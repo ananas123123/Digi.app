@@ -35,12 +35,12 @@ except ImportError:
     fuzz = None
 
 SUPPORTED = {".pdf", ".doc", ".docx"}
-APP_VERSION = "1.17.7.5"
+APP_VERSION = "1.0.0.0"
 
-# Update Log: 1.17.7.5 — Fixed folder-browser results regression introduced by the search-performance cache refactor.
+# Update Log: 1.0.0.0 — Fixed folder-browser results regression introduced by the search-performance cache refactor.
 
 
-VERSION_FOLDER_NAME = "Digi SE 1.17.7.5"
+VERSION_FOLDER_NAME = "Digi SE 1.0.0.0"
 
 
 def app_folder():
