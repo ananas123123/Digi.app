@@ -1861,9 +1861,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Digi Search Engine")
-        icon_path = resource_path("mbappe.ico")
-        if icon_path.exists():
-            self.setWindowIcon(QIcon(str(icon_path)))
         self.resize(1180, 720)
         self.setMinimumSize(900, 600)
 
