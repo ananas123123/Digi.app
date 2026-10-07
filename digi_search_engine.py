@@ -60,7 +60,7 @@ def app_folder():
 
 
 def program_files_folder():
-    value = os.environ.get("ProgramFiles")
+    value = os.environ.get("ProgramW6432") or os.environ.get("ProgramFiles")
     if value:
         return Path(value)
     return Path(r"C:\Program Files")
