@@ -165,7 +165,7 @@ echo Runtime dependencies are created in:
 echo   %%ProgramFiles%%\Digi Dependencies
 echo The Digi Factory folder is only needed if you want to rebuild.
 echo.
-echo The 3-second branded splash is intentionally retained.
+echo No branded splash screen or nose placeholder assets are included.
 echo.
 echo You can now launch:
 echo   "%EXE_PATH%"
