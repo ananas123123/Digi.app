@@ -48,7 +48,7 @@ if not exist "%VERSION_INFO_FILE%" (
     exit /b 1
 )
 
-py -c "import sys; v=open(r'%VERSION_FILE%',encoding='utf-8').read().strip(); r=open(r'%VERSION_INFO_FILE%',encoding='utf-8').read(); t=', '.join(v.split('.')); sys.exit(0 if f'filevers=({t})' in r and f'prodvers=({t})' in r and f''''FileVersion', '{v}'''' in r and f''''ProductVersion', '{v}'''' in r else 1)" >nul 2>&1
+py -c "import sys; v=open(r'%VERSION_FILE%',encoding='utf-8').read().strip(); r=open(r'%VERSION_INFO_FILE%',encoding='utf-8').read(); t=', '.join(v.split('.')); sys.exit(0 if 'filevers=('+t+')' in r and 'prodvers=('+t+')' in r and \"StringStruct('FileVersion', '\"+v+\"')\" in r and \"StringStruct('ProductVersion', '\"+v+\"')\" in r else 1)" >nul 2>&1
 if errorlevel 1 (
     echo.
     echo FATAL ERROR: version.txt and version_info.txt do not describe the same Digi version.
