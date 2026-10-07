@@ -102,9 +102,6 @@ if errorlevel 1 (
 echo.
 echo Preparing final application folder...
 if not exist "%FINAL_DIR%" mkdir "%FINAL_DIR%"
-if not exist "%FINAL_DIR%\Search Repository" mkdir "%FINAL_DIR%\Search Repository"
-if not exist "%FINAL_DIR%\Incoming" mkdir "%FINAL_DIR%\Incoming"
-if not exist "%FINAL_DIR%\Cache" mkdir "%FINAL_DIR%\Cache"
 
 echo.
 echo Cleaning previous build cache...
