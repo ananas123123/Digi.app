@@ -209,7 +209,12 @@ def ensure_dependencies():
             version_file.write_text(APP_VERSION + "\n", encoding="utf-8")
 
         version = version_file.read_text(encoding="utf-8").strip()
-        if not version:
+        parts = version.split(".")
+        valid = (
+            len(parts) == 4
+            and all(part.isdigit() for part in parts)
+        )
+        if not valid:
             version_file.write_text(APP_VERSION + "\n", encoding="utf-8")
 
         return paths
