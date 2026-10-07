@@ -1,0 +1,1304 @@
+DIGI SEARCH ENGINE 1.17.3.5
+FEATURES, LIMITATIONS AND IMPROVEMENT REVIEW
+============================================================
+
+Purpose of this document
+------------------------
+This document reviews the Digi Search Engine 1.17.3.5 application as supplied in
+this version. It covers current functionality, current limitations, missing
+functionality, GUI/cosmetic issues, technical limitations, and possible future
+improvements.
+
+This is a review only. NO changes to the application are made by this document.
+
+The review is based on the supplied Digi SE 1.17.3.5 source/README and its
+implemented UI and code paths. Items described as possible improvements are
+recommendations, not existing features.
+
+
+============================================================
+1. APPLICATION OVERVIEW
+============================================================
+
+Digi Search Engine is a Windows desktop application built around a local
+searchable repository of PDF and Microsoft Word study documents. It combines:
+
+- Local document indexing.
+- Filename/path search.
+- Normal and fuzzy search.
+- File-type, status and source filtering.
+- Folder browsing.
+- Search result sorting.
+- Study status and due-date tracking.
+- Per-file tags.
+- PDF/Word conversion.
+- An Incoming replacement workflow for modified documents.
+- Duplicate-file detection/management.
+- A built-in Digi Notes workspace intended for stylus use.
+- Folder/file management inside the Search Repository.
+- Recent searches.
+- Built-in guide and update log.
+- An Incoming Geek Console for debugging the Incoming workflow.
+
+The application is primarily a local Windows study/document-management tool,
+not a general-purpose web search engine or full document-management platform.
+
+
+============================================================
+2. CURRENT SEARCH FEATURES
+============================================================
+
+2.1 Normal search
+-----------------
+- Searches indexed file names and paths.
+- Uses a local SQLite database for the normal indexed path.
+- Search is deliberately empty when the search box is empty.
+- Search results are displayed as expandable result cards.
+- Search results can be refreshed from the filesystem/index.
+- The index is updated in the background.
+- The application also has a filesystem fallback for situations where a file
+  exists in the repository but is not yet represented in the index.
+
+2.2 Fuzzy search
+----------------
+- Approximate matching is available through RapidFuzz.
+- Useful for misspellings or imperfect filename/path queries.
+- Fuzzy search is still based on file/path information rather than document
+  contents.
+
+2.3 Semantic search
+-------------------
+NOT PRESENT.
+
+Semantic search was deliberately removed completely before 1.17.2.4.
+The current version does NOT contain:
+- A Semantic search mode.
+- A Sentence Transformers model.
+- PyTorch-based semantic indexing.
+- A semantic database.
+- A semantic model cache.
+- Semantic similarity scoring.
+- Semantic search UI.
+
+This is intentional and should not be interpreted as a bug in 1.17.3.5.
+
+2.4 Search result presentation
+-----------------------------
+- Results appear in a dedicated results panel.
+- Filenames are displayed without .pdf, .doc or .docx in the visible result.
+- PDF filenames have a subtle light-red tint.
+- Word filenames have a subtle light-blue tint.
+- Directory/path information is visually subdued.
+- Each result can be expanded to reveal directory/full-path information.
+- Results resize with the window.
+- Double-clicking a result opens the file using Windows/default application
+  handling.
+- Selecting a result exposes its study metadata and actions in the right-hand
+  detail panel.
+
+2.5 Search delay/debouncing
+---------------------------
+- Search updates use a short timer rather than attempting to refresh on every
+  keystroke immediately.
+
+
+============================================================
+3. CURRENT FILTERS AND SORTING
+============================================================
+
+3.1 File-type filter
+--------------------
+Available choices:
+- All types.
+- PDF.
+- Word.
+
+Supported document extensions are:
+- .pdf
+- .doc
+- .docx
+
+3.2 Status filter
+-----------------
+Available choices:
+- All statuses.
+- Not started.
+- Currently working on.
+- Finished.
+- Due.
+- Due late.
+
+The user can change the status of an individual file through the selected-file
+panel.
+
+3.3 Source filter
+-----------------
+Available choices:
+- All sources.
+- ExamPro.
+- PMT.
+
+Source detection is based on folder names/path components containing ExamPro or
+PMT. It is not a metadata/API-based source identification system.
+
+3.4 Folder browser
+-------------------
+- A scalable Folder Browser is available.
+- It is filesystem-first rather than depending exclusively on the search index.
+- Folders can be expanded and selected.
+- Selecting a folder can show files recursively underneath it.
+- The selected folder is displayed in the folder selector.
+
+3.5 Sorting
+-----------
+Available sorting modes:
+- Relevance.
+- Name A-Z.
+- Name Z-A.
+- Newest modified.
+- Oldest modified.
+- Most pages.
+- Fewest pages.
+
+3.6 Recent searches
+-------------------
+- Recent searches are stored locally.
+- Up to the most recent 12 queries are exposed by the Recent searches UI.
+- Pressing Enter on a query records it as a recent search.
+
+
+============================================================
+4. INDEXING AND REPOSITORY MANAGEMENT
+============================================================
+
+4.1 Local SQLite index
+----------------------
+The application maintains a local SQLite database containing information such
+as:
+- File path.
+- Filename.
+- Extension.
+- Modified time.
+- PDF page count where available.
+- Study status.
+- Due date.
+- Priority field in the database schema.
+
+4.2 Background indexing
+-----------------------
+- Initial indexing runs in the background.
+- Periodic index refreshes are scheduled.
+- The application avoids repeatedly calculating expensive PDF metadata for
+  unchanged files.
+- Database writes are batched to reduce UI-thread overhead.
+
+4.3 Search Repository
+---------------------
+- The user can choose a library/search-root folder.
+- The default repository is a Search Repository folder beside the application.
+- The Cache directory is excluded from the searchable library.
+- The Incoming staging directory is excluded from the searchable library.
+- The selected library location is persisted locally.
+
+4.4 Manual refresh
+------------------
+More -> Refresh index can force an index update.
+
+4.5 Folder/file management
+---------------------------
+Through the Folder Browser, right-clicking a folder provides management actions
+including:
+- New folder.
+- New Word document (.docx).
+- New legacy Word document (.doc).
+- New PDF.
+- Delete folder.
+
+Changes are reflected in the browser and the index is refreshed in the
+background.
+
+Legacy .doc creation requires Microsoft Word to be installed on Windows.
+
+
+============================================================
+5. SELECTED-FILE STUDY MANAGEMENT
+============================================================
+
+For a selected document, Digi can store/display:
+
+- Filename.
+- Status.
+- Due date.
+- Tags.
+- File-opening controls.
+- Containing-folder opening control.
+- Conversion controls.
+
+5.1 Status
+----------
+The user can set:
+- Not started.
+- Currently working on.
+- Finished.
+
+5.2 Due dates
+-------------
+- A calendar/date picker is provided.
+- Dates are stored locally.
+- The application derives Due and Due late filtering from the stored due date
+  and status.
+
+5.3 Tags
+--------
+- Tags can be added to individual files.
+- Tags can be removed.
+- Multiple tags can be attached to a file.
+- Tags are stored in the SQLite database.
+
+IMPORTANT LIMITATION:
+Tags are currently metadata attached to files, but there is no dedicated
+visible tag filter/search control in the main search interface.
+
+5.4 Priority
+------------
+A priority field exists in the SQLite schema, but the current visible selected
+file interface does not provide a complete user-facing priority editor/filter.
+This appears to be unfinished/dormant functionality rather than a complete
+user-facing feature.
+
+
+============================================================
+6. PDF <-> WORD CONVERSION
+============================================================
+
+6.1 PDF -> Word
+---------------
+- Supported.
+- Each PDF page is rendered as a PNG image.
+- PNG images are embedded in a DOCX.
+- The resulting Word file is intentionally image-based.
+- No OCR is performed.
+- No text reflow is performed.
+- The conversion is intended to preserve visual appearance rather than create
+  editable Word text.
+- PNG is lossless rather than JPEG-based.
+- Word is instructed not to recompress the images.
+
+6.2 Word -> PDF
+---------------
+- Supported.
+- Digi-created page-image DOCX files can be reconstructed directly from their
+  embedded PNG page images.
+- This avoids unnecessary lossy recompression for Digi-generated conversions.
+- Other DOCX files require the available external conversion mechanism,
+  including Microsoft Word/LibreOffice depending on the environment.
+
+6.3 Conversion source-retention option
+--------------------------------------
+After conversion, Digi asks whether the original should be retained.
+- Yes: retain the original.
+- No: remove the original only after successful conversion.
+- Failed conversion does not intentionally remove the original.
+
+
+============================================================
+7. INCOMING WORKFLOW
+============================================================
+
+Incoming is a staging/middleman system for updating repository documents.
+
+Core concept:
+- A repository file can be opened from Digi.
+- Digi temporarily remembers its source identity/path for the current session.
+- A modified copy can be placed into Incoming.
+- Digi can route it back to the intended repository file.
+- The original is replaced after the handoff succeeds.
+- Incoming is kept outside the searchable repository.
+
+7.1 Origin memory
+-----------------
+Digi can temporarily remember:
+- Exact repository path.
+- Original filename.
+- Original extension.
+- Source identity for the current session.
+
+This is designed to prevent replacement of the wrong file where identical
+filenames exist in different folders.
+
+7.2 Fallback matching
+---------------------
+If an exact remembered source is unavailable, fallback matching uses filename
+AND extension rather than filename alone.
+
+7.3 Ambiguous destinations
+--------------------------
+If multiple possible exact destinations exist, Digi presents a selection UI
+rather than blindly choosing one.
+
+7.4 Geek Console
+----------------
+More -> Incoming Geek Console provides a session-oriented debug log for the
+Incoming process, including source association and replacement operations.
+The log can be saved as a TXT file.
+
+7.5 Incoming duplicate indicator
+--------------------------------
+The Incoming/status button detects same-base-name files with different
+extensions in the same folder.
+
+Example:
+- 2019.pdf
+- 2019.docx
+
+These are treated as a duplicate-extension conflict group.
+
+A green indicator means no such conflict groups were found.
+A red indicator with a count means conflicts were found.
+
+7.6 Duplicate manager
+---------------------
+The duplicate manager allows the user to:
+- View conflict groups.
+- Open a containing folder.
+- Open a file.
+- Delete a selected file.
+- Refresh the list.
+
+
+============================================================
+8. DIGI NOTES WORKSPACE
+============================================================
+
+Digi includes a stylus-first notes workspace.
+
+8.1 Drawing tools
+-----------------
+- Pen.
+- Eraser.
+- Marker.
+- Highlighter.
+- Colour picker.
+- Adjustable stroke size.
+
+8.2 Stylus behaviour
+--------------------
+- Stylus drawing is supported.
+- Stylus barrel/right-button input can act as an eraser.
+- Finger touch does not draw.
+- Touch/pinch interaction is supported where the hardware provides it.
+
+8.3 Zoom
+--------
+- Zoom out.
+- 100% reset.
+- Zoom in.
+- Ctrl+wheel zoom.
+- Two-finger pinch zoom on supported touch hardware.
+- Zoom is bounded rather than unlimited.
+
+8.4 Automatic page expansion
+----------------------------
+The page can expand automatically when writing near an edge.
+
+8.5 Note organisation
+---------------------
+- Create notebooks.
+- Create nested sub-page folders.
+- Create pages.
+- Rename pages.
+- Delete pages.
+- Delete folders.
+- Reorder pages.
+- Insert images.
+- Insert text.
+
+8.6 Storage model
+-----------------
+Each notes page is stored as an individual PNG file under the Digi Notes
+workspace. This means pages can be backed up as independent files.
+
+
+============================================================
+9. USER INTERFACE FEATURES
+============================================================
+
+Main window includes:
+- Application title.
+- Search bar.
+- Normal/Fuzzy search selector.
+- More menu.
+- Type filter.
+- Status filter.
+- Source filter.
+- Folder Browser.
+- Sort selector.
+- Incoming control.
+- Incoming conflict indicator.
+- Results area.
+- Selected-file detail area.
+- Open file.
+- Open containing folder.
+
+More menu includes:
+- Recent searches.
+- Guide.
+- Update log.
+- Notes.
+- Incoming Geek Console.
+- Change library folder.
+- Refresh index.
+
+Result UI includes:
+- Empty-state screen.
+- Rounded result-card styling through the custom result delegate.
+- Expandable path information.
+- File-type colour distinction.
+- Result count.
+
+
+============================================================
+10. WHAT THE APPLICATION DOES NOT HAVE
+============================================================
+
+10.1 Search/content limitations
+-------------------------------
+The application does NOT currently provide:
+- Full-text search inside PDFs.
+- Full-text search inside DOC/DOCX files.
+- OCR-based search.
+- Search inside scanned PDFs by their visual content.
+- Search based on document meaning/semantics.
+- Natural-language question answering over the document library.
+- AI-generated summaries of documents.
+- AI-generated keywords.
+- AI-generated tags.
+- Automatic topic classification beyond the existing path/source logic.
+- Citation extraction.
+- Highlighted matching text inside documents.
+- Search-result snippets showing where a match occurs in a document.
+- Search by document author.
+- Search by document creation date as a dedicated filter.
+- Search by file size as a dedicated filter.
+- Search by page range as a dedicated filter.
+- Advanced Boolean query syntax.
+- Saved custom search queries as a visible user feature.
+- A dedicated tag-search/filter UI.
+
+10.2 Document viewing/editing limitations
+------------------------------------------
+The application does NOT provide a full built-in:
+- PDF viewer/editor.
+- Word document editor.
+- DOC editor.
+- DOCX editor.
+- PDF annotation editor.
+- Text extraction/editor for converted PDFs.
+
+Opening a document normally delegates to the Windows/default application.
+
+10.3 Conversion limitations
+----------------------------
+PDF -> Word is not a true editable-text conversion.
+It produces an image-based Word document.
+
+Therefore:
+- Text in the resulting Word file is not normal editable Word text.
+- OCR is not performed.
+- Text structure is not reconstructed.
+- Tables are not converted into editable Word tables.
+- Headings are not semantically reconstructed.
+- Hyperlinks are not reconstructed as editable Word links.
+- PDF form fields are not converted into Word form fields.
+- Searchable text is not created from scanned/image PDFs by Digi itself.
+
+Word -> PDF conversion for arbitrary Word files depends on the available
+external conversion environment and is not equivalent to Digi's specialised
+page-image restoration path.
+
+10.4 Cloud/synchronisation limitations
+--------------------------------------
+The application does NOT currently include:
+- Cloud storage.
+- Automatic OneDrive/Google Drive/Dropbox synchronisation.
+- Cross-device synchronisation.
+- Mobile/Android/iOS versions.
+- Browser/web version.
+- Account login.
+- User accounts.
+- Multi-user collaboration.
+- Conflict resolution across multiple devices.
+
+10.5 Collaboration limitations
+------------------------------
+There is no built-in:
+- Shared editing.
+- Comments/mentions.
+- Document locking for multiple users.
+- Collaboration history.
+- Version comparison.
+- Merge system.
+
+10.6 Version-control limitations
+--------------------------------
+The Incoming workflow replaces a repository file. It is NOT a full version
+control system.
+
+There is no built-in:
+- Unlimited revision history.
+- Restore-to-previous-version UI.
+- Diff viewer.
+- File-version timeline.
+- Automatic snapshots before replacement.
+- Undo for a completed Incoming replacement.
+- Git-style history/branching.
+
+10.7 Backup limitations
+-----------------------
+Digi Notes pages are independent PNG files, which is useful for manual backup,
+but Digi itself does not provide a complete automated backup system.
+
+There is no built-in:
+- Scheduled backup.
+- One-click full-library backup.
+- Backup verification.
+- Backup restore wizard.
+- Automatic cloud backup.
+
+10.8 Security limitations
+--------------------------
+There is no built-in:
+- End-to-end encryption.
+- Encrypted local repository.
+- Password-protected library.
+- Per-file access control.
+- User authentication.
+- Audit/security event system.
+
+10.9 Platform limitations
+-------------------------
+The application is designed around Windows APIs and Windows desktop behaviour.
+Examples include Windows default file opening, Explorer integration and legacy
+.doc creation requiring Microsoft Word.
+
+It is not currently a cross-platform application.
+
+
+============================================================
+11. FUNCTIONAL IMPROVEMENTS THAT WOULD HAVE THE HIGHEST VALUE
+============================================================
+
+11.1 Full-text indexing
+-----------------------
+This would likely be the single largest search improvement.
+
+Instead of searching only filenames and paths, Digi could index document text
+from:
+- Text PDFs.
+- DOCX files.
+- Potentially legacy DOC files.
+
+A local full-text index would allow queries such as:
+- "mitosis"
+- "electrophilic substitution"
+- "social influence"
+without requiring those words to appear in the filename/path.
+
+11.2 OCR
+---------
+Add OCR for scanned/image-only PDFs.
+
+This would make scanned exam papers searchable by their actual page content.
+
+11.3 Search-result snippets
+---------------------------
+Display the matching sentence/line and possibly the page number.
+
+Example:
+    2019 Cell Biology
+    "...mitochondrial ATP production..."
+    Page 4
+
+This would make search significantly more useful than filename matching alone.
+
+11.4 Better fuzzy search
+------------------------
+Possible improvements:
+- Highlight the matched portion.
+- Show a match score.
+- Search individual filename tokens.
+- Rank exact matches above partial/fuzzy matches more clearly.
+- Support typo tolerance without producing excessive irrelevant results.
+
+11.5 Advanced query system
+--------------------------
+Possible operators:
+- AND
+- OR
+- NOT
+- Exact phrase
+- Extension/type
+- Folder
+- Status
+- Tag
+- Date
+- Source
+
+Example:
+    "cell membrane" AND PDF AND Biology
+
+11.6 Tag filtering
+-------------------
+Tags already exist, so a natural next step would be:
+- Tag filter.
+- Multiple-tag filtering.
+- Tag management screen.
+- Tag colour/category system.
+- Tag suggestions.
+
+11.7 Real priority system
+-------------------------
+The database already contains a priority field, but the current UI does not
+fully expose it.
+
+A complete implementation could add:
+- Low.
+- Normal.
+- High.
+- Urgent.
+- Priority filter.
+- Priority sorting.
+- Visual priority indicators.
+
+11.8 Better study tracking
+--------------------------
+Potential additions:
+- Completion percentage.
+- Last studied date.
+- Study sessions.
+- Number of attempts.
+- Revision count.
+- Exam score tracking.
+- Per-paper notes.
+- "Needs review" state.
+
+11.9 Document version history
+-----------------------------
+The Incoming workflow would become considerably safer with automatic backups:
+- Before replacing a file, save the previous version.
+- Store timestamp/version number.
+- Allow restore.
+- Show previous versions.
+- Optionally compare versions.
+
+11.10 Safer Incoming jobs
+-------------------------
+Potential improvements:
+- Explicit job IDs.
+- Visible pending Incoming jobs.
+- Confirmation before cross-format replacement.
+- Better handling of simultaneous Incoming files.
+- Persistent source association across application restarts.
+- Clear success/failure state for each handoff.
+- Retry failed handoffs.
+- Automatic rollback if replacement fails part-way through.
+
+11.11 Persistent source identity
+--------------------------------
+The current source-memory mechanism is session-oriented. A future implementation
+could optionally persist an Incoming job safely across restarts, with explicit
+expiry and confirmation to avoid stale replacements.
+
+11.12 File watching for the repository
+---------------------------------------
+The Incoming directory has dedicated watching behaviour. A future version could
+use filesystem watching more extensively for the whole repository, reducing the
+need for periodic rescans while still providing a manual full refresh.
+
+11.13 Better indexing controls
+------------------------------
+Possible additions:
+- Index status/progress bar.
+- Number of files indexed.
+- Number of errors.
+- Last successful scan time.
+- Pause/resume indexing.
+- Exclude-folder configuration.
+- Rebuild-index option.
+- Index diagnostics.
+
+
+============================================================
+12. GUI / UX IMPROVEMENTS
+============================================================
+
+12.1 Responsive layout
+----------------------
+The current UI is designed around a minimum desktop window size and a fairly
+wide main layout. Future work could improve behaviour at:
+- Small laptop resolutions.
+- 125%/150% Windows scaling.
+- Very wide monitors.
+- Narrow windows.
+- Touchscreen use.
+
+12.2 Filter organisation
+------------------------
+There are several controls in one horizontal filter area. As more functionality
+is added, this could become crowded.
+
+Potential improvement:
+- Compact filter button.
+- Filter drawer/panel.
+- Clear-all-filters button.
+- Visible filter chips.
+- Persistent filter state.
+
+12.3 Search experience
+----------------------
+Potential improvements:
+- Search history dropdown directly below the search box.
+- Clear-search button.
+- Search suggestions.
+- Recent-search keyboard navigation.
+- Result count split by file type.
+- Search syntax help.
+- Match highlighting.
+
+12.4 Result cards
+-----------------
+Current result cards are functional but could be more informative.
+
+Potential additions:
+- File-type icon.
+- Page count.
+- Status badge.
+- Due-date badge.
+- Tag chips.
+- Last-modified date.
+- Match score.
+- Match snippet.
+- Quick-open buttons.
+
+12.5 Selected-file panel
+------------------------
+The right panel could be improved by separating information into sections:
+- File information.
+- Study tracking.
+- Tags.
+- Conversion.
+- Actions.
+
+This would make a growing set of features easier to scan.
+
+12.6 Empty states
+-----------------
+The application has an empty-state graphic, but additional contextual empty
+states could help:
+- No search results.
+- No files in selected folder.
+- No Incoming files.
+- No duplicate conflicts.
+- No recent searches.
+- No tags.
+
+12.7 Loading/progress feedback
+------------------------------
+Background indexing is used, but a more explicit status system could show:
+- Indexing percentage.
+- Files scanned.
+- Current operation.
+- Estimated remaining time where practical.
+- Last update.
+
+12.8 Error presentation
+-----------------------
+Errors are generally shown through labels/message boxes. A more polished system
+could provide:
+- Consistent error dialogs.
+- Copy-error button.
+- Technical details expandable on demand.
+- Friendly explanation plus technical cause.
+- Persistent error log.
+
+12.9 Keyboard accessibility
+---------------------------
+The application does not currently expose a comprehensive keyboard shortcut
+system.
+
+Possible additions:
+- Ctrl+K or similar: focus search.
+- Ctrl+F: focus search.
+- Enter: open selected file.
+- Ctrl+O: open file.
+- F5: refresh index.
+- Escape: clear/close active search UI.
+- Keyboard navigation for results and filters.
+- Shortcut reference in Guide.
+
+12.10 Accessibility
+--------------------
+Potential improvements:
+- Stronger keyboard navigation.
+- Screen-reader-friendly labels.
+- Adjustable text scaling.
+- Better high-contrast support.
+- Reduced-motion setting.
+- More consistent focus indicators.
+- Better colour choices for users with colour-vision deficiencies.
+
+The current PDF/Word colour distinction should not be the only way file type is
+communicated; an icon or text label would be more accessible.
+
+
+============================================================
+13. COSMETIC / VISUAL IMPROVEMENTS
+============================================================
+
+13.1 Visual hierarchy
+----------------------
+The main screen has many controls competing for attention. A more deliberate
+hierarchy could make the search box the dominant element, with secondary
+controls grouped underneath.
+
+13.2 Consistent button styling
+------------------------------
+Buttons could use a more consistent visual hierarchy:
+- Primary action.
+- Secondary action.
+- Destructive action.
+- Low-priority utility action.
+
+13.3 Destructive actions
+-------------------------
+Delete operations should remain visually distinct and consistently confirm the
+risk. A dedicated destructive button style could make this clearer.
+
+13.4 File-type visual identity
+------------------------------
+The current subtle red/blue filename colours are intentionally restrained.
+Future improvements could add small PDF/Word icons so the type is immediately
+recognisable without relying on colour.
+
+13.5 Typography
+---------------
+Potential improvements:
+- More consistent heading sizes.
+- More deliberate secondary-text sizing.
+- Better spacing between metadata fields.
+- Better typography for paths and technical information.
+
+13.6 Dark/light theme
+---------------------
+The current application uses a dark-oriented results area, but there is no
+complete user-facing theme system.
+
+Potential additions:
+- Dark theme.
+- Light theme.
+- System theme.
+- Custom accent colour.
+
+13.7 Icons
+----------
+Many controls currently rely primarily on text. Consistent icons could make
+common actions quicker to recognise, particularly:
+- Open.
+- Folder.
+- Refresh.
+- Search.
+- Filter.
+- Notes.
+- Convert.
+- Incoming.
+- Delete.
+- Add.
+
+13.8 Spacing and density
+------------------------
+A user-configurable compact/comfortable density mode could help users who have
+large document collections.
+
+13.9 Window state
+-----------------
+Potential improvements:
+- Remember window size.
+- Remember splitter position.
+- Remember selected filters.
+- Remember last folder.
+- Remember last selected file.
+
+
+============================================================
+14. DIGI NOTES: FUNCTIONAL IMPROVEMENTS
+============================================================
+
+Current Digi Notes is intentionally simple and stylus-first. It could be
+expanded substantially.
+
+Potential additions:
+- Lasso selection.
+- Move/resize drawn objects.
+- Undo/redo history.
+- Stroke smoothing.
+- Shape recognition.
+- Straight-line tool.
+- Rectangle/circle tools.
+- Ruler.
+- More pen presets.
+- Pressure-sensitive stroke width where hardware/API supports it.
+- Better handwriting-to-text conversion.
+- OCR handwriting recognition.
+- Page templates.
+- Grid/ruled/dot paper.
+- PDF import as note pages.
+- PDF export of notebooks.
+- Notebook search.
+- Searchable handwritten notes.
+- Drag-and-drop images.
+- Copy/paste between pages.
+- Duplicate page.
+- Page thumbnails.
+- Multi-page selection.
+- Batch delete/move.
+- Autosave.
+- Crash recovery.
+- Note backup/export.
+
+The current PNG-page model is simple and robust for independent-page backup, but
+it is not a structured vector notebook format. This limits later editing of
+individual strokes/objects.
+
+
+============================================================
+15. PERFORMANCE IMPROVEMENT AREAS
+============================================================
+
+Current performance-conscious features include background indexing, cached PDF
+metadata and batched database writes.
+
+Possible future improvements:
+- Incremental filesystem watching instead of periodic full scans.
+- More granular index invalidation.
+- SQLite FTS for full-text search.
+- Worker pools for large repositories.
+- Better cancellation of long-running scans.
+- Scan progress reporting.
+- Memory limits for very large collections.
+- Thumbnail generation/cache rather than loading large previews repeatedly.
+- Lazy loading of very large result sets.
+- Pagination or virtualised results for extremely large libraries.
+- Better handling of network-mounted repositories.
+
+
+============================================================
+16. RELIABILITY / ERROR-HANDLING IMPROVEMENTS
+============================================================
+
+Potential improvements include:
+
+- Atomic file replacement for Incoming operations.
+- Automatic backup before replacement.
+- Recovery if the application closes during a replacement.
+- Recovery if Windows temporarily locks the target file.
+- Better handling of files being renamed externally while Digi is open.
+- More explicit handling of permissions errors.
+- Handling of inaccessible network paths.
+- Detection of corrupt PDFs/DOCX files during indexing.
+- Per-file indexing error status rather than silently skipping problematic
+  files.
+- Index repair/rebuild tool.
+- Database integrity check.
+- Export/import of Digi metadata.
+
+
+============================================================
+17. DATA PORTABILITY IMPROVEMENTS
+============================================================
+
+The current application stores important metadata locally in SQLite and stores
+notes as PNG files. A future release could provide:
+
+- Export all metadata to JSON/CSV.
+- Import metadata after reinstalling Digi.
+- Export tags.
+- Export statuses/due dates.
+- Export search history.
+- Full application backup.
+- Full application restore.
+- Migration assistant between Digi versions.
+
+
+============================================================
+18. INSTALLATION / DEPLOYMENT LIMITATIONS
+============================================================
+
+The project is designed to be built into a Windows executable using PyInstaller.
+
+Current build requirements include packages such as:
+- PySide6.
+- PyMuPDF.
+- RapidFuzz.
+- PyInstaller.
+- python-docx.
+- pywin32.
+
+Potential deployment improvements:
+- Proper installer (MSI/MSIX/installer package).
+- Automatic updates.
+- Uninstaller.
+- Version migration handling.
+- Dependency verification on startup.
+- Repair installation option.
+- File associations.
+- Start-menu shortcut creation.
+- Desktop shortcut option.
+- Portable mode.
+
+A Microsoft Store package would also require a suitable Windows packaging and
+Store-compliance workflow; the current source/build setup is not itself a
+Microsoft Store publishing system.
+
+
+============================================================
+19. ARCHITECTURAL / TECHNICAL IMPROVEMENTS
+============================================================
+
+Potential longer-term improvements:
+
+- Separate UI, database, indexing, search and file-management modules more
+  strictly.
+- Introduce a repository service layer instead of having the main window own
+  much of the application logic.
+- Add formal data models for files, Incoming jobs and notes.
+- Add automated unit tests.
+- Add integration tests for indexing/search/conversion/Incoming.
+- Add regression tests for duplicate filenames and extensions.
+- Add test fixtures for locked files and permission failures.
+- Add structured logging rather than relying mainly on session text logs.
+- Add a migration system for database schema changes.
+- Add application configuration separate from the SQLite study metadata.
+- Improve thread cancellation and lifecycle handling.
+- Reduce dependence on Windows-specific APIs where cross-platform support is
+  ever desired.
+
+
+============================================================
+20. TESTING THAT WOULD BE VALUABLE
+============================================================
+
+A stronger automated test suite should cover at least:
+
+SEARCH
+- Exact filename match.
+- Partial filename match.
+- Path match.
+- Fuzzy typo match.
+- Empty query.
+- 500+ result sets.
+- Very large repository.
+- Unindexed filesystem file.
+- Deleted file removal from index.
+- Renamed file handling.
+
+FILTERS
+- PDF filter.
+- Word filter.
+- Status filters.
+- Due-date edge cases.
+- ExamPro detection.
+- PMT detection.
+- Folder filtering.
+- Sorting combinations.
+
+INCOMING
+- Exact source match.
+- Duplicate filenames in different folders.
+- Multiple fallback matches.
+- Missing source.
+- Incoming file with unexpected extension.
+- Locked destination.
+- Destination deleted before replacement.
+- Incoming file renamed.
+- Application restart during an Incoming job.
+- Multiple Incoming files arriving together.
+
+CONVERSION
+- Single-page PDF.
+- Multi-page PDF.
+- Large PDF.
+- Scanned PDF.
+- Existing output file.
+- Missing dependency.
+- Corrupt source.
+- Digi-created DOCX -> PDF restoration.
+- Arbitrary DOCX -> PDF.
+
+NOTES
+- New notebook.
+- Nested folders.
+- New page.
+- Rename.
+- Reorder.
+- Delete.
+- Autosave after switching pages.
+- Image insertion.
+- Text insertion.
+- Zoom.
+- Touch/stylus input.
+- Crash/recovery.
+
+
+============================================================
+21. HIGHEST-PRIORITY IMPROVEMENT ROADMAP
+============================================================
+
+If Digi SE were developed further, a sensible priority order would be:
+
+TIER 1 — CORE SEARCH
+1. Full-text indexing.
+2. OCR for scanned PDFs.
+3. Search-result snippets/page numbers.
+4. Better fuzzy ranking/highlighting.
+5. Tag filtering.
+
+TIER 2 — SAFETY/RELIABILITY
+6. Incoming automatic backup/version history.
+7. Atomic replacement and rollback.
+8. Persistent/recoverable Incoming jobs.
+9. Index diagnostics and repair.
+10. Better error reporting.
+
+TIER 3 — STUDY MANAGEMENT
+11. Priority system.
+12. Revision/session tracking.
+13. Completion tracking.
+14. Exam-score metadata.
+15. More powerful filters.
+
+TIER 4 — GUI/UX
+16. Better filter organisation.
+17. File-type icons.
+18. Improved result cards.
+19. Keyboard shortcuts/accessibility.
+20. Theme system.
+21. Remembered window/layout state.
+
+TIER 5 — NOTES
+22. Undo/redo.
+23. Lasso/object manipulation.
+24. Better handwriting support.
+25. PDF import/export.
+26. Searchable notes.
+27. Autosave/recovery.
+
+TIER 6 — ECOSYSTEM
+28. Backup/restore.
+29. Export/import.
+30. Automatic updates.
+31. Installer/Store-ready packaging.
+32. Optional cloud synchronisation.
+
+
+============================================================
+22. CURRENT STRENGTHS
+============================================================
+
+The current version has several particularly useful design choices:
+
+- It is focused on a specific study-document workflow rather than trying to be
+  a generic file manager.
+- Search is local and does not require an internet connection.
+- Normal search remains lightweight after semantic search was removed.
+- Fuzzy search handles imperfect filename queries.
+- The repository is indexed in the background.
+- The filesystem-first Folder Browser reduces dependence on index completeness.
+- Incoming source identity reduces the risk of replacing the wrong duplicate
+  filename.
+- The Incoming Geek Console makes the otherwise invisible replacement process
+  diagnosable.
+- Duplicate-extension conflicts are surfaced rather than silently ignored.
+- Conversion has explicit source-retention behaviour.
+- Digi Notes is integrated into the same application rather than being a
+  completely separate tool.
+- Notes pages are independent PNG files, making simple manual backup possible.
+- The visible result extension is hidden while the underlying extension remains
+  available to the application.
+- PDF/Word result colours are deliberately subtle rather than visually dominant.
+
+
+============================================================
+23. IMPORTANT DESIGN TRADE-OFFS
+============================================================
+
+1. Filename/path search vs content search
+-----------------------------------------
+Current filename/path search is fast and simple, but it cannot answer queries
+about the actual contents of a paper.
+
+2. Image-based PDF -> Word vs editable conversion
+--------------------------------------------------
+The current conversion preserves visual appearance well, but the resulting Word
+file is not a true editable transcription of the PDF.
+
+3. Local database vs cloud system
+---------------------------------
+A local database gives privacy, speed and offline operation, but it does not
+provide automatic cross-device synchronisation.
+
+4. PNG notes vs structured notebook objects
+--------------------------------------------
+PNG pages are straightforward and portable, but they make individual pen
+strokes and inserted objects harder to edit later.
+
+5. Automatic Incoming replacement vs version control
+------------------------------------------------------
+Automatic replacement is convenient for the user's study-paper workflow, but
+without snapshots/version history it is less recoverable than a full versioning
+system.
+
+6. Simple GUI vs feature density
+--------------------------------
+The current interface is relatively direct. Adding every possible feature to
+the main window would make it cluttered, so future functionality should be
+progressively grouped into secondary panels/dialogues.
+
+
+============================================================
+24. OVERALL LIMITATION SUMMARY
+============================================================
+
+Digi SE 1.17.3.5 is best described as:
+
+A local Windows study-paper search, organisation, conversion and stylus-notes
+application with filename/path search, fuzzy matching, study metadata,
+repository management and an Incoming replacement workflow.
+
+It is NOT currently:
+
+- A full-text document search engine.
+- An OCR system.
+- A semantic/AI search engine.
+- A PDF editor.
+- A Word editor.
+- A complete document-management/version-control platform.
+- A cloud-synchronised study platform.
+- A collaborative document system.
+- A full backup/restore system.
+- A cross-platform application.
+- A complete digital handwriting/vector notebook system.
+
+The largest functional gap is the absence of content-level document search.
+The largest reliability gap is the absence of automatic version history/rollback
+for Incoming replacement.
+The largest study-management gap is limited metadata/filtering beyond status,
+due dates and tags.
+The largest GUI opportunity is making the growing number of controls more
+structured, accessible and visually consistent.
+The largest Digi Notes opportunity is moving beyond raster PNG pages toward a
+richer editable notebook model while retaining the simplicity of the current
+system.
+
+
+END OF REVIEW
+Digi Search Engine 1.17.3.5
