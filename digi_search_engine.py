@@ -39,8 +39,18 @@ APP_VERSION = "1.0.0.0"
 
 # Update Log: 1.0.0.0 — Fixed folder-browser results regression introduced by the search-performance cache refactor.
 
+VERSION_FILE_NAME = "version.txt"
+DEPENDENCIES_ROOT_NAME = "Digi Dependencies"
+SEARCH_REPOSITORY_NAME = "Search Repository"
+VERSION_MANAGER_NAME = "Version manager"
+CACHE_NAME = "Cache"
 
-VERSION_FOLDER_NAME = "Digi SE 1.0.0.0"
+DEPENDENCY_MARKER_NAME = ".digi-dependency"
+DEPENDENCY_MARKERS = {
+    SEARCH_REPOSITORY_NAME: "search-repository",
+    VERSION_MANAGER_NAME: "version-manager",
+    CACHE_NAME: "cache",
+}
 
 
 def app_folder():
@@ -49,107 +59,210 @@ def app_folder():
     return Path(__file__).resolve().parent
 
 
-def ensure_version_folder_location():
-    """
-    Keep a frozen Digi executable self-organised without imposing a relocation
-    cost on normal launches.
+def program_files_folder():
+    value = os.environ.get("ProgramFiles")
+    if value:
+        return Path(value)
+    return Path(r"C:\Program Files")
 
-    If the EXE is already inside its current version folder, startup proceeds
-    normally. If the EXE has been moved elsewhere (for example to the Desktop),
-    create the version folder and its standard subfolders, then hand the EXE
-    off to a tiny Windows helper which moves the running file after this
-    process exits and relaunches it from the correct location.
+
+def dependencies_root():
+    return program_files_folder() / DEPENDENCIES_ROOT_NAME
+
+
+def dependency_paths():
+    root = dependencies_root()
+    return {
+        "root": root,
+        "search_repository": root / SEARCH_REPOSITORY_NAME,
+        "version_manager": root / VERSION_MANAGER_NAME,
+        "cache": root / CACHE_NAME,
+    }
+
+
+def write_dependency_marker(folder, marker):
+    marker_path = folder / DEPENDENCY_MARKER_NAME
+    marker_path.write_text(marker + "\n", encoding="utf-8")
+
+
+def find_marked_dependency(marker):
     """
+    Find a dependency folder by its marker. This allows Digi to repair a
+    dependency folder that was renamed by the user.
+    """
+    pf = program_files_folder()
+    if not pf.exists():
+        return None
+
+    try:
+        for marker_path in pf.rglob(DEPENDENCY_MARKER_NAME):
+            try:
+                if marker_path.is_file() and marker_path.read_text(
+                    encoding="utf-8"
+                ).strip() == marker:
+                    return marker_path.parent
+            except (OSError, UnicodeError):
+                continue
+    except OSError:
+        return None
+
+    return None
+
+
+def repair_dependency_structure():
+    """
+    Restore the canonical Program Files dependency structure.
+
+    Marker files make the repair deterministic even when the parent folder or
+    one of its three children has been renamed.
+    """
+    paths = dependency_paths()
+    root = paths["root"]
+
+    root_candidates = {}
+    for name, marker in DEPENDENCY_MARKERS.items():
+        exact = root / name
+        if exact.is_dir():
+            root_candidates[name] = exact
+        else:
+            marked = find_marked_dependency(marker)
+            if marked is not None:
+                root_candidates[name] = marked
+
+    # If the three marked folders were found under a renamed parent, recover
+    # that parent from the common ancestor.
+    for candidate in list(root_candidates.values()):
+        parent = candidate.parent
+        if parent != root:
+            try:
+                if root.exists():
+                    break
+                parent.rename(root)
+                break
+            except OSError:
+                pass
+
+    # Re-read after parent repair.
+    paths = dependency_paths()
+    root = paths["root"]
+    root.mkdir(parents=True, exist_ok=True)
+
+    for name, marker in DEPENDENCY_MARKERS.items():
+        expected = root / name
+        if expected.is_dir():
+            write_dependency_marker(expected, marker)
+            continue
+
+        marked = find_marked_dependency(marker)
+        if marked is not None and marked != expected:
+            try:
+                marked.rename(expected)
+                write_dependency_marker(expected, marker)
+                continue
+            except OSError:
+                pass
+
+        expected.mkdir(parents=True, exist_ok=True)
+        write_dependency_marker(expected, marker)
+
+    return dependency_paths()
+
+
+def elevate_for_dependency_repair():
+    """
+    Program Files is protected by Windows. If Digi needs to repair/create its
+    dependency structure and the current process lacks permission, relaunch
+    itself elevated once.
+    """
+    if "--dependency-repair" in sys.argv:
+        return False
+
     if not getattr(sys, "frozen", False):
         return False
 
     try:
-        exe_path = Path(sys.executable).resolve()
-        current_parent = exe_path.parent
+        import ctypes
 
-        if current_parent.name.casefold() == VERSION_FOLDER_NAME.casefold():
-            return False
-
-        target_dir = current_parent / VERSION_FOLDER_NAME
-        target_dir.mkdir(parents=True, exist_ok=True)
-        for folder_name in ("Search Repository", "Incoming", "Cache"):
-            (target_dir / folder_name).mkdir(parents=True, exist_ok=True)
-
-        target_exe = target_dir / exe_path.name
-        helper_path = target_dir / ".digi_relocate.cmd"
-
-        src = str(exe_path)
-        dst = str(target_exe)
-        target = str(target_dir)
-
-        helper = (
-            "@echo off\n"
-            "setlocal\n"
-            f'set "SRC={src}"\n'
-            f'set "DST={dst}"\n'
-            f'set "TARGETDIR={target}"\n'
-            ":retry\n"
-            'move /Y "%SRC%" "%DST%" >nul 2>&1\n'
-            'if exist "%SRC%" (\n'
-            "    timeout /t 1 /nobreak >nul\n"
-            "    goto retry\n"
-            ")\n"
-            'start "" "%DST%"\n'
-            'del "%~f0" >nul 2>&1\n'
-            "endlocal\n"
-        )
-
-        helper_path.write_text(helper, encoding="utf-8")
-        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-        subprocess.Popen(
-            ["cmd.exe", "/c", str(helper_path)],
-            cwd=str(target_dir),
-            creationflags=creationflags,
-            close_fds=True,
-        )
-        return True
+        executable = str(Path(sys.executable).resolve())
+        args = "--dependency-repair"
+        if ctypes.windll.shell32.ShellExecuteW(
+            None,
+            "runas",
+            executable,
+            args,
+            str(Path(executable).parent),
+            1,
+        ) > 32:
+            return True
     except Exception:
-        return False
+        pass
+
+    return False
+
+
+def ensure_dependencies():
+    try:
+        paths = repair_dependency_structure()
+
+        version_file = paths["version_manager"] / VERSION_FILE_NAME
+        if not version_file.exists():
+            version_file.write_text(APP_VERSION + "\n", encoding="utf-8")
+
+        version = version_file.read_text(encoding="utf-8").strip()
+        if not version:
+            version_file.write_text(APP_VERSION + "\n", encoding="utf-8")
+
+        return paths
+    except (PermissionError, OSError):
+        if elevate_for_dependency_repair():
+            raise SystemExit(0)
+        raise
+
+
+if getattr(sys, "frozen", False):
+    DEPENDENCIES = ensure_dependencies()
+else:
+    # Development/source mode uses a local equivalent so running the Python
+    # source does not unexpectedly modify Program Files.
+    local_root = app_folder() / "Digi Dependencies"
+    local_root.mkdir(parents=True, exist_ok=True)
+    DEPENDENCIES = {
+        "root": local_root,
+        "search_repository": local_root / SEARCH_REPOSITORY_NAME,
+        "version_manager": local_root / VERSION_MANAGER_NAME,
+        "cache": local_root / CACHE_NAME,
+    }
+    for name, marker in DEPENDENCY_MARKERS.items():
+        folder = DEPENDENCIES[name.lower().replace(" ", "_")] if name.lower().replace(" ", "_") in DEPENDENCIES else None
+        if folder is None:
+            folder = {
+                SEARCH_REPOSITORY_NAME: DEPENDENCIES["search_repository"],
+                VERSION_MANAGER_NAME: DEPENDENCIES["version_manager"],
+                CACHE_NAME: DEPENDENCIES["cache"],
+            }[name]
+        folder.mkdir(parents=True, exist_ok=True)
+        write_dependency_marker(folder, marker)
+    version_file = DEPENDENCIES["version_manager"] / VERSION_FILE_NAME
+    if not version_file.exists():
+        version_file.write_text(APP_VERSION + "\n", encoding="utf-8")
+
+
+APP_DIR = app_folder()
+CACHE_DIR = DEPENDENCIES["cache"]
+DB_PATH = CACHE_DIR / "study_index.db"
+DEFAULT_ROOT = DEPENDENCIES["search_repository"]
+DEFAULT_INCOMING = DEPENDENCIES["root"] / "Incoming"
+LIBRARY_CONFIG = CACHE_DIR / "library_folder.txt"
+
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+DEFAULT_ROOT.mkdir(parents=True, exist_ok=True)
+DEFAULT_INCOMING.mkdir(parents=True, exist_ok=True)
 
 
 def resource_path(name):
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         return Path(sys._MEIPASS) / name
     return APP_DIR / name
-
-
-if ensure_version_folder_location():
-    # The helper will move and relaunch this EXE after the current process
-    # exits. Do not initialise the GUI or database from the temporary location.
-    raise SystemExit(0)
-
-APP_DIR = app_folder()
-# User-writable application data is kept in a dedicated Cache folder so the
-# folder containing the EXE stays clean. The cache stores the SQLite index and
-# remembered library-folder setting; it is NOT searched as part of the library.
-CACHE_DIR = APP_DIR / "Cache"
-CACHE_DIR.mkdir(parents=True, exist_ok=True)
-DB_PATH = CACHE_DIR / "study_index.db"
-DEFAULT_ROOT = APP_DIR / "Search Repository"
-DEFAULT_INCOMING = APP_DIR / "Incoming"
-LIBRARY_CONFIG = CACHE_DIR / "library_folder.txt"
-
-def load_library_root():
-    try:
-        if LIBRARY_CONFIG.exists():
-            candidate = Path(LIBRARY_CONFIG.read_text(encoding="utf-8").strip()).expanduser()
-            if candidate.exists() and candidate.is_dir():
-                return candidate.resolve()
-    except Exception:
-        pass
-    return DEFAULT_ROOT.resolve()
-
-ROOT = load_library_root()
-try:
-    DEFAULT_ROOT.mkdir(parents=True, exist_ok=True)
-    DEFAULT_INCOMING.mkdir(parents=True, exist_ok=True)
-except OSError:
-    pass
 
 
 def open_file(path):
