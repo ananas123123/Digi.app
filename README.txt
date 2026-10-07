@@ -1,4 +1,4 @@
-DIGI SEARCH ENGINE 1.17.7.5
+DIGI SEARCH ENGINE 1.0.0.0
 
 This is the Digi Search Engine with an integrated stylus-first Digi Notes workspace.
 
@@ -34,7 +34,7 @@ DIGI NOTES
 
 FOLDER LAYOUT
 A Level Papers/
-  VERSION 1.17.7.5 — VERSION-FOLDER SELF-ORGANISATION BUG FIX
+  VERSION 1.0.0.0 — VERSION-FOLDER SELF-ORGANISATION BUG FIX
 - If Digi Search Engine.exe is moved outside its current version folder and launched, Digi now creates the current version folder beside the EXE.
 - The version folder contains Search Repository, Incoming, and Cache.
 - Digi then moves and relaunches the EXE from that version folder.
@@ -48,7 +48,7 @@ Digi Search Engine/
   Incoming/
   Digi Notes/   (created automatically)
 
-STARTUP / BUILD PERFORMANCE 1.17.7.5
+STARTUP / BUILD PERFORMANCE 1.0.0.0
 - The EXE is placed directly in its final version folder during build.
 - Normal launches from that correct version folder perform no relocation work.
 - If the EXE is moved elsewhere and launched, Digi creates the current version folder beside it, creates Search Repository, Incoming and Cache, then moves and relaunches the EXE there.
