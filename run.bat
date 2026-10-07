@@ -4,7 +4,7 @@ cd /d "%~dp0"
 title Digi Search Engine - Launcher
 
 echo ==========================================
-echo        DIGI SEARCH ENGINE 1.17.7.5
+echo        DIGI SEARCH ENGINE 1.0.0.0
 echo ==========================================
 echo.
 
