@@ -3,9 +3,9 @@ setlocal
 cd /d "%~dp0"
 
 REM ============================================================
-REM Digi Search Engine - Build 1.17.7.5
+REM Digi Search Engine - Build 1.0.0.0
 REM Final user-facing layout:
-REM   Digi SE 1.17.7.5\
+REM   Digi SE 1.0.0.0\
 REM     Digi Search Engine.exe
 REM     Search Repository\
 REM     Incoming\
@@ -19,7 +19,7 @@ REM ============================================================
 
 set "FACTORY_DIR=%~dp0"
 set "OUTPUT_DIR=%~dp0.."
-set "FINAL_DIR=%OUTPUT_DIR%\Digi SE 1.17.7.5"
+set "FINAL_DIR=%OUTPUT_DIR%\Digi SE 1.0.0.0"
 set "BUILD_CACHE=%FACTORY_DIR%Cache\build"
 set "DIST_CACHE=%FACTORY_DIR%Cache\dist"
 set "SPEC_CACHE=%FACTORY_DIR%Cache\spec"
@@ -27,7 +27,7 @@ set "EXE_PATH=%FINAL_DIR%\Digi Search Engine.exe"
 
 echo.
 echo ==========================================
-echo       DIGI SEARCH ENGINE 1.17.7.5 BUILD
+echo       DIGI SEARCH ENGINE 1.0.0.0 BUILD
 echo ==========================================
 echo.
 
