@@ -264,11 +264,6 @@ DEFAULT_ROOT.mkdir(parents=True, exist_ok=True)
 DEFAULT_INCOMING.mkdir(parents=True, exist_ok=True)
 
 
-def resource_path(name):
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / name
-    return APP_DIR / name
-
 
 def open_file(path):
     """Open a document with its Windows default application, with a fallback."""
@@ -606,83 +601,6 @@ class ResultDelegate(QStyledItemDelegate):
         size = super().sizeHint(option, index)
         size.setHeight(78 if not index.parent().isValid() else 54)
         return size
-
-
-class SplashScreen(QWidget):
-    """Short branded startup screen with a subtle fade animation."""
-    def __init__(self):
-        super().__init__(
-            None,
-            Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.SplashScreen |
-            Qt.WindowType.WindowStaysOnTopHint
-        )
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setFixedSize(760, 507)
-
-        self.background = QLabel(self)
-        self.background.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.background.setStyleSheet(
-            "background:#05070a;border-radius:18px;"
-        )
-
-        splash_path = resource_path("digi_splash.png")
-        if splash_path.exists():
-            pixmap = QPixmap(str(splash_path))
-            self.background.setPixmap(
-                pixmap.scaled(
-                    self.size(),
-                    Qt.AspectRatioMode.KeepAspectRatioByExpanding,
-                    Qt.TransformationMode.SmoothTransformation
-                )
-            )
-
-        self.background.setGeometry(self.rect())
-
-        self.opacity_effect = QGraphicsOpacityEffect(self.background)
-        self.background.setGraphicsEffect(self.opacity_effect)
-        self.opacity_effect.setOpacity(0.0)
-
-        self.fade_in = QPropertyAnimation(
-            self.opacity_effect, b"opacity", self
-        )
-        self.fade_in.setDuration(650)
-        self.fade_in.setStartValue(0.0)
-        self.fade_in.setEndValue(1.0)
-        self.fade_in.setEasingCurve(QEasingCurve.Type.OutCubic)
-
-        self.fade_out = QPropertyAnimation(
-            self.opacity_effect, b"opacity", self
-        )
-        self.fade_out.setDuration(500)
-        self.fade_out.setStartValue(1.0)
-        self.fade_out.setEndValue(0.0)
-        self.fade_out.setEasingCurve(QEasingCurve.Type.InCubic)
-
-        screen = QApplication.primaryScreen()
-        if screen:
-            area = screen.availableGeometry()
-            self.move(
-                area.center().x() - self.width() // 2,
-                area.center().y() - self.height() // 2
-            )
-
-    def start(self, finished_callback):
-        self.finished_callback = finished_callback
-        self.show()
-        self.raise_()
-        self.fade_in.start()
-        # Total startup presentation is about 3.5 seconds including fade-out.
-        QTimer.singleShot(3000, self.finish)
-
-    def finish(self):
-        self.fade_out.finished.connect(self._finish_done)
-        self.fade_out.start()
-
-    def _finish_done(self):
-        if hasattr(self, "finished_callback"):
-            self.finished_callback()
-        self.close()
 
 
 
@@ -2217,9 +2135,6 @@ class MainWindow(QMainWindow):
         self.empty_state.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.empty_state.setStyleSheet("background:#3f4247; border:none;")
         self.empty_state.setScaledContents(True)
-        nose_path = resource_path("nose_placeholder.png")
-        if nose_path.exists():
-            self.empty_state.setPixmap(QPixmap(str(nose_path)))
         self.results_stack.addWidget(self.empty_state)
         self.results_stack.setCurrentIndex(1)
         splitter.addWidget(self.results_container)
@@ -4307,15 +4222,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setApplicationName("Digi Search Engine")
 
-    # Build the main window while the branded startup screen is visible.
     w = MainWindow()
-
-    splash = SplashScreen()
-
-    def show_main_window():
-        w.show()
-        w.raise_()
-        w.activateWindow()
-
-    splash.start(show_main_window)
+    w.show()
     sys.exit(app.exec())
