@@ -19,7 +19,36 @@ REM ============================================================
 
 set "FACTORY_DIR=%~dp0"
 set "OUTPUT_DIR=%~dp0.."
-set "FINAL_DIR=%OUTPUT_DIR%\Digi SE 1.0.0.0"
+set "VERSION_FILE=%FACTORY_DIR%version.txt"
+set "VERSION_INFO_FILE=%FACTORY_DIR%version_info.txt"
+
+if not exist "%VERSION_FILE%" (
+    echo.
+    echo FATAL ERROR: Digi version file was not found:
+    echo   %VERSION_FILE%
+    pause
+    exit /b 1
+)
+
+set /p APP_VERSION=<"%VERSION_FILE%"
+py -c "import re,sys; v=open(r'%VERSION_FILE%',encoding='utf-8').read().strip(); sys.exit(0 if re.fullmatch(r'\d+\.\d+\.\d+\.\d+',v) else 1)" >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo FATAL ERROR: Digi version file must contain exactly MAJOR.MINOR.PATCH.BUILD.
+    echo   %VERSION_FILE%
+    pause
+    exit /b 1
+)
+
+if not exist "%VERSION_INFO_FILE%" (
+    echo.
+    echo FATAL ERROR: Digi Windows version resource was not found:
+    echo   %VERSION_INFO_FILE%
+    pause
+    exit /b 1
+)
+
+set "FINAL_DIR=%OUTPUT_DIR%\Digi SE %APP_VERSION%"
 set "BUILD_CACHE=%FACTORY_DIR%Cache\build"
 set "DIST_CACHE=%FACTORY_DIR%Cache\dist"
 set "SPEC_CACHE=%FACTORY_DIR%Cache\spec"
@@ -78,7 +107,7 @@ mkdir "%SPEC_CACHE%"
 
 echo.
 echo Building single-file Digi Search Engine.exe...
-py -m PyInstaller --noconfirm --clean --windowed --onefile --name "Digi Search Engine" --icon "%FACTORY_DIR%mbappe.ico" --add-data "%FACTORY_DIR%nose_placeholder.png;." --add-data "%FACTORY_DIR%mbappe.ico;." --add-data "%FACTORY_DIR%digi_splash.png;." --hidden-import "win32com.client" --hidden-import "pythoncom" --workpath "%BUILD_CACHE%" --distpath "%DIST_CACHE%" --specpath "%SPEC_CACHE%" "%FACTORY_DIR%digi_search_engine.py"
+py -m PyInstaller --noconfirm --clean --windowed --onefile --name "Digi Search Engine" --version-file "%VERSION_INFO_FILE%" --icon "%FACTORY_DIR%mbappe.ico" --add-data "%FACTORY_DIR%nose_placeholder.png;." --add-data "%FACTORY_DIR%mbappe.ico;." --add-data "%FACTORY_DIR%digi_splash.png;." --hidden-import "win32com.client" --hidden-import "pythoncom" --workpath "%BUILD_CACHE%" --distpath "%DIST_CACHE%" --specpath "%SPEC_CACHE%" "%FACTORY_DIR%digi_search_engine.py"
 
 if errorlevel 1 (
     echo.
@@ -100,6 +129,16 @@ if errorlevel 1 (
     echo.
     echo ERROR: Could not copy the EXE to:
     echo %EXE_PATH%
+    pause
+    exit /b 1
+)
+
+echo.
+echo Copying authoritative version file into final application folder...
+copy /y "%VERSION_FILE%" "%FINAL_DIR%\version.txt" >nul
+if errorlevel 1 (
+    echo.
+    echo FATAL ERROR: Could not copy the Digi version file into the final application folder.
     pause
     exit /b 1
 )
