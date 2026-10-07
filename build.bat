@@ -159,10 +159,10 @@ echo Final user-facing setup:
 echo.
 echo   %FINAL_DIR%
 echo   ^|-- Digi Search Engine.exe
-echo   ^|-- Search Repository
-echo   ^|-- Incoming
-echo   `-- Cache
-echo The Cache folder stores the SQLite index and saved settings.
+echo   ^|-- version.txt
+echo.
+echo Runtime dependencies are created in:
+echo   %%ProgramFiles%%\Digi Dependencies
 echo The Digi Factory folder is only needed if you want to rebuild.
 echo.
 echo The 3-second branded splash is intentionally retained.
