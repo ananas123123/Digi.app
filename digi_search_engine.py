@@ -258,6 +258,7 @@ DB_PATH = CACHE_DIR / "study_index.db"
 DEFAULT_ROOT = DEPENDENCIES["search_repository"]
 DEFAULT_INCOMING = DEPENDENCIES["search_repository"] / "Incoming"
 LIBRARY_CONFIG = CACHE_DIR / "library_folder.txt"
+ROOT = DEFAULT_ROOT
 
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 DEFAULT_ROOT.mkdir(parents=True, exist_ok=True)
