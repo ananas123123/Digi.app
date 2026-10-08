@@ -56,7 +56,7 @@ def _file_digest(path):
 def _ensure_recovery_store():
     RECOVERY_ROOT.mkdir(parents=True, exist_ok=True)
     if not RECOVERY_VERSION.exists():
-        _write_atomic(RECOVERY_VERSION, expected_version() + "\\n")
+        _write_atomic(RECOVERY_VERSION, expected_version() + "\n")
     if not RECOVERY_MARKER.exists():
         _write_atomic(RECOVERY_MARKER, "initialized\\n")
 
