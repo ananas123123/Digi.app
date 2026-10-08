@@ -1,10 +1,8 @@
 from pathlib import Path
-import hashlib
-import json
+import ctypes
 import os
 import shutil
 import tempfile
-import time
 
 from .config import (
     APP_VERSION,
@@ -23,20 +21,21 @@ MARKER_FILE_NAME = ".version_initialized"
 VERSION_FILE = VERSION_MANAGER / VERSION_FILE_NAME
 MARKER_FILE = VERSION_MANAGER / MARKER_FILE_NAME
 
-# Recovery data deliberately lives OUTSIDE %LOCALAPPDATA%\Digi so that the
-# entire Digi data root can be moved or deleted and still be reconstructed.
-RECOVERY_ROOT = USER_DATA_ROOT.parent / "Digi Recovery"
-RECOVERY_MANIFEST = RECOVERY_ROOT / "manifest.json"
-RECOVERY_VERSION = RECOVERY_ROOT / VERSION_FILE_NAME
-RECOVERY_MARKER = RECOVERY_ROOT / MARKER_FILE_NAME
-
-EXPECTED_FOLDERS = {
-    "Search Repository": SEARCH_REPOSITORY,
-    "Cache": CACHE_DIR,
-    "Version manager": VERSION_MANAGER,
+# These are the only protected runtime templates. They live in the executable
+# as Python data, not in a second recovery directory on disk.
+TEMPLATE_FILES = {
+    "Version manager/version.txt": lambda: expected_version() + "\n",
+    "Version manager/.version_initialized": lambda: "initialized\n",
 }
 
-# These are runtime/cache artefacts. They never belong in Search Repository.
+EXPECTED_DIRECTORIES = (
+    "Search Repository",
+    "Search Repository/Incoming",
+    "Search Repository/Digi Notes",
+    "Cache",
+    "Version manager",
+)
+
 CACHE_ARTEFACT_NAMES = {
     "study_index",
     "study_index.db",
@@ -45,18 +44,28 @@ CACHE_ARTEFACT_NAMES = {
     "library_folder.txt",
 }
 
+# Win32 sharing constants. A handle that does not include FILE_SHARE_DELETE
+# prevents rename/move/delete of that object while the handle is alive.
+GENERIC_READ = 0x80000000
+FILE_LIST_DIRECTORY = 0x0001
+FILE_READ_ATTRIBUTES = 0x0080
+FILE_SHARE_READ = 0x00000001
+FILE_SHARE_WRITE = 0x00000002
+FILE_SHARE_DELETE = 0x00000004
+OPEN_EXISTING = 3
+FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
+
 
 def expected_version():
     return APP_VERSION.strip()
 
 
-def _write_atomic(path, data, binary=False):
+def _write_atomic(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp_name = tempfile.mkstemp(prefix=".digi-", dir=str(path.parent))
     try:
-        mode = "wb" if binary else "w"
-        kwargs = {} if binary else {"encoding": "utf-8", "newline": ""}
-        with os.fdopen(fd, mode, **kwargs) as handle:
+        with os.fdopen(fd, "wb") as handle:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
@@ -69,224 +78,98 @@ def _write_atomic(path, data, binary=False):
                 pass
 
 
-def _read_bytes(path):
-    try:
-        return path.read_bytes()
-    except (OSError, ValueError):
-        return None
-
-
-def _digest(path):
-    data = _read_bytes(path)
-    return hashlib.sha256(data).hexdigest() if data is not None else None
-
-
-def _creation_ns(path):
-    try:
-        return int(path.stat().st_ctime_ns)
-    except (OSError, ValueError):
-        return None
-
-
-def _load_manifest():
-    try:
-        return json.loads(RECOVERY_MANIFEST.read_text(encoding="utf-8"))
-    except (OSError, ValueError, TypeError, UnicodeError):
-        return {}
-
-
-def _save_manifest(manifest):
-    _write_atomic(
-        RECOVERY_MANIFEST,
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
-    )
-
-
-def _ensure_recovery_store():
-    RECOVERY_ROOT.mkdir(parents=True, exist_ok=True)
-
-    if not RECOVERY_VERSION.exists():
-        _write_atomic(RECOVERY_VERSION, (expected_version() + "\n").encode("utf-8"), binary=True)
-
-    if not RECOVERY_MARKER.exists():
-        _write_atomic(RECOVERY_MARKER, b"initialized\n", binary=True)
-
-    manifest = _load_manifest()
-    if manifest.get("format") != 1:
-        manifest = {
-            "format": 1,
-            "version": expected_version(),
-            "folders": {},
-            "files": {
-                VERSION_FILE_NAME: _digest(RECOVERY_VERSION),
-                MARKER_FILE_NAME: _digest(RECOVERY_MARKER),
-            },
-        }
-
-    # The recovery copy is authoritative for the two Version manager files.
-    # Never silently replace it because the live files changed.
-    manifest["version"] = expected_version()
-    manifest["files"] = {
-        VERSION_FILE_NAME: _digest(RECOVERY_VERSION),
-        MARKER_FILE_NAME: _digest(RECOVERY_MARKER),
-    }
-
-    for name, path in EXPECTED_FOLDERS.items():
-        if path.is_dir():
-            current = manifest.setdefault("folders", {}).get(name, {})
-            if not current:
-                manifest["folders"][name] = {
-                    "creation_ns": _creation_ns(path),
-                }
-
-    _save_manifest(manifest)
-
-
-def _folder_creation_matches(path, expected_creation):
-    if expected_creation is None:
-        return False
-    return _creation_ns(path) == expected_creation
+def _template_bytes(relative_path):
+    return TEMPLATE_FILES[relative_path]().encode("utf-8")
 
 
 def _candidate_roots():
     parent = USER_DATA_ROOT.parent
     try:
-        children = [p for p in parent.iterdir() if p.is_dir()]
+        return [
+            p for p in parent.iterdir()
+            if p.is_dir() and p != DEPENDENCIES_ROOT
+        ]
     except OSError:
         return []
 
-    candidates = []
-    for candidate in children:
-        if candidate in {RECOVERY_ROOT}:
-            continue
-        if candidate == DEPENDENCIES_ROOT:
-            continue
-        candidates.append(candidate)
-    return candidates
 
-
-def _find_moved_root():
-    manifest = _load_manifest()
-    expected_creation = manifest.get("root_creation_ns")
-
-    # First choice: the exact recorded creation time. Renaming/moving a
-    # directory on the same Windows volume preserves its creation time.
-    for candidate in _candidate_roots():
-        if _folder_creation_matches(candidate, expected_creation):
-            return candidate
-
-    # Second choice: the expected Digi structure. This handles older installs
-    # created before the recovery manifest existed.
-    for candidate in _candidate_roots():
-        try:
-            matches = sum((candidate / name).is_dir() for name in EXPECTED_FOLDERS)
-        except OSError:
-            continue
-        if matches >= 2:
-            return candidate
-
-    return None
-
-
-def _find_renamed_folder(name):
-    expected = EXPECTED_FOLDERS[name]
-    if expected.is_dir():
-        return expected
-
-    manifest = _load_manifest()
-    expected_creation = manifest.get("folders", {}).get(name, {}).get("creation_ns")
-
+def _looks_like_digi_root(path):
     try:
-        candidates = [p for p in DEPENDENCIES_ROOT.iterdir() if p.is_dir()]
+        return sum((path / name).is_dir() for name in (
+            "Search Repository", "Cache", "Version manager"
+        )) >= 2
     except OSError:
-        return None
-
-    # Exact creation timestamp is the reliable rename/move detector.
-    for candidate in candidates:
-        if _folder_creation_matches(candidate, expected_creation):
-            return candidate
-
-    # Compatibility fallback for an older installation.
-    for candidate in candidates:
-        try:
-            if name == "Version manager" and (
-                (candidate / VERSION_FILE_NAME).exists()
-                or (candidate / MARKER_FILE_NAME).exists()
-            ):
-                return candidate
-            if name == "Cache" and any(
-                (candidate / item).exists() for item in CACHE_ARTEFACT_NAMES
-            ):
-                return candidate
-            if name == "Search Repository" and (
-                (candidate / "Incoming").is_dir()
-                or (candidate / "Digi Notes").is_dir()
-            ):
-                return candidate
-        except OSError:
-            continue
-
-    return None
+        return False
 
 
-def _restore_root():
+def _restore_root_if_renamed():
     if DEPENDENCIES_ROOT.is_dir():
         return False
 
-    moved_root = _find_moved_root()
-    if moved_root and moved_root != DEPENDENCIES_ROOT:
-        DEPENDENCIES_ROOT.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(moved_root), str(DEPENDENCIES_ROOT))
-        return True
+    for candidate in _candidate_roots():
+        if _looks_like_digi_root(candidate):
+            DEPENDENCIES_ROOT.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(candidate), str(DEPENDENCIES_ROOT))
+            return True
 
     DEPENDENCIES_ROOT.mkdir(parents=True, exist_ok=True)
     return True
 
 
-def _restore_expected_folders():
-    changed = False
-    DEPENDENCIES_ROOT.mkdir(parents=True, exist_ok=True)
-
-    for name, expected in EXPECTED_FOLDERS.items():
-        if expected.is_dir():
-            continue
-
-        candidate = _find_renamed_folder(name)
-        if candidate and candidate != expected:
-            shutil.move(str(candidate), str(expected))
-        else:
-            expected.mkdir(parents=True, exist_ok=True)
-        changed = True
-
-    return changed
-
-
-def _restore_version_file(target, recovery):
-    recovery_data = _read_bytes(recovery)
-    if recovery_data is None:
-        return False
-
-    if target.exists() and _read_bytes(target) == recovery_data:
-        return False
-
-    # If the user renamed the file rather than editing it, move that exact
-    # file back instead of creating a duplicate.
+def _folder_candidates(name):
     try:
-        siblings = [p for p in VERSION_MANAGER.iterdir() if p.is_file()]
+        return [p for p in DEPENDENCIES_ROOT.iterdir() if p.is_dir()]
     except OSError:
-        siblings = []
+        return []
 
-    recovery_digest = hashlib.sha256(recovery_data).hexdigest()
-    for candidate in siblings:
-        if candidate == target:
+
+def _looks_like_folder(name, candidate):
+    try:
+        if name == "Version manager":
+            return (
+                (candidate / VERSION_FILE_NAME).exists()
+                or (candidate / MARKER_FILE_NAME).exists()
+            )
+        if name == "Cache":
+            return any((candidate / item).exists() for item in CACHE_ARTEFACT_NAMES)
+        if name == "Search Repository":
+            return (
+                (candidate / "Incoming").is_dir()
+                or (candidate / "Digi Notes").is_dir()
+            )
+    except OSError:
+        return False
+    return False
+
+
+def _restore_folder(name):
+    target = DEPENDENCIES_ROOT / name
+    if target.is_dir():
+        return False
+
+    for candidate in _folder_candidates(name):
+        if candidate.name == name:
             continue
-        if _digest(candidate) == recovery_digest:
-            if target.exists():
-                target.unlink()
-            candidate.rename(target)
+        if _looks_like_folder(name, candidate):
+            shutil.move(str(candidate), str(target))
             return True
 
-    _write_atomic(target, recovery_data, binary=True)
+    target.mkdir(parents=True, exist_ok=True)
+    return True
+
+
+def _ensure_template_file(relative_path):
+    target = DEPENDENCIES_ROOT / relative_path
+    data = _template_bytes(relative_path)
+
+    if target.exists():
+        try:
+            if target.read_bytes() == data:
+                return False
+        except OSError:
+            pass
+
+    _write_atomic(target, data)
     return True
 
 
@@ -304,7 +187,6 @@ def _clean_version_manager():
                 child.unlink()
             changed = True
         except OSError:
-            # The integrity failure remains visible if Windows has a live lock.
             pass
 
     return changed
@@ -324,8 +206,6 @@ def _move_cache_artefacts_out_of_search_repository():
         destination = CACHE_DIR / child.name
         try:
             if destination.exists():
-                # The active Cache copy is authoritative. Stale duplicates in
-                # Search Repository are not useful and are removed.
                 if child.is_dir():
                     shutil.rmtree(child)
                 else:
@@ -334,62 +214,163 @@ def _move_cache_artefacts_out_of_search_repository():
                 shutil.move(str(child), str(destination))
             changed = True
         except OSError:
-            # Do not make a cache-file cleanup failure destroy user data.
             pass
 
     return changed
-
-
-def _refresh_folder_manifest():
-    manifest = _load_manifest()
-    manifest["format"] = 1
-    manifest["version"] = expected_version()
-    manifest["root_creation_ns"] = _creation_ns(DEPENDENCIES_ROOT)
-    manifest["folders"] = {
-        name: {"creation_ns": _creation_ns(path)}
-        for name, path in EXPECTED_FOLDERS.items()
-        if path.is_dir()
-    }
-    manifest["files"] = {
-        VERSION_FILE_NAME: _digest(RECOVERY_VERSION),
-        MARKER_FILE_NAME: _digest(RECOVERY_MARKER),
-    }
-    _save_manifest(manifest)
 
 
 def repair_all():
     if not IS_FROZEN:
         return False
 
-    _ensure_recovery_store()
+    changed = _restore_root_if_renamed()
 
-    changed = _restore_root()
-    changed = _restore_expected_folders() or changed
+    for name in ("Search Repository", "Cache", "Version manager"):
+        changed = _restore_folder(name) or changed
 
-    SEARCH_REPOSITORY.mkdir(parents=True, exist_ok=True)
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    VERSION_MANAGER.mkdir(parents=True, exist_ok=True)
+    for relative_path in (
+        "Search Repository/Incoming",
+        "Search Repository/Digi Notes",
+    ):
+        target = DEPENDENCIES_ROOT / relative_path
+        if not target.is_dir():
+            target.mkdir(parents=True, exist_ok=True)
+            changed = True
 
     changed = _move_cache_artefacts_out_of_search_repository() or changed
     changed = _clean_version_manager() or changed
 
-    changed = _restore_version_file(VERSION_FILE, RECOVERY_VERSION) or changed
-    changed = _restore_version_file(MARKER_FILE, RECOVERY_MARKER) or changed
+    for relative_path in TEMPLATE_FILES:
+        changed = _ensure_template_file(relative_path) or changed
 
-    _refresh_folder_manifest()
     return changed
 
 
+class _ProtectedHandle:
+    def __init__(self, path, handle):
+        self.path = Path(path)
+        self.handle = handle
+
+    def close(self):
+        if self.handle and self.handle != INVALID_HANDLE_VALUE:
+            _close_handle(self.handle)
+            self.handle = None
+
+
+_kernel32 = None
+_close_handle = None
+_create_file = None
+
+
+def _init_win32():
+    global _kernel32, _close_handle, _create_file
+    if _kernel32 is not None:
+        return True
+    if os.name != "nt":
+        return False
+
+    _kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    _create_file = _kernel32.CreateFileW
+    _create_file.argtypes = [
+        ctypes.c_wchar_p,
+        ctypes.c_uint32,
+        ctypes.c_uint32,
+        ctypes.c_void_p,
+        ctypes.c_uint32,
+        ctypes.c_uint32,
+        ctypes.c_void_p,
+    ]
+    _create_file.restype = ctypes.c_void_p
+
+    _close_handle = _kernel32.CloseHandle
+    _close_handle.argtypes = [ctypes.c_void_p]
+    _close_handle.restype = ctypes.c_int
+    return True
+
+
+def _open_directory_lock(path):
+    handle = _create_file(
+        str(path),
+        FILE_LIST_DIRECTORY | FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        None,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS,
+        None,
+    )
+    if handle == INVALID_HANDLE_VALUE:
+        return None
+    return _ProtectedHandle(path, handle)
+
+
+def _open_file_lock(path):
+    handle = _create_file(
+        str(path),
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        None,
+        OPEN_EXISTING,
+        0,
+        None,
+    )
+    if handle == INVALID_HANDLE_VALUE:
+        return None
+    return _ProtectedHandle(path, handle)
+
+
+class ProtectedDataLock:
+    def __init__(self):
+        self.handles = []
+
+    def acquire(self):
+        if not IS_FROZEN or not _init_win32():
+            return
+
+        self.release()
+
+        for directory in (CACHE_DIR, VERSION_MANAGER):
+            if directory.is_dir():
+                lock = _open_directory_lock(directory)
+                if lock:
+                    self.handles.append(lock)
+
+        # Version-manager files are immutable while Digi is running.
+        for file_path in (VERSION_FILE, MARKER_FILE):
+            if file_path.is_file():
+                lock = _open_file_lock(file_path)
+                if lock:
+                    self.handles.append(lock)
+
+        # Lock cache artefacts against rename/delete. The live SQLite database
+        # remains writable by Digi itself; SQLite already coordinates its
+        # database/WAL access. The directory itself stays protected.
+        if CACHE_DIR.is_dir():
+            for child in CACHE_DIR.iterdir():
+                if not child.is_file() or child.name == "library_folder.txt":
+                    continue
+                lock = _open_file_lock(child)
+                if lock:
+                    self.handles.append(lock)
+
+    def release(self):
+        for handle in self.handles:
+            handle.close()
+        self.handles.clear()
+
+
+_PROTECTED_LOCK = ProtectedDataLock()
+
+
 def initialize_version_file():
-    # This is intentionally silent. It is the first operation performed on
-    # installed startup, before Database/Search/Notes services are opened.
+    if not IS_FROZEN:
+        return True
     try:
         repair_all()
+        _PROTECTED_LOCK.acquire()
+        ok, _ = version_integrity()
+        return ok
     except (OSError, ValueError, RuntimeError):
-        # Integrity will be checked immediately afterwards. The UI will show
-        # Error Code 3 only if the repair could not actually finish.
-        pass
-    return VERSION_FILE.exists()
+        return False
 
 
 def version_integrity():
@@ -409,7 +390,6 @@ def version_integrity():
         if not path.exists():
             return False, problem
 
-    # Version manager must contain exactly the two protected files.
     try:
         contents = {p.name for p in VERSION_MANAGER.iterdir()}
     except OSError:
@@ -418,19 +398,24 @@ def version_integrity():
     if contents != {VERSION_FILE_NAME, MARKER_FILE_NAME}:
         return False, "version_manager_contents"
 
-    # Byte-for-byte comparison catches EVERY content change: version number,
-    # whitespace, newline, encoding, BOM, truncation, or arbitrary edits.
-    if _digest(VERSION_FILE) != _digest(RECOVERY_VERSION):
-        return False, "version_file"
-    if _digest(MARKER_FILE) != _digest(RECOVERY_MARKER):
-        return False, "version_marker"
+    for relative_path in TEMPLATE_FILES:
+        path = DEPENDENCIES_ROOT / relative_path
+        try:
+            if path.read_bytes() != _template_bytes(relative_path):
+                return False, relative_path
+        except OSError:
+            return False, relative_path
 
     return True, "ok"
 
 
 def recalibrate_version():
+    if not IS_FROZEN:
+        return True
     try:
+        _PROTECTED_LOCK.release()
         repair_all()
+        _PROTECTED_LOCK.acquire()
         ok, _ = version_integrity()
         return ok
     except (OSError, ValueError, RuntimeError):
@@ -438,7 +423,10 @@ def recalibrate_version():
 
 
 def repair_after_close():
+    if not IS_FROZEN:
+        return
     try:
+        _PROTECTED_LOCK.release()
         repair_all()
     except (OSError, ValueError, RuntimeError):
         pass
