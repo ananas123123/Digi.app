@@ -341,16 +341,10 @@ class ProtectedDataLock:
                 if lock:
                     self.handles.append(lock)
 
-        # Lock cache artefacts against rename/delete. The live SQLite database
-        # remains writable by Digi itself; SQLite already coordinates its
-        # database/WAL access. The directory itself stays protected.
-        if CACHE_DIR.is_dir():
-            for child in CACHE_DIR.iterdir():
-                if not child.is_file() or child.name == "library_folder.txt":
-                    continue
-                lock = _open_file_lock(child)
-                if lock:
-                    self.handles.append(lock)
+        # Cache contains the live SQLite database and its WAL/shm files.
+        # Those files must remain writable by Digi itself, so the cache is
+        # protected at the directory level rather than by exclusive file
+        # handles. SQLite supplies its own database locking.
 
     def release(self):
         for handle in self.handles:
