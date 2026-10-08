@@ -1,50 +1,28 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title Digi Search Engine - Launcher
+title Digi Search Engine - Development Launcher
 
-echo ==========================================
-echo        DIGI SEARCH ENGINE 1.0.0.0
-echo ==========================================
-echo.
+set "PYTHON=%~dp0.venv\Scripts\python.exe"
+set "CACHE_DIR=%~dp0Digi Dependencies\Cache"
+set "LOG_FILE=%CACHE_DIR%\launcher_output.txt"
 
-where py >nul 2>&1
-if not errorlevel 1 (
-    set "PYTHON=py"
-) else (
-    where python >nul 2>&1
-    if not errorlevel 1 (
-        set "PYTHON=python"
-    ) else (
-        echo ERROR: Python was not found.
-        echo Install Python 3 and make sure it is available as "py" or "python".
-        echo.
-        pause
-        exit /b 1
-    )
-)
-
-echo Checking required packages...
-%PYTHON% -m pip install -r "%~dp0requirements.txt"
-if errorlevel 1 (
-    echo.
-    echo ==========================================
-    echo PACKAGE INSTALLATION FAILED
-    echo ==========================================
-    echo The application was not started.
+if not exist "%PYTHON%" (
+    echo Digi's development environment is not set up.
+    echo Run setup.bat once, then run run.bat again.
     echo.
     pause
     exit /b 1
 )
 
-if not exist "%~dp0Cache" mkdir "%~dp0Cache"
+if not exist "%CACHE_DIR%" mkdir "%CACHE_DIR%"
 
-echo.
 echo Starting Digi Search Engine...
-echo If it closes immediately, the error will be saved below.
+echo Logs, if needed, will be saved to:
+echo %LOG_FILE%
 echo.
 
-%PYTHON% "%~dp0digi_search_engine.py" > "%~dp0Cache\launcher_output.txt" 2>&1
+"%PYTHON%" "%~dp0digi_search_engine.py" > "%LOG_FILE%" 2>&1
 set "APP_EXIT=%ERRORLEVEL%"
 
 if not "%APP_EXIT%"=="0" (
@@ -54,18 +32,13 @@ if not "%APP_EXIT%"=="0" (
     echo ==========================================
     echo Exit code: %APP_EXIT%
     echo.
-    echo Full error output:
-    type "%~dp0Cache\launcher_output.txt"
+    type "%LOG_FILE%"
     echo.
-    echo The same output was saved to:
-    echo %~dp0Cache\launcher_output.txt
+    echo Full output saved to:
+    echo %LOG_FILE%
     echo.
     pause
     exit /b %APP_EXIT%
 )
 
-echo.
-echo Digi Search Engine closed normally.
-echo.
-pause
 exit /b 0
