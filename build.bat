@@ -24,5 +24,7 @@ if errorlevel 1 (echo BUILD FAILED&pause&exit /b 1)
 if not exist "%FINAL_DIR%" mkdir "%FINAL_DIR%"
 if exist "%FINAL_DIR%\version.txt" del /q "%FINAL_DIR%\version.txt"
 copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%EXE_PATH%" >nul
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$desktop=[Environment]::GetFolderPath('Desktop'); $shell=New-Object -ComObject WScript.Shell; $shortcut=$shell.CreateShortcut((Join-Path $desktop 'Digi Search Engine.lnk')); $shortcut.TargetPath='%EXE_PATH%'; $shortcut.WorkingDirectory='%FINAL_DIR%'; $shortcut.IconLocation='%EXE_PATH%,0'; $shortcut.Save()"
+if errorlevel 1 (echo WARNING: Desktop shortcut could not be created.) else (echo DESKTOP SHORTCUT CREATED.)
 echo BUILD COMPLETE: "%EXE_PATH%"
 pause
