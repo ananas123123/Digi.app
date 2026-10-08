@@ -2,24 +2,14 @@
 setlocal
 cd /d "%~dp0"
 
-echo Checking Windows installed applications for Digi... 
-set "FOUND_DIGI_EXE="
-for /f "usebackq delims=" %%F in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$keys=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'); Get-ItemProperty $keys -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -and $_.DisplayName -like '*Digi*' } | ForEach-Object { if ($_.DisplayIcon) { ($_.DisplayIcon -replace ',.*$','').Trim('"') } elseif ($_.InstallLocation) { Join-Path $_.InstallLocation 'Digi Search Engine.exe' } } | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -First 1"`) do (
-    set "FOUND_DIGI_EXE=%%F"
-    goto :DIGI_EXE_FOUND
+echo Checking Windows installed applications for Digi...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$keys=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'); $found=Get-ItemProperty $keys -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -and $_.DisplayName -like '*Digi*' } | ForEach-Object { if ($_.DisplayIcon) { ($_.DisplayIcon -replace ',.*$','').Trim('"') } elseif ($_.InstallLocation) { Join-Path $_.InstallLocation 'Digi Search Engine.exe' } } | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -First 1; if ($found) { Write-Host ''; Write-Host 'FATAL: An installed Digi executable was found:'; Write-Host $found; Write-Host ''; exit 1 } else { exit 0 }"
+if errorlevel 1 (
+    echo.
+    echo Build cancelled because an installed Digi executable was found.
+    pause
+    exit /b 1
 )
-goto :DIGI_EXE_CLEAR
-
-:DIGI_EXE_FOUND
-echo.
-echo FATAL: An installed Digi executable was found:
-echo "%FOUND_DIGI_EXE%"
-echo.
-echo Build cancelled.
-pause
-exit /b 1
-
-:DIGI_EXE_CLEAR
 set "FACTORY_DIR=%~dp0"
 set "OUTPUT_DIR=%~dp0.."
 set "VERSION_FILE=%FACTORY_DIR%version.txt"
