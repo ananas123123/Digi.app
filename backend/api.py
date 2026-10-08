@@ -12,6 +12,7 @@ from .notes import NotesService
 
 class DigiBridge(QObject):
     indexUpdated=Signal()
+    conversionProgress=Signal(str,int)
     conversionFinished=Signal(bool,str,str)
     error=Signal(str)
     def __init__(self,parent=None):
@@ -60,7 +61,10 @@ class DigiBridge(QObject):
     @Slot(str,str,result=bool)
     def convert(self,path,target):
         if self.worker and self.worker.isRunning(): return False
-        self.worker=ConversionWorker(path,target); self.worker.finished.connect(self.conversionFinished); self.worker.start(); return True
+        self.worker=ConversionWorker(path,target)
+        self.worker.progress.connect(lambda value: self.conversionProgress.emit(str(path),value))
+        self.worker.finished.connect(lambda ok,msg,out: self.conversionFinished.emit(ok,msg,str(path)))
+        self.worker.start(); return True
     @Slot(result=str)
     def notesTree(self): return json.dumps(self.notes.tree())
     @Slot(str,str,result=str)
