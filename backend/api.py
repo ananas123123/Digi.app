@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from PySide6.QtCore import QObject,Signal,Slot
 from PySide6.QtWidgets import QFileDialog
-from .config import APP_VERSION,DEFAULT_INCOMING,get_library_root,ensure_directories
+from .config import APP_VERSION,DEFAULT_INCOMING,LIBRARY_CONFIG,get_library_root,ensure_directories
 from .database import Database
 from .search import SearchService
 from .files import FileService
@@ -43,11 +43,11 @@ class DigiBridge(QObject):
     @Slot(str,result=bool)
     def setLibraryFolder(self,path):
         root=Path(path).resolve(); self.search_service.configure(root,self.incoming.incoming_folder)
-        self.db.set_setting("library_folder",str(root)); self.incoming.set_folders(root,self.incoming.incoming_folder); self.notes=NotesService(root); self.start_scan(); return True
+        self.db.set_setting("library_folder",str(root)); LIBRARY_CONFIG.write_text(str(root),encoding="utf-8"); self.incoming.set_folders(root,self.incoming.incoming_folder); self.notes=NotesService(root); self.start_scan(); return True
     @Slot(result=str)
     def chooseIncomingFolder(self):
         folder=QFileDialog.getExistingDirectory(None,"Choose Incoming folder",str(self.incoming.incoming_folder))
-        if folder: self.incoming.set_folders(self.search_service.root,folder); self.db.set_setting("incoming_folder",folder)
+        if folder: self.incoming.set_folders(self.search_service.root,folder); self.search_service.incoming=Path(folder).resolve(); self.db.set_setting("incoming_folder",folder)
         return folder or ""
     @Slot(result=bool)
     def processIncoming(self): self.incoming.process(); self.start_scan(); return True
