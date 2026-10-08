@@ -98,7 +98,7 @@ def _load_manifest():
 def _save_manifest(manifest):
     _write_atomic(
         RECOVERY_MANIFEST,
-        json.dumps(manifest, indent=2, sort_keys=True) + "\\n",
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
     )
 
 
@@ -106,10 +106,10 @@ def _ensure_recovery_store():
     RECOVERY_ROOT.mkdir(parents=True, exist_ok=True)
 
     if not RECOVERY_VERSION.exists():
-        _write_atomic(RECOVERY_VERSION, (expected_version() + "\\n").encode("utf-8"), binary=True)
+        _write_atomic(RECOVERY_VERSION, (expected_version() + "\n").encode("utf-8"), binary=True)
 
     if not RECOVERY_MARKER.exists():
-        _write_atomic(RECOVERY_MARKER, b"initialized\\n", binary=True)
+        _write_atomic(RECOVERY_MARKER, b"initialized\n", binary=True)
 
     manifest = _load_manifest()
     if manifest.get("format") != 1:
