@@ -6,7 +6,7 @@ from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from backend.api import DigiBridge
 from backend.version_manager import repair_after_close
-BASE_DIR=Path(__file__).resolve().parent
+BASE_DIR=Path(getattr(sys,"_MEIPASS",Path(__file__).resolve().parent))
 class DigiWindow(QMainWindow):
     def __init__(self):
         super().__init__(); self.setWindowTitle("Digi Search Engine"); self.resize(1180,720); self.setMinimumSize(900,600)
