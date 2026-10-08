@@ -23,6 +23,5 @@ py -m PyInstaller --noconfirm --clean --windowed --onefile --name "Digi Search E
 if errorlevel 1 (echo BUILD FAILED&pause&exit /b 1)
 if not exist "%FINAL_DIR%" mkdir "%FINAL_DIR%"
 copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%EXE_PATH%" >nul
-copy /y "%VERSION_FILE%" "%FINAL_DIR%\version.txt" >nul
 echo BUILD COMPLETE: "%EXE_PATH%"
 pause
