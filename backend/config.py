@@ -15,14 +15,17 @@ APP_DIR = (
     else Path(__file__).resolve().parents[1]
 )
 
+# Define the production data path in both modes because shared modules import
+# this constant. Source/test mode never writes there; DEPENDENCIES_ROOT below
+# remains repository-local unless the application is frozen.
+USER_DATA_ROOT = Path(
+    os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))
+) / "Digi"
+
 if IS_FROZEN:
     # Installed application files belong in Program Files, while all
     # persistent user data belongs in LOCALAPPDATA.
     INSTALL_ROOT = Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Digi"
-    USER_DATA_ROOT = Path(
-        os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))
-    ) / "Digi"
-
     DEPENDENCIES_ROOT = USER_DATA_ROOT
 else:
     # Never redirect source/test execution into the production data location.
