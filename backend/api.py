@@ -1,8 +1,6 @@
 import json
-import subprocess
-import sys
 from pathlib import Path
-from PySide6.QtCore import QObject,Signal,Slot,QTimer
+from PySide6.QtCore import QObject,Signal,Slot
 from PySide6.QtWidgets import QFileDialog
 from .config import APP_VERSION,DEFAULT_INCOMING,LIBRARY_CONFIG,get_library_root,ensure_directories
 from .database import Database
@@ -11,31 +9,19 @@ from .files import FileService
 from .conversion import ConversionWorker
 from .incoming import IncomingService
 from .notes import NotesService
-from .version_manager import initialize_version_file,version_integrity,recalibrate_version,repair_after_close,ERROR_CODE_INTEGRITY
+from .version_manager import initialize_version_file,version_integrity,recalibrate_version
 
 class DigiBridge(QObject):
     indexUpdated=Signal()
     conversionProgress=Signal(str,int)
     conversionFinished=Signal(bool,str,str)
     error=Signal(str)
-    integrityViolation=Signal(int,str)
     def __init__(self,parent=None):
         super().__init__(parent); initialize_version_file()
         self.version_ok,self.version_problem=version_integrity()
         if self.version_ok:
             ensure_directories()
         self.db=None; self.search_service=None; self.incoming=None; self.notes=None; self.worker=None
-        self._integrity_problem=None
-        self._integrity_timer=QTimer(self)
-        self._integrity_timer.setInterval(750)
-        self._integrity_timer.timeout.connect(self._check_integrity)
-        self._integrity_timer.start()
-        if self.version_ok:
-            self.db=Database()
-            root=get_library_root(); saved=self.db.setting("incoming_folder"); incoming=Path(saved) if saved else DEFAULT_INCOMING
-            self.search_service=SearchService(); self.search_service.configure(root,incoming)
-            self.incoming=IncomingService(self.db,root,incoming); self.notes=NotesService(root)
-            self.start_scan()
     @Slot(result=str)
     def state(self):
         return json.dumps({"library":str(self.search_service.root) if self.search_service else "","incoming":str(self.incoming.incoming_folder) if self.incoming else "","version":APP_VERSION,"version_ok":self.version_ok,"version_problem":self.version_problem})
@@ -50,22 +36,6 @@ class DigiBridge(QObject):
             self.incoming=IncomingService(self.db,root,incoming); self.notes=NotesService(root)
             self.start_scan()
         return self.version_ok
-    def _check_integrity(self):
-        ok, problem = version_integrity()
-        if not ok and problem != self._integrity_problem:
-            self._integrity_problem=problem
-            self.version_ok=False
-            self.version_problem=problem
-            self.integrityViolation.emit(ERROR_CODE_INTEGRITY, problem)
-        elif ok and not self.version_ok:
-            self._integrity_problem=None
-            self.version_ok=True
-
-    @Slot()
-    def restartApplication(self):
-        subprocess.Popen([sys.executable, *sys.argv[1:]], cwd=str(Path(sys.executable).resolve().parent))
-        from PySide6.QtWidgets import QApplication
-        QApplication.instance().quit()
     @Slot(str,str,str,str,str,str,result=str)
     def search(self,q,typ,status,source,method,sort): return json.dumps(self.search_service.query(q,typ,status,source,method,sort))
     @Slot(str,result=str)
