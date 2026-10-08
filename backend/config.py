@@ -1,24 +1,32 @@
 from pathlib import Path
 import ctypes
+import os
 import sys
 
 APP_VERSION = "1.0.0.0"
 SUPPORTED = {".pdf", ".doc", ".docx"}
 
-# Source/development builds must never require administrator access or write to
-# Program Files. Frozen/distributed builds keep the existing Program Files
-# dependency layout and can elevate only when that layout must be repaired.
+IS_FROZEN = bool(getattr(sys, "frozen", False))
+
+# Development/source execution stays entirely inside the repository.
 APP_DIR = (
     Path(sys.executable).resolve().parent
-    if getattr(sys, "frozen", False)
+    if IS_FROZEN
     else Path(__file__).resolve().parents[1]
 )
 
-if getattr(sys, "frozen", False):
-    DEPENDENCIES_ROOT = Path(
-        Path("C:/Program Files") / "Digi Dependencies"
-    )
+if IS_FROZEN:
+    # Installed application files belong in Program Files, while all
+    # persistent user data belongs in LOCALAPPDATA.
+    INSTALL_ROOT = Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Digi"
+    USER_DATA_ROOT = Path(
+        os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))
+    ) / "Digi"
+
+    DEPENDENCIES_ROOT = USER_DATA_ROOT
 else:
+    # Never redirect source/test execution into the production data location.
+    INSTALL_ROOT = APP_DIR
     DEPENDENCIES_ROOT = APP_DIR / "Digi Dependencies"
 
 SEARCH_REPOSITORY = DEPENDENCIES_ROOT / "Search Repository"
@@ -44,9 +52,11 @@ def ensure_directories():
         _create_dependency_layout()
         return
     except PermissionError:
-        # Only distributed builds use the protected Program Files layout.
-        # Relaunch elevated once so the dependency repair can complete.
-        if getattr(sys, "frozen", False) and "--dependency-repair" not in sys.argv:
+        # Source/test mode must never elevate.
+        # In the installed application, user data should normally be writable
+        # without elevation. Elevation is retained only as a compatibility
+        # fallback for an installation/data layout that still requires repair.
+        if IS_FROZEN and "--dependency-repair" not in sys.argv:
             try:
                 executable = str(Path(sys.executable).resolve())
                 result = ctypes.windll.shell32.ShellExecuteW(
