@@ -11,7 +11,7 @@ from .files import FileService
 from .conversion import ConversionWorker
 from .incoming import IncomingService
 from .notes import NotesService
-from .version_manager import version_integrity,recalibrate_version
+from .version_manager import initialize_version_file,version_integrity,recalibrate_version
 
 class DigiBridge(QObject):
     indexUpdated=Signal()
