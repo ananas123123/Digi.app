@@ -20,8 +20,8 @@ class DigiBridge(QObject):
     error=Signal(str)
     integrityViolation=Signal(int,str)
     def __init__(self,parent=None):
-        super().__init__(parent); ensure_directories()
-        initialize_version_file()
+        super().__init__(parent); initialize_version_file()
+        ensure_directories()
         self.version_ok,self.version_problem=version_integrity()
         self.db=None; self.search_service=None; self.incoming=None; self.notes=None; self.worker=None
         self._integrity_problem=None
