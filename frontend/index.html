@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digi Search Engine</title>
+<script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+<script src="https://cdn.tailwindcss.com"></script><script src="./tailwind.config.js"></script><link rel="stylesheet" href="./styles.css"></head>
+<body class="bg-neutral-950 text-neutral-100">
+<header class="header"><div class="brand"><div class="brand-mark">D</div><div><b>Digi</b><small>Search Engine</small></div></div>
+<div class="search-wrap"><input id="search" class="search-input" placeholder="Search files..." autocomplete="off"><button id="clear" class="icon-button">×</button></div>
+<div class="header-actions"><button class="ui-button" id="notes">Notes</button><button class="ui-button" id="incoming">Incoming</button><button class="ui-button" id="repository">Repository</button></div></header>
+<main class="layout"><aside class="sidebar"><div class="section-label">FILTERS</div>
+<label>Type<select id="type"><option>All types</option><option>PDF</option><option>Word</option></select></label>
+<label>Status<select id="status"><option>All statuses</option><option>Not started</option><option>In progress</option><option>Finished</option><option>Due</option><option>Due late</option></select></label>
+<label>Source<select id="source"><option>All sources</option><option>ExamPro</option><option>PMT</option></select></label>
+<label>Search<select id="method"><option>Normal</option><option>Fuzzy</option></select></label>
+<label>Sort<select id="sort"><option>Relevance</option><option>Name A-Z</option><option>Name Z-A</option><option>Newest modified</option><option>Oldest modified</option><option>Most pages</option><option>Fewest pages</option></select></label>
+<button class="wide-button" id="scan">Update index</button><button class="wide-button" id="recent">Recent searches</button></aside>
+<section class="content"><div class="content-head"><div><h1>Search Repository</h1><p id="hint">Type a search term to show files.</p></div><span id="count">0 results</span></div><div id="results" class="results"></div></section></main>
+<div id="modal" class="modal hidden"></div><script src="./app.js"></script></body></html>
