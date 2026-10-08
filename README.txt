@@ -28,6 +28,11 @@ The frontend does not implement search, conversion, tagging, indexing, Incoming 
 COMMUNICATION
 The HTML frontend communicates with Python through Qt WebChannel. The bridge exposes application operations as explicit commands/signals rather than allowing frontend code to reach backend implementation details directly.
 
+DEVELOPMENT SETUP
+- Run setup.bat once to create .venv and install requirements.txt.
+- Run run.bat for normal launches. It reuses .venv and does not reinstall dependencies on each run.
+- Tailwind is currently unused; the frontend is styled by frontend/styles.css.
+
 BUILD
 Run build.bat. The build packages frontend/ and backend/ into the one-file application and includes Qt WebEngine.
 
