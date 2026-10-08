@@ -179,3 +179,9 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Digi runtime data and generated logs (keep local; never commit)
+/Cache/
+/Digi Dependencies/
+/Search Repository/
+/Incoming/
