@@ -1,25 +1,21 @@
-from pathlib import Path
-
-from .config import APP_VERSION, VERSION_MANAGER, IS_FROZEN
+from .config import APP_VERSION, VERSION_MANAGER
 
 VERSION_FILE_NAME = "version.txt"
 VERSION_FILE = VERSION_MANAGER / VERSION_FILE_NAME
+INITIALIZED_MARKER = VERSION_MANAGER / ".version_initialized"
 
 
 def expected_version():
     return APP_VERSION.strip()
 
 
-def ensure_version_file():
+def initialize_version_file():
     VERSION_MANAGER.mkdir(parents=True, exist_ok=True)
-    if not VERSION_FILE.exists():
-        VERSION_FILE.write_text(expected_version() + "\n", encoding="utf-8")
+    if not VERSION_FILE.exists() and not INITIALIZED_MARKER.exists():
+        VERSION_FILE.write_text(expected_version() + "\\n", encoding="utf-8")
+        INITIALIZED_MARKER.write_text("initialized\\n", encoding="utf-8")
         return True
-    try:
-        current = VERSION_FILE.read_text(encoding="utf-8").strip()
-    except (OSError, UnicodeError):
-        return False
-    return current == expected_version()
+    return VERSION_FILE.exists()
 
 
 def version_integrity():
@@ -37,5 +33,6 @@ def version_integrity():
 
 def recalibrate_version():
     VERSION_MANAGER.mkdir(parents=True, exist_ok=True)
-    VERSION_FILE.write_text(expected_version() + "\n", encoding="utf-8")
+    VERSION_FILE.write_text(expected_version() + "\\n", encoding="utf-8")
+    INITIALIZED_MARKER.write_text("initialized\\n", encoding="utf-8")
     return True
