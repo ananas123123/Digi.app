@@ -1,0 +1,5 @@
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+qt.gui.icc: fromIccProfile: Failed to parse description
+js: Uncaught ReferenceError: tailwind is not defined
+QDxgiVSyncService not destroyed in time
+^C
