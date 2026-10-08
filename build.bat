@@ -22,6 +22,7 @@ mkdir "%BUILD_CACHE%" "%DIST_CACHE%" "%SPEC_CACHE%"
 py -m PyInstaller --noconfirm --clean --windowed --onefile --name "Digi Search Engine" --version-file "%VERSION_INFO_FILE%" --icon "%FACTORY_DIR%mbappe.ico" --hidden-import "win32com.client" --hidden-import "pythoncom" --collect-all "PySide6.QtWebEngineCore" --collect-all "PySide6.QtWebEngineWidgets" --collect-all "PySide6.QtWebChannel" --add-data "%FACTORY_DIR%frontend;frontend" --add-data "%FACTORY_DIR%backend;backend" --workpath "%BUILD_CACHE%" --distpath "%DIST_CACHE%" --specpath "%SPEC_CACHE%" "%FACTORY_DIR%digi_search_engine.py"
 if errorlevel 1 (echo BUILD FAILED&pause&exit /b 1)
 if not exist "%FINAL_DIR%" mkdir "%FINAL_DIR%"
+if exist "%FINAL_DIR%\version.txt" del /q "%FINAL_DIR%\version.txt"
 copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%EXE_PATH%" >nul
 echo BUILD COMPLETE: "%EXE_PATH%"
 pause
