@@ -1,6 +1,44 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+
+echo Checking for existing Digi executables...
+set "FOUND_DIGI_EXE="
+for /r "%ProgramFiles%" %%F in (*.exe) do (
+    echo %%~nxF | findstr /i /r "^Digi.*\.exe$ ^.*Digi.*\.exe$" >nul
+    if not errorlevel 1 (
+        if /i not "%%~fF"=="%~dp0..\Digi Search Engine.exe" (
+            set "FOUND_DIGI_EXE=%%~fF"
+            goto :DIGI_EXE_FOUND
+        )
+    )
+)
+for /r "%ProgramFiles(x86)%" %%F in (*.exe) do (
+    echo %%~nxF | findstr /i /r "^Digi.*\.exe$ ^.*Digi.*\.exe$" >nul
+    if not errorlevel 1 (
+        set "FOUND_DIGI_EXE=%%~fF"
+        goto :DIGI_EXE_FOUND
+    )
+)
+for /r "%LOCALAPPDATA%" %%F in (*.exe) do (
+    echo %%~nxF | findstr /i /r "^Digi.*\.exe$ ^.*Digi.*\.exe$" >nul
+    if not errorlevel 1 (
+        set "FOUND_DIGI_EXE=%%~fF"
+        goto :DIGI_EXE_FOUND
+    )
+)
+goto :DIGI_EXE_CLEAR
+
+:DIGI_EXE_FOUND
+echo.
+echo FATAL: Another Digi executable was found:
+echo "%FOUND_DIGI_EXE%"
+echo.
+echo Build cancelled.
+pause
+exit /b 1
+
+:DIGI_EXE_CLEAR
 set "FACTORY_DIR=%~dp0"
 set "OUTPUT_DIR=%~dp0.."
 set "VERSION_FILE=%FACTORY_DIR%version.txt"
