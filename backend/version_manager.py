@@ -1,6 +1,5 @@
 from pathlib import Path
 import hashlib
-import json
 import os
 import shutil
 import tempfile
@@ -65,8 +64,7 @@ def _ensure_recovery_store():
 def _ensure_identity():
     if not IDENTITY_FILE.exists():
         _write_atomic(IDENTITY_FILE, "Digi-local-data-root-v1\\n")
-    DEPENDENCIES_ROOT.mkdir(parents=True, exist_ok=True)
-    if not ROOT_IDENTITY_FILE.exists():
+    if DEPENDENCIES_ROOT.is_dir() and not ROOT_IDENTITY_FILE.exists():
         _write_atomic(ROOT_IDENTITY_FILE, IDENTITY_FILE.read_text(encoding="utf-8"))
 
 
@@ -168,6 +166,7 @@ def repair_all():
     _ensure_recovery_store()
     _ensure_identity()
     changed = _restore_root()
+    _ensure_identity()
     changed = _restore_expected_folders() or changed
 
     SEARCH_REPOSITORY.mkdir(parents=True, exist_ok=True)
