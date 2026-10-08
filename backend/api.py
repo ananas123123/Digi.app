@@ -2,7 +2,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from PySide6.QtCore import QObject,Signal,Slot
+from PySide6.QtCore import QObject,Signal,Slot,QTimer
 from PySide6.QtWidgets import QFileDialog
 from .config import APP_VERSION,DEFAULT_INCOMING,LIBRARY_CONFIG,get_library_root,ensure_directories
 from .database import Database
@@ -11,17 +11,23 @@ from .files import FileService
 from .conversion import ConversionWorker
 from .incoming import IncomingService
 from .notes import NotesService
-from .version_manager import initialize_version_file,version_integrity,recalibrate_version
+from .version_manager import initialize_version_file,version_integrity,recalibrate_version,repair_after_close,ERROR_CODE_INTEGRITY
 
 class DigiBridge(QObject):
     indexUpdated=Signal()
     conversionProgress=Signal(str,int)
     conversionFinished=Signal(bool,str,str)
     error=Signal(str)
+    integrityViolation=Signal(int,str)
     def __init__(self,parent=None):
         super().__init__(parent); ensure_directories()
         self.version_ok,self.version_problem=version_integrity()
         self.db=None; self.search_service=None; self.incoming=None; self.notes=None; self.worker=None
+        self._integrity_problem=None
+        self._integrity_timer=QTimer(self)
+        self._integrity_timer.setInterval(750)
+        self._integrity_timer.timeout.connect(self._check_integrity)
+        self._integrity_timer.start()
         if self.version_ok:
             self.db=Database()
             root=get_library_root(); saved=self.db.setting("incoming_folder"); incoming=Path(saved) if saved else DEFAULT_INCOMING
@@ -42,6 +48,17 @@ class DigiBridge(QObject):
             self.incoming=IncomingService(self.db,root,incoming); self.notes=NotesService(root)
             self.start_scan()
         return self.version_ok
+    def _check_integrity(self):
+        ok, problem = version_integrity()
+        if not ok and problem != self._integrity_problem:
+            self._integrity_problem=problem
+            self.version_ok=False
+            self.version_problem=problem
+            self.integrityViolation.emit(ERROR_CODE_INTEGRITY, problem)
+        elif ok and not self.version_ok:
+            self._integrity_problem=None
+            self.version_ok=True
+
     @Slot()
     def restartApplication(self):
         subprocess.Popen([sys.executable, *sys.argv[1:]], cwd=str(Path(sys.executable).resolve().parent))
