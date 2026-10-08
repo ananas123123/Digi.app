@@ -3,10 +3,11 @@ setlocal
 cd /d "%~dp0"
 
 echo Checking Windows installed applications for Digi...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$keys=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'); $found=Get-ItemProperty $keys -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -and $_.DisplayName -like '*Digi*' } | ForEach-Object { if ($_.DisplayIcon) { ($_.DisplayIcon -replace ',.*$','').Trim('"') } elseif ($_.InstallLocation) { Join-Path $_.InstallLocation 'Digi Search Engine.exe' } } | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -First 1; if ($found) { Write-Host ''; Write-Host 'FATAL: An installed Digi executable was found:'; Write-Host $found; Write-Host ''; exit 1 } else { exit 0 }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$keys=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'); $found=Get-ItemProperty $keys -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -and $_.DisplayName -like '*Digi*' } | ForEach-Object { if ($_.DisplayIcon) { ($_.DisplayIcon -replace ',.*$','').Trim([char]34) } elseif ($_.InstallLocation) { Join-Path $_.InstallLocation 'Digi Search Engine.exe' } } | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -First 1; if ($found) { Write-Output 'DIGI_FOUND'; Write-Output $found; exit 1 }; exit 0"
 if errorlevel 1 (
     echo.
-    echo Build cancelled because an installed Digi executable was found.
+    echo FATAL: An installed Digi executable was found.
+    echo Build cancelled.
     pause
     exit /b 1
 )
