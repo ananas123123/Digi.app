@@ -1511,6 +1511,9 @@ body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-sele
 
 /* Digi custom right-click menu */
 #digi-context-menu[hidden] { display: none !important; }
+#digi-context-menu button[hidden],
+#digi-context-menu .digi-context-separator[hidden],
+#digi-context-menu .digi-context-submenu[hidden] { display: none !important; }
 #digi-context-menu {
   position: fixed;
   z-index: 999999;
