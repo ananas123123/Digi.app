@@ -2089,3 +2089,25 @@ body.delete-confirm-open { overflow: hidden; }
   min-height: 0;
   margin: 0;
 }
+
+
+/* Keep the empty-state message inside the existing list box without changing its layout. */
+.move-browser-list.is-empty {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  padding: 8px;
+}
+.move-browser-list.is-empty > .empty {
+  position: absolute;
+  inset: 8px;
+  display: flex;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
