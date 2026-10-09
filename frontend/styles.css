@@ -803,3 +803,42 @@ body:has(#search:not(:placeholder-shown)) .search-wrap .icon-button { top: 50%; 
 body:has(#search:not(:placeholder-shown)) .home-cards{display:none}
 @media(max-width:760px){.home-cards{width:calc(100vw - 32px);gap:8px;bottom:16px}.home-card{min-height:112px;padding:13px 11px;gap:6px;border-radius:12px}.home-card-icon{font-size:19px}.home-card-title{font-size:13px}.home-card-copy{font-size:10px}.home-card-arrow{top:11px;right:10px;font-size:13px}}
 @media(max-height:520px){.home-cards{position:absolute;bottom:auto;top:calc(45vh + 75px)}body:not(:has(#search:not(:placeholder-shown))) .content-head{top:12vh}.search-wrap.ui-input-container{top:42vh}}
+
+
+/* Center the landing hero, search, and feature cards as one balanced group. */
+body:not(:has(#search:not(:placeholder-shown))) .search-wrap.ui-input-container {
+  top: 50%;
+  width: min(720px, calc(100vw - 48px));
+}
+body:not(:has(#search:not(:placeholder-shown))) .content-head {
+  top: calc(50% - 165px);
+}
+body:not(:has(#search:not(:placeholder-shown))) .home-cards {
+  position: fixed;
+  top: calc(50% + 66px);
+  bottom: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(720px, calc(100vw - 48px));
+}
+@media (max-width: 760px) {
+  body:not(:has(#search:not(:placeholder-shown))) .search-wrap.ui-input-container {
+    top: 49%;
+    width: calc(100vw - 32px);
+  }
+  body:not(:has(#search:not(:placeholder-shown))) .content-head {
+    top: calc(49% - 135px);
+    left: 16px;
+    right: 16px;
+  }
+  body:not(:has(#search:not(:placeholder-shown))) .home-cards {
+    top: calc(49% + 64px);
+    width: calc(100vw - 32px);
+    gap: 8px;
+  }
+}
+@media (max-height: 600px) {
+  body:not(:has(#search:not(:placeholder-shown))) .content-head { top: 8vh; }
+  body:not(:has(#search:not(:placeholder-shown))) .search-wrap.ui-input-container { top: 36vh; }
+  body:not(:has(#search:not(:placeholder-shown))) .home-cards { top: calc(36vh + 70px); }
+}
