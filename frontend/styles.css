@@ -1545,3 +1545,15 @@ body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-sele
 }
 #digi-context-menu button:disabled { opacity: .35; cursor: default; }
 .digi-context-separator { height: 1px; margin: 5px 4px; background: rgba(255,255,255,.1); }
+
+
+/* Prevent accidental text highlighting while dragging across the Digi interface. */
+body, body * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+input, textarea, [contenteditable="true"], [contenteditable=""], .selectable-text,
+input *, textarea *, [contenteditable="true"] *, [contenteditable=""] * {
+  -webkit-user-select: text;
+  user-select: text;
+}
