@@ -738,6 +738,8 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
         };
       }
       else if (action === 'new-docx' || action === 'new-pdf') {
+        const requestedParent = button.dataset.parent;
+        const documentParent = typeof requestedParent === 'string' && requestedParent !== '[object PointerEvent]' ? requestedParent : '';
         hide();
         const kind = action === 'new-docx' ? 'docx' : 'pdf';
         const label = kind === 'docx' ? 'Word document' : 'PDF document';
@@ -754,9 +756,6 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
           const submit = form.querySelector('[type="submit"]');
           submit.disabled = true;
           submit.textContent = 'Creating…';
-          const repositoryBrowser = document.querySelector('.repo-browser');
-          const pathLabel = repositoryBrowser ? repositoryBrowser.querySelector('#repo-browser-path') : null;
-          const documentParent = resultsArea ? '' : (pathLabel && typeof pathLabel.dataset.path === 'string' ? pathLabel.dataset.path : '');
           call('createDocument', [documentParent, name, kind], raw => {
             let result = null;
             try { result = JSON.parse(raw); } catch (_) {}
