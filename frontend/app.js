@@ -126,9 +126,10 @@ function openSearchRepositoryBrowser(initialPath = "") {
   }
   const rootPathInput = $("repo-browser-path");
   if (rootPathInput) {
-    // Keep the last scan across explorer navigation/modal reopen so the
-    // placeholder can resume immediately when returning to the repository root.
-    let repositoryFolders = Array.isArray(window.digiRepositoryFolderCache) ? window.digiRepositoryFolderCache.slice() : [];
+    // The cycle is independent from scanning. Keep the current index and the
+    // last known list while a background refresh runs.
+    let repositoryFolders = Array.isArray(window.digiRepositoryFolderCache)
+      ? window.digiRepositoryFolderCache.slice() : [];
     let folderCycleIndex = 0;
     let folderCycleTimer = null;
     let folderRefreshTimer = null;
@@ -160,66 +161,33 @@ function openSearchRepositoryBrowser(initialPath = "") {
       }
       if (refreshInProgress) return;
       refreshInProgress = true;
-      const found = new Set();
-      const visited = new Set();
-      const walk = relativePath => {
-        const normalized = String(relativePath || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-        if (visited.has(normalized)) return;
-        visited.add(normalized);
-        call("listLibraryContents", [normalized], raw => {
-          const result = parseJson(raw, null, "repository folder placeholder scan");
-          if (result && result.ok && Array.isArray(result.entries)) {
-            result.entries.forEach(entry => {
-              if (entry.type !== "folder") return;
-              const child = normalized ? normalized + "/" + entry.name : entry.name;
-              found.add(child);
-              walk(child);
-            });
-          }
-          // Finish after every discovered directory has been queried.
-          if (visited.size > 0 && pendingScans === 0) finishScan();
-        });
-      };
-      let pendingScans = 0;
-      let scanFinished = false;
-      const finishScan = () => {
-        if (scanFinished || pendingScans !== 0) return;
-        scanFinished = true;
+      call("listSearchRepositoryFolders", [], raw => {
         refreshInProgress = false;
         if (!rootPathInput.isConnected) {
           stopFolderPlaceholderTimers();
           return;
         }
-        repositoryFolders = Array.from(found).sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base"}));
-        window.digiRepositoryFolderCache = repositoryFolders.slice();
-        folderCycleIndex = 0;
-        rotateFolderPlaceholder();
-      };
-      // Count asynchronous directory requests so the refresh completes only
-      // after every reachable folder has been checked.
-      const scanDirectory = relativePath => {
-        const normalized = String(relativePath || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-        if (visited.has(normalized)) return;
-        visited.add(normalized);
-        pendingScans++;
-        call("listLibraryContents", [normalized], raw => {
-          const result = parseJson(raw, null, "repository folder placeholder scan");
-          if (result && result.ok && Array.isArray(result.entries)) {
-            result.entries.forEach(entry => {
-              if (entry.type !== "folder") return;
-              const child = normalized ? normalized + "/" + entry.name : entry.name;
-              found.add(child);
-              scanDirectory(child);
-            });
-          }
-          pendingScans--;
-          finishScan();
-        });
-      };
-      // Replace the initial helper with a counted recursive scan.
-      visited.clear();
-      scanDirectory("");
+        const result = parseJson(raw, null, "repository folder placeholder scan");
+        if (!result || !result.ok || !Array.isArray(result.folders)) return;
+        const updatedFolders = result.folders
+          .filter(path => typeof path === "string" && path.trim())
+          .sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base"}));
+        // Do not reset the cycle when a scan completes; scanning must not
+        // affect the 2-second animation or make it restart from the first item.
+        const currentFolder = repositoryFolders.length
+          ? repositoryFolders[folderCycleIndex % repositoryFolders.length] : "";
+        repositoryFolders = updatedFolders;
+        window.digiRepositoryFolderCache = updatedFolders.slice();
+        if (currentFolder) {
+          const sameIndex = repositoryFolders.indexOf(currentFolder);
+          folderCycleIndex = sameIndex >= 0 ? sameIndex : folderCycleIndex % Math.max(repositoryFolders.length, 1);
+        } else {
+          folderCycleIndex = folderCycleIndex % Math.max(repositoryFolders.length, 1);
+        }
+      });
     };
+    // Restore the animation immediately from cache before starting a new scan.
+    rotateFolderPlaceholder();
     refreshRepositoryFolderCycle();
     folderCycleTimer = setInterval(rotateFolderPlaceholder, 2000);
     folderRefreshTimer = setInterval(refreshRepositoryFolderCycle, 3000);
