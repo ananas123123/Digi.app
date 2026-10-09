@@ -10,7 +10,8 @@ import ast
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else REPO_ROOT
 SOURCE_FILES = [ROOT / "app.py", *sorted((ROOT / "backend").rglob("*.py"))]
 LOCAL_PREFIXES = {"backend", "app", "digi_search_engine"}
 IGNORED = {"__future__"}
