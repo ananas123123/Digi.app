@@ -67,6 +67,13 @@
   <button type="button" role="menuitem" data-action="paste">Paste</button>
   <button type="button" role="menuitem" data-action="select-all">Select all</button>
   <div class="digi-context-separator"></div>
+  <div class="digi-context-submenu">
+    <button type="button" role="menuitem" data-action="new-menu" aria-haspopup="true" aria-expanded="false">New <span aria-hidden="true">›</span></button>
+    <div class="digi-context-submenu-items" role="menu" aria-label="New document">
+      <button type="button" role="menuitem" data-action="new-docx">New DOCX</button>
+      <button type="button" role="menuitem" data-action="new-pdf">New PDF</button>
+    </div>
+  </div>
   <button type="button" role="menuitem" data-action="delete-result" hidden>Delete file…</button>
   <button type="button" role="menuitem" data-action="reload">Reload Digi</button>
 </div>
