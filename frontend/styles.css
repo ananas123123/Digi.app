@@ -957,7 +957,6 @@ body:not(:has(#search:not(:placeholder-shown))) .content p {
 
 /* Keep repository controls out of the idle landing header. Move update status
    into the existing Home brand slot without changing the updater's element ID. */
-body:not(:has(#search:not(:placeholder-shown))) #incoming,
 body:not(:has(#search:not(:placeholder-shown))) #repository { display: none; }
 .brand-home .home-status-slot {
   display: inline-flex;
@@ -1821,7 +1820,6 @@ body.filters-dialog-open { overflow: hidden; }
   gap: 8px !important;
   margin-left: 0 !important;
 }
-.header > .header-actions > #incoming,
 .header > .header-actions > #filters-toggle {
   display: inline-flex !important;
   flex: 0 0 auto !important;
@@ -1846,7 +1844,6 @@ body.filters-dialog-open { overflow: hidden; }
 @media (max-width: 900px) {
   .header { gap: 10px !important; padding-left: 12px !important; padding-right: 12px !important; }
   .header > .header-actions { gap: 6px !important; }
-  .header > .header-actions > #incoming,
   .header > .header-actions > #filters-toggle { padding: 0 10px !important; }
 }
 
