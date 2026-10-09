@@ -81,9 +81,10 @@ class ConversionWorker(QThread):
 
             try:
                 temporary_target.unlink(missing_ok=True)
+                temporary_target = None
             except OSError:
+                # The final file is installed; the finally block retries temp cleanup.
                 pass
-            temporary_target = None
             self._progress(100)
             self.finished.emit(True, "Conversion completed successfully.", str(target))
         except Exception as exc:
