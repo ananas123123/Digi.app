@@ -136,8 +136,9 @@ function openSearchRepositoryBrowser(initialPath = "") {
       const uriText = transfer ? (transfer.getData('text/uri-list') || transfer.getData('text/plain')) : '';
       const uri = uriText.split(/\r?\n/).map(line => line.trim()).find(line => line && !line.startsWith('#') && /^file:/i.test(line));
       if (!uri) {
-        modal('Add folder', '<p class="repo-browser-drop-message">Digi could not read the folder path from this drop. Try dragging the folder directly from Windows File Explorer.</p><div class="new-document-actions"><button type="button" class="new-document-create" id="repo-drop-close">Close</button></div>');
-        $('repo-drop-close').onclick = () => $('modal').classList.add('hidden');
+        // Native Qt drag/drop handles folders. HTML5 drops without a usable
+        // folder URI are commonly individual files, which Digi does not import.
+        showRepositoryDropMessage('Folder only', 'Drop a folder into the repository list. Individual files cannot be added by this action.');
         return;
       }
       let sourcePath = '';
