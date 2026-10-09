@@ -2113,13 +2113,13 @@ body.delete-confirm-open { overflow: hidden; }
 }
 
 
-/* Parent-folder navigation sits in the top-left corner of the browser panel. */
+/* Reserve space for parent navigation so the first folder never sits beneath it. */
 .move-browser-list { position: relative; }
 .move-browser-back {
-  position: absolute;
+  position: relative;
   z-index: 3;
-  top: 15px;
-  left: 15px;
+  display: inline-flex;
+  margin: 4px 0 8px 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
