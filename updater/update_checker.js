@@ -5,28 +5,26 @@
 (() => {
   "use strict";
 
-  const LATEST_URLS = [
-    "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/latest.json",
-    "https://api.github.com/repos/ananas123123/digiwebversionreleases/contents/latest.json?ref=main"
-  ];
   const RELEASES_URL = "https://github.com/ananas123123/digiwebversionreleases/releases";
   const CURRENT_VERSION = "1.0.0.0";
   const PENDING_KEY = "digi.updateChecker.pendingVersion";
   const CHECK_INTERVAL_MS = 60000;
-  const REQUEST_TIMEOUT_MS = 10000;
 
   let lastRemoteCheck = 0;
   let requestInProgress = false;
 
   function compareVersions(left, right) {
-    const a = String(left).split(".");
-    const b = String(right).split(".");
-    if (a.length !== b.length || !a.length) return null;
+    const a = String(left).trim().split(".");
+    const b = String(right).trim().split(".");
+    if (!a.length || !b.length) return null;
     const valid = value => value.every(part => /^\d+$/.test(part));
     if (!valid(a) || !valid(b)) return null;
-    for (let i = 0; i < a.length; i += 1) {
-      const x = Number(a[i]);
-      const y = Number(b[i]);
+
+    // Compare numeric components; missing trailing components count as zero.
+    const length = Math.max(a.length, b.length);
+    for (let i = 0; i < length; i += 1) {
+      const x = Number(a[i] ?? 0);
+      const y = Number(b[i] ?? 0);
       if (x > y) return 1;
       if (x < y) return -1;
     }
@@ -79,7 +77,7 @@
     if (requestInProgress || Date.now() - lastRemoteCheck < CHECK_INTERVAL_MS) return;
     requestInProgress = true;
     lastRemoteCheck = Date.now();
-    setStatus("checking", "Checking for Digi updates…");
+    setStatus("checking", "Checking the latest Digi version…");
     try {
       const backend = await waitForBridge();
       const response = await new Promise((resolve, reject) => {
@@ -104,6 +102,7 @@
         window.addEventListener("digi-release-manifest", onResult);
         backend.checkReleaseManifest();
       });
+
       if (!response || !response.ok || !response.manifest) {
         throw new Error("Could not reach the release repository.");
       }
@@ -112,31 +111,35 @@
         throw new Error("Release metadata schema is not supported.");
       }
 
-      if (manifest.release_status !== "published" ||
-          typeof manifest.latest_version !== "string" ||
-          !manifest.latest_version.trim()) {
-        setStatus("current", "No published Digi update is available.");
+      // latest_version is the single source of truth for the dot.
+      // A null/empty version means no version has been published yet.
+      if (typeof manifest.latest_version !== "string" || !manifest.latest_version.trim()) {
+        setStatus("current", "No newer Digi version is published.");
         return;
       }
 
-      const relation = compareVersions(manifest.latest_version, CURRENT_VERSION);
+      const latestVersion = manifest.latest_version.trim();
+      const relation = compareVersions(latestVersion, CURRENT_VERSION);
       if (relation === null) {
-        setStatus("offline", "Could not validate the published version.");
+        setStatus("offline", "Could not validate the latest Digi version.");
         return;
       }
+
       if (relation > 0) {
-        setStatus("update", "Digi update available: " + manifest.latest_version);
+        setStatus("update", "Newer Digi version available: " + latestVersion);
         try {
-          localStorage.setItem(PENDING_KEY, manifest.latest_version);
+          localStorage.setItem(PENDING_KEY, latestVersion);
         } catch (_) {
           // Storage is optional; the status indicator still works without it.
         }
-        return;
+      } else {
+        setStatus("current", "Latest published version: " + latestVersion + ". Current Digi version: " + CURRENT_VERSION + ".");
+        try {
+          localStorage.removeItem(PENDING_KEY);
+        } catch (_) {
+          // Storage is optional.
+        }
       }
-
-      setStatus("current", relation === 0
-        ? "Digi is up to date."
-        : "The published release is older than this installation; no downgrade will be suggested.");
     } catch (_) {
       setStatus("offline", "Update status unavailable. Could not reach the release repository.");
     } finally {
@@ -148,16 +151,7 @@
     const dot = document.getElementById("digi-update-status");
     if (!dot) return;
 
-    try {
-      const pending = localStorage.getItem(PENDING_KEY);
-      if (pending && compareVersions(pending, CURRENT_VERSION) === 1) {
-        showPendingUpdate(pending);
-      }
-    } catch (_) {
-      // Storage is optional; never interfere with Digi if unavailable.
-    }
-
-    setStatus("checking", "Checking for Digi updates…");
+    setStatus("checking", "Checking the latest Digi version…");
     checkRemoteStatus();
     window.setInterval(checkRemoteStatus, CHECK_INTERVAL_MS);
   }
