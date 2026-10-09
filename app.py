@@ -25,43 +25,57 @@ TITLEBAR_BORDER = "#30352c"
 
 
 class DigiWebView(QWebEngineView):
-    localFoldersDropped = Signal("QStringList", int, int)
+    localItemsDropped = Signal("QStringList", int, int)
+    localItemsDragMoved = Signal("QStringList", int, int)
+    localItemsDragLeft = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
 
-    def dragEnterEvent(self, event):
+    def _local_paths(self, event):
+        paths = []
         mime = event.mimeData()
-        if mime.hasUrls() and any(url.isLocalFile() and Path(url.toLocalFile()).is_dir() for url in mime.urls()):
+        if mime.hasUrls():
+            for url in mime.urls():
+                if url.isLocalFile():
+                    path = Path(url.toLocalFile())
+                    if path.exists() and (path.is_dir() or path.is_file()):
+                        paths.append(str(path.resolve()))
+        return paths
+
+    def dragEnterEvent(self, event):
+        paths = self._local_paths(event)
+        if paths:
             event.setDropAction(Qt.DropAction.CopyAction)
             event.accept()
             return
         event.ignore()
 
     def dragMoveEvent(self, event):
-        mime = event.mimeData()
-        if mime.hasUrls() and any(url.isLocalFile() and Path(url.toLocalFile()).is_dir() for url in mime.urls()):
+        paths = self._local_paths(event)
+        if paths:
+            x, y = event.position().toPoint().x(), event.position().toPoint().y()
+            self.localItemsDragMoved.emit(paths, x, y)
             event.setDropAction(Qt.DropAction.CopyAction)
             event.accept()
             return
+        self.localItemsDragLeft.emit()
         event.ignore()
 
+    def dragLeaveEvent(self, event):
+        self.localItemsDragLeft.emit()
+        super().dragLeaveEvent(event)
+
     def dropEvent(self, event):
-        mime = event.mimeData()
-        folders = []
-        if mime.hasUrls():
-            for url in mime.urls():
-                if not url.isLocalFile():
-                    continue
-                path = Path(url.toLocalFile())
-                if path.is_dir():
-                    folders.append(str(path.resolve()))
-        if folders:
-            self.localFoldersDropped.emit(folders, event.position().toPoint().x(), event.position().toPoint().y())
+        paths = self._local_paths(event)
+        if paths:
+            self.localItemsDropped.emit(paths, event.position().toPoint().x(), event.position().toPoint().y())
+            self.localItemsDragLeft.emit()
             event.setDropAction(Qt.DropAction.CopyAction)
             event.accept()
         else:
+            self.localItemsDragLeft.emit()
             event.ignore()
 
 
@@ -139,7 +153,9 @@ class DigiWindow(QMainWindow):
         self.view = DigiWebView(root)
         self.view.setObjectName("DigiWebView")
         self.view.setStyleSheet("border: none; background: #10110f;")
-        self.view.localFoldersDropped.connect(self._handle_local_folders_dropped)
+        self.view.localItemsDropped.connect(self._handle_native_items_dropped)
+        self.view.localItemsDragMoved.connect(self._handle_native_items_drag_moved)
+        self.view.localItemsDragLeft.connect(self._handle_native_items_drag_left)
         layout.addWidget(self.view, 1)
         self.setCentralWidget(root)
         self._apply_window_shape()
@@ -154,14 +170,25 @@ class DigiWindow(QMainWindow):
         if app:
             app.installEventFilter(self)
 
-    def _handle_local_folders_dropped(self, folders, x, y):
-        # Pass actual native filesystem paths to the page; Chromium's HTML5
-        # DataTransfer intentionally does not expose reliable folder paths.
+    def _handle_native_items_dropped(self, paths, x, y):
         import json
-        payload = json.dumps(list(folders))
+        payload = json.dumps(list(paths))
         self.view.page().runJavaScript(
-            "if (window.handleNativeFolderDrop) window.handleNativeFolderDrop("
+            "if (window.handleNativeItemsDrop) window.handleNativeItemsDrop("
             + json.dumps(payload) + ", " + str(int(x)) + ", " + str(int(y)) + ");"
+        )
+
+    def _handle_native_items_drag_moved(self, paths, x, y):
+        import json
+        payload = json.dumps(list(paths))
+        self.view.page().runJavaScript(
+            "if (window.handleNativeItemsDragMove) window.handleNativeItemsDragMove("
+            + json.dumps(payload) + ", " + str(int(x)) + ", " + str(int(y)) + ");"
+        )
+
+    def _handle_native_items_drag_left(self):
+        self.view.page().runJavaScript(
+            "if (window.handleNativeItemsDragLeave) window.handleNativeItemsDragLeave();"
         )
 
     def _apply_window_shape(self):
