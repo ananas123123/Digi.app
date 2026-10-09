@@ -407,9 +407,17 @@ class DigiBridge(QObject):
     def deleteFolder(self, path):
         if not self.search_service:
             return False
-        FileService.delete_folder(path)
-        self.start_scan()
-        return True
+        try:
+            root = Path(self.search_service.root).resolve()
+            target = Path(path).resolve()
+            target.relative_to(root)
+            if target == root or not target.is_dir():
+                return False
+            FileService.delete_folder(str(target))
+            self.start_scan()
+            return True
+        except (OSError, ValueError):
+            return False
 
     @Slot(str, str, result=bool)
     def convert(self, path, target):
