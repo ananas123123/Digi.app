@@ -1630,3 +1630,31 @@ body.filters-open .sidebar {
   margin: 0;
   transform: none;
 }
+
+
+/* Search and refresh are one compact group; the refresh remains an independent icon button. */
+.header > .search-refresh-group {
+  flex: 0 1 700px;
+  width: min(700px, 58vw);
+  max-width: 700px;
+  margin-right: 0;
+}
+.header > .header-actions { margin-left: 0; }
+.header > .search-refresh-group .search-refresh {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 50%;
+  color: #e8bd62;
+  text-shadow: 0 0 6px rgba(232,189,98,.9), 0 0 15px rgba(232,189,98,.65);
+  font-size: 27px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  cursor: pointer;
+}
+.header > .search-refresh-group .search-refresh:hover {
+  background: transparent !important;
+  color: #ffdc80;
+  text-shadow: 0 0 8px rgba(255,220,128,1), 0 0 20px rgba(232,189,98,.9);
+}
