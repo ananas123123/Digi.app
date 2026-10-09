@@ -217,6 +217,19 @@ function showRepositoryDropMessage(title, message) {
   document.body.appendChild(overlay);
   overlay.querySelector('.repo-drop-alert-ok').focus();
 }
+function showDropReplacePrompt(name, type, onReplace, onCancel) {
+  document.querySelectorAll('.repo-drop-replace').forEach(node => node.remove());
+  const overlay = document.createElement('div');
+  overlay.className = 'repo-drop-replace';
+  overlay.innerHTML = '<div class="repo-drop-replace-card" role="alertdialog" aria-modal="true" aria-labelledby="repo-drop-replace-title"><div class="repo-drop-replace-title" id="repo-drop-replace-title">Item already exists</div><p class="repo-drop-replace-message"></p><div class="repo-drop-replace-actions"><button type="button" class="repo-drop-cancel">Cancel</button><button type="button" class="repo-drop-confirm">Replace</button></div></div>';
+  overlay.querySelector('.repo-drop-replace-message').textContent = 'A ' + type + ' named "' + name + '" already exists here. Replace it with the dropped ' + type + '?';
+  const close = () => overlay.remove();
+  overlay.querySelector('.repo-drop-cancel').addEventListener('click', () => { close(); if (onCancel) onCancel(); });
+  overlay.querySelector('.repo-drop-confirm').addEventListener('click', () => { close(); if (onReplace) onReplace(); });
+  overlay.addEventListener('click', event => { if (event.target === overlay) { close(); if (onCancel) onCancel(); } });
+  document.body.appendChild(overlay);
+  overlay.querySelector('.repo-drop-cancel').focus();
+}
 function nativeDropTarget(x, y) {
   const target = document.elementFromPoint(Number(x) || 0, Number(y) || 0);
   return target && target.closest('.repo-browser-list');
@@ -261,15 +274,29 @@ window.handleNativeItemsDrop = function (serializedPaths, x, y) {
       if (typeof refresh === 'function') refresh();
       return;
     }
-    call('importDroppedItem', [paths[index], destination], raw => {
-      const result = parseJson(raw, null, 'dropped item import');
-      if (!result || !result.ok) {
-        list.classList.remove('repo-browser-importing');
-        showRepositoryDropMessage('Could not add item', result && result.error ? result.error : 'Digi could not copy this file or folder.');
-        return;
-      }
-      importNext(index + 1);
-    });
+    const sourcePath = paths[index];
+    const retryImport = replaceExisting => {
+      call('importDroppedItem', [sourcePath, destination, replaceExisting], raw => {
+        const result = parseJson(raw, null, 'dropped item import');
+        if (result && result.conflict) {
+          const droppedType = result.type === 'folder' ? 'folder' : 'file';
+          showDropReplacePrompt(result.name || sourcePath.split(/[\\/]/).pop(), droppedType,
+            () => retryImport(true),
+            () => {
+              if (list) list.classList.remove('repo-browser-importing');
+              openSearchRepositoryBrowser(destination);
+            });
+          return;
+        }
+        if (!result || !result.ok) {
+          list.classList.remove('repo-browser-importing');
+          showRepositoryDropMessage('Could not add item', result && result.error ? result.error : 'Digi could not copy this file or folder.');
+          return;
+        }
+        importNext(index + 1);
+      });
+    };
+    retryImport(false);
   };
   importNext(0);
 };
