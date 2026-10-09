@@ -2274,3 +2274,143 @@ body.delete-confirm-open { overflow: hidden; }
   font-weight: 800;
   letter-spacing: .07em;
 }
+
+ 
+/* White Digi rename popup: a compact tabbed surface rather than the native OS prompt. */
+#modal .rename-popup-overlay[hidden] { display: none !important; }
+#modal .rename-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100010;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(10, 12, 16, .38);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+#modal .rename-popup {
+  width: min(430px, calc(100vw - 36px));
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 13px;
+  background: #fff;
+  color: #20242b;
+  box-shadow: 0 22px 65px rgba(0,0,0,.28);
+  animation: rename-popup-enter .16s ease-out;
+}
+@keyframes rename-popup-enter {
+  from { opacity: 0; transform: translateY(7px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+#modal .rename-popup-tab {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 43px;
+  padding: 0 13px 0 17px;
+  border-bottom: 1px solid #eceef1;
+  background: #f8f9fb;
+  color: #555d68;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: .015em;
+}
+#modal .rename-popup-tab-mark {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #e8bd62;
+}
+#modal #rename-popup-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #68707b;
+  font-size: 20px;
+  cursor: pointer;
+}
+#modal #rename-popup-close:hover { background: #e9edf2; color: #20242b; }
+#modal .rename-popup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px;
+}
+#modal .rename-popup-form h3 {
+  margin: 0;
+  color: #1e232b;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -.025em;
+}
+#modal .rename-popup-form p {
+  margin: 0 0 7px;
+  color: #69717d;
+  font-size: 13px;
+  line-height: 1.5;
+}
+#modal .rename-popup-form label {
+  color: #414955;
+  font-size: 12px;
+  font-weight: 650;
+}
+#modal #rename-popup-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 43px;
+  padding: 10px 12px;
+  border: 1px solid #cfd5dd;
+  border-radius: 7px;
+  outline: none;
+  background: #fff;
+  color: #20242b;
+  font: inherit;
+  font-size: 13px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+#modal #rename-popup-input:focus {
+  border-color: #8b9db4;
+  box-shadow: 0 0 0 3px rgba(90, 117, 151, .13);
+}
+#modal .rename-popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+#modal .rename-popup-actions button {
+  min-height: 37px;
+  padding: 0 13px;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+#modal .rename-popup-cancel {
+  border: 1px solid #d8dde4;
+  background: #fff;
+  color: #424a55;
+}
+#modal .rename-popup-cancel:hover { background: #f3f5f7; }
+#modal .rename-popup-confirm {
+  border: 1px solid #252b34;
+  background: #252b34;
+  color: #fff;
+}
+#modal .rename-popup-confirm:hover { background: #3a424e; border-color: #3a424e; }
+#modal .rename-popup-actions button:focus-visible,
+#modal #rename-popup-close:focus-visible {
+  outline: 2px solid #879bb6;
+  outline-offset: 2px;
+}
