@@ -269,7 +269,12 @@ class DigiBridge(QObject):
             return json.dumps({"ok": False, "error": "Search repository is not ready."})
         try:
             root = Path(self.search_service.root).resolve()
-            current = Path(folder).resolve() if folder else root
+            supplied = str(folder or "").strip()
+            candidate = Path(supplied).expanduser() if supplied else root
+            if supplied and not candidate.is_absolute():
+                # Browser paths are repository-relative, never machine-root paths.
+                candidate = root / supplied.replace("/", os.sep).replace("\\", os.sep)
+            current = candidate.resolve()
             current.relative_to(root)
             if not current.is_dir():
                 raise NotADirectoryError("This folder no longer exists.")
