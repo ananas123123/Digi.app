@@ -784,3 +784,22 @@ body:has(#search:not(:placeholder-shown)) .search-wrap .icon-button { top: 50%; 
   .ui-input-icon { left: 11px; }
   .search-wrap .icon-button { right: 4px; width: 32px; height: 32px; }
 }
+
+
+/* Home feature cards: anchored to the bottom of the landing state. */
+.home-cards{position:fixed;z-index:12;left:50%;bottom:clamp(18px,5vh,42px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;width:min(720px,calc(100vw - 48px));transform:translateX(-50%)}
+.home-card{position:relative;display:flex;min-width:0;min-height:126px;flex-direction:column;align-items:flex-start;gap:7px;padding:17px 18px;overflow:hidden;text-align:left;border:1px solid rgba(232,189,98,.22);border-radius:15px;background:linear-gradient(145deg,rgba(25,23,18,.97),rgba(15,15,13,.97));color:var(--text);cursor:pointer;box-shadow:0 10px 35px rgba(0,0,0,.22);transition:transform .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease}
+.home-card:hover{transform:translateY(-4px);border-color:rgba(232,189,98,.68);background:linear-gradient(145deg,#252014,#171510);box-shadow:0 15px 38px rgba(0,0,0,.32),0 0 24px rgba(232,189,98,.045)}
+.home-card:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
+.home-card-icon{color:var(--gold);font-size:22px;line-height:1;margin-bottom:4px}
+.home-card-title{color:#fff5df;font-size:14px;font-weight:700}
+.home-card-copy{color:#a69b83;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.home-card-arrow{position:absolute;top:16px;right:16px;color:#806b42;font-size:15px;transition:color .2s ease,transform .2s ease}
+.home-card:hover .home-card-arrow{color:var(--gold-bright);transform:translate(2px,-2px)}
+.feature-coming{text-align:center;padding:clamp(22px,5vh,48px) 12px}
+.feature-coming-icon{display:inline-grid;place-items:center;width:58px;height:58px;border:1px solid rgba(232,189,98,.32);border-radius:18px;color:var(--gold);background:#211b10;font-size:29px}
+.feature-coming h2{margin:18px 0 8px;color:#fff4d9;font-size:21px}
+.feature-coming p{max-width:340px;margin:0 auto;color:#b8ad95;font-size:13px;line-height:1.65}
+body:has(#search:not(:placeholder-shown)) .home-cards{display:none}
+@media(max-width:760px){.home-cards{width:calc(100vw - 32px);gap:8px;bottom:16px}.home-card{min-height:112px;padding:13px 11px;gap:6px;border-radius:12px}.home-card-icon{font-size:19px}.home-card-title{font-size:13px}.home-card-copy{font-size:10px}.home-card-arrow{top:11px;right:10px;font-size:13px}}
+@media(max-height:520px){.home-cards{position:absolute;bottom:auto;top:calc(45vh + 75px)}body:not(:has(#search:not(:placeholder-shown))) .content-head{top:12vh}.search-wrap.ui-input-container{top:42vh}}
