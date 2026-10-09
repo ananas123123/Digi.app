@@ -30,7 +30,6 @@ CACHE_DIR = DEPENDENCIES_ROOT / "Cache"
 VERSION_MANAGER = DEPENDENCIES_ROOT / "Version manager"
 DB_PATH = CACHE_DIR / "study_index.db"
 LIBRARY_CONFIG = CACHE_DIR / "library_folder.txt"
-DEFAULT_INCOMING = SEARCH_REPOSITORY / "Incoming"
 
 
 def ensure_directories():
@@ -39,7 +38,6 @@ def ensure_directories():
         SEARCH_REPOSITORY,
         CACHE_DIR,
         VERSION_MANAGER,
-        DEFAULT_INCOMING,
     )
 
     if IS_FROZEN:
