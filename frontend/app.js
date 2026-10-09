@@ -39,6 +39,8 @@ function openMoveBrowser(sourcePath, sourceName) {
   modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div><div class="move-browser-actions"><span id="move-browser-message" role="status"></span><button class="ui-button move-here-button" id="move-here" type="button" disabled>Move here</button></div></div>');
   let currentFolder = '';
   let checkRequest = 0;
+  let destinationConflict = false;
+  let identicalConflict = false;
   const render = folder => {
     currentFolder = folder || '';
     call('listLibraryContents', [currentFolder], raw => {
@@ -115,7 +117,9 @@ function openMoveBrowser(sourcePath, sourceName) {
           message.textContent = check && check.error ? check.error : 'Could not check destination.';
           return;
         }
-        moveButton.disabled = !check.can_move;
+        destinationConflict = Boolean(check.conflict);
+        identicalConflict = Boolean(check.identical);
+        moveButton.disabled = !check.can_move && (!destinationConflict || identicalConflict);
         message.textContent = check.reason || '';
       });
     });
@@ -123,15 +127,33 @@ function openMoveBrowser(sourcePath, sourceName) {
   $('move-here').onclick = () => {
     const button = $('move-here');
     if (button.disabled) return;
+    let newName = '';
+    if (destinationConflict) {
+      const dot = sourceName.lastIndexOf('.');
+      const suggestedName = dot > 0
+        ? sourceName.slice(0, dot) + ' (1)' + sourceName.slice(dot)
+        : sourceName + ' (1)';
+      newName = window.prompt(
+        'A file with this name already exists. Enter a new filename to continue moving your file:',
+        suggestedName
+      );
+      if (newName === null || !newName.trim()) {
+        $('move-browser-message').textContent = 'Move failed — two files of the same name cannot be in one folder.';
+        return;
+      }
+      newName = newName.trim();
+    }
     button.disabled = true;
     $('move-browser-message').textContent = 'Moving file…';
-    call('moveFile', [sourcePath, currentFolder], raw => {
+    call('moveFile', [sourcePath, currentFolder, newName], raw => {
       const result = parseJson(raw, null, 'move file');
       if (result && result.ok) {
         $('modal').classList.add('hidden');
         refresh();
       } else {
-        $('move-browser-message').textContent = result && result.error ? result.error : 'The file could not be moved.';
+        $('move-browser-message').textContent = result && result.error
+          ? result.error
+          : 'Move failed — two files of the same name cannot be in one folder.';
         render(currentFolder);
       }
     });
