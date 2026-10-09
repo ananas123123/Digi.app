@@ -54,8 +54,13 @@ function openMoveBrowser(sourcePath, sourceName) {
       list.classList.toggle('is-empty', data.entries.length === 0);
       if (data.parent) {
         const up = document.createElement('button');
-        up.type = 'button'; up.className = 'move-browser-entry move-browser-up'; up.textContent = '↰  ..';
-        up.onclick = () => render(data.parent); list.appendChild(up);
+        up.type = 'button';
+        up.className = 'move-browser-back';
+        up.title = 'Go to parent folder';
+        up.setAttribute('aria-label', 'Go to parent folder');
+        up.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>';
+        up.onclick = () => render(data.parent);
+        list.appendChild(up);
       }
       if (!data.entries.length) {
         const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'This folder is empty.'; list.appendChild(empty);
