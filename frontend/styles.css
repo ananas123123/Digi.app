@@ -842,3 +842,19 @@ body:not(:has(#search:not(:placeholder-shown))) .home-cards {
   body:not(:has(#search:not(:placeholder-shown))) .search-wrap.ui-input-container { top: 36vh; }
   body:not(:has(#search:not(:placeholder-shown))) .home-cards { top: calc(36vh + 70px); }
 }
+
+
+/* Keep the landing search centered vertically; override active/header positioning only while idle. */
+body:not(:has(#search:not(:placeholder-shown))) .search-wrap.ui-input-container {
+  position: fixed;
+  top: 50vh !important;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+body:not(:has(#search:not(:placeholder-shown))) .content-head {
+  top: calc(50vh - 165px) !important;
+}
+body:not(:has(#search:not(:placeholder-shown))) .home-cards {
+  top: calc(50vh + 66px) !important;
+  bottom: auto !important;
+}
