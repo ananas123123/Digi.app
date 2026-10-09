@@ -170,6 +170,57 @@ function openSearchRepositoryBrowser(initialPath = "") {
   }
   renderRepository(initialPath);
 }
+function showRepositoryDropMessage(title, message) {
+  document.querySelectorAll('.repo-drop-alert').forEach(node => node.remove());
+  const overlay = document.createElement('div');
+  overlay.className = 'repo-drop-alert';
+  overlay.innerHTML = '<div class="repo-drop-alert-card" role="alertdialog" aria-modal="true" aria-labelledby="repo-drop-alert-title"><div class="repo-drop-alert-title" id="repo-drop-alert-title"></div><p class="repo-drop-alert-message"></p><div class="repo-drop-alert-actions"><button type="button" class="repo-drop-alert-ok">Okay</button></div></div>';
+  overlay.querySelector('.repo-drop-alert-title').textContent = title || 'Could not add folder';
+  overlay.querySelector('.repo-drop-alert-message').textContent = message || 'Digi could not add the dropped folder.';
+  const close = () => overlay.remove();
+  overlay.querySelector('.repo-drop-alert-ok').addEventListener('click', close);
+  overlay.addEventListener('click', event => { if (event.target === overlay) close(); });
+  document.addEventListener('keydown', function onKey(event) {
+    if (event.key === 'Escape' && document.body.contains(overlay)) {
+      close();
+      document.removeEventListener('keydown', onKey);
+    }
+  });
+  document.body.appendChild(overlay);
+  overlay.querySelector('.repo-drop-alert-ok').focus();
+}
+window.handleNativeFolderDrop = function (serializedPaths) {
+  let paths = [];
+  try { paths = JSON.parse(serializedPaths || '[]'); } catch (_) {}
+  paths = Array.isArray(paths) ? paths.filter(path => typeof path === 'string' && path.trim()) : [];
+  const browser = document.querySelector('.repo-browser');
+  if (!browser || !paths.length) {
+    showRepositoryDropMessage('Open Search Repository', 'Open Digi’s Search Repository explorer, then drop the folder into its folder list.');
+    return;
+  }
+  const pathLabel = browser.querySelector('#repo-browser-path');
+  const destination = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
+  const list = browser.querySelector('#repo-browser-list');
+  if (list) list.classList.add('repo-browser-importing');
+  const importNext = index => {
+    if (index >= paths.length) {
+      if (list) list.classList.remove('repo-browser-importing');
+      openSearchRepositoryBrowser(destination);
+      if (typeof refresh === 'function') refresh();
+      return;
+    }
+    call('importFolder', [paths[index], destination], raw => {
+      const result = parseJson(raw, null, 'folder import');
+      if (!result || !result.ok) {
+        if (list) list.classList.remove('repo-browser-importing');
+        showRepositoryDropMessage('Could not add folder', result && result.error ? result.error : 'Digi could not read or copy this folder.');
+        return;
+      }
+      importNext(index + 1);
+    });
+  };
+  importNext(0);
+};
 const repositoryButton = $("open-search-repository");
 if (repositoryButton) repositoryButton.addEventListener("click", openSearchRepositoryBrowser);
 function conversionButton(path){return [...document.querySelectorAll("[data-convert]")].find(b=>b.dataset.convert===path);}
