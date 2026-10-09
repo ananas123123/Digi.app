@@ -55,30 +55,35 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
 // Let the wordmark dot be dragged temporarily; it snaps back on release.
 (() => {
   const dot = document.querySelector('.digi-home-logo-dot');
-  if (!dot) return;
-  dot.style.cursor = 'grab';
-  dot.style.touchAction = 'none';
-  dot.addEventListener('pointerdown', event => {
+  const logo = dot && dot.closest('.digi-home-logo');
+  if (!dot || !logo) return;
+  logo.style.touchAction = 'none';
+  logo.addEventListener('pointerdown', event => {
     if (event.button !== 0) return;
+    const rect = dot.getBoundingClientRect();
+    const hitPadding = 14;
+    if (event.clientX < rect.left - hitPadding || event.clientX > rect.right + hitPadding ||
+        event.clientY < rect.top - hitPadding || event.clientY > rect.bottom + hitPadding) return;
     event.preventDefault();
+    event.stopPropagation();
     const startX = event.clientX;
     const startY = event.clientY;
-    dot.style.cursor = 'grabbing';
-    dot.setPointerCapture(event.pointerId);
+    logo.style.cursor = 'grabbing';
     const move = e => {
       dot.style.translate = (e.clientX - startX) + 'px ' + (e.clientY - startY) + 'px';
     };
     const finish = () => {
       dot.style.translate = '';
-      dot.style.cursor = 'grab';
-      dot.removeEventListener('pointermove', move);
-      dot.removeEventListener('pointerup', finish);
-      dot.removeEventListener('pointercancel', finish);
-      dot.removeEventListener('lostpointercapture', finish);
+      logo.style.cursor = '';
+      logo.removeEventListener('pointermove', move);
+      logo.removeEventListener('pointerup', finish);
+      logo.removeEventListener('pointercancel', finish);
+      logo.removeEventListener('lostpointercapture', finish);
     };
-    dot.addEventListener('pointermove', move);
-    dot.addEventListener('pointerup', finish);
-    dot.addEventListener('pointercancel', finish);
-    dot.addEventListener('lostpointercapture', finish);
+    logo.setPointerCapture(event.pointerId);
+    logo.addEventListener('pointermove', move);
+    logo.addEventListener('pointerup', finish);
+    logo.addEventListener('pointercancel', finish);
+    logo.addEventListener('lostpointercapture', finish);
   });
 })();
