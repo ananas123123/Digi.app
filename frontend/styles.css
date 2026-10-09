@@ -2074,3 +2074,18 @@ body.delete-confirm-open { overflow: hidden; }
 .move-browser-list.is-empty {
   overflow: hidden;
 }
+
+
+/* Fit the empty-state message inside the listing box without clipping its bottom. */
+.move-browser-list.is-empty {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+}
+.move-browser-list.is-empty > .empty {
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+}
