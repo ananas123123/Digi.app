@@ -61,15 +61,44 @@ function openMoveBrowser(sourcePath, sourceName) {
       }
       list.innerHTML = '';
       list.classList.toggle('is-empty', data.entries.length === 0);
-      if (data.parent) {
-        const up = document.createElement('button');
-        up.type = 'button';
-        up.className = 'move-browser-back';
-        up.title = 'Go to parent folder';
-        up.setAttribute('aria-label', 'Go to parent folder');
-        up.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>';
-        up.onclick = () => render(data.parent);
-        list.appendChild(up);
+      if (data.parent || currentFolder) {
+        const nav = document.createElement('div');
+        nav.className = 'move-browser-nav';
+        if (data.parent) {
+          const up = document.createElement('button');
+          up.type = 'button';
+          up.className = 'move-browser-back';
+          up.title = 'Go to parent folder';
+          up.setAttribute('aria-label', 'Go to parent folder');
+          up.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>';
+          up.onclick = () => render(data.parent);
+          nav.appendChild(up);
+        }
+        const breadcrumb = document.createElement('div');
+        breadcrumb.className = 'move-browser-breadcrumb';
+        breadcrumb.setAttribute('aria-label', 'Current directory');
+        const parts = String(currentFolder).replace(/\\\\/g, '/').split('/').filter(Boolean);
+        let accumulated = '';
+        parts.forEach((part, index) => {
+          if (index) {
+            const arrow = document.createElement('span');
+            arrow.className = 'move-browser-breadcrumb-arrow';
+            arrow.setAttribute('aria-hidden', 'true');
+            arrow.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 3 5 5-5 5"/></svg>';
+            breadcrumb.appendChild(arrow);
+          }
+          accumulated = accumulated ? accumulated + '/' + part : part;
+          const segment = document.createElement('button');
+          segment.type = 'button';
+          segment.className = 'move-browser-breadcrumb-segment' + (index === parts.length - 1 ? ' is-current' : '');
+          segment.textContent = part;
+          segment.title = 'Open ' + accumulated;
+          segment.disabled = index === parts.length - 1;
+          segment.onclick = () => render(accumulated);
+          breadcrumb.appendChild(segment);
+        });
+        nav.appendChild(breadcrumb);
+        list.appendChild(nav);
       }
       if (!data.entries.length) {
         const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'This folder is empty.'; list.appendChild(empty);
