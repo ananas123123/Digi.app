@@ -858,3 +858,49 @@ body:not(:has(#search:not(:placeholder-shown))) .home-cards {
   top: calc(50vh + 66px) !important;
   bottom: auto !important;
 }
+
+
+/* Match the Digi.web wordmark and typography in the landing hero. */
+.digi-home-logo {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: .055em;
+  margin: 0;
+  color: #fff;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: clamp(64px, 8vw, 92px) !important;
+  font-weight: 800 !important;
+  line-height: .95 !important;
+  letter-spacing: -.06em !important;
+  text-shadow: 0 0 10px rgba(255,255,255,.09), 0 0 24px rgba(201,162,39,.1);
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  color: #fff !important;
+}
+.digi-home-logo-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: .19em;
+  height: .19em;
+  margin-left: .02em;
+  border-radius: 50%;
+  vertical-align: baseline;
+  background: #c9a227;
+  box-shadow: 0 0 7px #c9a227, 0 0 17px #c9a227, 0 0 34px rgba(201,162,39,.8), 0 0 56px rgba(201,162,39,.4);
+  animation: digiHomeLogoPulse 2.2s ease-in-out infinite;
+}
+@keyframes digiHomeLogoPulse {
+  0%,100% { opacity: .9; box-shadow: 0 0 6px #c9a227, 0 0 14px #c9a227, 0 0 28px rgba(201,162,39,.7); }
+  50% { opacity: 1; box-shadow: 0 0 9px #e0bd45, 0 0 20px #c9a227, 0 0 38px rgba(201,162,39,.9); }
+}
+body:not(:has(#search:not(:placeholder-shown))) .content p {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (max-width: 760px) {
+  .digi-home-logo { font-size: clamp(58px, 14vw, 78px) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .digi-home-logo-dot { animation: none; }
+}
