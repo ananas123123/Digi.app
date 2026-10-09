@@ -1,5 +1,4 @@
 from pathlib import Path
-import ctypes
 import os
 import sys
 
@@ -15,20 +14,14 @@ APP_DIR = (
     else Path(__file__).resolve().parents[1]
 )
 
-# Define the production data path in both modes because shared modules import
-# this constant. Source/test mode never writes there; DEPENDENCIES_ROOT below
-# remains repository-local unless the application is frozen.
 USER_DATA_ROOT = Path(
     os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))
 ) / "Digi"
 
 if IS_FROZEN:
-    # Installed application files belong in Program Files, while all
-    # persistent user data belongs in LOCALAPPDATA.
     INSTALL_ROOT = Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Digi"
     DEPENDENCIES_ROOT = USER_DATA_ROOT
 else:
-    # Never redirect source/test execution into the production data location.
     INSTALL_ROOT = APP_DIR
     DEPENDENCIES_ROOT = APP_DIR / "Digi Dependencies"
 
@@ -40,43 +33,26 @@ LIBRARY_CONFIG = CACHE_DIR / "library_folder.txt"
 DEFAULT_INCOMING = SEARCH_REPOSITORY / "Incoming"
 
 
-def _create_dependency_layout():
-    for path in (
+def ensure_directories():
+    """Prepare development folders, but never repair a packaged user's data."""
+    required = (
         SEARCH_REPOSITORY,
         CACHE_DIR,
         VERSION_MANAGER,
         DEFAULT_INCOMING,
-    ):
-        path.mkdir(parents=True, exist_ok=True)
+    )
 
-
-def ensure_directories():
-    try:
-        _create_dependency_layout()
+    if IS_FROZEN:
+        missing = [str(path) for path in required if not path.is_dir()]
+        if missing:
+            raise FileNotFoundError(
+                "Required Digi data folders are missing: " + ", ".join(missing)
+            )
         return
-    except PermissionError:
-        # Source/test mode must never elevate.
-        # In the installed application, user data should normally be writable
-        # without elevation. Elevation is retained only as a compatibility
-        # fallback for an installation/data layout that still requires repair.
-        if IS_FROZEN and "--dependency-repair" not in sys.argv:
-            try:
-                executable = str(Path(sys.executable).resolve())
-                result = ctypes.windll.shell32.ShellExecuteW(
-                    None,
-                    "runas",
-                    executable,
-                    "--dependency-repair",
-                    str(Path(executable).parent),
-                    1,
-                )
-                if result > 32:
-                    raise SystemExit(0)
-            except SystemExit:
-                raise
-            except Exception:
-                pass
-        raise
+
+    # Source/test mode uses repository-local disposable dependencies only.
+    for path in required:
+        path.mkdir(parents=True, exist_ok=True)
 
 
 def get_library_root():
