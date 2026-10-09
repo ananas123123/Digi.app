@@ -17,15 +17,18 @@
 
 /* Explicit loading state; grey is reserved for unavailable checks. */
 .update-status-dot[data-status="checking"]{
-  width:12px;
-  height:12px;
-  background:transparent;
+  width:16px;
+  height:16px;
+  min-width:16px;
+  background:transparent !important;
   border:2px solid rgba(255,255,255,.22);
   border-top-color:#fff;
   border-right-color:#fff;
+  border-radius:50%;
   box-shadow:none;
-  animation:digiUpdateSpin .65s linear infinite;
+  animation:digiUpdateSpin .65s linear infinite !important;
   transform-origin:center;
+  will-change:transform;
 }
 .update-status-dot[data-status="offline"]{
   background:#777;
