@@ -5,7 +5,17 @@
 <link rel="stylesheet" href="./styles.css"></head>
 <body>
 <header class="header"><div class="brand"><div class="brand-mark">D</div><div><b>Digi</b><small>Search Engine</small></div></div>
-<div class="search-wrap"><input id="search" class="search-input" placeholder="Search files..." autocomplete="off"><button id="clear" class="icon-button">×</button></div>
+<div class="ui-input-container search-wrap">
+  <input id="search" required class="ui-input search-input" placeholder="Search files..." autocomplete="off" type="text">
+  <div class="ui-input-underline"></div>
+  <div class="ui-input-highlight"></div>
+  <div class="ui-input-icon" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" d="M21 21L16.65 16.65M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z"></path>
+    </svg>
+  </div>
+  <button id="clear" class="icon-button" aria-label="Clear search" title="Clear search">×</button>
+</div>
 <div class="header-actions"><button class="ui-button" id="notes">Notes</button><button class="ui-button" id="incoming">Incoming</button><button class="ui-button" id="repository">Repository</button><span class="window-controls"><button class="window-control" id="window-minimize" aria-label="Minimise" title="Minimise">−</button><button class="window-control" id="window-maximize" aria-label="Maximise or restore" title="Maximise or restore">□</button><button class="window-control window-close" id="window-close" aria-label="Close" title="Close">×</button></span></div>
 <div class="update-status-wrap" title="Update status"><span id="digi-update-status" class="update-status-dot" data-status="checking" role="status" aria-label="Checking for Digi updates" title="Checking for Digi updates…"></span></div></header>
 <main class="layout"><aside class="sidebar"><div class="section-label">FILTERS</div>
