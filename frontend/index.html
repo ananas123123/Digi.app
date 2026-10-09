@@ -18,7 +18,8 @@
 </div>
 <div class="header-actions"><button class="ui-button" id="incoming">Incoming</button><button class="ui-button" id="repository">Repository</button><span class="window-controls"><button class="window-control" id="window-minimize" aria-label="Minimise" title="Minimise">−</button><button class="window-control" id="window-maximize" aria-label="Maximise or restore" title="Maximise or restore">□</button><button class="window-control window-close" id="window-close" aria-label="Close" title="Close">×</button></span></div>
 </header>
-<main class="layout"><aside class="sidebar"><div class="section-label">FILTERS</div>
+<button id="filters-toggle" type="button" aria-controls="filters-panel" aria-expanded="false" title="Show filters"><span class="filters-toggle-icon" aria-hidden="true">›</span><span class="filters-toggle-label">Filters</span></button>
+<main class="layout"><aside class="sidebar" id="filters-panel"><div class="section-label">FILTERS</div>
 <label>Type<select id="type"><option>All types</option><option>PDF</option><option>Word</option></select></label>
 <label>Status<select id="status"><option>All statuses</option><option>Not started</option><option>In progress</option><option>Finished</option><option>Due</option><option>Due late</option></select></label>
 <label>Source<select id="source"><option>All sources</option><option>ExamPro</option><option>PMT</option></select></label>
