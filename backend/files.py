@@ -15,8 +15,6 @@ class FileService:
         if os.name == "nt" and p.suffix.lower() == ".docx":
             try:
                 import win32com.client
-                # DispatchEx avoids attaching to an unrelated pre-existing Word
-                # automation instance. Open the exact absolute path, not a title.
                 word = win32com.client.DispatchEx("Word.Application")
                 word.Visible = True
                 document = word.Documents.Open(
@@ -24,13 +22,24 @@ class FileService:
                     ReadOnly=False,
                     AddToRecentFiles=True,
                     ConfirmConversions=False,
+                    OpenAndRepair=False,
+                    NoEncodingDialog=True,
                 )
-                print("[Digi Open] Word opened:", str(document.FullName), flush=True)
+                opened_path = Path(str(document.FullName)).resolve()
+                print("[Digi Open] Word reports opened path:", str(opened_path), flush=True)
+                if os.path.normcase(str(opened_path)) != os.path.normcase(str(p)):
+                    raise RuntimeError(
+                        "Word opened a different document. Requested: "
+                        + str(p) + "; opened: " + str(opened_path)
+                    )
                 return
             except Exception as exc:
-                print("[Digi Open] Direct Word automation failed:", repr(exc), flush=True)
-                # Fall back to the registered file association, but make the
-                # fallback visible in the log instead of silently swallowing it.
+                print("[Digi Open] Direct Word open FAILED:", repr(exc), flush=True)
+                raise RuntimeError(
+                    "Digi could not open this existing DOCX directly in Word. "
+                    "The file was not replaced or modified. Requested path: "
+                    + str(p) + ". Details: " + str(exc)
+                ) from exc
         if hasattr(os, "startfile"):
             os.startfile(str(p), "open")
             print("[Digi Open] Launched using Windows file association:", str(p), flush=True)
