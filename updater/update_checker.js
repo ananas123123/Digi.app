@@ -89,6 +89,8 @@
     requestInProgress = true;
     lastRemoteCheck = Date.now();
     setStatus("checking", "Checking for Digi updates…");
+    // Keep the checking state visible briefly, even when the network fails immediately.
+    await new Promise(resolve => window.setTimeout(resolve, 700));
     try {
       let manifest = null;
       let lastError = null;
