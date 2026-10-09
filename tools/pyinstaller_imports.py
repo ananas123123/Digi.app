@@ -32,9 +32,6 @@ def module_from_import(node: ast.AST, current_package: str) -> set[str]:
             base = node.module or ""
         if base:
             found.add(base)
-        for alias in node.names:
-            if alias.name != "*":
-                found.add(".".join(part for part in (base, alias.name) if part))
     return found
 
 
