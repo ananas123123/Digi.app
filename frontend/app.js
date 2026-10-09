@@ -31,7 +31,7 @@ call("search",[q,$("type").value,$("status").value,$("source").value,$("method")
 document.querySelectorAll("[data-preview]").forEach(card=>{const select=()=>showPreview(card.dataset.preview,card.dataset.name,card);card.onclick=e=>{if(e.target.closest("button"))return;select()};card.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&!e.target.closest("button")){e.preventDefault();select()}};});
 document.querySelectorAll("[data-open]").forEach(b=>b.onclick=e=>{e.stopPropagation();openSelectedFile(b.dataset.open)});document.querySelectorAll("[data-folder]").forEach(b=>b.onclick=e=>{e.stopPropagation();call("openFolder",[b.dataset.folder])});document.querySelectorAll("[data-convert]").forEach(b=>b.onclick=e=>{e.stopPropagation();startConversion(b)});});}
 function openSearchRepositoryBrowser(initialPath = "") {
-  modal("Search repository", '<div class="repo-browser"><div class="repo-browser-path" id="repo-browser-path">Search repository</div><div class="repo-browser-list" id="repo-browser-list"><div class="empty">Loading folders…</div></div></div>');
+  modal("Search repository", '<div class="repo-browser"><div class="repo-browser-path-wrap"><span class="repo-browser-path-prefix">Search Repository /</span><input class="repo-browser-path" id="repo-browser-path" aria-label="Repository folder path" autocomplete="off" spellcheck="false" placeholder="(root)"><span class="repo-browser-path-help">Edit path and press Enter to navigate</span></div><div class="repo-browser-list" id="repo-browser-list"><div class="empty">Loading folders…</div></div></div>');
   let current = "";
   const renderRepository = path => {
     // Never let an event object become a filesystem path.
@@ -39,9 +39,12 @@ function openSearchRepositoryBrowser(initialPath = "") {
     const list = $("repo-browser-list");
     const pathLabel = $("repo-browser-path");
     if (!list || !pathLabel) return;
-    pathLabel.textContent = current || "Search repository";
     pathLabel.dataset.path = current;
     pathLabel.dataset.currentPath = current;
+    const displayPath = current.replace(/\\/g, '/');
+    // Display only the path relative to the configured repository root.
+    pathLabel.value = displayPath ? displayPath.split('/').filter(Boolean).slice(-1).join('/') : '';
+    pathLabel.dataset.fullPath = current;
     const contextAddFolder = document.querySelector('#digi-context-menu [data-action="add-folder"]');
     if (contextAddFolder) contextAddFolder.dataset.parent = current;
     list.innerHTML = '<div class="empty">Loading…</div>';
@@ -52,6 +55,15 @@ function openSearchRepositoryBrowser(initialPath = "") {
         list.innerHTML = '<div class="empty">Could not load this folder.</div>';
         return;
       }
+      // Canonicalize the current path from the backend and show it relative to
+      // the repository root, never as a C:\\... filesystem path.
+      current = data.current || current;
+      pathLabel.dataset.currentPath = current;
+      pathLabel.dataset.path = current;
+      const rootPath = String(data.root || '').replace(/\\/g, '/').replace(/\/$/, '');
+      const normalizedCurrent = String(current || '').replace(/\\/g, '/');
+      const relativePath = normalizedCurrent.startsWith(rootPath) ? normalizedCurrent.slice(rootPath.length).replace(/^\/+/, '') : '';
+      pathLabel.value = relativePath;
       list.innerHTML = "";
       if (data.parent) {
         const up = document.createElement("button");
@@ -94,6 +106,21 @@ function openSearchRepositoryBrowser(initialPath = "") {
       });
     });
   };
+  const pathInput = $("repo-browser-path");
+  if (pathInput) {
+    pathInput.addEventListener('keydown', event => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      const prefix = document.querySelector('.repo-browser-path-prefix');
+      let typed = pathInput.value.trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+      typed = typed.replace(/^search repository\s*\/?/i, '').replace(/^\/+/, '');
+      if (typed.split('/').some(part => part === '..')) {
+        showRepositoryDropMessage('Invalid folder path', 'Use a path inside Search Repository. Parent traversal is not allowed.');
+        return;
+      }
+      renderRepository(typed);
+    });
+  }
   const browser = $("repo-browser-list");
   if (browser) {
     browser.oncontextmenu = event => {
