@@ -1609,3 +1609,24 @@ body.filters-open .sidebar {
   font-size: 18px;
 }
 #preview-panel[hidden] { display: none !important; }
+
+
+/* Keep the refresh control immediately beside the search field, not at the window edge. */
+.search-refresh-group {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  gap: 10px;
+}
+.search-refresh-group .search-wrap {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+.search-refresh-group .search-refresh {
+  position: static;
+  flex: 0 0 34px;
+  margin: 0;
+  transform: none;
+}
