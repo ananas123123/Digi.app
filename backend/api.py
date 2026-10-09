@@ -262,6 +262,28 @@ class DigiBridge(QObject):
         except (OSError, ValueError):
             return False
 
+    @Slot(str, result=str)
+    def listLibraryContents(self, folder):
+        """List one directory inside the configured search repository."""
+        if not self.search_service:
+            return json.dumps({"ok": False, "error": "Search repository is not ready."})
+        try:
+            root = Path(self.search_service.root).resolve()
+            current = Path(folder).resolve() if folder else root
+            current.relative_to(root)
+            if not current.is_dir():
+                raise NotADirectoryError("This folder no longer exists.")
+            entries = []
+            for item in sorted(current.iterdir(), key=lambda p: (not p.is_dir(), p.name.casefold())):
+                try:
+                    item.resolve().relative_to(root)
+                except ValueError:
+                    continue
+                entries.append({"name": item.name, "path": str(item), "type": "folder" if item.is_dir() else "file"})
+            return json.dumps({"ok": True, "root": str(root), "current": str(current), "parent": str(current.parent) if current != root else "", "entries": entries})
+        except (OSError, ValueError) as exc:
+            return json.dumps({"ok": False, "error": str(exc)})
+
     @Slot(str, result=bool)
     def openFolder(self, path):
         FileService.open_folder(path)
