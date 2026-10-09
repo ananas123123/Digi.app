@@ -2055,3 +2055,16 @@ body.delete-confirm-open { overflow: hidden; }
 .move-browser-entry:hover { background: rgba(255,255,255,.09); }
 .move-browser-entry.is-selected { background: rgba(255,255,255,.14); outline: 1px solid rgba(255,255,255,.25); }
 .move-browser-entry.move-browser-up { color: #fff; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 6px; }
+
+
+/* The empty-state panel fills the entire move-browser listing area. */
+.move-browser-list > .empty {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
