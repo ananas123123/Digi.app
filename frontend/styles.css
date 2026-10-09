@@ -2988,3 +2988,66 @@ button.results-folder-icon:focus-visible { outline: 2px solid #e8bd62; outline-o
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
+
+
+/* Compact, centered Digi-style notification for rejected folder drops. */
+.repo-drop-alert {
+  position: fixed;
+  inset: 0;
+  z-index: 2000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(0, 0, 0, .72);
+  backdrop-filter: blur(5px);
+}
+.repo-drop-alert-card {
+  width: min(410px, calc(100vw - 36px));
+  padding: 22px;
+  border: 1px solid rgba(232, 189, 98, .32);
+  border-radius: 17px;
+  background: #141410;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .58);
+  color: #f1e8d4;
+}
+.repo-drop-alert-title {
+  margin: 0 0 11px;
+  color: #f3ead6;
+  font-size: 16px;
+  font-weight: 750;
+}
+.repo-drop-alert-message {
+  margin: 0;
+  color: #bdb29a;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.repo-drop-alert-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+.repo-drop-alert-ok {
+  min-width: 94px;
+  min-height: 40px;
+  padding: 9px 18px;
+  border: 1px solid #a92c31;
+  border-radius: 11px;
+  background: #c9363d;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background .15s ease, transform .15s ease;
+}
+.repo-drop-alert-ok:hover {
+  background: #df4249;
+  transform: translateY(-1px);
+}
+.repo-drop-alert-ok:focus-visible {
+  outline: 2px solid #e8bd62;
+  outline-offset: 3px;
+}
