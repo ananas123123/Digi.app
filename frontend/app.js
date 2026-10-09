@@ -744,11 +744,15 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
         const kind = action === 'new-docx' ? 'docx' : 'pdf';
         const label = kind === 'docx' ? 'Word document' : 'PDF document';
         modal('New ' + (kind === 'docx' ? 'DOCX' : 'PDF'),
-          '<form id="new-document-form" class="new-document-form"><label for="new-document-name">File name</label><input id="new-document-name" name="name" required maxlength="180" placeholder="My document" autocomplete="off"><p>The file will be created in your configured search repository.</p><div class="new-document-actions"><button type="button" class="small-button" id="new-document-cancel">Cancel</button><button type="submit" class="small-button">Create ' + (kind === 'docx' ? 'DOCX' : 'PDF') + '</button></div></form>');
+          '<form id="new-document-form" class="new-document-form"><label for="new-document-name">File name</label><input id="new-document-name" name="name" required maxlength="180" placeholder="My document" autocomplete="off"><p>The file will be created in your configured search repository.</p><div class="new-document-actions"><button type="button" class="new-document-cancel" id="new-document-cancel">Cancel</button><button type="submit" class="new-document-create">Create ' + (kind === 'docx' ? 'DOCX' : 'PDF') + '</button></div></form>');
+        $('modal').classList.add('new-document-modal');
         const form = $('new-document-form');
         const input = $('new-document-name');
         if (input) input.focus();
-        $('new-document-cancel').onclick = () => $('modal').classList.add('hidden');
+        $('new-document-cancel').onclick = () => {
+          $('modal').classList.add('hidden');
+          $('modal').classList.remove('new-document-modal');
+        };
         form.onsubmit = event => {
           event.preventDefault();
           const name = input.value.trim();
@@ -773,6 +777,7 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
             }
             // Keep the user in the place where they initiated New.
             $('modal').classList.add('hidden');
+            $('modal').classList.remove('new-document-modal');
             if (repositoryBrowser) {
               const pathLabel = repositoryBrowser.querySelector('#repo-browser-path');
               const currentPath = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
