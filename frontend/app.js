@@ -64,6 +64,7 @@ function openSearchRepositoryBrowser(initialPath = "") {
       const normalizedCurrent = String(current || '').replace(/\\/g, '/');
       const relativePath = normalizedCurrent.startsWith(rootPath) ? normalizedCurrent.slice(rootPath.length).replace(/^\/+/, '') : '';
       pathLabel.value = relativePath;
+      pathLabel.dataset.isRoot = relativePath ? "false" : "true";
       list.innerHTML = "";
       if (data.parent) {
         const backButton = document.createElement("button");
@@ -142,7 +143,7 @@ function openSearchRepositoryBrowser(initialPath = "") {
       }
       // Only animate the placeholder at the repository root. Never overwrite
       // a path the user is editing or a path for a subfolder.
-      if (rootPathInput.dataset.currentPath) return;
+      if (rootPathInput.dataset.isRoot !== "true") return;
       if (document.activeElement === rootPathInput && rootPathInput.value.trim()) return;
       if (!repositoryFolders.length) {
         rootPathInput.placeholder = "(root)";
