@@ -50,6 +50,22 @@ class ReleaseManifestWorker(QThread):
 
 
 class DigiBridge(QObject):
+    @Slot()
+    def minimizeWindow(self):
+        if self.parent():
+            self.parent().showMinimized()
+
+    @Slot()
+    def toggleMaximizeWindow(self):
+        window = self.parent()
+        if window:
+            window.showNormal() if window.isMaximized() else window.showMaximized()
+
+    @Slot()
+    def closeWindow(self):
+        if self.parent():
+            self.parent().close()
+
     indexUpdated = Signal()
     releaseManifestResult = Signal(str)
     conversionProgress = Signal(str, int)
