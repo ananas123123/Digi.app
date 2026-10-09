@@ -47,9 +47,14 @@ def main() -> int:
         except (OSError, SyntaxError, UnicodeError) as exc:
             print(f"ERROR: cannot analyse {path}: {exc}", file=sys.stderr)
             return 2
-        package = "backend" + ("." + ".".join(path.relative_to(ROOT / "backend").parts[:-1]) if path.parent != ROOT / "backend" else "")
-        if path.name == "__init__.py":
-            package = package.rsplit(".", 1)[0] if "." in package else "backend"
+        if path == ROOT / "app.py":
+            package = ""
+        else:
+            relative = path.relative_to(ROOT / "backend")
+            parts = relative.parts[:-1]
+            package = "backend" + ("." + ".".join(parts) if parts else "")
+            if path.name == "__init__.py" and parts:
+                package = "backend." + ".".join(parts)
         for node in ast.walk(tree):
             if isinstance(node, (ast.Import, ast.ImportFrom)):
                 imports.update(module_from_import(node, package))
