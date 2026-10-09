@@ -2414,3 +2414,11 @@ body.delete-confirm-open { overflow: hidden; }
   outline: 2px solid #879bb6;
   outline-offset: 2px;
 }
+
+ 
+/* Clearly flag destination conflicts in the move browser's bottom status line. */
+#modal:has(.move-browser) #move-browser-message.move-browser-message-error {
+  color: #ff343f !important;
+  text-shadow: 0 0 5px rgba(255, 35, 55, .42), 0 0 12px rgba(255, 35, 55, .2);
+  font-weight: 650;
+}
