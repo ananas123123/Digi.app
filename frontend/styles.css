@@ -649,7 +649,7 @@ body.digi-launching .results {
   padding: 0 62px 0 58px;
   border: 0;
   border-bottom: 2px solid rgba(232,189,98,.35);
-  border-radius: 14px 14px 3px 3px;
+  border-radius: 14px;
   outline: none;
   background: rgba(20,19,16,.96);
   color: #fff8e9;
@@ -724,7 +724,7 @@ body:has(#search:not(:placeholder-shown)) .search-wrap.ui-input-container {
 body:has(#search:not(:placeholder-shown)) .ui-input-container .ui-input {
   height: 48px;
   padding-left: 50px;
-  border-radius: 11px 11px 3px 3px;
+  border-radius: 11px;
   font-size: 14px;
 }
 body:has(#search:not(:placeholder-shown)) .ui-input-icon { left: 16px; }
