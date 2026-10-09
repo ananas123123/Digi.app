@@ -1066,3 +1066,16 @@ body {
   clip-path: inset(0 round 18px) !important;
   -webkit-clip-path: inset(0 round 18px) !important;
 }
+
+
+/* Maximized/windowed-fullscreen state uses square corners; normal mode stays rounded. */
+html.window-maximized,
+html.window-maximized body,
+html.window-maximized body {
+  border-radius: 0 !important;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+}
+html.window-maximized body {
+  border: 0 !important;
+}
