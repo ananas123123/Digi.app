@@ -3051,3 +3051,68 @@ button.results-folder-icon:focus-visible { outline: 2px solid #e8bd62; outline-o
   outline: 2px solid #e8bd62;
   outline-offset: 3px;
 }
+
+
+/* Editable repository-relative path bar. */
+#modal:has(.repo-browser) .repo-browser-path-wrap {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px 10px;
+  padding: 10px 13px;
+  border: 1px solid #342d20;
+  border-radius: 11px;
+  background: #171611;
+}
+#modal:has(.repo-browser) .repo-browser-path-prefix {
+  color: #e8c979;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+#modal:has(.repo-browser) input.repo-browser-path {
+  width: 100%;
+  min-width: 0;
+  padding: 2px 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  outline: none;
+  background: transparent;
+  color: #eee4cf;
+  font: inherit;
+  font-size: 12px;
+}
+#modal:has(.repo-browser) input.repo-browser-path:focus {
+  border-color: rgba(232, 189, 98, .45);
+  background: rgba(0, 0, 0, .2);
+}
+#modal:has(.repo-browser) input.repo-browser-path::placeholder { color: #8c826e; }
+#modal:has(.repo-browser) .repo-browser-path-help {
+  grid-column: 1 / -1;
+  color: #938873;
+  font-size: 10px;
+}
+#modal:has(.repo-browser) .repo-browser-path { overflow-wrap: anywhere; }
+.repo-browser-list.repo-browser-native-drop {
+  border-color: #e8bd62;
+  background: rgba(232, 189, 98, .08);
+  box-shadow: inset 0 0 0 2px rgba(232, 189, 98, .2), 0 0 18px rgba(232, 189, 98, .08);
+}
+.repo-browser-native-drop-hint {
+  position: absolute;
+  z-index: 5;
+  inset: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border: 2px dashed rgba(232, 189, 98, .82);
+  border-radius: 13px;
+  background: rgba(17, 17, 15, .94);
+  color: #f0d88d;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .2px;
+  text-align: center;
+  pointer-events: none;
+}
