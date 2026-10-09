@@ -15,21 +15,74 @@ class ConversionWorker(QThread):
             self._progress(2)
             if not self.source.is_file():
                 raise FileNotFoundError(self.source)
+            source_suffix = self.source.suffix.lower()
             if self.target_kind not in {"pdf", "docx", "word"}:
                 raise ValueError("Unsupported conversion target.")
-            target = self.source.with_suffix(".pdf" if self.target_kind == "pdf" else ".docx")
-            if target.resolve() == self.source.resolve():
-                raise ValueError("The source and destination must be different files.")
-            temporary_target = target.with_name(".{}.digi-tmp-{}{}".format(target.stem, uuid.uuid4().hex, target.suffix))
+            target_suffix = ".pdf" if self.target_kind == "pdf" else ".docx"
+            if source_suffix == target_suffix:
+                raise ValueError("The file is already in the requested format.")
+            if (source_suffix, target_suffix) not in {(".docx", ".pdf"), (".pdf", ".docx")}:
+                raise ValueError("Only PDF and DOCX files can be converted in place.")
+            target = self.source.with_suffix(target_suffix)
+            if target.exists():
+                raise FileExistsError(
+                    "Conversion cancelled because the destination already exists: "
+                    + str(target)
+                )
+
+            # Build and validate a complete sibling file before changing either final path.
+            temporary_target = target.with_name(
+                ".{}.digi-tmp-{}{}".format(target.stem, uuid.uuid4().hex, target.suffix)
+            )
             self._progress(5)
-            if temporary_target.suffix.lower() == ".docx":
+            if target_suffix == ".docx":
                 self.pdf_to_docx(self.source, temporary_target)
             else:
                 self.docx_to_pdf(self.source, temporary_target)
             self._validate_output(temporary_target)
-            self._progress(98)
-            # Same-directory temporary file: replace atomically without pre-deleting the original.
-            os.replace(temporary_target, target)
+            self._progress(95)
+
+            # Final rename sequence:
+            # 1) os.link installs the validated file at the new name atomically and
+            #    fails rather than overwriting a destination created during conversion.
+            # 2) unlink the old name only after the new name is safely installed.
+            # 3) remove the temporary name. All paths are in the same directory.
+            #
+            # This is not a single atomic two-name swap. A crash between steps 1 and 2
+            # can leave both names, but the original data remains available.
+            try:
+                os.link(temporary_target, target)
+            except FileExistsError:
+                raise FileExistsError(
+                    "Conversion cancelled because the destination already exists: "
+                    + str(target)
+                )
+            except OSError as exc:
+                raise RuntimeError(
+                    "The filesystem could not safely install the converted file "
+                    "without overwriting an existing destination. The original was preserved."
+                ) from exc
+
+            try:
+                self.source.unlink()
+            except OSError as exc:
+                # Roll back only the output we just installed, never an unrelated file.
+                try:
+                    target_stat = target.stat()
+                    temp_stat = temporary_target.stat()
+                    if (target_stat.st_dev, target_stat.st_ino) == (temp_stat.st_dev, temp_stat.st_ino):
+                        target.unlink()
+                except OSError:
+                    pass
+                raise RuntimeError(
+                    "The converted file was prepared, but Digi could not remove the original. "
+                    "The original was preserved; check file locks and permissions."
+                ) from exc
+
+            try:
+                temporary_target.unlink(missing_ok=True)
+            except OSError:
+                pass
             temporary_target = None
             self._progress(100)
             self.finished.emit(True, "Conversion completed successfully.", str(target))
