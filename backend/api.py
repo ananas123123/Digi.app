@@ -414,6 +414,39 @@ class DigiBridge(QObject):
         except (OSError, ValueError) as exc:
             return json.dumps({"ok": False, "error": str(exc) or "Could not create folder."})
 
+    @Slot(str, str, result=str)
+    def importFolder(self, source_path, destination_folder):
+        """Copy a dropped local folder into the configured search repository."""
+        if not self.search_service:
+            return json.dumps({"ok": False, "error": "Search repository is not ready."})
+        try:
+            import shutil
+            source = Path(source_path).expanduser().resolve()
+            root = Path(self.search_service.root).resolve()
+            destination = Path(destination_folder).resolve() if destination_folder else root
+            destination.relative_to(root)
+            if not source.is_dir():
+                raise NotADirectoryError("Drop a folder from your computer, not a file.")
+            if not destination.is_dir():
+                raise NotADirectoryError("The destination folder no longer exists.")
+            target = (destination / source.name).resolve()
+            target.relative_to(root)
+            if target == root or target.exists():
+                raise FileExistsError("A folder with that name already exists here.")
+            # Avoid copying a directory into itself or one of its descendants.
+            try:
+                target.relative_to(source)
+                raise ValueError("A folder cannot be copied into itself.")
+            except ValueError as exc:
+                if str(exc) == "A folder cannot be copied into itself.":
+                    raise
+            shutil.copytree(source, target)
+            self.start_scan()
+            return json.dumps({"ok": True, "path": str(target)})
+        except Exception as exc:
+            print("[Digi Import Folder] Failed:", repr(exc), flush=True)
+            return json.dumps({"ok": False, "error": str(exc) or type(exc).__name__})
+
     @Slot(str, result=bool)
     def deleteFolder(self, path):
         if not self.search_service:
