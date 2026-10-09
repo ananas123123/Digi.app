@@ -2157,9 +2157,20 @@ body.delete-confirm-open { overflow: hidden; }
 }
 
 
-/* Cleaner move dialog: larger title and no redundant directory display. */
+/* Move dialog typography: prominent title and gold-glowing selected filename. */
 #modal:has(.move-browser) .modal-head b {
-  font-size: 22px;
-  line-height: 1.3;
+  font-size: clamp(30px, 3vw, 34px);
+  line-height: 1.15;
+}
+#modal:has(.move-browser) .move-source-label {
+  color: rgba(246,242,232,.48);
+  font-size: 14px;
+  line-height: 1.5;
+}
+#modal:has(.move-browser) .move-source-label strong {
+  color: #f4d58b;
+  font-size: 16px;
+  font-weight: 700;
+  text-shadow: 0 0 5px rgba(232,189,98,.85), 0 0 13px rgba(232,189,98,.45);
 }
 #modal:has(.move-browser) .move-browser-location { display: none !important; }
