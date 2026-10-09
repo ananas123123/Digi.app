@@ -25,9 +25,17 @@ class IndexWorker(QThread):
             if not self.root.is_dir():
                 raise FileNotFoundError(f"Search repository does not exist: {self.root}")
 
+            # Preserve existing index entries beneath unreadable folders;
+            # otherwise a partial walk could mistakenly delete valid records.
+            def preserve_unreadable_folder(error):
+                blocked = Path(error.filename).resolve() if error.filename else None
+                if blocked:
+                    prefix = str(blocked) + __import__("os").sep
+                    found.update(path for path in self.cached if path == str(blocked) or path.startswith(prefix))
+
             # Walk directory-by-directory so one unreadable or temporarily
             # unavailable folder cannot abort the entire indexing pass.
-            for folder, dirs, files in __import__("os").walk(self.root, onerror=lambda _error: None):
+            for folder, dirs, files in __import__("os").walk(self.root, onerror=preserve_unreadable_folder):
                 base = Path(folder)
                 dirs[:] = [name for name in dirs if not self._excluded(base / name)]
                 for name in files:
