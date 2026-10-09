@@ -14,3 +14,24 @@
 .digi-update-actions{display:flex;justify-content:flex-end;gap:8px}
 .digi-update-primary{border-color:#4b4b4b;background:#242424}
 @media(max-width:900px){.header{gap:10px;padding:10px}.brand{min-width:auto}.header-actions{gap:4px}.header-actions .ui-button{padding:8px}.update-status-wrap{padding:0}}
+
+/* Explicit loading state; grey is reserved for unavailable checks. */
+.update-status-dot[data-status="checking"]{
+  background:#d5d5d5;
+  box-shadow:0 0 5px 1px rgba(220,220,220,.28);
+  animation:digiUpdateSpin .8s linear infinite;
+  border:2px solid rgba(255,255,255,.22);
+  border-top-color:#fff;
+}
+.update-status-dot[data-status="offline"]{
+  background:#777;
+  box-shadow:0 0 4px 1px rgba(180,180,180,.22);
+  animation:none;
+}
+@keyframes digiUpdateSpin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+@media(prefers-reduced-motion:reduce){
+  .update-status-dot[data-status="checking"]{animation:none}
+}
