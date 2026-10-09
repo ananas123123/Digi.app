@@ -313,7 +313,9 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     } catch (error) {
       console.warn('Digi context menu action could not be completed:', error);
     }
-    hide();
+    // Keep the parent context menu open while the New submenu is toggled.
+    // All other actions retain their normal close behavior.
+    if (action !== 'new-menu') hide();
   });
 })();
 
