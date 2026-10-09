@@ -34,7 +34,11 @@ mkdir "%BUILD_CACHE%" "%DIST_CACHE%" "%SPEC_CACHE%"
 
 rem Discover imports from editable app.py/backend without bundling those local modules.
 set "AUTO_HIDDEN_IMPORTS="
-for /f "usebackq delims=" %%I in (`py "%FACTORY_DIR%tools\pyinstaller_imports.py"`) do set "AUTO_HIDDEN_IMPORTS=%%I"
+if exist "%SOURCE_DIR%\app.py" (
+    for /f "usebackq delims=" %%I in (`py "%FACTORY_DIR%tools\pyinstaller_imports.py" "%SOURCE_DIR%"`) do set "AUTO_HIDDEN_IMPORTS=%%I"
+) else (
+    for /f "usebackq delims=" %%I in (`py "%FACTORY_DIR%tools\pyinstaller_imports.py"`) do set "AUTO_HIDDEN_IMPORTS=%%I"
+)
 if not defined AUTO_HIDDEN_IMPORTS (echo FATAL: Could not analyse external-source imports.&pause&exit /b 1)
 rem Bundle the launcher/runtime and all imports discovered in the external Python source.
 py -m PyInstaller --noconfirm --clean --windowed --onefile --name "Digi Search Engine" --version-file "%VERSION_INFO_FILE%" --icon "%FACTORY_DIR%mbappe.ico" %AUTO_HIDDEN_IMPORTS% --collect-all "PySide6.QtWebEngineCore" --collect-all "PySide6.QtWebEngineWidgets" --collect-all "PySide6.QtWebChannel" --workpath "%BUILD_CACHE%" --distpath "%DIST_CACHE%" --specpath "%SPEC_CACHE%" "%FACTORY_DIR%digi_search_engine.py"
