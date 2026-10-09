@@ -1203,3 +1203,24 @@ body:has(#search:not(:placeholder-shown)) .content {
   body:has(#search:not(:placeholder-shown)) .sidebar { top: 0; }
   body.filters-open:has(#search:not(:placeholder-shown)) #filters-toggle { left: min(292px, 86vw); }
 }
+
+
+/* Center the remaining Notes and Wiki cards beneath the landing search field. */
+.home-cards {
+  display: flex;
+  justify-content: center;
+  left: 50% !important;
+  width: min(480px, calc(100vw - 48px)) !important;
+  transform: translateX(-50%);
+  gap: 14px;
+}
+.home-card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+@media (max-width: 760px) {
+  .home-cards {
+    width: calc(100vw - 32px) !important;
+    gap: 8px;
+  }
+}
