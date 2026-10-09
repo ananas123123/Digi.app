@@ -30,12 +30,65 @@ function refresh(){let q=$("search").value.trim();if(!q){$("results").innerHTML=
 call("search",[q,$("type").value,$("status").value,$("source").value,$("method").value,$("sort").value],raw=>{let rows=parseJson(raw,null,"search results");if(!Array.isArray(rows)){$("results").innerHTML='<div class="empty">Digi could not read search results. Check the startup log.</div>';$("count").textContent="Unavailable";return}$("count").textContent=rows.length+" result(s)";$("results").innerHTML=rows.length?rows.map(r=>'<article class="result" tabindex="0" role="button" aria-label="Preview '+esc(r.name)+'" data-preview="'+esc(r.path)+'" data-name="'+esc(r.name)+'"><div class="result-name">'+esc(r.name)+'</div><div class="result-meta">'+esc(r.path)+' · '+esc(r.ext)+' · '+(r.pages||0)+' pages · '+esc(r.status)+'</div><div class="result-actions"><button class="small-button" data-open="'+esc(r.path)+'">Open</button><button class="small-button" data-folder="'+esc(r.path)+'">Folder</button><button class="small-button" data-convert="'+esc(r.path)+'" data-kind="'+(r.ext===".pdf"?"word":"pdf")+'">'+(r.ext===".pdf"?"→ Word":"→ PDF")+'</button></div></article>').join(""):'<div class="empty">No matching files.</div>';
 document.querySelectorAll("[data-preview]").forEach(card=>{const select=()=>showPreview(card.dataset.preview,card.dataset.name,card);card.onclick=e=>{if(e.target.closest("button"))return;select()};card.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&!e.target.closest("button")){e.preventDefault();select()}};});
 document.querySelectorAll("[data-open]").forEach(b=>b.onclick=e=>{e.stopPropagation();openSelectedFile(b.dataset.open)});document.querySelectorAll("[data-folder]").forEach(b=>b.onclick=e=>{e.stopPropagation();call("openFolder",[b.dataset.folder])});document.querySelectorAll("[data-convert]").forEach(b=>b.onclick=e=>{e.stopPropagation();startConversion(b)});});}
+function openSearchRepositoryBrowser() {
+  modal("Search repository", '<div class="repo-browser"><div class="repo-browser-path" id="repo-browser-path">Search repository</div><div class="repo-browser-list" id="repo-browser-list"><div class="empty">Loading folders…</div></div></div>');
+  let current = "";
+  const renderRepository = path => {
+    current = path || "";
+    const list = $("repo-browser-list");
+    const pathLabel = $("repo-browser-path");
+    if (!list || !pathLabel) return;
+    pathLabel.textContent = current || "Search repository";
+    list.innerHTML = '<div class="empty">Loading…</div>';
+    call("listLibraryContents", [current], raw => {
+      const data = parseJson(raw, null, "search repository browser");
+      if (!list.isConnected) return;
+      if (!data || !data.ok) {
+        list.innerHTML = '<div class="empty">Could not load this folder.</div>';
+        return;
+      }
+      list.innerHTML = "";
+      if (data.parent) {
+        const up = document.createElement("button");
+        up.type = "button";
+        up.className = "repo-browser-entry repo-browser-up";
+        up.textContent = "←  Back";
+        up.onclick = () => renderRepository(data.parent);
+        list.appendChild(up);
+      }
+      if (!data.entries.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "This folder is empty.";
+        list.appendChild(empty);
+      }
+      data.entries.forEach(entry => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "repo-browser-entry";
+        const isFolder = entry.type === "folder";
+        button.innerHTML = '<span class="repo-browser-entry-icon" aria-hidden="true">' + (isFolder
+          ? '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
+          : '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></svg>') + '</span><span class="repo-browser-entry-name"></span><span class="repo-browser-entry-arrow">' + (isFolder ? "›" : "↗") + '</span>';
+        button.querySelector(".repo-browser-entry-name").textContent = entry.name;
+        button.title = entry.path;
+        button.onclick = () => {
+          if (isFolder) renderRepository(entry.path);
+          else call("openFile", [entry.path], ok => {
+            if (ok !== true) {
+              const message = $("repo-browser-path");
+              if (message) message.textContent = "Could not open " + entry.name;
+            }
+          });
+        };
+        list.appendChild(button);
+      });
+    });
+  };
+  renderRepository("");
+}
 const repositoryButton = $("open-search-repository");
-if (repositoryButton) repositoryButton.addEventListener("click", () => {
-  call("openSearchRepository", [], ok => {
-    if (ok !== true) console.warn("Digi could not open the configured search repository.");
-  });
-});
+if (repositoryButton) repositoryButton.addEventListener("click", openSearchRepositoryBrowser);
 function conversionButton(path){return [...document.querySelectorAll("[data-convert]")].find(b=>b.dataset.convert===path);}
 function startConversion(button){if(button.disabled)return;button.disabled=true;button.classList.add("conversion-active");button.dataset.original=button.textContent;button.innerHTML='<span class="conversion-label">0%</span><span class="conversion-track"><span class="conversion-fill"></span></span>';call("convert",[button.dataset.convert,button.dataset.kind],ok=>{if(ok===false)finishConversion(button,false,"Conversion could not be started.");});}
 function finishConversion(button,success,message){if(!button)return;if(!success){button.disabled=false;button.classList.remove("conversion-active");button.textContent=button.dataset.original||"Convert";if(message)alert("Conversion failed: "+message);return}button.disabled=true;button.classList.remove("conversion-active");button.classList.add("conversion-success");button.innerHTML='<span class="success-check">✓</span> Success';const panel=$("preview-panel");if(panel)panel.innerHTML='<div class="preview-empty"><span class="preview-empty-icon">▤</span><strong>Document preview</strong><p>Conversion completed. Select the renamed file to preview it.</p></div>';setTimeout(()=>{button.classList.add("conversion-fading");setTimeout(()=>{button.classList.remove("conversion-success","conversion-fading");button.disabled=false;button.textContent=button.dataset.original||"Convert";refresh()},350)},3000);}
