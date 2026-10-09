@@ -130,6 +130,7 @@ function openSearchRepositoryBrowser(initialPath = "") {
     let folderCycleIndex = 0;
     let folderCycleTimer = null;
     let folderRefreshTimer = null;
+    let refreshInProgress = false;
     const stopFolderPlaceholderTimers = () => {
       if (folderCycleTimer) clearInterval(folderCycleTimer);
       if (folderRefreshTimer) clearInterval(folderRefreshTimer);
@@ -141,8 +142,6 @@ function openSearchRepositoryBrowser(initialPath = "") {
         stopFolderPlaceholderTimers();
         return;
       }
-      // Only animate the placeholder at the repository root. Never overwrite
-      // a path the user is editing or a path for a subfolder.
       if (rootPathInput.dataset.isRoot !== "true") return;
       if (document.activeElement === rootPathInput && rootPathInput.value.trim()) return;
       if (!repositoryFolders.length) {
@@ -157,18 +156,66 @@ function openSearchRepositoryBrowser(initialPath = "") {
         stopFolderPlaceholderTimers();
         return;
       }
-      call("listSearchRepositoryFolders", [], raw => {
+      if (refreshInProgress) return;
+      refreshInProgress = true;
+      const found = new Set();
+      const visited = new Set();
+      const walk = relativePath => {
+        const normalized = String(relativePath || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+        if (visited.has(normalized)) return;
+        visited.add(normalized);
+        call("listLibraryContents", [normalized], raw => {
+          const result = parseJson(raw, null, "repository folder placeholder scan");
+          if (result && result.ok && Array.isArray(result.entries)) {
+            result.entries.forEach(entry => {
+              if (entry.type !== "folder") return;
+              const child = normalized ? normalized + "/" + entry.name : entry.name;
+              found.add(child);
+              walk(child);
+            });
+          }
+          // Finish after every discovered directory has been queried.
+          if (visited.size > 0 && pendingScans === 0) finishScan();
+        });
+      };
+      let pendingScans = 0;
+      let scanFinished = false;
+      const finishScan = () => {
+        if (scanFinished || pendingScans !== 0) return;
+        scanFinished = true;
+        refreshInProgress = false;
         if (!rootPathInput.isConnected) {
           stopFolderPlaceholderTimers();
           return;
         }
-        const result = parseJson(raw, null, "repository folder placeholder list");
-        if (result && result.ok && Array.isArray(result.folders)) {
-          repositoryFolders = result.folders.filter(path => typeof path === "string" && path.trim());
-          folderCycleIndex = 0;
-          rotateFolderPlaceholder();
-        }
-      });
+        repositoryFolders = Array.from(found).sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base"}));
+        folderCycleIndex = 0;
+        rotateFolderPlaceholder();
+      };
+      // Count asynchronous directory requests so the refresh completes only
+      // after every reachable folder has been checked.
+      const scanDirectory = relativePath => {
+        const normalized = String(relativePath || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+        if (visited.has(normalized)) return;
+        visited.add(normalized);
+        pendingScans++;
+        call("listLibraryContents", [normalized], raw => {
+          const result = parseJson(raw, null, "repository folder placeholder scan");
+          if (result && result.ok && Array.isArray(result.entries)) {
+            result.entries.forEach(entry => {
+              if (entry.type !== "folder") return;
+              const child = normalized ? normalized + "/" + entry.name : entry.name;
+              found.add(child);
+              scanDirectory(child);
+            });
+          }
+          pendingScans--;
+          finishScan();
+        });
+      };
+      // Replace the initial helper with a counted recursive scan.
+      visited.clear();
+      scanDirectory("");
     };
     refreshRepositoryFolderCycle();
     folderCycleTimer = setInterval(rotateFolderPlaceholder, 2000);
