@@ -2829,3 +2829,62 @@ button.results-folder-icon:focus-visible { outline: 2px solid #e8bd62; outline-o
   color: #b42318 !important;
   font-size: 13px;
 }
+
+
+/* Compact centered naming dialog for New DOCX / New PDF */
+#modal.new-document-modal {
+  background: rgba(0, 0, 0, .74);
+  z-index: 1000000;
+}
+#modal.new-document-modal .modal-card {
+  width: min(440px, calc(100vw - 36px));
+  max-width: 440px;
+  height: auto;
+  max-height: calc(100vh - 48px);
+  background: #fff;
+  color: #252525;
+  border: 1px solid rgba(0, 0, 0, .12);
+  border-radius: 13px;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, .38);
+}
+#modal.new-document-modal .modal-head {
+  align-items: center;
+  padding: 15px 18px;
+  border-bottom: 1px solid #e8e8e8;
+}
+#modal.new-document-modal .modal-head b { color: #242424; }
+#modal.new-document-modal .modal-head .ui-button {
+  color: #333;
+  background: #f5f5f5;
+  border-color: #e4e4e4;
+}
+#modal.new-document-modal .modal-body { padding: 20px; overflow: auto; }
+#modal.new-document-modal .new-document-form { min-width: 0; gap: 10px; }
+#modal.new-document-modal .new-document-form label { color: #333; font-size: 13px; }
+#modal.new-document-modal .new-document-form input {
+  background: #fff;
+  color: #202020;
+  border-color: #d4d4d4;
+  border-radius: 8px;
+}
+#modal.new-document-modal .new-document-form input:focus {
+  border-color: #279451;
+  box-shadow: 0 0 0 3px rgba(39, 148, 81, .12);
+}
+#modal.new-document-modal .new-document-form p { color: #777; font-size: 12px; }
+#modal.new-document-modal .new-document-actions { margin-top: 8px; gap: 9px; }
+#modal.new-document-modal .new-document-cancel {
+  color: #555;
+  background: rgba(0, 0, 0, .035);
+  border: 1px solid rgba(0, 0, 0, .08);
+  opacity: .62;
+}
+#modal.new-document-modal .new-document-cancel:hover { opacity: .9; }
+#modal.new-document-modal .new-document-create {
+  color: #fff;
+  background: #258449;
+  border: 1px solid #20723f;
+}
+#modal.new-document-modal .new-document-create:hover { background: #1e713d; }
+#modal.new-document-modal .new-document-create:disabled { opacity: .65; cursor: wait; }
+#modal.new-document-modal .new-document-error { color: #b42318; font-size: 12px; }
