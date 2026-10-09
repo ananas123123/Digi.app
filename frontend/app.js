@@ -116,7 +116,7 @@ function openMoveBrowser(sourcePath, sourceName) {
         const folderRow = event.target.closest('.move-browser-folder');
         contextTargetIsFile = Boolean(fileRow);
         contextTargetFolderPath = folderRow ? (folderRow.dataset.path || '') : '';
-        $('folder-context-add').hidden = contextTargetIsFile || Boolean(folderRow);
+        $('folder-context-add').hidden = false;
         $('folder-context-delete').hidden = !contextTargetIsFile;
         $('folder-context-delete-folder').hidden = !folderRow;
         contextMenu.style.left = Math.max(8, Math.min(event.clientX, window.innerWidth - 190)) + 'px';
