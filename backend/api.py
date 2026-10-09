@@ -452,9 +452,10 @@ class DigiBridge(QObject):
             print("[Digi Import Folder] Failed:", repr(exc), flush=True)
             return json.dumps({"ok": False, "error": str(exc) or type(exc).__name__})
 
-    @Slot(str, str, result=str)
-    def importDroppedItem(self, source_path, destination_folder):
+    @Slot(str, str, bool, result=str)
+    def importDroppedItem(self, source_path, destination_folder, replace_existing=False):
         """Copy one local file or folder into the configured search repository."""
+
         if not self.search_service:
             return json.dumps({"ok": False, "error": "Search repository is not ready."})
         try:
@@ -469,8 +470,16 @@ class DigiBridge(QObject):
                 raise NotADirectoryError("The destination folder no longer exists.")
             target = (destination / source.name).resolve()
             target.relative_to(root)
-            if target == root or target.exists():
-                raise FileExistsError("An item named '" + source.name + "' already exists in this folder.")
+            if target == root:
+                raise ValueError("The repository root cannot be replaced.")
+            if target.exists():
+                if not replace_existing:
+                    return json.dumps({"ok": False, "conflict": True, "name": source.name, "type": "folder" if target.is_dir() else "file"})
+                # Replacement is only performed after explicit confirmation in Digi.
+                if target.is_dir() and not target.is_symlink():
+                    shutil.rmtree(target)
+                else:
+                    target.unlink()
             if source.is_dir():
                 try:
                     target.relative_to(source)
