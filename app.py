@@ -25,7 +25,7 @@ TITLEBAR_BORDER = "#30352c"
 
 
 class DigiWebView(QWebEngineView):
-    localFoldersDropped = Signal("QStringList")
+    localFoldersDropped = Signal("QStringList", int, int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -58,7 +58,7 @@ class DigiWebView(QWebEngineView):
                 if path.is_dir():
                     folders.append(str(path.resolve()))
         if folders:
-            self.localFoldersDropped.emit(folders)
+            self.localFoldersDropped.emit(folders, event.position().toPoint().x(), event.position().toPoint().y())
             event.setDropAction(Qt.DropAction.CopyAction)
             event.accept()
         else:
@@ -154,14 +154,14 @@ class DigiWindow(QMainWindow):
         if app:
             app.installEventFilter(self)
 
-    def _handle_local_folders_dropped(self, folders):
+    def _handle_local_folders_dropped(self, folders, x, y):
         # Pass actual native filesystem paths to the page; Chromium's HTML5
         # DataTransfer intentionally does not expose reliable folder paths.
         import json
         payload = json.dumps(list(folders))
         self.view.page().runJavaScript(
             "if (window.handleNativeFolderDrop) window.handleNativeFolderDrop("
-            + json.dumps(payload) + ");"
+            + json.dumps(payload) + ", " + str(int(x)) + ", " + str(int(y)) + ");"
         )
 
     def _apply_window_shape(self):
