@@ -42,3 +42,15 @@
 @media(prefers-reduced-motion:reduce){
   .update-status-dot[data-status="checking"]{animation:none}
 }
+
+/* Update checker: yellow means the remote check is in progress. */
+.update-status-dot[data-status="checking"]{
+  width:10px;
+  height:10px;
+  min-width:10px;
+  border:0;
+  border-radius:50%;
+  background:#ffd43b !important;
+  box-shadow:0 0 5px 1px rgba(255,212,59,.45) !important;
+  animation:none !important;
+}
