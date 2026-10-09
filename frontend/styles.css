@@ -1055,3 +1055,14 @@ body {
   html { border-radius: 14px !important; }
   body { border-radius: 13px !important; clip-path: inset(0 round 13px) !important; }
 }
+
+
+/* Ensure all four window corners, including the bottom edge, are clipped and rounded. */
+html, body {
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+body {
+  clip-path: inset(0 round 18px) !important;
+  -webkit-clip-path: inset(0 round 18px) !important;
+}
