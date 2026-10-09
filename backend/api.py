@@ -447,6 +447,41 @@ class DigiBridge(QObject):
             print("[Digi Import Folder] Failed:", repr(exc), flush=True)
             return json.dumps({"ok": False, "error": str(exc) or type(exc).__name__})
 
+    @Slot(str, str, result=str)
+    def importDroppedItem(self, source_path, destination_folder):
+        """Copy one local file or folder into the configured search repository."""
+        if not self.search_service:
+            return json.dumps({"ok": False, "error": "Search repository is not ready."})
+        try:
+            import shutil
+            source = Path(source_path).expanduser().resolve()
+            root = Path(self.search_service.root).resolve()
+            destination = Path(destination_folder).resolve() if destination_folder else root
+            destination.relative_to(root)
+            if not source.exists() or not (source.is_file() or source.is_dir()):
+                raise FileNotFoundError("The dropped file or folder no longer exists.")
+            if not destination.is_dir():
+                raise NotADirectoryError("The destination folder no longer exists.")
+            target = (destination / source.name).resolve()
+            target.relative_to(root)
+            if target == root or target.exists():
+                raise FileExistsError("An item named '" + source.name + "' already exists in this folder.")
+            if source.is_dir():
+                try:
+                    target.relative_to(source)
+                    raise ValueError("A folder cannot be copied into itself.")
+                except ValueError as exc:
+                    if str(exc) == "A folder cannot be copied into itself.":
+                        raise
+                shutil.copytree(source, target)
+            else:
+                shutil.copy2(source, target)
+            self.start_scan()
+            return json.dumps({"ok": True, "path": str(target), "type": "folder" if source.is_dir() else "file"})
+        except Exception as exc:
+            print("[Digi Import Drop] Failed:", repr(exc), flush=True)
+            return json.dumps({"ok": False, "error": str(exc) or type(exc).__name__})
+
     @Slot(str, result=bool)
     def deleteFolder(self, path):
         if not self.search_service:
