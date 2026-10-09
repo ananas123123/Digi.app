@@ -41,7 +41,18 @@ function loadNotes(){call("notesTree",[],raw=>{let tree=parseJson(raw,null,"note
 function loadData(data){let img=new Image();img.onload=()=>{let c=notes.canvas;c.width=Math.max(1100,img.width);c.height=Math.max(650,img.height);notes.ctx.drawImage(img,0,0);notes.dirty=false};img.src=data;}
 function saveNote(){if(notes.current&&notes.canvas)call("saveNote",[notes.current,notes.canvas.toDataURL("image/png")],()=>notes.dirty=false);}
 $("window-minimize").onclick=()=>call("minimizeWindow");$("window-maximize").onclick=()=>{document.documentElement.classList.toggle("window-maximized");call("toggleMaximizeWindow");};$("window-close").onclick=()=>call("closeWindow");
-const filtersToggle=$("filters-toggle");if(filtersToggle){filtersToggle.onclick=()=>{const open=document.body.classList.toggle("filters-open");filtersToggle.setAttribute("aria-expanded",String(open));filtersToggle.title=open?"Hide filters":"Show filters";const icon=filtersToggle.querySelector(".filters-toggle-icon");if(icon)icon.textContent=open?"‹":"›";};}
+const filtersToggle=$("filters-toggle"), filtersOverlay=$("filters-overlay"), filtersClose=$("filters-close");
+const setFiltersOpen=open=>{
+  if(!filtersOverlay||!filtersToggle)return;
+  filtersOverlay.hidden=!open;
+  document.body.classList.toggle("filters-dialog-open",open);
+  filtersToggle.setAttribute("aria-expanded",String(open));
+  if(open&&filtersClose)filtersClose.focus();
+};
+if(filtersToggle)filtersToggle.onclick=()=>setFiltersOpen(filtersOverlay ? filtersOverlay.hidden : false);
+if(filtersClose)filtersClose.onclick=()=>setFiltersOpen(false);
+if(filtersOverlay)filtersOverlay.addEventListener("click",event=>{if(event.target===filtersOverlay)setFiltersOpen(false);});
+document.addEventListener("keydown",event=>{if(event.key==="Escape"&&filtersOverlay&&!filtersOverlay.hidden)setFiltersOpen(false);});
 let refreshButtonTimer=null;
 const scheduleRefreshButton=()=>{
   const button=$("scan");
