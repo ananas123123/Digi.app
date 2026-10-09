@@ -159,12 +159,10 @@ class ConversionWorker(QThread):
                 total_items=max(1,len(items))
                 for i,item in enumerate(items,1):
                     data=zin.read(item.filename)
-                    if item.filename=="word/settings.xml":
-                        try:
-                            root=ET.fromstring(data); ns={"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
-                            if root.find("w:doNotCompressPictures",ns) is None: root.append(ET.Element("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}doNotCompressPictures"))
-                            data=ET.tostring(root,encoding="utf-8",xml_declaration=True)
-                        except Exception: pass
+                    # Preserve every python-docx-generated package part byte-for-byte.
+                    # Re-serializing settings.xml with ElementTree can drop namespace
+                    # declarations used only inside mc:Ignorable values, which may make
+                    # Word reject an otherwise valid DOCX as corrupted.
                     zout.writestr(item,data)
                     self._progress(88 + (i/total_items)*10)
                 zout.writestr("word/digi_search_engine_page_images.json",json.dumps(marker).encode())
