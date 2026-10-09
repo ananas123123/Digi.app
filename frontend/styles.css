@@ -2524,7 +2524,27 @@ body.delete-confirm-open { overflow: hidden; }
   font-size: 13px;
   cursor: pointer;
 }
+#modal:has(.move-browser) #folder-context-add,
+#modal:has(.move-browser) #folder-context-delete,
+#modal:has(.move-browser) #folder-context-delete-folder {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+#modal:has(.move-browser) #folder-context-add { color: #eee4cf; }
+#modal:has(.move-browser) #folder-context-delete,
+#modal:has(.move-browser) #folder-context-delete-folder { color: #ff7777; }
 #modal:has(.move-browser) #folder-context-add:hover { background: rgba(232,189,98,.12); }
+#modal:has(.move-browser) #folder-context-delete:hover,
+#modal:has(.move-browser) #folder-context-delete-folder:hover { background: rgba(255,70,70,.12); }
 #modal:has(.move-browser) .new-folder-overlay {
   position: fixed;
   inset: 0;
