@@ -787,17 +787,31 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
         const folderTarget = target && target.closest('.repo-browser-entry[data-type="folder"]');
         if (!path || !folderTarget) return;
         hide();
-        if (!window.confirm('Delete folder "' + name + '" and all its contents? This cannot be undone.')) return;
-        call('deleteFolder', [path], ok => {
-          if (ok === true) {
-            const pathLabel = $('repo-browser-path');
-            const currentPath = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
-            openSearchRepositoryBrowser(currentPath);
-            if (typeof refresh === 'function') refresh();
-          } else {
-            alert('Digi could not delete this folder. Check whether it still exists or is in use.');
-          }
-        });
+        modal('Delete folder', '<div class="digi-delete-dialog"><p>Delete <strong>' + esc(name) + '</strong> and all its contents?</p><p class="digi-delete-warning">This cannot be undone.</p><div class="digi-delete-actions"><button type="button" class="digi-delete-no" id="digi-delete-folder-no">No, keep folder</button><button type="button" class="digi-delete-yes" id="digi-delete-folder-yes">Yes, delete folder</button></div></div>');
+        $('digi-delete-folder-no').onclick = () => $('modal').classList.add('hidden');
+        $('digi-delete-folder-yes').onclick = () => {
+          const confirmButton = $('digi-delete-folder-yes');
+          confirmButton.disabled = true;
+          confirmButton.textContent = 'Deleting…';
+          call('deleteFolder', [path], ok => {
+            if (ok === true) {
+              const pathLabel = $('repo-browser-path');
+              const currentPath = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
+              openSearchRepositoryBrowser(currentPath);
+              if (typeof refresh === 'function') refresh();
+            } else {
+              confirmButton.disabled = false;
+              confirmButton.textContent = 'Yes, delete folder';
+              let error = $('modal').querySelector('.digi-delete-error');
+              if (!error) {
+                error = document.createElement('p');
+                error.className = 'digi-delete-error';
+                error.textContent = 'Digi could not delete this folder. Check whether it still exists or is in use.';
+                $('modal').querySelector('.digi-delete-dialog').insertBefore(error, $('modal').querySelector('.digi-delete-actions'));
+              }
+            }
+          });
+        };
       }
       else if (action === 'select-all' && el) {
         el.focus();
