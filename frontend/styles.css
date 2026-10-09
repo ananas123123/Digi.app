@@ -1660,20 +1660,29 @@ body.filters-open .sidebar {
 }
 
 
-/* Final header layout: search field and refresh icon sit directly together. */
+/* Keep the search field flexible and preserve the window controls at the far right. */
 .header > .search-refresh-group {
   display: flex !important;
-  flex: 0 1 744px !important;
-  width: min(744px, 60vw) !important;
-  max-width: 744px !important;
+  flex: 1 1 0 !important;
+  width: auto !important;
+  max-width: none !important;
   min-width: 0 !important;
   gap: 10px !important;
   align-items: center !important;
 }
 .header > .search-refresh-group .search-wrap {
-  flex: 1 1 auto !important;
+  flex: 1 1 0 !important;
   width: auto !important;
+  max-width: none !important;
   min-width: 0 !important;
+}
+.header > .header-actions {
+  flex: 0 0 auto !important;
+  margin-left: auto !important;
+}
+.header .window-controls {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
 }
 .header > .search-refresh-group .search-refresh {
   position: static !important;
