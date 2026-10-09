@@ -102,6 +102,71 @@ function openSearchRepositoryBrowser(initialPath = "") {
       const addFolder = document.querySelector('#digi-context-menu [data-action="add-folder"]');
       if (addFolder) addFolder.dataset.parent = pathLabel ? (pathLabel.dataset.path || "") : "";
     };
+    let dragDepth = 0;
+    const showDropState = active => {
+      browser.classList.toggle('repo-browser-drop-active', active);
+      let hint = browser.querySelector('.repo-browser-drop-hint');
+      if (active && !hint) {
+        hint = document.createElement('div');
+        hint.className = 'repo-browser-drop-hint';
+        hint.textContent = 'Drop folder to add it here';
+        browser.appendChild(hint);
+      } else if (!active && hint) hint.remove();
+    };
+    browser.addEventListener('dragenter', event => {
+      event.preventDefault();
+      dragDepth++;
+      showDropState(true);
+    });
+    browser.addEventListener('dragover', event => {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+      showDropState(true);
+    });
+    browser.addEventListener('dragleave', event => {
+      event.preventDefault();
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (!dragDepth) showDropState(false);
+    });
+    browser.addEventListener('drop', event => {
+      event.preventDefault();
+      dragDepth = 0;
+      showDropState(false);
+      const transfer = event.dataTransfer;
+      const uriText = transfer ? (transfer.getData('text/uri-list') || transfer.getData('text/plain')) : '';
+      const uri = uriText.split(/\r?\n/).map(line => line.trim()).find(line => line && !line.startsWith('#') && /^file:/i.test(line));
+      if (!uri) {
+        modal('Add folder', '<p class="repo-browser-drop-message">Digi could not read the folder path from this drop. Try dragging the folder directly from Windows File Explorer.</p><div class="new-document-actions"><button type="button" class="new-document-create" id="repo-drop-close">Close</button></div>');
+        $('repo-drop-close').onclick = () => $('modal').classList.add('hidden');
+        return;
+      }
+      let sourcePath = '';
+      try {
+        const parsed = new URL(uri);
+        sourcePath = decodeURIComponent(parsed.pathname);
+        if (/^\/[a-zA-Z]:/.test(sourcePath)) sourcePath = sourcePath.slice(1);
+        sourcePath = sourcePath.replace(/\//g, '\\');
+        if (parsed.hostname && parsed.hostname !== 'localhost') sourcePath = '\\\\' + parsed.hostname + sourcePath;
+      } catch (_) {}
+      if (!sourcePath) return;
+      const pathLabel = $('repo-browser-path');
+      const destination = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
+      browser.classList.add('repo-browser-importing');
+      call('importFolder', [sourcePath, destination], raw => {
+        browser.classList.remove('repo-browser-importing');
+        const result = parseJson(raw, null, 'folder import');
+        if (!result || !result.ok) {
+          modal('Could not add folder', '<p class="repo-browser-drop-message">' + esc(result && result.error ? result.error : 'Digi could not import this folder.') + '</p><div class="new-document-actions"><button type="button" class="new-document-create" id="repo-drop-close">Close</button></div>');
+          $('repo-drop-close').onclick = () => {
+            $('modal').classList.add('hidden');
+            openSearchRepositoryBrowser(destination);
+          };
+          return;
+        }
+        openSearchRepositoryBrowser(destination);
+        if (typeof refresh === 'function') refresh();
+      });
+    });
   }
   renderRepository(initialPath);
 }
