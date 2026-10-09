@@ -31,7 +31,7 @@ call("search",[q,$("type").value,$("status").value,$("source").value,$("method")
 document.querySelectorAll("[data-preview]").forEach(card=>{const select=()=>showPreview(card.dataset.preview,card.dataset.name,card);card.onclick=e=>{if(e.target.closest("button"))return;select()};card.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&!e.target.closest("button")){e.preventDefault();select()}};});
 document.querySelectorAll("[data-open]").forEach(b=>b.onclick=e=>{e.stopPropagation();openSelectedFile(b.dataset.open)});document.querySelectorAll("[data-folder]").forEach(b=>b.onclick=e=>{e.stopPropagation();call("openFolder",[b.dataset.folder])});document.querySelectorAll("[data-convert]").forEach(b=>b.onclick=e=>{e.stopPropagation();startConversion(b)});});}
 function openSearchRepositoryBrowser(initialPath = "") {
-  modal("Search repository", '<div class="repo-browser"><div class="repo-browser-path-wrap"><button type="button" class="repo-browser-back-icon" id="repo-browser-back" aria-label="Go to parent folder" title="Back" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6M9 12h11"/></svg></button><span class="repo-browser-path-prefix">Search Repository /</span><input class="repo-browser-path" id="repo-browser-path" aria-label="Repository folder path" autocomplete="off" spellcheck="false" placeholder="(root)"><span class="repo-browser-path-help">Edit path and press Enter to navigate</span></div><div class="repo-browser-list" id="repo-browser-list"><div class="empty">Loading folders…</div></div></div>');
+  modal("Search repository", '<div class="repo-browser"><div class="repo-browser-path-wrap"><span class="repo-browser-path-prefix">Search Repository /</span><input class="repo-browser-path" id="repo-browser-path" aria-label="Repository folder path" autocomplete="off" spellcheck="false" placeholder="(root)"><span class="repo-browser-path-help">Edit path and press Enter to navigate</span></div><div class="repo-browser-list" id="repo-browser-list"><button type="button" class="repo-browser-back-icon repo-browser-list-back" id="repo-browser-back" aria-label="Go to parent folder" title="Back" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6-6 6M9 12h11"/></svg></button><div class="empty">Loading folders…</div></div></div>');
   let current = "";
   const renderRepository = path => {
     // Never let an event object become a filesystem path.
@@ -65,10 +65,15 @@ function openSearchRepositoryBrowser(initialPath = "") {
       const relativePath = normalizedCurrent.startsWith(rootPath) ? normalizedCurrent.slice(rootPath.length).replace(/^\/+/, '') : '';
       pathLabel.value = relativePath;
       list.innerHTML = "";
-      const backButton = $("repo-browser-back");
-      if (backButton) {
-        backButton.hidden = !data.parent;
-        backButton.onclick = () => { if (data.parent) renderRepository(data.parent); };
+      if (data.parent) {
+        const backButton = document.createElement("button");
+        backButton.type = "button";
+        backButton.className = "repo-browser-back-icon repo-browser-list-back";
+        backButton.setAttribute("aria-label", "Go to parent folder");
+        backButton.title = "Back";
+        backButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6M9 12h11"/></svg>';
+        backButton.onclick = () => renderRepository(data.parent);
+        list.appendChild(backButton);
       }
       if (!data.entries.length) {
         const empty = document.createElement("div");
