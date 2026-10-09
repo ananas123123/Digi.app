@@ -738,3 +738,49 @@ body:has(#search:not(:placeholder-shown)) .search-wrap .icon-button { top: 50%; 
   .ui-input-container .ui-input { height: 58px; padding-left: 50px; }
   body:has(#search:not(:placeholder-shown)) .search-wrap.ui-input-container { width: calc(100vw - 32px); }
 }
+
+
+/* Search field edge containment and responsive typography. */
+.search-wrap.ui-input-container {
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 14px;
+  isolation: isolate;
+}
+.ui-input-container .ui-input {
+  box-sizing: border-box;
+  min-width: 0;
+  font-size: clamp(13px, 2.2vw, 16px);
+  padding-left: clamp(44px, 7vw, 58px);
+  padding-right: clamp(44px, 7vw, 62px);
+  border-radius: 14px;
+}
+.ui-input-underline {
+  left: 0;
+  right: 0;
+  width: auto;
+  bottom: 0;
+  border-radius: 0 0 14px 14px;
+}
+.ui-input-highlight {
+  left: 0;
+  right: 0;
+  width: auto;
+  border-radius: 14px;
+}
+.ui-input-icon { left: clamp(14px, 2.5vw, 20px); }
+@media (max-width: 760px) {
+  .search-wrap.ui-input-container { width: calc(100vw - 32px); }
+  .ui-input-container .ui-input {
+    font-size: clamp(13px, 3.5vw, 15px);
+    padding-left: 46px;
+    padding-right: 46px;
+  }
+  .ui-input-icon { left: 14px; }
+}
+@media (max-width: 380px) {
+  .search-wrap.ui-input-container { width: calc(100vw - 24px); }
+  .ui-input-container .ui-input { padding-left: 40px; padding-right: 40px; }
+  .ui-input-icon { left: 11px; }
+  .search-wrap .icon-button { right: 4px; width: 32px; height: 32px; }
+}
