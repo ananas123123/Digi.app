@@ -2926,3 +2926,29 @@ button.results-folder-icon:focus-visible { outline: 2px solid #e8bd62; outline-o
 }
 #modal.new-document-modal .new-document-create:disabled { opacity: .65; cursor: wait; }
 #modal.new-document-modal .new-document-error { color: #f07878; font-size: 12px; }
+
+
+/* Keep the Search Repository listing a fixed, scrollable viewport. */
+#modal:has(.repo-browser) .modal-card {
+  height: min(760px, 88vh);
+}
+#modal:has(.repo-browser) .modal-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+#modal:has(.repo-browser) .repo-browser {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+#modal:has(.repo-browser) .repo-browser-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
