@@ -1458,3 +1458,29 @@ body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-sele
     min-height: 260px;
   }
 }
+
+
+/* Hard size limits for the document preview: keep it visibly narrower and shorter. */
+body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-selected) {
+  grid-template-columns: minmax(260px, 1fr) minmax(260px, 34vw) !important;
+}
+body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-selected) .preview-panel {
+  width: 100% !important;
+  height: 54vh !important;
+  max-height: 480px !important;
+  min-height: 0 !important;
+  justify-self: end;
+}
+@media (min-width: 981px) {
+  body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-selected) {
+    grid-template-columns: minmax(260px, 1fr) minmax(260px, 34vw) !important;
+  }
+}
+@media (max-width: 980px) {
+  body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-selected) .preview-panel {
+    width: 100% !important;
+    height: 42vh !important;
+    max-height: 360px !important;
+    min-height: 0 !important;
+  }
+}
