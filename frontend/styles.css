@@ -2044,12 +2044,14 @@ body.delete-confirm-open { overflow: hidden; }
 
 
 /* Move-file repository browser */
-.move-browser { display: flex; flex-direction: column; gap: 12px; min-width: min(560px, 72vw); }
-.move-source-label { color: #e5c45d; font-size: 12px; }
-.move-browser-location { padding: 9px 11px; border: 1px solid rgba(201,162,39,.25); border-radius: 7px; color: #c9c9ce; font-size: 11px; overflow-wrap: anywhere; }
-.move-browser-list { min-height: 220px; max-height: 45vh; overflow: auto; padding: 5px; border: 1px solid rgba(255,255,255,.09); border-radius: 8px; }
-.move-browser-entry { display: block; width: 100%; padding: 9px 10px; border: 0; border-radius: 5px; background: transparent; color: #eee; text-align: left; font: inherit; }
-.move-browser-entry:not(:disabled) { cursor: pointer; }
-.move-browser-entry:not(:disabled):hover { background: rgba(201,162,39,.15); color: #e5c45d; }
-.move-browser-entry:disabled { opacity: .8; cursor: default; }
-.move-browser-actions { display: flex; justify-content: flex-end; }
+#modal:has(.move-browser) .modal-card { width: min(900px, 92vw); max-width: 92vw; }
+#modal:has(.move-browser) .modal-body { padding: 20px; }
+.move-browser { display: flex; flex-direction: column; gap: 14px; width: 100%; min-width: 0; }
+.move-source-label { color: #f3f3f5; font-size: 13px; }
+.move-source-label strong { font-weight: 600; }
+.move-browser-location { padding: 10px 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 7px; color: #e5e5e8; font-size: 12px; overflow-wrap: anywhere; }
+.move-browser-list { width: 100%; box-sizing: border-box; height: min(58vh, 520px); min-height: 320px; overflow: auto; padding: 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; background: rgba(255,255,255,.025); }
+.move-browser-entry { display: block; width: 100%; box-sizing: border-box; padding: 11px 12px; margin: 1px 0; border: 0; border-radius: 5px; background: transparent; color: #f4f4f5; text-align: left; font: inherit; cursor: pointer; }
+.move-browser-entry:hover { background: rgba(255,255,255,.09); }
+.move-browser-entry.is-selected { background: rgba(255,255,255,.14); outline: 1px solid rgba(255,255,255,.25); }
+.move-browser-entry.move-browser-up { color: #fff; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 6px; }
