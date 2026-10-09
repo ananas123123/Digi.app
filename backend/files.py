@@ -13,18 +13,14 @@ class FileService:
         # indexed file or an unintended blank document.
         print("[Digi Open] Requested path:", str(p), flush=True)
         if os.name == "nt" and p.suffix.lower() == ".docx":
+            word = None
             try:
                 import win32com.client
                 word = win32com.client.DispatchEx("Word.Application")
                 word.Visible = True
-                document = word.Documents.Open(
-                    FileName=str(p),
-                    ReadOnly=False,
-                    AddToRecentFiles=True,
-                    ConfirmConversions=False,
-                    OpenAndRepair=False,
-                    NoEncodingDialog=True,
-                )
+                # Use positional COM arguments for compatibility with Word/type-library
+                # variants that reject named arguments from pywin32.
+                document = word.Documents.Open(str(p), False, False, True)
                 opened_path = Path(str(document.FullName)).resolve()
                 print("[Digi Open] Word reports opened path:", str(opened_path), flush=True)
                 if os.path.normcase(str(opened_path)) != os.path.normcase(str(p)):
@@ -32,14 +28,32 @@ class FileService:
                         "Word opened a different document. Requested: "
                         + str(p) + "; opened: " + str(opened_path)
                     )
+                print("[Digi Open] Direct Word open succeeded:", str(opened_path), flush=True)
                 return
             except Exception as exc:
                 print("[Digi Open] Direct Word open FAILED:", repr(exc), flush=True)
-                raise RuntimeError(
-                    "Digi could not open this existing DOCX directly in Word. "
-                    "The file was not replaced or modified. Requested path: "
-                    + str(p) + ". Details: " + str(exc)
-                ) from exc
+                # Close only the dedicated Word instance created above, and only
+                # if it did not successfully open a document. Never quit the user's
+                # existing Word instance.
+                if word is not None:
+                    try:
+                        if word.Documents.Count == 0:
+                            word.Quit()
+                    except Exception as cleanup_exc:
+                        print("[Digi Open] Could not close empty Word instance:", repr(cleanup_exc), flush=True)
+                # Fall back to the Windows file association so a COM incompatibility
+                # does not prevent opening the actual selected file.
+                try:
+                    os.startfile(str(p), "open")
+                    print("[Digi Open] Launched using Windows file association after COM failure:", str(p), flush=True)
+                    return
+                except Exception as shell_exc:
+                    print("[Digi Open] Windows file association FAILED:", repr(shell_exc), flush=True)
+                    raise RuntimeError(
+                        "Digi could not open the selected DOCX. Requested path: "
+                        + str(p) + ". Word automation error: " + str(exc)
+                        + ". Windows open error: " + str(shell_exc)
+                    ) from shell_exc
         if hasattr(os, "startfile"):
             os.startfile(str(p), "open")
             print("[Digi Open] Launched using Windows file association:", str(p), flush=True)
