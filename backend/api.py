@@ -292,9 +292,13 @@ class DigiBridge(QObject):
         if not self.search_service:
             return ""
         destination = parent.strip() if parent and parent.strip() else str(self.search_service.root)
-        result = FileService.create_document(destination, name, kind)
-        self.start_scan()
-        return result
+        try:
+            result = FileService.create_document(destination, name, kind)
+            self.start_scan()
+            return json.dumps({"ok": True, "path": result})
+        except Exception as exc:
+            print("[Digi Create] Failed to create", kind, repr(exc), flush=True)
+            return json.dumps({"ok": False, "error": str(exc) or type(exc).__name__})
 
     @Slot(str, str, result=str)
     def createFolder(self, parent, name):
