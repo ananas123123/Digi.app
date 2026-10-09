@@ -126,6 +126,17 @@
         throw new Error("Release metadata schema is not supported.");
       }
 
+      // A planned/unpublished version is not an installable update. Do not
+      // turn a newer version number into an update alert until it is published.
+      if (manifest.release_status !== "published") {
+        const statusMessage = typeof manifest.message === "string" && manifest.message.trim()
+          ? manifest.message.trim()
+          : "No published Digi update is currently available.";
+        setStatus("current", "Update check succeeded. " + statusMessage);
+        try { localStorage.removeItem(PENDING_KEY); } catch (_) {}
+        return;
+      }
+
       const latestVersion = manifest.latest_version;
       if (typeof latestVersion !== "string" || !latestVersion.trim()) {
         setStatus("current", "Installed Digi version: " + currentVersion + ". No latest version is published in latest.json.");
