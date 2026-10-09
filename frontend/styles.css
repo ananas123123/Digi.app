@@ -1499,3 +1499,12 @@ body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-sele
     max-height: none !important;
   }
 }
+
+
+/* Give the gold wordmark dot breathing room after the final i, like a bullet. */
+.digi-home-logo { gap: 0 !important; }
+.digi-home-logo-dot {
+  display: inline-block;
+  margin-left: .12em !important;
+  transform: translateY(-.02em);
+}
