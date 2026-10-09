@@ -1557,3 +1557,54 @@ input *, textarea *, [contenteditable="true"] *, [contenteditable=""] * {
   -webkit-user-select: text;
   user-select: text;
 }
+
+
+/* Keep the filters drawer visually crisp while moving; no bright drag shadow. */
+.sidebar {
+  box-shadow: 8px 0 18px rgba(0,0,0,.24) !important;
+  filter: none !important;
+  outline: none !important;
+  border-right: 1px solid rgba(201,162,39,.28) !important;
+}
+body.filters-open .sidebar {
+  box-shadow: 8px 0 18px rgba(0,0,0,.24) !important;
+}
+
+/* Search-adjacent index refresh control. */
+.search-wrap .search-refresh {
+  position: absolute;
+  right: 42px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gold, #e8bd62);
+  font-size: 23px;
+  line-height: 1;
+  cursor: pointer;
+}
+.search-wrap .search-refresh:hover {
+  background: rgba(232,189,98,.12);
+}
+.search-wrap #clear { right: 8px; }
+
+/* Preview header controls: Open and Close sit together. */
+.preview-head-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+.preview-head .preview-close {
+  min-width: 30px;
+  padding: 5px 9px;
+  font-size: 18px;
+}
+#preview-panel[hidden] { display: none !important; }
