@@ -1,5 +1,5 @@
 from pathlib import Path
-import io,json,shutil,subprocess,zipfile,xml.etree.ElementTree as ET
+import io,json,os,shutil,subprocess,tempfile,uuid,zipfile,xml.etree.ElementTree as ET
 from PySide6.QtCore import QThread,Signal
 try: import fitz
 except ImportError: fitz=None
@@ -10,17 +10,55 @@ class ConversionWorker(QThread):
     def __init__(self,source,target_kind): super().__init__(); self.source=Path(source); self.target_kind=target_kind
     def _progress(self,value): self.progress.emit(max(0,min(100,int(value))))
     def run(self):
+        temporary_target = None
         try:
             self._progress(2)
-            if not self.source.exists(): raise FileNotFoundError(self.source)
-            target=self.source.with_suffix(".pdf" if self.target_kind=="pdf" else ".docx")
-            if target.exists(): target.unlink()
+            if not self.source.is_file():
+                raise FileNotFoundError(self.source)
+            if self.target_kind not in {"pdf", "docx", "word"}:
+                raise ValueError("Unsupported conversion target.")
+            target = self.source.with_suffix(".pdf" if self.target_kind == "pdf" else ".docx")
+            if target.resolve() == self.source.resolve():
+                raise ValueError("The source and destination must be different files.")
+            temporary_target = target.with_name(".{}.digi-tmp-{}{}".format(target.stem, uuid.uuid4().hex, target.suffix))
             self._progress(5)
-            self.pdf_to_docx(self.source,target) if target.suffix==".docx" else self.docx_to_pdf(self.source,target)
+            if temporary_target.suffix.lower() == ".docx":
+                self.pdf_to_docx(self.source, temporary_target)
+            else:
+                self.docx_to_pdf(self.source, temporary_target)
+            self._validate_output(temporary_target)
+            self._progress(98)
+            # Same-directory temporary file: replace atomically without pre-deleting the original.
+            os.replace(temporary_target, target)
+            temporary_target = None
             self._progress(100)
-            if not target.exists() or not target.stat().st_size: raise RuntimeError("Conversion produced no usable output.")
-            self.finished.emit(True,"Conversion completed successfully.",str(target))
-        except Exception as exc: self.finished.emit(False,str(exc),"")
+            self.finished.emit(True, "Conversion completed successfully.", str(target))
+        except Exception as exc:
+            self.finished.emit(False, str(exc), "")
+        finally:
+            if temporary_target is not None:
+                try:
+                    temporary_target.unlink(missing_ok=True)
+                except OSError:
+                    pass
+
+    @staticmethod
+    def _validate_output(path):
+        if not path.is_file() or path.stat().st_size == 0:
+            raise RuntimeError("Conversion produced no usable output.")
+        if path.suffix.lower() == ".pdf":
+            if fitz is None:
+                raise RuntimeError("Cannot validate the PDF because PyMuPDF is not installed.")
+            with fitz.open(str(path)) as document:
+                if len(document) < 1:
+                    raise RuntimeError("Conversion produced a PDF with no pages.")
+        elif path.suffix.lower() == ".docx":
+            with zipfile.ZipFile(path, "r") as document:
+                if document.testzip() is not None:
+                    raise RuntimeError("Conversion produced a damaged Word document.")
+                ET.fromstring(document.read("word/document.xml"))
+        else:
+            raise RuntimeError("Conversion produced an unsupported output format.")
     def pdf_to_docx(self,source,target):
         if fitz is None: raise RuntimeError("PyMuPDF is not installed.")
         from docx import Document
@@ -50,22 +88,26 @@ class ConversionWorker(QThread):
         doc.save(str(target))
         self._progress(88)
         marker={"format":"digi-page-image-docx-v1","dpi":200,"pages":[{"page":r["page"],"width_pt":r["width_pt"],"height_pt":r["height_pt"],"media":f"word/media/image{i+1}.png"} for i,r in enumerate(records)]}
-        temp=target.with_suffix(".tmp.docx")
-        with zipfile.ZipFile(target,"r") as zin,zipfile.ZipFile(temp,"w",zipfile.ZIP_DEFLATED) as zout:
-            items=zin.infolist()
-            total_items=max(1,len(items))
-            for i,item in enumerate(items,1):
-                data=zin.read(item.filename)
-                if item.filename=="word/settings.xml":
-                    try:
-                        root=ET.fromstring(data); ns={"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
-                        if root.find("w:doNotCompressPictures",ns) is None: root.append(ET.Element("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}doNotCompressPictures"))
-                        data=ET.tostring(root,encoding="utf-8",xml_declaration=True)
-                    except Exception: pass
-                zout.writestr(item,data)
-                self._progress(88 + (i/total_items)*10)
-            zout.writestr("word/digi_search_engine_page_images.json",json.dumps(marker).encode())
-        temp.replace(target)
+        temp=target.with_name(".{}.package-{}.tmp".format(target.name, uuid.uuid4().hex))
+        try:
+            with zipfile.ZipFile(target,"r") as zin,zipfile.ZipFile(temp,"w",zipfile.ZIP_DEFLATED) as zout:
+                items=zin.infolist()
+                total_items=max(1,len(items))
+                for i,item in enumerate(items,1):
+                    data=zin.read(item.filename)
+                    if item.filename=="word/settings.xml":
+                        try:
+                            root=ET.fromstring(data); ns={"w":"http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+                            if root.find("w:doNotCompressPictures",ns) is None: root.append(ET.Element("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}doNotCompressPictures"))
+                            data=ET.tostring(root,encoding="utf-8",xml_declaration=True)
+                        except Exception: pass
+                    zout.writestr(item,data)
+                    self._progress(88 + (i/total_items)*10)
+                zout.writestr("word/digi_search_engine_page_images.json",json.dumps(marker).encode())
+            os.replace(temp,target)
+        finally:
+            try: temp.unlink(missing_ok=True)
+            except OSError: pass
     def docx_to_pdf(self,source,target):
         if fitz is None: raise RuntimeError("PyMuPDF is not installed.")
         try:
@@ -95,8 +137,11 @@ class ConversionWorker(QThread):
         libre=shutil.which("soffice") or shutil.which("libreoffice")
         if not libre: raise RuntimeError("Word-to-PDF requires Microsoft Word or LibreOffice.")
         self._progress(20)
-        proc=subprocess.run([libre,"--headless","--convert-to","pdf","--outdir",str(target.parent),str(source)],capture_output=True,text=True,timeout=120)
-        if proc.returncode: raise RuntimeError(proc.stderr or "LibreOffice conversion failed.")
-        generated=target.parent/(source.stem+".pdf")
-        if generated!=target and generated.exists(): generated.replace(target)
+        with tempfile.TemporaryDirectory(prefix=".digi-convert-", dir=str(target.parent)) as staging:
+            proc=subprocess.run([libre,"--headless","--convert-to","pdf","--outdir",staging,str(source)],capture_output=True,text=True,timeout=120)
+            if proc.returncode: raise RuntimeError(proc.stderr or proc.stdout or "LibreOffice conversion failed.")
+            generated=Path(staging)/(source.stem+".pdf")
+            if not generated.is_file() or generated.stat().st_size == 0:
+                raise RuntimeError("LibreOffice did not produce a usable PDF.")
+            os.replace(generated,target)
         self._progress(92)
