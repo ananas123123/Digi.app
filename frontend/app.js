@@ -610,6 +610,50 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
         }
         button.setAttribute('aria-expanded', String(newPinnedOpen));
       }
+      else if (action === 'add-folder') {
+        hide();
+        modal('Add folder', '<form id="context-new-folder-form" class="new-document-form"><label for="context-new-folder-name">Folder name</label><input id="context-new-folder-name" name="name" required maxlength="120" placeholder="New folder" autocomplete="off"><p>The folder will be created in your configured search repository.</p><div class="new-document-actions"><button type="button" class="small-button" id="context-new-folder-cancel">Cancel</button><button type="submit" class="small-button">Create folder</button></div></form>');
+        const form = $('context-new-folder-form');
+        const input = $('context-new-folder-name');
+        if (input) input.focus();
+        $('context-new-folder-cancel').onclick = () => $('modal').classList.add('hidden');
+        form.onsubmit = event => {
+          event.preventDefault();
+          const name = input.value.trim();
+          if (!name) { input.focus(); return; }
+          if (/[<>:"/\\|?*]/.test(name) || name === '.' || name === '..') {
+            let error = form.querySelector('.new-document-error');
+            if (!error) {
+              error = document.createElement('p');
+              error.className = 'new-document-error';
+              form.insertBefore(error, form.querySelector('.new-document-actions'));
+            }
+            error.textContent = 'Enter a valid folder name.';
+            input.focus();
+            return;
+          }
+          const submit = form.querySelector('[type="submit"]');
+          submit.disabled = true;
+          submit.textContent = 'Creating…';
+          call('createFolder', ['', name], raw => {
+            const result = parseJson(raw, null, 'create folder');
+            if (!result || !result.ok) {
+              submit.disabled = false;
+              submit.textContent = 'Create folder';
+              let error = form.querySelector('.new-document-error');
+              if (!error) {
+                error = document.createElement('p');
+                error.className = 'new-document-error';
+                form.insertBefore(error, form.querySelector('.new-document-actions'));
+              }
+              error.textContent = result && result.error ? result.error : 'Digi could not create the folder.';
+              return;
+            }
+            $('modal').classList.add('hidden');
+            if (typeof refresh === 'function') refresh();
+          });
+        };
+      }
       else if (action === 'new-docx' || action === 'new-pdf') {
         hide();
         const kind = action === 'new-docx' ? 'docx' : 'pdf';
