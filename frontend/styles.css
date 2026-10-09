@@ -1508,3 +1508,40 @@ body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-sele
   margin-left: .12em !important;
   transform: translateY(-16px);
 }
+
+
+/* Digi custom right-click menu */
+#digi-context-menu[hidden] { display: none !important; }
+#digi-context-menu {
+  position: fixed;
+  z-index: 999999;
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid rgba(201,162,39,.34);
+  border-radius: 10px;
+  background: rgba(22,22,25,.98);
+  box-shadow: 0 12px 34px rgba(0,0,0,.48), 0 0 18px rgba(201,162,39,.08);
+  color: #f4f4f5;
+  backdrop-filter: blur(16px);
+  font: 13px Inter, system-ui, sans-serif;
+}
+#digi-context-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 11px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+#digi-context-menu button:hover,
+#digi-context-menu button:focus-visible {
+  outline: none;
+  background: rgba(201,162,39,.17);
+  color: #e5c45d;
+}
+#digi-context-menu button:disabled { opacity: .35; cursor: default; }
+.digi-context-separator { height: 1px; margin: 5px 4px; background: rgba(255,255,255,.1); }
