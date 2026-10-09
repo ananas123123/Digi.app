@@ -1079,3 +1079,13 @@ html.window-maximized body {
 html.window-maximized body {
   border: 0 !important;
 }
+
+
+/* Digi interaction policy: no ambient or entrance animations, no easing.
+   Hover/focus feedback remains immediate and can still lift or expand elements. */
+*, *::before, *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+  caret-color: auto;
+}
