@@ -1133,3 +1133,73 @@ body:has(#search:not(:placeholder-shown)) .content-head .digi-home-logo {
     margin: 0 !important;
   }
 }
+
+
+/* Collapsible filters drawer: a compact edge tab opens the existing filter panel. */
+#filters-toggle {
+  position: fixed;
+  z-index: 60;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 42px;
+  min-height: 112px;
+  padding: 14px 10px;
+  border: 1px solid rgba(232,189,98,.32);
+  border-left: 0;
+  border-radius: 0 12px 12px 0;
+  background: #17140e;
+  color: var(--gold-bright, #f4d58b);
+  cursor: pointer;
+  box-shadow: 5px 8px 24px rgba(0,0,0,.28);
+}
+#filters-toggle .filters-toggle-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+#filters-toggle .filters-toggle-icon { font-size: 17px; line-height: 1; }
+body:has(#search:not(:placeholder-shown)) #filters-toggle { display: inline-flex; }
+body:has(#search:not(:placeholder-shown)) .layout {
+  grid-template-columns: 0 minmax(0,1fr) !important;
+}
+body:has(#search:not(:placeholder-shown)) .sidebar {
+  position: fixed;
+  z-index: 55;
+  top: 82px;
+  bottom: 0;
+  left: 0;
+  width: 292px;
+  max-width: min(292px, 86vw);
+  padding: 24px 18px;
+  overflow-y: auto;
+  border-right: 1px solid rgba(232,189,98,.25);
+  background: #100f0c;
+  box-shadow: 16px 0 42px rgba(0,0,0,.38);
+  display: block;
+}
+body:has(#search:not(:placeholder-shown)):not(.filters-open) .sidebar {
+  display: none !important;
+}
+body.filters-open:has(#search:not(:placeholder-shown)) .sidebar { display: block !important; }
+body.filters-open:has(#search:not(:placeholder-shown)) #filters-toggle {
+  left: 292px;
+  max-width: min(292px, 86vw);
+  border-left: 1px solid rgba(232,189,98,.32);
+  border-radius: 0 12px 12px 0;
+}
+body:has(#search:not(:placeholder-shown)) .content {
+  grid-column: 2;
+  min-width: 0;
+}
+@media (max-width: 760px) {
+  body:has(#search:not(:placeholder-shown)) .sidebar { top: 0; }
+  body.filters-open:has(#search:not(:placeholder-shown)) #filters-toggle { left: min(292px, 86vw); }
+}
