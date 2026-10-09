@@ -2600,7 +2600,9 @@ body.delete-confirm-open { overflow: hidden; }
 
 /* Move-browser file deletion confirmation. */
 #modal:has(.move-browser) .delete-file-overlay[hidden] { display: none !important; }
-#modal:has(.move-browser) .folder-context-menu button[hidden] { display: none !important; }
+#modal:has(.move-browser) .folder-context-menu button[hidden],
+#modal:has(.move-browser) #folder-context-delete[hidden],
+#modal:has(.move-browser) #folder-context-add[hidden] { display: none !important; }
 #modal:has(.move-browser) #folder-context-delete {
   display: block;
   width: 100%;
