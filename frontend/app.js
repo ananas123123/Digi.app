@@ -561,9 +561,18 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
       addFolderButton.hidden = !resultsArea && !repositoryBrowser;
       if (repositoryBrowser) {
         const pathLabel = repositoryBrowser.querySelector('#repo-browser-path');
-        addFolderButton.dataset.parent = pathLabel ? (pathLabel.dataset.path || '') : '';
+        const parentPath = pathLabel ? (pathLabel.dataset.path || '') : '';
+        addFolderButton.dataset.parent = parentPath;
+        for (const action of ['new-docx', 'new-pdf']) {
+          const createButton = menu.querySelector('[data-action="' + action + '"]');
+          if (createButton) createButton.dataset.parent = parentPath;
+        }
       } else if (resultsArea) {
         addFolderButton.dataset.parent = '';
+        for (const action of ['new-docx', 'new-pdf']) {
+          const createButton = menu.querySelector('[data-action="' + action + '"]');
+          if (createButton) createButton.dataset.parent = '';
+        }
       }
     }
     // Delete is available only when right-clicking the individual file card,
