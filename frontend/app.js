@@ -228,8 +228,6 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
             const path = result.path;
             $('modal').classList.add('hidden');
             if (typeof refresh === 'function') refresh();
-            modal('Document created', '<div class="new-document-created"><p>' + esc(path) + ' was created.</p><button type="button" class="small-button" id="new-document-open">Open document</button></div>');
-            $('new-document-open').onclick = () => { $('modal').classList.add('hidden'); call('openFile', [path]); };
           });
         };
       }
