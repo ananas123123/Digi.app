@@ -193,8 +193,9 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     event.preventDefault();
     target = event.target instanceof Element ? event.target : null;
     const editable = target && (target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]'));
-    // The Delete action is tied strictly to the individual file card (for example,
-    // the box containing "rawr"), not the overall results container or preview panel.
+    const resultsArea = target ? target.closest('#results') : null;
+    // Delete is available only when right-clicking the individual file card,
+    // not the surrounding results container or preview panel.
     const resultCard = target ? target.closest('#results .result[data-preview]') : null;
     const newWrapper = menu.querySelector('.digi-context-submenu');
     const newSeparator = newWrapper && newWrapper.previousElementSibling;
