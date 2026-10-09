@@ -586,6 +586,7 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     const resultCard = target ? target.closest('#results .result[data-preview]') : null;
     const repositoryEntry = target ? target.closest('.repo-browser-entry') : null;
     const repositoryFile = repositoryEntry && repositoryEntry.dataset.type === 'file' ? repositoryEntry : null;
+    const repositoryFolder = repositoryEntry && repositoryEntry.dataset.type === 'folder' ? repositoryEntry : null;
     const newWrapper = menu.querySelector('.digi-context-submenu');
     const newSeparator = newWrapper && newWrapper.previousElementSibling;
     // Keep New available anywhere in the results area, including over a result card.
@@ -603,12 +604,19 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
       moveButton.dataset.name = resultCard ? (resultCard.dataset.name || '') : '';
     }
     const deleteButton = menu.querySelector('[data-action="delete-result"]');
+    const deleteFolderButton = menu.querySelector('[data-action="delete-folder-result"]');
     if (deleteButton) {
-      // Show Delete for results and files inside Digi's repository explorer.
+      // Delete file is available for result cards and repository files only.
       deleteButton.hidden = !resultsArea && !repositoryBrowser;
       deleteButton.disabled = !resultCard && !repositoryFile;
       deleteButton.dataset.path = resultCard ? resultCard.dataset.preview : (repositoryFile ? repositoryFile.dataset.path : '');
       deleteButton.dataset.name = resultCard ? (resultCard.dataset.name || '') : (repositoryFile ? (repositoryFile.dataset.name || '') : '');
+    }
+    if (deleteFolderButton) {
+      deleteFolderButton.hidden = !repositoryBrowser;
+      deleteFolderButton.disabled = !repositoryFolder;
+      deleteFolderButton.dataset.path = repositoryFolder ? repositoryFolder.dataset.path : '';
+      deleteFolderButton.dataset.name = repositoryFolder ? (repositoryFolder.dataset.name || '') : '';
     }
     const selection = window.getSelection();
     const hasSelection = !!(selection && String(selection).length);
@@ -772,6 +780,24 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
         } else {
           openDeleteConfirmation(path, name);
         }
+      }
+      else if (action === 'delete-folder-result') {
+        const path = button.dataset.path;
+        const name = button.dataset.name || path;
+        const folderTarget = target && target.closest('.repo-browser-entry[data-type="folder"]');
+        if (!path || !folderTarget) return;
+        hide();
+        if (!window.confirm('Delete folder "' + name + '" and all its contents? This cannot be undone.')) return;
+        call('deleteFolder', [path], ok => {
+          if (ok === true) {
+            const pathLabel = $('repo-browser-path');
+            const currentPath = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
+            openSearchRepositoryBrowser(currentPath);
+            if (typeof refresh === 'function') refresh();
+          } else {
+            alert('Digi could not delete this folder. Check whether it still exists or is in use.');
+          }
+        });
       }
       else if (action === 'select-all' && el) {
         el.focus();
