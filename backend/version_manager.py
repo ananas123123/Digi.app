@@ -81,6 +81,12 @@ def _bootstrap_first_run():
 
 def _integrity_problem():
     if not USER_DATA_ROOT.is_dir():
+        unexpected = _unexpected_existing_root()
+        if unexpected is not None:
+            return (
+                f"Digi data was found at an unexpected location: {unexpected}. "
+                "Digi did not move or change it. Contact Digi support for guidance."
+            )
         return "Digi data folder is missing."
 
     for path in EXPECTED_DIRECTORIES:
