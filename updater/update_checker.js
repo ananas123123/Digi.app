@@ -6,7 +6,6 @@
   "use strict";
 
   const RELEASES_URL = "https://github.com/ananas123123/digiwebversionreleases/releases";
-  const CURRENT_VERSION = "1.0.0.0";
   const PENDING_KEY = "digi.updateChecker.pendingVersion";
   const CHECK_INTERVAL_MS = 60000;
 
@@ -39,29 +38,13 @@
     dot.setAttribute("aria-label", title);
   }
 
-  function showPendingUpdate(version) {
-    const dialog = document.getElementById("digi-update-dialog");
-    const versionLabel = document.getElementById("digi-update-version");
-    if (!dialog || !versionLabel) return;
-    versionLabel.textContent = version;
-    dialog.classList.remove("hidden");
-    document.body.classList.add("digi-update-dialog-open");
-    const later = document.getElementById("digi-update-later");
-    const details = document.getElementById("digi-update-details");
-    if (later) later.onclick = () => {
-      dialog.classList.add("hidden");
-      document.body.classList.remove("digi-update-dialog-open");
-    };
-    if (details) details.onclick = () => {
-      window.open(RELEASES_URL, "_blank", "noopener,noreferrer");
-    };
-  }
-
   function waitForBridge() {
     return new Promise((resolve, reject) => {
       const started = Date.now();
       const poll = () => {
-        if (window.digiBackend && typeof window.digiBackend.checkReleaseManifest === "function") {
+        if (window.digiBackend &&
+            typeof window.digiBackend.checkReleaseManifest === "function" &&
+            typeof window.digiBackend.state === "function") {
           resolve(window.digiBackend);
         } else if (Date.now() - started > 8000) {
           reject(new Error("Digi backend bridge unavailable."));
@@ -73,85 +56,112 @@
     });
   }
 
+  function readInstalledVersion(backend) {
+    return new Promise((resolve, reject) => {
+      const timeout = window.setTimeout(
+        () => reject(new Error("Could not read Digi's installed version.")),
+        5000
+      );
+      backend.state(raw => {
+        window.clearTimeout(timeout);
+        try {
+          const state = JSON.parse(raw);
+          const version = state && state.version;
+          if (typeof version !== "string" || !/^\d+(\.\d+)*$/.test(version.trim())) {
+            reject(new Error("Digi returned an invalid installed version."));
+            return;
+          }
+          resolve(version.trim());
+        } catch (_) {
+          reject(new Error("Could not parse Digi's installed version."));
+        }
+      });
+    });
+  }
+
+  function readManifest(backend) {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const timeout = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("digi-release-manifest", onResult);
+        reject(new Error("Release repository request timed out."));
+      }, 20000);
+
+      const onResult = event => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        window.removeEventListener("digi-release-manifest", onResult);
+        try {
+          resolve(JSON.parse(event.detail));
+        } catch (_) {
+          reject(new Error("Invalid backend response."));
+        }
+      };
+
+      window.addEventListener("digi-release-manifest", onResult);
+      backend.checkReleaseManifest();
+    });
+  }
+
   async function checkRemoteStatus() {
     if (requestInProgress || Date.now() - lastRemoteCheck < CHECK_INTERVAL_MS) return;
     requestInProgress = true;
     lastRemoteCheck = Date.now();
-    setStatus("checking", "Checking the latest Digi version…");
+    setStatus("checking", "Checking Digi's installed version and the latest release…");
+
     try {
       const backend = await waitForBridge();
-      const response = await new Promise((resolve, reject) => {
-        let settled = false;
-        const timeout = window.setTimeout(() => {
-          if (settled) return;
-          settled = true;
-          window.removeEventListener("digi-release-manifest", onResult);
-          reject(new Error("Release repository request timed out."));
-        }, 20000);
-        const onResult = event => {
-          if (settled) return;
-          settled = true;
-          window.clearTimeout(timeout);
-          window.removeEventListener("digi-release-manifest", onResult);
-          try {
-            resolve(JSON.parse(event.detail));
-          } catch (_) {
-            reject(new Error("Invalid backend response."));
-          }
-        };
-        window.addEventListener("digi-release-manifest", onResult);
-        backend.checkReleaseManifest();
-      });
+      const currentVersion = await readInstalledVersion(backend);
+      const response = await readManifest(backend);
 
       if (!response || !response.ok || !response.manifest) {
         throw new Error("Could not reach the release repository.");
       }
+
       const manifest = response.manifest;
       if (manifest.product !== "Digi" || manifest.schema_version !== 1) {
         throw new Error("Release metadata schema is not supported.");
       }
 
-      // latest_version is the single source of truth for the dot.
-      // A null/empty version means no version has been published yet.
-      if (typeof manifest.latest_version !== "string" || !manifest.latest_version.trim()) {
-        setStatus("current", "No newer Digi version is published.");
+      const latestVersion = manifest.latest_version;
+      if (typeof latestVersion !== "string" || !latestVersion.trim()) {
+        setStatus("current", "Installed Digi version: " + currentVersion + ". No latest version is published in latest.json.");
+        try { localStorage.removeItem(PENDING_KEY); } catch (_) {}
         return;
       }
 
-      const latestVersion = manifest.latest_version.trim();
-      const relation = compareVersions(latestVersion, CURRENT_VERSION);
+      const normalizedLatest = latestVersion.trim();
+      const relation = compareVersions(normalizedLatest, currentVersion);
       if (relation === null) {
-        setStatus("offline", "Could not validate the latest Digi version.");
+        setStatus("offline", "Version comparison failed. Installed: " + currentVersion + "; latest.json: " + normalizedLatest + ".");
         return;
       }
 
       if (relation > 0) {
-        setStatus("update", "Newer Digi version available: " + latestVersion);
+        setStatus("update", "RED: latest.json says " + normalizedLatest + "; installed Digi version is " + currentVersion + ".");
         try {
-          localStorage.setItem(PENDING_KEY, latestVersion);
+          localStorage.setItem(PENDING_KEY, normalizedLatest);
         } catch (_) {
           // Storage is optional; the status indicator still works without it.
         }
       } else {
-        setStatus("current", "Latest published version: " + latestVersion + ". Current Digi version: " + CURRENT_VERSION + ".");
-        try {
-          localStorage.removeItem(PENDING_KEY);
-        } catch (_) {
-          // Storage is optional.
-        }
+        setStatus("current", "GREEN: latest.json says " + normalizedLatest + "; installed Digi version is " + currentVersion + ".");
+        try { localStorage.removeItem(PENDING_KEY); } catch (_) {}
       }
-    } catch (_) {
-      setStatus("offline", "Update status unavailable. Could not reach the release repository.");
+    } catch (error) {
+      const reason = error && error.message ? error.message : "Unknown update-check error.";
+      setStatus("offline", "GREY: update check failed. " + reason);
     } finally {
       requestInProgress = false;
     }
   }
 
   function start() {
-    const dot = document.getElementById("digi-update-status");
-    if (!dot) return;
-
-    setStatus("checking", "Checking the latest Digi version…");
+    if (!document.getElementById("digi-update-status")) return;
+    setStatus("checking", "Checking Digi's installed version and the latest release…");
     checkRemoteStatus();
     window.setInterval(checkRemoteStatus, CHECK_INTERVAL_MS);
   }
