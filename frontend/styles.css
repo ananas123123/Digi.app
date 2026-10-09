@@ -1409,3 +1409,19 @@ body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-sele
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+
+
+/* Selected document: warmer gold fill and a restrained luminous edge. */
+.results-workspace .result.is-selected {
+  background: linear-gradient(125deg, rgba(244, 202, 105, .24), rgba(190, 139, 39, .13) 58%, rgba(232, 189, 98, .08)) !important;
+  border-color: #f0c45f !important;
+  box-shadow:
+    inset 3px 0 0 #f4cd70,
+    0 0 0 1px rgba(246, 203, 104, .24),
+    0 0 16px rgba(236, 180, 56, .22),
+    0 0 30px rgba(236, 180, 56, .10) !important;
+}
+.results-workspace .result.is-selected .result-name {
+  color: #ffe7a8 !important;
+  text-shadow: 0 0 12px rgba(246, 203, 104, .22);
+}
