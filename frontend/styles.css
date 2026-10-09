@@ -2831,60 +2831,98 @@ button.results-folder-icon:focus-visible { outline: 2px solid #e8bd62; outline-o
 }
 
 
-/* Compact centered naming dialog for New DOCX / New PDF */
+/* Digi-styled compact naming prompt for New DOCX / New PDF */
 #modal.new-document-modal {
-  background: rgba(0, 0, 0, .74);
+  background: rgba(0, 0, 0, .76);
   z-index: 1000000;
 }
 #modal.new-document-modal .modal-card {
-  width: min(440px, calc(100vw - 36px));
-  max-width: 440px;
+  width: min(460px, calc(100vw - 36px));
+  max-width: 460px;
   height: auto;
   max-height: calc(100vh - 48px);
-  background: #fff;
-  color: #252525;
-  border: 1px solid rgba(0, 0, 0, .12);
-  border-radius: 13px;
-  box-shadow: 0 22px 70px rgba(0, 0, 0, .38);
+  background: #11110f;
+  color: #f3ead6;
+  border: 1px solid rgba(232, 189, 98, .34);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .62), 0 0 28px rgba(232, 189, 98, .07);
 }
 #modal.new-document-modal .modal-head {
   align-items: center;
-  padding: 15px 18px;
-  border-bottom: 1px solid #e8e8e8;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(232, 189, 98, .17);
 }
-#modal.new-document-modal .modal-head b { color: #242424; }
+#modal.new-document-modal .modal-head b {
+  color: #f3ead6;
+  font-size: 16px;
+  font-weight: 700;
+}
 #modal.new-document-modal .modal-head .ui-button {
-  color: #333;
-  background: #f5f5f5;
-  border-color: #e4e4e4;
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid rgba(232, 189, 98, .22);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .035);
+  color: #e8dfcc;
 }
-#modal.new-document-modal .modal-body { padding: 20px; overflow: auto; }
-#modal.new-document-modal .new-document-form { min-width: 0; gap: 10px; }
-#modal.new-document-modal .new-document-form label { color: #333; font-size: 13px; }
+#modal.new-document-modal .modal-body { padding: 22px; overflow: auto; }
+#modal.new-document-modal .new-document-form { min-width: 0; gap: 12px; }
+#modal.new-document-modal .new-document-form label {
+  color: #d8c9a8;
+  font-size: 13px;
+  font-weight: 600;
+}
 #modal.new-document-modal .new-document-form input {
-  background: #fff;
-  color: #202020;
-  border-color: #d4d4d4;
-  border-radius: 8px;
+  min-height: 46px;
+  padding: 12px 14px;
+  background: #0c0c0b;
+  color: #f5ead3;
+  border: 1px solid rgba(232, 189, 98, .28);
+  border-radius: 11px;
+  font: inherit;
 }
 #modal.new-document-modal .new-document-form input:focus {
-  border-color: #279451;
-  box-shadow: 0 0 0 3px rgba(39, 148, 81, .12);
+  border-color: #e8bd62;
+  box-shadow: 0 0 0 3px rgba(232, 189, 98, .1);
 }
-#modal.new-document-modal .new-document-form p { color: #777; font-size: 12px; }
-#modal.new-document-modal .new-document-actions { margin-top: 8px; gap: 9px; }
+#modal.new-document-modal .new-document-form p {
+  color: #a99d86;
+  font-size: 12px;
+  line-height: 1.55;
+}
+#modal.new-document-modal .new-document-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+#modal.new-document-modal .new-document-actions button {
+  min-height: 42px;
+  padding: 0 17px;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease, opacity .16s ease;
+}
 #modal.new-document-modal .new-document-cancel {
-  color: #555;
-  background: rgba(0, 0, 0, .035);
-  border: 1px solid rgba(0, 0, 0, .08);
-  opacity: .62;
+  color: #d9d0bf;
+  background: rgba(255, 255, 255, .035);
+  border: 1px solid rgba(255, 255, 255, .10);
+  opacity: .68;
 }
-#modal.new-document-modal .new-document-cancel:hover { opacity: .9; }
+#modal.new-document-modal .new-document-cancel:hover { opacity: .92; }
 #modal.new-document-modal .new-document-create {
   color: #fff;
-  background: #258449;
-  border: 1px solid #20723f;
+  background: #21834a;
+  border: 1px solid #31965b;
+  box-shadow: 0 5px 16px rgba(33, 131, 74, .22);
 }
-#modal.new-document-modal .new-document-create:hover { background: #1e713d; }
+#modal.new-document-modal .new-document-create:hover {
+  background: #279452;
+  border-color: #43ad6c;
+  transform: translateY(-1px);
+}
 #modal.new-document-modal .new-document-create:disabled { opacity: .65; cursor: wait; }
-#modal.new-document-modal .new-document-error { color: #b42318; font-size: 12px; }
+#modal.new-document-modal .new-document-error { color: #f07878; font-size: 12px; }
