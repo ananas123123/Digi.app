@@ -88,3 +88,73 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
   document.addEventListener('pointerup', finish, true);
   document.addEventListener('pointercancel', finish, true);
 })();
+
+
+// Replace the browser's right-click menu with Digi's own interface-wide menu.
+(() => {
+  const menu = document.getElementById('digi-context-menu');
+  if (!menu) return;
+  let target = null;
+  const hide = () => { menu.hidden = true; };
+  document.addEventListener('contextmenu', event => {
+    event.preventDefault();
+    target = event.target instanceof Element ? event.target : null;
+    const editable = target && (target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]'));
+    const selection = window.getSelection();
+    const hasSelection = !!(selection && String(selection).length);
+    for (const action of ['cut','copy','paste','select-all']) {
+      const button = menu.querySelector('[data-action="' + action + '"]');
+      if (button) button.hidden = action === 'paste' ? !(editable && !editable.readOnly && !editable.disabled) : action === 'select-all' ? !editable : !hasSelection && !editable;
+    }
+    const back = menu.querySelector('[data-action="back"]');
+    const forward = menu.querySelector('[data-action="forward"]');
+    if (back) back.disabled = history.length <= 1;
+    if (forward) forward.disabled = true;
+    menu.hidden = false;
+    const width = menu.offsetWidth;
+    const height = menu.offsetHeight;
+    menu.style.left = Math.max(8, Math.min(event.clientX, window.innerWidth - width - 8)) + 'px';
+    menu.style.top = Math.max(8, Math.min(event.clientY, window.innerHeight - height - 8)) + 'px';
+  });
+  document.addEventListener('pointerdown', event => {
+    if (!menu.contains(event.target)) hide();
+  }, true);
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') hide();
+  });
+  menu.addEventListener('click', async event => {
+    const button = event.target.closest('button[data-action]');
+    if (!button || button.disabled) return;
+    const action = button.dataset.action;
+    const el = target && target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]');
+    try {
+      if (action === 'back') history.back();
+      else if (action === 'forward') history.forward();
+      else if (action === 'reload') window.location.reload();
+      else if (action === 'select-all' && el) {
+        el.focus();
+        if (typeof el.select === 'function') el.select();
+        else document.execCommand('selectAll');
+      } else if ((action === 'cut' || action === 'copy') && window.getSelection()?.toString()) {
+        document.execCommand(action);
+      } else if (action === 'cut' && el && typeof el.setRangeText === 'function') {
+        const start = el.selectionStart, end = el.selectionEnd;
+        if (start !== end) { await navigator.clipboard.writeText(el.value.slice(start, end)); el.setRangeText('', start, end, 'start'); }
+      } else if (action === 'copy' && el && typeof el.setRangeText === 'function') {
+        const start = el.selectionStart, end = el.selectionEnd;
+        if (start !== end) await navigator.clipboard.writeText(el.value.slice(start, end));
+      } else if (action === 'paste' && el && !el.readOnly && !el.disabled && navigator.clipboard?.readText) {
+        const text = await navigator.clipboard.readText();
+        if (typeof el.setRangeText === 'function') {
+          const start = el.selectionStart ?? el.value.length;
+          const end = el.selectionEnd ?? start;
+          el.setRangeText(text, start, end, 'end');
+          el.dispatchEvent(new Event('input', {bubbles:true}));
+        } else { el.focus(); document.execCommand('insertText', false, text); }
+      }
+    } catch (error) {
+      console.warn('Digi context menu action could not be completed:', error);
+    }
+    hide();
+  });
+})();
