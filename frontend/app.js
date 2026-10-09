@@ -50,7 +50,6 @@ function openMoveBrowser(sourcePath, sourceName) {
   };
   const render = folder => {
     currentFolder = folder || '';
-    breadcrumbFolders = currentFolder ? breadcrumbFolders.filter(item => item.path === currentFolder || currentFolder.startsWith(item.path.replace(/[\\\\/]+$/, '') + '\\\\') || currentFolder.startsWith(item.path.replace(/[\\\\/]+$/, '') + '/')) : [];
     call('listLibraryContents', [currentFolder], raw => {
       const data = parseJson(raw, null, 'move browser contents');
       const list = $('move-browser-list');
@@ -73,7 +72,7 @@ function openMoveBrowser(sourcePath, sourceName) {
           up.title = 'Go to parent folder';
           up.setAttribute('aria-label', 'Go to parent folder');
           up.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>';
-          up.onclick = () => { breadcrumbFolders = breadcrumbFolders.filter(item => item.path !== currentFolder && (data.parent.startsWith(item.path.replace(/[\\\\/]+$/, '') + '\\\\') || data.parent.startsWith(item.path.replace(/[\\\\/]+$/, '') + '/'))); render(data.parent); };
+          up.onclick = () => { breadcrumbFolders.pop(); render(data.parent); };
           nav.appendChild(up);
         }
         const breadcrumb = document.createElement('div');
@@ -95,7 +94,7 @@ function openMoveBrowser(sourcePath, sourceName) {
           segment.textContent = item.name;
           segment.title = 'Open ' + accumulated;
           segment.disabled = index === parts.length - 1;
-          segment.onclick = () => render(accumulated);
+          segment.onclick = () => { breadcrumbFolders = breadcrumbFolders.slice(0, index + 1); render(accumulated); };
           breadcrumb.appendChild(segment);
         });
         nav.appendChild(breadcrumb);
@@ -129,7 +128,7 @@ function openMoveBrowser(sourcePath, sourceName) {
           row.textContent = (entry.type === 'folder' ? '▣  ' : '▤  ') + entry.name;
           if (entry.type === 'folder') {
             row.classList.add('move-browser-folder');
-            row.onclick = () => { breadcrumbFolders = breadcrumbFolders.filter(item => item.path !== entry.path && (entry.path.startsWith(item.path.replace(/[\\\\/]+$/, '') + '\\\\') || entry.path.startsWith(item.path.replace(/[\\\\/]+$/, '') + '/'))); breadcrumbFolders.push({ path: entry.path, name: entry.name }); render(entry.path); };
+            row.onclick = () => { if (!breadcrumbFolders.length || breadcrumbFolders[breadcrumbFolders.length - 1].path !== entry.path) breadcrumbFolders.push({ path: entry.path, name: entry.name }); render(entry.path); };
           } else {
             row.classList.add('move-browser-file');
             row.disabled = true;
