@@ -190,7 +190,9 @@ function showRepositoryDropMessage(title, message) {
   document.body.appendChild(overlay);
   overlay.querySelector('.repo-drop-alert-ok').focus();
 }
-window.handleNativeFolderDrop = function (serializedPaths) {
+window.handleNativeFolderDrop = function (serializedPaths, dropX, dropY) {
+  const dropTarget = document.elementFromPoint(Number(dropX) || 0, Number(dropY) || 0);
+  if (!dropTarget || !dropTarget.closest('.repo-browser-list')) return;
   let paths = [];
   try { paths = JSON.parse(serializedPaths || '[]'); } catch (_) {}
   paths = Array.isArray(paths) ? paths.filter(path => typeof path === 'string' && path.trim()) : [];
