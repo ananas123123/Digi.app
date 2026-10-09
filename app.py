@@ -5,6 +5,7 @@ from PySide6.QtCore import QEvent, QUrl, Qt
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
+    QVBoxLayout,
     QWidget,
 )
 from PySide6.QtWebChannel import QWebChannel
