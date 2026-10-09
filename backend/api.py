@@ -291,7 +291,8 @@ class DigiBridge(QObject):
     def createDocument(self, parent, name, kind):
         if not self.search_service:
             return ""
-        result = FileService.create_document(parent, name, kind)
+        destination = parent.strip() if parent and parent.strip() else str(self.search_service.root)
+        result = FileService.create_document(destination, name, kind)
         self.start_scan()
         return result
 
