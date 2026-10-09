@@ -595,3 +595,28 @@ body:has(#search:not(:placeholder-shown)) .results { display: flex; animation: d
 .window-control.window-close:hover{background:#d83b43;border-color:#d83b43;color:#fff}
 @media(max-width:1050px){.window-controls{margin-left:5px;padding-left:5px}.window-control{width:32px;min-width:32px}}
 @media(max-width:760px){.window-controls{margin-left:3px;padding-left:3px}.window-control{width:28px;min-width:28px;height:32px}}
+
+
+/* Consistent launch entrance: content settles downward into place while fading in. */
+@keyframes digiLaunchEntrance {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+body.digi-launching .header,
+body.digi-launching .sidebar,
+body.digi-launching .content {
+  opacity: 0;
+  animation: digiLaunchEntrance 620ms cubic-bezier(.2,.7,.2,1) both;
+}
+body.digi-launching .header { animation-delay: 70ms; }
+body.digi-launching .sidebar { animation-delay: 150ms; }
+body.digi-launching .content { animation-delay: 230ms; }
+@media (prefers-reduced-motion: reduce) {
+  body.digi-launching .header,
+  body.digi-launching .sidebar,
+  body.digi-launching .content {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
