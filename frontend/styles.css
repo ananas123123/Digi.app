@@ -2422,3 +2422,58 @@ body.delete-confirm-open { overflow: hidden; }
   text-shadow: 0 0 5px rgba(255, 35, 55, .42), 0 0 12px rgba(255, 35, 55, .2);
   font-weight: 650;
 }
+
+
+/* Low-contrast directory breadcrumb beside the move-browser back button. */
+#modal:has(.move-browser) .move-browser-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin: 4px 4px 12px;
+}
+#modal:has(.move-browser) .move-browser-nav .move-browser-back {
+  flex: 0 0 36px;
+  margin: 0;
+}
+#modal:has(.move-browser) .move-browser-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+  color: rgba(205, 209, 216, .42);
+  font-size: 13px;
+  line-height: 1.5;
+}
+#modal:has(.move-browser) .move-browser-breadcrumb-arrow {
+  display: inline-flex;
+  align-items: center;
+  color: rgba(177, 183, 192, .34);
+}
+#modal:has(.move-browser) .move-browser-breadcrumb-segment {
+  max-width: 240px;
+  padding: 2px 1px;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: rgba(205, 209, 216, .48);
+  font: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .15s ease;
+}
+#modal:has(.move-browser) .move-browser-breadcrumb-segment:hover:not(:disabled) {
+  color: rgba(232, 235, 240, .82);
+}
+#modal:has(.move-browser) .move-browser-breadcrumb-segment.is-current,
+#modal:has(.move-browser) .move-browser-breadcrumb-segment:disabled {
+  color: rgba(220, 224, 231, .64);
+  cursor: default;
+}
+#modal:has(.move-browser) .move-browser-breadcrumb-segment:focus-visible {
+  outline: 1px solid rgba(205, 209, 216, .4);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
