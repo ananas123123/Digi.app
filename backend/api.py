@@ -239,8 +239,12 @@ class DigiBridge(QObject):
 
     @Slot(str, result=bool)
     def openFile(self, path):
-        FileService.open_file(path)
-        return True
+        try:
+            FileService.open_file(path)
+            return True
+        except Exception as exc:
+            self.error.emit("Could not open the selected file: " + str(exc))
+            return False
 
     @Slot(str, result=bool)
     def deleteFile(self, path):
