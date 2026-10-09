@@ -210,15 +210,25 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
           const submit = form.querySelector('[type="submit"]');
           submit.disabled = true;
           submit.textContent = 'Creating…';
-          call('createDocument', ['', name, kind], path => {
-            if (!path) {
+          call('createDocument', ['', name, kind], raw => {
+            let result = null;
+            try { result = JSON.parse(raw); } catch (_) {}
+            if (!result || !result.ok || !result.path) {
               submit.disabled = false;
-              submit.textContent = 'Try again';
+              submit.textContent = 'Create ' + (kind === 'docx' ? 'DOCX' : 'PDF');
+              let error = form.querySelector('.new-document-error');
+              if (!error) {
+                error = document.createElement('p');
+                error.className = 'new-document-error';
+                form.insertBefore(error, form.querySelector('.new-document-actions'));
+              }
+              error.textContent = result && result.error ? result.error : 'Digi did not return a creation result. Check that the backend is ready.';
               return;
             }
+            const path = result.path;
             $('modal').classList.add('hidden');
             if (typeof refresh === 'function') refresh();
-            modal('Document created', '<div class="new-document-created"><p>' + esc(name + (name.toLowerCase().endsWith('.' + kind) ? '' : '.' + kind)) + ' was created in your search repository.</p><button type="button" class="small-button" id="new-document-open">Open document</button></div>');
+            modal('Document created', '<div class="new-document-created"><p>' + esc(path) + ' was created.</p><button type="button" class="small-button" id="new-document-open">Open document</button></div>');
             $('new-document-open').onclick = () => { $('modal').classList.add('hidden'); call('openFile', [path]); };
           });
         };
