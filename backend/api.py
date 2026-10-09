@@ -1,6 +1,7 @@
 import json
+import urllib.request
 from pathlib import Path
-from PySide6.QtCore import QObject,Signal,Slot
+from PySide6.QtCore import QObject,Signal,Slot,QThread
 from PySide6.QtWidgets import QFileDialog
 from .config import APP_VERSION,DEFAULT_INCOMING,LIBRARY_CONFIG,get_library_root,ensure_directories
 from .database import Database
@@ -11,8 +12,33 @@ from .incoming import IncomingService
 from .notes import NotesService
 from .version_manager import initialize_version_file,version_integrity,recalibrate_version
 
+class ReleaseManifestWorker(QThread):
+    resultReady=Signal(str)
+    URLS=(
+        "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/latest.json",
+        "https://api.github.com/repos/ananas123123/digiwebversionreleases/contents/latest.json?ref=main",
+    )
+    def run(self):
+        for url in self.URLS:
+            try:
+                request=urllib.request.Request(url,headers={"Accept":"application/vnd.github+json","User-Agent":"Digi-Update-Checker"})
+                with urllib.request.urlopen(request,timeout=8) as response:
+                    payload=response.read()
+                if "api.github.com" in url:
+                    import base64
+                    envelope=json.loads(payload.decode("utf-8"))
+                    payload=base64.b64decode(envelope["content"]).decode("utf-8")
+                manifest=json.loads(payload.decode("utf-8") if isinstance(payload,bytes) else payload)
+                self.resultReady.emit(json.dumps({"ok":True,"manifest":manifest}))
+                return
+            except Exception:
+                continue
+        self.resultReady.emit(json.dumps({"ok":False,"manifest":None}))
+
+
 class DigiBridge(QObject):
     indexUpdated=Signal()
+    releaseManifestResult=Signal(str)
     conversionProgress=Signal(str,int)
     conversionFinished=Signal(bool,str,str)
     error=Signal(str)
@@ -20,7 +46,7 @@ class DigiBridge(QObject):
         super().__init__(parent)
         initialize_version_file()
         self.version_ok,self.version_problem=version_integrity()
-        self.db=None; self.search_service=None; self.incoming=None; self.notes=None; self.worker=None
+        self.db=None; self.search_service=None; self.incoming=None; self.notes=None; self.worker=None; self.release_worker=None
         if self.version_ok:
             try:
                 ensure_directories()
@@ -41,6 +67,14 @@ class DigiBridge(QObject):
         self.incoming=IncomingService(self.db,root,incoming)
         self.notes=NotesService(root)
         self.start_scan()
+
+    @Slot()
+    def checkReleaseManifest(self):
+        if self.release_worker and self.release_worker.isRunning():
+            return
+        self.release_worker=ReleaseManifestWorker(self)
+        self.release_worker.resultReady.connect(self.releaseManifestResult.emit)
+        self.release_worker.start()
 
     @Slot(result=str)
     def state(self):
