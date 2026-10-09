@@ -2192,3 +2192,42 @@ body.delete-confirm-open { overflow: hidden; }
   height: auto;
   min-height: 320px;
 }
+
+
+/* Move confirmation sits below the destination browser. */
+#modal:has(.move-browser) .move-browser-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 14px;
+}
+#modal:has(.move-browser) #move-browser-message {
+  min-width: 0;
+  color: rgba(246,242,232,.58);
+  font-size: 12px;
+  line-height: 1.45;
+}
+#modal:has(.move-browser) .move-here-button {
+  flex: 0 0 auto;
+  min-width: 120px;
+  border-color: rgba(232,189,98,.42);
+  background: #e8bd62;
+  color: #17130b;
+  font-weight: 700;
+}
+#modal:has(.move-browser) .move-here-button:hover:not(:disabled) {
+  background: #f4d58b;
+  border-color: #f4d58b;
+}
+#modal:has(.move-browser) .move-here-button:disabled {
+  opacity: .35;
+  filter: grayscale(1);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+@media (max-width: 560px) {
+  #modal:has(.move-browser) .move-browser-actions { align-items: stretch; flex-direction: column; }
+  #modal:has(.move-browser) .move-here-button { width: 100%; }
+}
