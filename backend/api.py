@@ -341,6 +341,17 @@ class DigiBridge(QObject):
         except (OSError, ValueError) as exc:
             return json.dumps({"ok": False, "error": str(exc) or "The file could not be moved."})
 
+    @Slot(result=bool)
+    def openSearchRepository(self):
+        if not self.search_service:
+            return False
+        try:
+            FileService.open_folder(str(self.search_service.root))
+            return True
+        except Exception as exc:
+            self.error.emit("Could not open the search repository: " + str(exc))
+            return False
+
     @Slot(str, result=bool)
     def openFolder(self, path):
         FileService.open_folder(path)
