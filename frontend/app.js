@@ -51,6 +51,7 @@ function openMoveBrowser(sourcePath, sourceName) {
       }
       location.textContent = data.current;
       list.innerHTML = '';
+      list.classList.toggle('is-empty', data.entries.length === 0);
       if (data.parent) {
         const up = document.createElement('button');
         up.type = 'button'; up.className = 'move-browser-entry move-browser-up'; up.textContent = '↰  ..';
