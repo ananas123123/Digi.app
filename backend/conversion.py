@@ -151,6 +151,9 @@ class ConversionWorker(QThread):
             self._progress(60 + ((i+1)/total)*25)
         doc.save(str(target))
         self._progress(88)
+        # Store Digi's round-trip metadata as a valid OPC package part.
+        # Every ZIP part must have a declared content type; adding a bare JSON
+        # part without a [Content_Types].xml declaration makes Word report repair.
         marker={"format":"digi-page-image-docx-v1","dpi":200,"pages":[{"page":r["page"],"width_pt":r["width_pt"],"height_pt":r["height_pt"],"media":f"word/media/image{i+1}.png"} for i,r in enumerate(records)]}
         temp=target.with_name(".{}.package-{}.tmp".format(target.name, uuid.uuid4().hex))
         try:
@@ -159,13 +162,20 @@ class ConversionWorker(QThread):
                 total_items=max(1,len(items))
                 for i,item in enumerate(items,1):
                     data=zin.read(item.filename)
-                    # Preserve every python-docx-generated package part byte-for-byte.
-                    # Re-serializing settings.xml with ElementTree can drop namespace
-                    # declarations used only inside mc:Ignorable values, which may make
-                    # Word reject an otherwise valid DOCX as corrupted.
+                    if item.filename=="[Content_Types].xml":
+                        # Add a default content type for the JSON metadata part,
+                        # preserving the existing XML and namespace declarations.
+                        text=data.decode("utf-8")
+                        if "Extension=\"json\"" not in text:
+                            close=text.rfind("</Types>")
+                            if close < 0:
+                                raise RuntimeError("DOCX package has an invalid [Content_Types].xml file.")
+                            declaration='<Default Extension="json" ContentType="application/json"/>'
+                            text=text[:close]+declaration+text[close:]
+                            data=text.encode("utf-8")
                     zout.writestr(item,data)
                     self._progress(88 + (i/total_items)*10)
-                zout.writestr("word/digi_search_engine_page_images.json",json.dumps(marker).encode())
+                zout.writestr("word/digi_search_engine_page_images.json",json.dumps(marker).encode("utf-8"))
             os.replace(temp,target)
         finally:
             try: temp.unlink(missing_ok=True)
