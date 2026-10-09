@@ -771,8 +771,14 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
               error.textContent = result && result.error ? result.error : 'Digi did not return a creation result. Check that the backend is ready.';
               return;
             }
-            const path = result.path;
+            // Keep the user in the place where they initiated New.
             $('modal').classList.add('hidden');
+            if (repositoryBrowser) {
+              const pathLabel = repositoryBrowser.querySelector('#repo-browser-path');
+              const currentPath = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
+              openSearchRepositoryBrowser(currentPath);
+            }
+            // Refresh the underlying index without navigating away from the explorer.
             if (typeof refresh === 'function') refresh();
           });
         };
