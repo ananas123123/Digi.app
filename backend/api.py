@@ -204,51 +204,41 @@ class DigiBridge(QObject):
                         pages.append({"number": index + 1, "image": "data:image/png;base64," + encoded})
                 return json.dumps({"kind": "pdf", "name": source.name, "pages": pages, "total": total, "truncated": total > len(pages)})
             if suffix in (".docx", ".docm"):
+                # Read Office Open XML directly; this avoids python-docx package lookup
+                # failures and also works in frozen PyInstaller builds.
                 try:
-                    from docx import Document
-                    document = Document(str(source))
+                    import zipfile
+                    import xml.etree.ElementTree as ET
+                    if not zipfile.is_zipfile(str(source)):
+                        raise ValueError("The file is not a valid DOCX/DOCM package; it may be a legacy .doc file renamed with a .docx extension.")
+                    with zipfile.ZipFile(str(source), "r") as archive:
+                        xml_data = archive.read("word/document.xml")
+                    root = ET.fromstring(xml_data)
+                    ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
                     blocks = []
-                    for paragraph in document.paragraphs:
-                        text = paragraph.text.strip()
-                        if text:
-                            blocks.append("<p>" + escape(text) + "</p>")
-                    for table in document.tables:
-                        rows = []
-                        for row in table.rows:
-                            cells = "".join("<td>" + escape(cell.text.strip()) + "</td>" for cell in row.cells)
-                            rows.append("<tr>" + cells + "</tr>")
-                        blocks.append("<table>" + "".join(rows) + "</table>")
+                    body_node = root.find("w:body", ns)
+                    if body_node is not None:
+                        for node in body_node:
+                            tag = node.tag.rsplit("}", 1)[-1]
+                            if tag == "p":
+                                text = "".join(part.text or "" for part in node.findall(".//w:t", ns)).strip()
+                                if text:
+                                    blocks.append("<p>" + escape(text) + "</p>")
+                            elif tag == "tbl":
+                                rows = []
+                                for row in node.findall("w:tr", ns):
+                                    cells = []
+                                    for cell in row.findall("w:tc", ns):
+                                        text = "".join(part.text or "" for part in cell.findall(".//w:t", ns)).strip()
+                                        cells.append("<td>" + escape(text) + "</td>")
+                                    rows.append("<tr>" + "".join(cells) + "</tr>")
+                                blocks.append("<table>" + "".join(rows) + "</table>")
                     body = "".join(blocks) or "<p>This Word document contains no extractable text. Use Open to view it in Word.</p>"
                     return json.dumps({"kind": "word", "name": source.name, "html": body})
                 except Exception as exc:
-                    return json.dumps({"kind": "error", "message": "Could not read this Word document (" + type(exc).__name__ + "). Use Open to view it in Word."})
+                    return json.dumps({"kind": "error", "message": "Could not preview this Word document: " + str(exc) + ". Use Open to view it in Word."})
             if suffix == ".doc":
-                try:
-                    import pythoncom
-                    import win32com.client
-                    pythoncom.CoInitialize()
-                    word = None
-                    document = None
-                    try:
-                        word = win32com.client.DispatchEx("Word.Application")
-                        word.Visible = False
-                        word.DisplayAlerts = 0
-                        document = word.Documents.Open(str(source.resolve()), ReadOnly=True, AddToRecentFiles=False)
-                        blocks = []
-                        for paragraph in document.Paragraphs:
-                            text = paragraph.Range.Text.strip("\r\x07\n ")
-                            if text:
-                                blocks.append("<p>" + escape(text) + "</p>")
-                        body = "".join(blocks) or "<p>This Word document contains no extractable text. Use Open to view it in Word.</p>"
-                        return json.dumps({"kind": "word", "name": source.name, "html": body})
-                    finally:
-                        if document is not None:
-                            document.Close(False)
-                        if word is not None:
-                            word.Quit()
-                        pythoncom.CoUninitialize()
-                except Exception as exc:
-                    return json.dumps({"kind": "error", "message": "Previewing legacy .doc files requires Microsoft Word. Details: " + type(exc).__name__ + ". You can still use Open to view the file."})
+                return json.dumps({"kind": "error", "message": "Legacy .doc files are not Open XML documents. Open this file in Microsoft Word or save a copy as .docx to preview it here."})
             return json.dumps({"kind": "error", "message": "Preview is available for PDF and Word documents only."})
         except Exception as exc:
             return json.dumps({"kind": "error", "message": "Preview could not be loaded: " + str(exc)})
