@@ -668,7 +668,10 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
           const submit = form.querySelector('[type="submit"]');
           submit.disabled = true;
           submit.textContent = 'Creating…';
-          const folderParent = button.dataset.parent || '';
+          const repositoryBrowser = document.querySelector('.repo-browser');
+          const pathLabel = repositoryBrowser ? repositoryBrowser.querySelector('#repo-browser-path') : null;
+          // Read the current folder from Digi's explorer itself, not the click event.
+          const folderParent = resultsArea ? '' : (pathLabel && typeof pathLabel.dataset.path === 'string' ? pathLabel.dataset.path : '');
           call('createFolder', [folderParent, name], raw => {
             const result = parseJson(raw, null, 'create folder');
             if (!result || !result.ok) {
@@ -707,7 +710,9 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
           const submit = form.querySelector('[type="submit"]');
           submit.disabled = true;
           submit.textContent = 'Creating…';
-          const documentParent = button.dataset.parent || '';
+          const repositoryBrowser = document.querySelector('.repo-browser');
+          const pathLabel = repositoryBrowser ? repositoryBrowser.querySelector('#repo-browser-path') : null;
+          const documentParent = resultsArea ? '' : (pathLabel && typeof pathLabel.dataset.path === 'string' ? pathLabel.dataset.path : '');
           call('createDocument', [documentParent, name, kind], raw => {
             let result = null;
             try { result = JSON.parse(raw); } catch (_) {}
