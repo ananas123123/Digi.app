@@ -1026,3 +1026,32 @@ body {
 }
 ::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
 * { scrollbar-width: none !important; }
+
+
+/* Refine frameless window shape. Use larger radii in windowed mode and let
+   the app surface reach the viewport edges so maximized mode cannot be inset. */
+html {
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: #090909;
+}
+body {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255,255,255,.28) !important;
+  border-radius: 17px !important;
+  clip-path: inset(0 round 17px) !important;
+}
+@media (max-width: 760px) {
+  html { border-radius: 14px !important; }
+  body { border-radius: 13px !important; clip-path: inset(0 round 13px) !important; }
+}
