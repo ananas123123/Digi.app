@@ -30,7 +30,7 @@ function refresh(){let q=$("search").value.trim();if(!q){$("results").innerHTML=
 call("search",[q,$("type").value,$("status").value,$("source").value,$("method").value,$("sort").value],raw=>{let rows=parseJson(raw,null,"search results");if(!Array.isArray(rows)){$("results").innerHTML='<div class="empty">Digi could not read search results. Check the startup log.</div>';$("count").textContent="Unavailable";return}$("count").textContent=rows.length+" result(s)";$("results").innerHTML=rows.length?rows.map(r=>'<article class="result" tabindex="0" role="button" aria-label="Preview '+esc(r.name)+'" data-preview="'+esc(r.path)+'" data-name="'+esc(r.name)+'"><div class="result-name">'+esc(r.name)+'</div><div class="result-meta">'+esc(r.path)+' · '+esc(r.ext)+' · '+(r.pages||0)+' pages · '+esc(r.status)+'</div><div class="result-actions"><button class="small-button" data-open="'+esc(r.path)+'">Open</button><button class="small-button" data-folder="'+esc(r.path)+'">Folder</button><button class="small-button" data-convert="'+esc(r.path)+'" data-kind="'+(r.ext===".pdf"?"word":"pdf")+'">'+(r.ext===".pdf"?"→ Word":"→ PDF")+'</button></div></article>').join(""):'<div class="empty">No matching files.</div>';
 document.querySelectorAll("[data-preview]").forEach(card=>{const select=()=>showPreview(card.dataset.preview,card.dataset.name,card);card.onclick=e=>{if(e.target.closest("button"))return;select()};card.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&!e.target.closest("button")){e.preventDefault();select()}};});
 document.querySelectorAll("[data-open]").forEach(b=>b.onclick=e=>{e.stopPropagation();openSelectedFile(b.dataset.open)});document.querySelectorAll("[data-folder]").forEach(b=>b.onclick=e=>{e.stopPropagation();call("openFolder",[b.dataset.folder])});document.querySelectorAll("[data-convert]").forEach(b=>b.onclick=e=>{e.stopPropagation();startConversion(b)});});}
-function openSearchRepositoryBrowser() {
+function openSearchRepositoryBrowser(initialPath = "") {
   modal("Search repository", '<div class="repo-browser"><div class="repo-browser-path" id="repo-browser-path">Search repository</div><div class="repo-browser-list" id="repo-browser-list"><div class="empty">Loading folders…</div></div></div>');
   let current = "";
   const renderRepository = path => {
@@ -39,6 +39,9 @@ function openSearchRepositoryBrowser() {
     const pathLabel = $("repo-browser-path");
     if (!list || !pathLabel) return;
     pathLabel.textContent = current || "Search repository";
+    pathLabel.dataset.path = current;
+    const contextAddFolder = document.querySelector('#digi-context-menu [data-action="add-folder"]');
+    if (contextAddFolder) contextAddFolder.dataset.parent = current;
     list.innerHTML = '<div class="empty">Loading…</div>';
     call("listLibraryContents", [current], raw => {
       const data = parseJson(raw, null, "search repository browser");
@@ -85,7 +88,16 @@ function openSearchRepositoryBrowser() {
       });
     });
   };
-  renderRepository("");
+  const browser = $("repo-browser-list");
+  if (browser) {
+    browser.oncontextmenu = event => {
+      event.preventDefault();
+      const pathLabel = $("repo-browser-path");
+      const addFolder = document.querySelector('#digi-context-menu [data-action="add-folder"]');
+      if (addFolder) addFolder.dataset.parent = pathLabel ? (pathLabel.dataset.path || "") : "";
+    };
+  }
+  renderRepository(initialPath);
 }
 const repositoryButton = $("open-search-repository");
 if (repositoryButton) repositoryButton.addEventListener("click", openSearchRepositoryBrowser);
@@ -543,6 +555,17 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     target = event.target instanceof Element ? event.target : null;
     const editable = target && (target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]'));
     const resultsArea = target ? target.closest('#results') : null;
+    const repositoryBrowser = target ? target.closest('.repo-browser') : null;
+    const addFolderButton = menu.querySelector('[data-action="add-folder"]');
+    if (addFolderButton) {
+      addFolderButton.hidden = !resultsArea && !repositoryBrowser;
+      if (repositoryBrowser) {
+        const pathLabel = repositoryBrowser.querySelector('#repo-browser-path');
+        addFolderButton.dataset.parent = pathLabel ? (pathLabel.dataset.path || '') : '';
+      } else if (resultsArea) {
+        addFolderButton.dataset.parent = '';
+      }
+    }
     // Delete is available only when right-clicking the individual file card,
     // not the surrounding results container or preview panel.
     const resultCard = target ? target.closest('#results .result[data-preview]') : null;
@@ -550,7 +573,7 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     const newSeparator = newWrapper && newWrapper.previousElementSibling;
     // Keep New available anywhere in the results area, including over a result card.
     if (newWrapper) {
-      newWrapper.hidden = !resultsArea;
+      newWrapper.hidden = !resultsArea && !repositoryBrowser;
       if (newSeparator && newSeparator.classList.contains('digi-context-separator')) {
         newSeparator.hidden = newWrapper.hidden;
       }
@@ -636,7 +659,8 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
           const submit = form.querySelector('[type="submit"]');
           submit.disabled = true;
           submit.textContent = 'Creating…';
-          call('createFolder', ['', name], raw => {
+          const folderParent = button.dataset.parent || '';
+          call('createFolder', [folderParent, name], raw => {
             const result = parseJson(raw, null, 'create folder');
             if (!result || !result.ok) {
               submit.disabled = false;
@@ -652,7 +676,7 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
             }
             // The Add folder form uses Digi's shared modal. Reopen the in-app
             // repository browser after creation instead of leaving it closed.
-            openSearchRepositoryBrowser();
+            openSearchRepositoryBrowser(folderParent);
             if (typeof refresh === 'function') refresh();
           });
         };
@@ -674,7 +698,8 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
           const submit = form.querySelector('[type="submit"]');
           submit.disabled = true;
           submit.textContent = 'Creating…';
-          call('createDocument', ['', name, kind], raw => {
+          const documentParent = button.dataset.parent || '';
+          call('createDocument', [documentParent, name, kind], raw => {
             let result = null;
             try { result = JSON.parse(raw); } catch (_) {}
             if (!result || !result.ok || !result.path) {
