@@ -41,6 +41,12 @@ function openMoveBrowser(sourcePath, sourceName) {
   let checkRequest = 0;
   let destinationConflict = false;
   let identicalConflict = false;
+  const setMoveMessage = (text, isError = false) => {
+    const message = $('move-browser-message');
+    if (!message) return;
+    message.textContent = text || '';
+    message.classList.toggle('move-browser-message-error', Boolean(isError));
+  };
   const render = folder => {
     currentFolder = folder || '';
     call('listLibraryContents', [currentFolder], raw => {
@@ -50,7 +56,7 @@ function openMoveBrowser(sourcePath, sourceName) {
       if (!data || !data.ok) {
         list.textContent = data && data.error ? data.error : 'The repository contents could not be loaded.';
         $('move-here').disabled = true;
-        $('move-browser-message').textContent = 'Could not load this folder.';
+        setMoveMessage('Could not load this folder.', true);
         return;
       }
       list.innerHTML = '';
@@ -108,19 +114,19 @@ function openMoveBrowser(sourcePath, sourceName) {
       const message = $('move-browser-message');
       moveButton.disabled = true;
       moveButton.textContent = 'Move here';
-      message.textContent = 'Checking destination…';
+      setMoveMessage('Checking destination…');
       call('checkMoveDestination', [sourcePath, currentFolder], rawCheck => {
         if (requestId !== checkRequest || !$('move-here')) return;
         const check = parseJson(rawCheck, null, 'move destination check');
         if (!check || !check.ok) {
           moveButton.disabled = true;
-          message.textContent = check && check.error ? check.error : 'Could not check destination.';
+          setMoveMessage(check && check.error ? check.error : 'Could not check destination.', true);
           return;
         }
         destinationConflict = Boolean(check.conflict);
         identicalConflict = Boolean(check.identical);
         moveButton.disabled = !check.can_move && (!destinationConflict || identicalConflict);
-        message.textContent = check.reason || '';
+        setMoveMessage(check.reason || '', Boolean(check.conflict || !check.can_move));
       });
     });
   };
@@ -148,16 +154,16 @@ function openMoveBrowser(sourcePath, sourceName) {
         if (!newName) { input.focus(); return; }
         overlay.hidden = true;
         button.disabled = true;
-        $('move-browser-message').textContent = 'Moving file…';
+        setMoveMessage('Moving file…');
         call('moveFile', [sourcePath, currentFolder, newName], raw => {
           const result = parseJson(raw, null, 'move file');
           if (result && result.ok) {
             $('modal').classList.add('hidden');
             refresh();
           } else {
-            $('move-browser-message').textContent = result && result.error
+            setMoveMessage(result && result.error
               ? result.error
-              : 'Move failed — two files of the same name cannot be in one folder.';
+              : 'Move failed — two files of the same name cannot be in one folder.', true);
             render(currentFolder);
           }
         });
@@ -165,16 +171,16 @@ function openMoveBrowser(sourcePath, sourceName) {
       return;
     }
     button.disabled = true;
-    $('move-browser-message').textContent = 'Moving file…';
+    setMoveMessage('Moving file…');
     call('moveFile', [sourcePath, currentFolder, ''], raw => {
       const result = parseJson(raw, null, 'move file');
       if (result && result.ok) {
         $('modal').classList.add('hidden');
         refresh();
       } else {
-        $('move-browser-message').textContent = result && result.error
+        setMoveMessage(result && result.error
           ? result.error
-          : 'Move failed — two files of the same name cannot be in one folder.';
+          : 'Move failed — two files of the same name cannot be in one folder.', true);
         render(currentFolder);
       }
     });
