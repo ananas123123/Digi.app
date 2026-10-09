@@ -148,7 +148,18 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
   const menu = document.getElementById('digi-context-menu');
   if (!menu) return;
   let target = null;
-  const hide = () => { menu.hidden = true; };
+  let newPinnedOpen = false;
+  const newWrapper = () => menu.querySelector('.digi-context-submenu');
+  const closeNewSubmenu = () => {
+    const wrapper = newWrapper();
+    if (wrapper) {
+      wrapper.classList.remove('submenu-open', 'submenu-opens-left', 'submenu-hover-open');
+      const button = wrapper.querySelector('[data-action="new-menu"]');
+      if (button) button.setAttribute('aria-expanded', 'false');
+    }
+    newPinnedOpen = false;
+  };
+  const hide = () => { menu.hidden = true; closeNewSubmenu(); };
   const positionNewSubmenu = wrapper => {
     if (!wrapper) return;
     wrapper.classList.remove('submenu-opens-left');
@@ -165,7 +176,18 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
   };
   menu.addEventListener('pointerover', event => {
     const wrapper = event.target.closest('.digi-context-submenu');
-    if (wrapper) positionNewSubmenu(wrapper);
+    if (wrapper && !wrapper.contains(event.relatedTarget)) {
+      wrapper.classList.add('submenu-hover-open');
+      positionNewSubmenu(wrapper);
+    }
+  });
+  menu.addEventListener('pointerout', event => {
+    const wrapper = event.target.closest('.digi-context-submenu');
+    if (wrapper && !wrapper.contains(event.relatedTarget) && !newPinnedOpen) {
+      wrapper.classList.remove('submenu-open', 'submenu-opens-left', 'submenu-hover-open');
+      const button = wrapper.querySelector('[data-action="new-menu"]');
+      if (button) button.setAttribute('aria-expanded', 'false');
+    }
   });
   document.addEventListener('contextmenu', event => {
     event.preventDefault();
@@ -208,10 +230,16 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     try {
       if (action === 'new-menu') {
         const wrapper = button.closest('.digi-context-submenu');
-        const isOpen = wrapper && wrapper.classList.toggle('submenu-open');
-        if (isOpen) positionNewSubmenu(wrapper);
-        else if (wrapper) wrapper.classList.remove('submenu-opens-left');
-        button.setAttribute('aria-expanded', String(!!isOpen));
+        newPinnedOpen = !!wrapper && !newPinnedOpen;
+        if (wrapper) {
+          if (newPinnedOpen) {
+            wrapper.classList.add('submenu-open');
+            positionNewSubmenu(wrapper);
+          } else {
+            wrapper.classList.remove('submenu-open', 'submenu-opens-left', 'submenu-hover-open');
+          }
+        }
+        button.setAttribute('aria-expanded', String(newPinnedOpen));
       }
       else if (action === 'new-docx' || action === 'new-pdf') {
         hide();
