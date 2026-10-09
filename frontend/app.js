@@ -36,7 +36,7 @@ function finishConversion(button,success,message){if(!button)return;if(!success)
 
 function modal(title,body){let m=$("modal");m.classList.remove("hidden");m.innerHTML='<div class="modal-card"><div class="modal-head"><b>'+esc(title)+'</b><button class="ui-button" id="close-modal">Close</button></div><div class="modal-body">'+body+'</div></div>';$("close-modal").onclick=()=>m.classList.add("hidden");}
 function openMoveBrowser(sourcePath, sourceName) {
-  modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div><div class="move-browser-actions"><span id="move-browser-message" role="status"></span><button class="ui-button move-here-button" id="move-here" type="button" disabled>Move here</button></div><div class="rename-popup-overlay" id="rename-popup-overlay" hidden><section class="rename-popup" role="dialog" aria-modal="true" aria-labelledby="rename-popup-title"><div class="rename-popup-tab"><span class="rename-popup-tab-mark" aria-hidden="true"></span><span>Rename file</span><button type="button" id="rename-popup-close" aria-label="Close rename popup">×</button></div><form id="rename-popup-form" class="rename-popup-form"><h3 id="rename-popup-title">Choose a new filename</h3><p>A file with this name already exists in the destination folder.</p><label for="rename-popup-input">New filename</label><input id="rename-popup-input" name="filename" type="text" maxlength="240" required autocomplete="off"><div class="rename-popup-actions"><button type="button" class="rename-popup-cancel" id="rename-popup-cancel">Cancel</button><button type="submit" class="rename-popup-confirm" id="rename-popup-confirm">Rename and move</button></div></form></section></div></div>');
+  modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div><div class="folder-context-menu" id="folder-context-menu" hidden><button type="button" id="folder-context-add">＋ Add folder</button></div><div class="new-folder-overlay" id="new-folder-overlay" hidden><section class="new-folder-popup" role="dialog" aria-modal="true" aria-labelledby="new-folder-title"><div class="new-folder-tab"><span class="rename-popup-tab-mark" aria-hidden="true"></span><span>New folder</span><button type="button" id="new-folder-close" aria-label="Close">×</button></div><form id="new-folder-form"><h3 id="new-folder-title">Create a folder</h3><label for="new-folder-name">Folder name</label><input id="new-folder-name" name="foldername" type="text" maxlength="120" required autocomplete="off"><div class="new-folder-actions"><button type="button" id="new-folder-cancel">Cancel</button><button type="submit" id="new-folder-create">Create folder</button></div></form></section></div><div class="move-browser-actions"><span id="move-browser-message" role="status"></span><button class="ui-button move-here-button" id="move-here" type="button" disabled>Move here</button></div><div class="rename-popup-overlay" id="rename-popup-overlay" hidden><section class="rename-popup" role="dialog" aria-modal="true" aria-labelledby="rename-popup-title"><div class="rename-popup-tab"><span class="rename-popup-tab-mark" aria-hidden="true"></span><span>Rename file</span><button type="button" id="rename-popup-close" aria-label="Close rename popup">×</button></div><form id="rename-popup-form" class="rename-popup-form"><h3 id="rename-popup-title">Choose a new filename</h3><p>A file with this name already exists in the destination folder.</p><label for="rename-popup-input">New filename</label><input id="rename-popup-input" name="filename" type="text" maxlength="240" required autocomplete="off"><div class="rename-popup-actions"><button type="button" class="rename-popup-cancel" id="rename-popup-cancel">Cancel</button><button type="submit" class="rename-popup-confirm" id="rename-popup-confirm">Rename and move</button></div></form></section></div></div>');
   let currentFolder = '';
   let breadcrumbFolders = [];
   let checkRequest = 0;
@@ -103,6 +103,53 @@ function openMoveBrowser(sourcePath, sourceName) {
       if (!data.entries.length) {
         const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'This folder is empty.'; list.appendChild(empty);
       }
+      const contextMenu = $('folder-context-menu');
+      list.oncontextmenu = event => {
+        event.preventDefault();
+        contextMenu.style.left = Math.min(event.clientX, window.innerWidth - 180) + 'px';
+        contextMenu.style.top = Math.min(event.clientY, window.innerHeight - 60) + 'px';
+        contextMenu.hidden = false;
+      };
+      const hideFolderMenu = () => { if (contextMenu) contextMenu.hidden = true; };
+      document.addEventListener('pointerdown', event => {
+        if (contextMenu && !contextMenu.contains(event.target)) hideFolderMenu();
+      }, { once: true });
+      $('folder-context-add').onclick = () => {
+        hideFolderMenu();
+        const overlay = $('new-folder-overlay');
+        const input = $('new-folder-name');
+        const form = $('new-folder-form');
+        const close = () => { overlay.hidden = true; };
+        input.value = '';
+        overlay.hidden = false;
+        $('new-folder-close').onclick = close;
+        $('new-folder-cancel').onclick = close;
+        input.focus();
+        form.onsubmit = event => {
+          event.preventDefault();
+          const name = input.value.trim();
+          if (!name) { input.focus(); return; }
+          if (/[<>:"/\\\\|?*]/.test(name) || name === '.' || name === '..') {
+            setMoveMessage('That folder name contains invalid characters.', true);
+            input.focus();
+            return;
+          }
+          const createButton = $('new-folder-create');
+          createButton.disabled = true;
+          setMoveMessage('Creating folder…');
+          call('createFolder', [currentFolder, name], rawResult => {
+            createButton.disabled = false;
+            const result = parseJson(rawResult, null, 'create folder');
+            if (result === true || (result && result.ok)) {
+              close();
+              setMoveMessage('Folder created.');
+              render(currentFolder);
+            } else {
+              setMoveMessage(result && result.error ? result.error : 'Could not create folder.', true);
+            }
+          });
+        };
+      };
       const normalizePath = value => String(value || '').replace(/\\\\/g, '/').replace(/\/$/, '').toLowerCase();
       data.entries.forEach(entry => {
         const row = document.createElement('button');
