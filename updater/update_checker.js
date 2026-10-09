@@ -59,29 +59,20 @@
     };
   }
 
-  async function fetchManifest(url) {
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        cache: "no-store",
-        mode: "cors",
-        signal: controller.signal,
-        headers: { "Accept": "application/json" }
-      });
-      if (!response.ok) throw new Error("HTTP " + response.status);
-      if (url.includes("api.github.com")) {
-        const file = await response.json();
-        if (!file || typeof file.content !== "string" || file.encoding !== "base64") {
-          throw new Error("GitHub API returned an unexpected file format.");
+  function waitForBridge() {
+    return new Promise((resolve, reject) => {
+      const started = Date.now();
+      const poll = () => {
+        if (window.digiBackend && typeof window.digiBackend.checkReleaseManifest === "function") {
+          resolve(window.digiBackend);
+        } else if (Date.now() - started > 8000) {
+          reject(new Error("Digi backend bridge unavailable."));
+        } else {
+          window.setTimeout(poll, 100);
         }
-        return JSON.parse(atob(file.content.replace(/\\s/g, "")));
-      }
-      return await response.json();
-    } finally {
-      window.clearTimeout(timeout);
-    }
+      };
+      poll();
+    });
   }
 
   async function checkRemoteStatus() {
@@ -89,20 +80,34 @@
     requestInProgress = true;
     lastRemoteCheck = Date.now();
     setStatus("checking", "Checking for Digi updates…");
-    // Keep the checking state visible briefly, even when the network fails immediately.
-    await new Promise(resolve => window.setTimeout(resolve, 700));
     try {
-      let manifest = null;
-      let lastError = null;
-      for (const url of LATEST_URLS) {
-        try {
-          manifest = await fetchManifest(url);
-          break;
-        } catch (error) {
-          lastError = error;
-        }
+      const backend = await waitForBridge();
+      const response = await new Promise((resolve, reject) => {
+        let settled = false;
+        const timeout = window.setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener("digi-release-manifest", onResult);
+          reject(new Error("Release repository request timed out."));
+        }, 20000);
+        const onResult = event => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeout);
+          window.removeEventListener("digi-release-manifest", onResult);
+          try {
+            resolve(JSON.parse(event.detail));
+          } catch (_) {
+            reject(new Error("Invalid backend response."));
+          }
+        };
+        window.addEventListener("digi-release-manifest", onResult);
+        backend.checkReleaseManifest();
+      });
+      if (!response || !response.ok || !response.manifest) {
+        throw new Error("Could not reach the release repository.");
       }
-      if (!manifest) throw lastError || new Error("Release metadata unavailable.");
+      const manifest = response.manifest;
       if (manifest.product !== "Digi" || manifest.schema_version !== 1) {
         throw new Error("Release metadata schema is not supported.");
       }
