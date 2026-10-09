@@ -26,7 +26,7 @@ TITLEBAR_BORDER = "#30352c"
 
 class DigiWebView(QWebEngineView):
     localItemsDropped = Signal("QStringList", int, int)
-    localItemsDragMoved = Signal("QStringList", int, int)
+    localItemsDragMoved = Signal("QStringList", int, int, bool)
     localItemsDragLeft = Signal()
 
     def __init__(self, parent=None):
@@ -56,7 +56,7 @@ class DigiWebView(QWebEngineView):
         paths = self._local_paths(event)
         if paths:
             x, y = event.position().toPoint().x(), event.position().toPoint().y()
-            self.localItemsDragMoved.emit(paths, x, y)
+            self.localItemsDragMoved.emit(paths, x, y, any(Path(path).is_dir() for path in paths))
             event.setDropAction(Qt.DropAction.CopyAction)
             event.accept()
             return
@@ -175,10 +175,10 @@ class DigiWindow(QMainWindow):
         payload = json.dumps(list(paths))
         self.view.page().runJavaScript(
             "if (window.handleNativeItemsDrop) window.handleNativeItemsDrop("
-            + json.dumps(payload) + ", " + str(int(x)) + ", " + str(int(y)) + ");"
+            + json.dumps(payload) + ", " + str(int(x)) + ", " + str(int(y)) + ", " + ("true" if has_folder else "false") + ");"
         )
 
-    def _handle_native_items_drag_moved(self, paths, x, y):
+    def _handle_native_items_drag_moved(self, paths, x, y, has_folder):
         import json
         payload = json.dumps(list(paths))
         self.view.page().runJavaScript(
