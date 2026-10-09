@@ -178,6 +178,54 @@ class DigiBridge(QObject):
         self.db.update(path, "due_date", value)
         return True
 
+    @Slot(str, result=str)
+    def previewFile(self, path):
+        """Return a safe, read-only preview payload for a selected PDF or Word file."""
+        import base64
+        from html import escape
+        source = Path(path)
+        try:
+            if not source.is_file():
+                return json.dumps({"kind": "error", "message": "This file is no longer available."})
+            suffix = source.suffix.lower()
+            if suffix == ".pdf":
+                try:
+                    import fitz
+                except ImportError:
+                    return json.dumps({"kind": "error", "message": "PDF preview is unavailable because the PDF renderer is not installed."})
+                pages = []
+                with fitz.open(str(source)) as document:
+                    total = len(document)
+                    for index, page in enumerate(document):
+                        if index >= 20:
+                            break
+                        pixmap = page.get_pixmap(matrix=fitz.Matrix(1.15, 1.15), alpha=False)
+                        encoded = base64.b64encode(pixmap.tobytes("png")).decode("ascii")
+                        pages.append({"number": index + 1, "image": "data:image/png;base64," + encoded})
+                return json.dumps({"kind": "pdf", "name": source.name, "pages": pages, "total": total, "truncated": total > len(pages)})
+            if suffix in (".docx", ".docm"):
+                try:
+                    from docx import Document
+                    document = Document(str(source))
+                    blocks = []
+                    for paragraph in document.paragraphs:
+                        text = paragraph.text.strip()
+                        if text:
+                            blocks.append("<p>" + escape(text) + "</p>")
+                    for table in document.tables:
+                        rows = []
+                        for row in table.rows:
+                            cells = "".join("<td>" + escape(cell.text.strip()) + "</td>" for cell in row.cells)
+                            rows.append("<tr>" + cells + "</tr>")
+                        blocks.append("<table>" + "".join(rows) + "</table>")
+                    body = "".join(blocks) or "<p>This Word document contains no extractable text. Use Open to view it in Word.</p>"
+                    return json.dumps({"kind": "word", "name": source.name, "html": body})
+                except Exception:
+                    return json.dumps({"kind": "error", "message": "Digi could not read this Word document. Use Open to view it in Word."})
+            return json.dumps({"kind": "error", "message": "Preview is available for PDF and Word documents only."})
+        except Exception as exc:
+            return json.dumps({"kind": "error", "message": "Preview could not be loaded: " + str(exc)})
+
     @Slot(str, result=bool)
     def openFile(self, path):
         if not self.incoming:
