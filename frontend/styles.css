@@ -1484,3 +1484,18 @@ body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-sele
     min-height: 0 !important;
   }
 }
+
+
+/* Let the preview extend to the bottom edge of the application content area. */
+body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-selected) .preview-panel {
+  height: calc(100vh - 150px) !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  align-self: stretch !important;
+}
+@media (max-width: 980px) {
+  body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-selected) .preview-panel {
+    height: 65vh !important;
+    max-height: none !important;
+  }
+}
