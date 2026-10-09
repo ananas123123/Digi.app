@@ -1005,19 +1005,14 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
         if (!path || (!resultTarget && !repositoryTarget)) return;
         hide();
         if (repositoryTarget) {
-          if (!window.confirm('Delete "' + name + '"? This cannot be undone.')) return;
-          call('deleteFile', [path], ok => {
-            if (ok === true) {
-              const pathLabel = $('repo-browser-path');
-              const currentPath = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
-              openSearchRepositoryBrowser(currentPath);
-              if (typeof refresh === 'function') refresh();
-            } else {
-              alert('Digi could not delete this file.');
-            }
+          openDeleteConfirmation(path, name, "file", () => {
+            const pathLabel = $('repo-browser-path');
+            const currentPath = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
+            openSearchRepositoryBrowser(currentPath);
+            if (typeof refresh === 'function') refresh();
           });
         } else {
-          openDeleteConfirmation(path, name);
+          openDeleteConfirmation(path, name, "file");
         }
       }
       else if (action === 'delete-folder-result') {
