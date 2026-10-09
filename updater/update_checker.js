@@ -22,7 +22,7 @@
     const a = String(left).split(".");
     const b = String(right).split(".");
     if (a.length !== b.length || !a.length) return null;
-    const valid = value => value.every(part => /^\\d+$/.test(part));
+    const valid = value => value.every(part => /^\d+$/.test(part));
     if (!valid(a) || !valid(b)) return null;
     for (let i = 0; i < a.length; i += 1) {
       const x = Number(a[i]);
