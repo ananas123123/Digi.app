@@ -2111,3 +2111,33 @@ body.delete-confirm-open { overflow: hidden; }
   justify-content: center;
   padding: 24px;
 }
+
+
+/* Parent-folder navigation sits in the top-left corner of the browser panel. */
+.move-browser-list { position: relative; }
+.move-browser-back {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid rgba(232,189,98,.32);
+  border-radius: 9px;
+  background: #17140f;
+  color: #e8bd62;
+  cursor: pointer;
+}
+.move-browser-back:hover {
+  background: #252016;
+  border-color: rgba(232,189,98,.68);
+  color: #ffdc80;
+}
+.move-browser-back:focus-visible {
+  outline: 2px solid #e8bd62;
+  outline-offset: 2px;
+}
