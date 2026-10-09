@@ -36,20 +36,18 @@ function finishConversion(button,success,message){if(!button)return;if(!success)
 
 function modal(title,body){let m=$("modal");m.classList.remove("hidden");m.innerHTML='<div class="modal-card"><div class="modal-head"><b>'+esc(title)+'</b><button class="ui-button" id="close-modal">Close</button></div><div class="modal-body">'+body+'</div></div>';$("close-modal").onclick=()=>m.classList.add("hidden");}
 function openMoveBrowser(sourcePath, sourceName) {
-  modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-location" id="move-browser-location">Loading search repository…</div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div></div>');
+  modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div></div>');
   const close = () => $('modal').classList.add('hidden');
   const render = folder => {
     call('listLibraryContents', [folder], raw => {
       const data = parseJson(raw, null, 'move browser contents');
-      const location = $('move-browser-location');
       const list = $('move-browser-list');
-      if (!location || !list) return;
+      if (!list) return;
       if (!data || !data.ok) {
         location.textContent = 'Could not open search repository';
         list.textContent = data && data.error ? data.error : 'The repository contents could not be loaded.';
         return;
       }
-      location.textContent = data.current;
       list.innerHTML = '';
       list.classList.toggle('is-empty', data.entries.length === 0);
       if (data.parent) {
@@ -69,7 +67,6 @@ function openMoveBrowser(sourcePath, sourceName) {
         const row = document.createElement('button');
         row.type = 'button'; row.className = 'move-browser-entry';
         row.textContent = (entry.type === 'folder' ? '▣  ' : '▤  ') + entry.name;
-        row.title = entry.path;
         if (entry.type === 'folder') {
           row.classList.add('move-browser-folder');
           row.onclick = () => render(entry.path);
