@@ -213,7 +213,10 @@ class DigiWindow(QMainWindow):
     def eventFilter(self, watched, event):
         # FramelessWindowHint removes Windows' native resize frame. Restore
         # native resizing by handing edge drags to the operating system.
-        if event.type() == QEvent.Type.MouseButtonPress:
+        belongs_to_window = watched is self or (
+            isinstance(watched, QWidget) and self.isAncestorOf(watched)
+        )
+        if belongs_to_window and event.type() == QEvent.Type.MouseButtonPress:
             if event.button() == Qt.MouseButton.LeftButton and self.isVisible():
                 global_pos = event.globalPosition().toPoint()
                 local = self.mapFromGlobal(global_pos)
