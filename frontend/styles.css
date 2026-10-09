@@ -2710,3 +2710,71 @@ body:not(:has(#search:not(:placeholder-shown))) .results-folder-icon {
     height: 36px;
   }
 }
+
+
+/* Clickable results folder shortcut and native Digi repository browser. */
+button.results-folder-icon {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+button.results-folder-icon:hover {
+  color: #ffe2a0;
+  border-color: rgba(232,189,98,.72);
+  background: linear-gradient(145deg, rgba(232,189,98,.22), rgba(232,189,98,.07));
+  box-shadow: 0 0 0 3px rgba(232,189,98,.07), 0 5px 18px rgba(0,0,0,.2);
+  transform: translateY(-1px);
+}
+button.results-folder-icon:active { transform: translateY(0); }
+button.results-folder-icon:focus-visible { outline: 2px solid #e8bd62; outline-offset: 3px; }
+.repo-browser { display: flex; flex-direction: column; gap: 12px; min-height: 260px; }
+.repo-browser-path {
+  padding: 10px 13px;
+  border: 1px solid #342d20;
+  border-radius: 9px;
+  color: #e8c979;
+  background: #171611;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.repo-browser-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 210px;
+  max-height: min(55vh, 520px);
+  overflow: auto;
+  padding: 5px;
+  border: 1px solid #302b20;
+  border-radius: 12px;
+  background: #11110f;
+}
+.repo-browser-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #eee4cf;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.repo-browser-entry:hover {
+  border-color: rgba(232,189,98,.23);
+  background: rgba(232,189,98,.08);
+}
+.repo-browser-entry-icon { display: inline-flex; color: #d8b967; flex: 0 0 22px; }
+.repo-browser-entry-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.repo-browser-entry-arrow { color: #8f8267; font-size: 20px; }
+.repo-browser-up { color: #d8cba9; }
