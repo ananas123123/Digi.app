@@ -4,12 +4,11 @@ import urllib.request
 from pathlib import Path
 from PySide6.QtCore import QObject, Signal, Slot, QThread
 from PySide6.QtWidgets import QFileDialog
-from .config import APP_VERSION, DEFAULT_INCOMING, LIBRARY_CONFIG, get_library_root, ensure_directories
+from .config import APP_VERSION, LIBRARY_CONFIG, get_library_root, ensure_directories
 from .database import Database
 from .search import SearchService
 from .files import FileService
 from .conversion import ConversionWorker
-from .incoming import IncomingService
 from .notes import NotesService
 from .version_manager import initialize_version_file, version_integrity, recalibrate_version
 
@@ -78,7 +77,6 @@ class DigiBridge(QObject):
         self.version_ok, self.version_problem = version_integrity()
         self.db = None
         self.search_service = None
-        self.incoming = None
         self.notes = None
         self.worker = None
         self.release_worker = None
@@ -95,11 +93,8 @@ class DigiBridge(QObject):
         """Create backend services once the runtime layout passes integrity checks."""
         self.db = Database()
         root = get_library_root()
-        saved = self.db.setting("incoming_folder")
-        incoming = Path(saved) if saved else DEFAULT_INCOMING
         self.search_service = SearchService()
-        self.search_service.configure(root, incoming)
-        self.incoming = IncomingService(self.db, root, incoming)
+        self.search_service.configure(root)
         self.notes = NotesService(root)
         self.start_scan()
 
@@ -115,11 +110,10 @@ class DigiBridge(QObject):
     def state(self):
         return json.dumps({
             "library": str(self.search_service.root) if self.search_service else "",
-            "incoming": str(self.incoming.incoming_folder) if self.incoming else "",
             "version": APP_VERSION,
             "version_ok": self.version_ok,
             "version_problem": self.version_problem,
-            "ready": bool(self.db and self.search_service and self.incoming and self.notes),
+            "ready": bool(self.db and self.search_service and self.notes),
         })
 
     @Slot(result=bool)
@@ -245,9 +239,6 @@ class DigiBridge(QObject):
 
     @Slot(str, result=bool)
     def openFile(self, path):
-        if not self.incoming:
-            return False
-        self.incoming.remember_origin(path)
         FileService.open_file(path)
         return True
 
@@ -266,35 +257,13 @@ class DigiBridge(QObject):
 
     @Slot(str, result=bool)
     def setLibraryFolder(self, path):
-        if not all((self.search_service, self.incoming, self.db)):
+        if not all((self.search_service, self.db)):
             return False
         root = Path(path).resolve()
-        self.search_service.configure(root, self.incoming.incoming_folder)
+        self.search_service.configure(root)
         self.db.set_setting("library_folder", str(root))
         LIBRARY_CONFIG.write_text(str(root), encoding="utf-8")
-        self.incoming.set_folders(root, self.incoming.incoming_folder)
         self.notes = NotesService(root)
-        self.start_scan()
-        return True
-
-    @Slot(result=str)
-    def chooseIncomingFolder(self):
-        if not all((self.search_service, self.incoming, self.db)):
-            return ""
-        folder = QFileDialog.getExistingDirectory(
-            None, "Choose Incoming folder", str(self.incoming.incoming_folder)
-        )
-        if folder:
-            self.incoming.set_folders(self.search_service.root, folder)
-            self.search_service.incoming = Path(folder).resolve()
-            self.db.set_setting("incoming_folder", folder)
-        return folder or ""
-
-    @Slot(result=bool)
-    def processIncoming(self):
-        if not self.incoming:
-            return False
-        self.incoming.process()
         self.start_scan()
         return True
 
