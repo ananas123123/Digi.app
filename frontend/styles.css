@@ -1357,5 +1357,9 @@ body:not(:has(#search:not(:placeholder-shown))) .results-workspace {
   display: none !important;
 }
 body:not(:has(#search:not(:placeholder-shown))) .content-head {
+  display: flex !important;
+}
+body:not(:has(#search:not(:placeholder-shown))) .content-head #count,
+body:not(:has(#search:not(:placeholder-shown))) .content-head p#hint {
   display: none !important;
 }
