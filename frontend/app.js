@@ -66,18 +66,38 @@ function openMoveBrowser(sourcePath, sourceName) {
       if (!data.entries.length) {
         const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'This folder is empty.'; list.appendChild(empty);
       }
+      const normalizePath = value => String(value || '').replace(/\\\\/g, '/').replace(/\\/$/, '').toLowerCase();
       data.entries.forEach(entry => {
         const row = document.createElement('button');
         row.type = 'button'; row.className = 'move-browser-entry';
-        row.textContent = (entry.type === 'folder' ? '▣  ' : '▤  ') + entry.name;
-        if (entry.type === 'folder') {
-          row.classList.add('move-browser-folder');
-          row.onclick = () => render(entry.path);
-        } else {
-          row.classList.add('move-browser-file');
+        const isSourceFile = entry.type === 'file' && normalizePath(entry.path) === normalizePath(sourcePath);
+        if (isSourceFile) {
+          row.classList.add('move-browser-current-file');
+          const arrow = document.createElement('span');
+          arrow.className = 'move-browser-current-arrow';
+          arrow.setAttribute('aria-hidden', 'true');
+          arrow.textContent = '➜';
+          const name = document.createElement('span');
+          name.className = 'move-browser-current-name';
+          name.textContent = entry.name;
+          const badge = document.createElement('span');
+          badge.className = 'move-browser-current-badge';
+          badge.textContent = 'YOUR FILE!';
+          row.append(arrow, name, badge);
           row.disabled = true;
           row.setAttribute('aria-disabled', 'true');
           row.tabIndex = -1;
+        } else {
+          row.textContent = (entry.type === 'folder' ? '▣  ' : '▤  ') + entry.name;
+          if (entry.type === 'folder') {
+            row.classList.add('move-browser-folder');
+            row.onclick = () => render(entry.path);
+          } else {
+            row.classList.add('move-browser-file');
+            row.disabled = true;
+            row.setAttribute('aria-disabled', 'true');
+            row.tabIndex = -1;
+          }
         }
         list.appendChild(row);
       });
