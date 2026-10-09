@@ -2041,3 +2041,15 @@ body.delete-confirm-open { overflow: hidden; }
 .digi-context-submenu .digi-context-submenu-items { display: none; }
 .digi-context-submenu.submenu-open .digi-context-submenu-items,
 .digi-context-submenu.submenu-hover-open .digi-context-submenu-items { display: block; }
+
+
+/* Move-file repository browser */
+.move-browser { display: flex; flex-direction: column; gap: 12px; min-width: min(560px, 72vw); }
+.move-source-label { color: #e5c45d; font-size: 12px; }
+.move-browser-location { padding: 9px 11px; border: 1px solid rgba(201,162,39,.25); border-radius: 7px; color: #c9c9ce; font-size: 11px; overflow-wrap: anywhere; }
+.move-browser-list { min-height: 220px; max-height: 45vh; overflow: auto; padding: 5px; border: 1px solid rgba(255,255,255,.09); border-radius: 8px; }
+.move-browser-entry { display: block; width: 100%; padding: 9px 10px; border: 0; border-radius: 5px; background: transparent; color: #eee; text-align: left; font: inherit; }
+.move-browser-entry:not(:disabled) { cursor: pointer; }
+.move-browser-entry:not(:disabled):hover { background: rgba(201,162,39,.15); color: #e5c45d; }
+.move-browser-entry:disabled { opacity: .8; cursor: default; }
+.move-browser-actions { display: flex; justify-content: flex-end; }
