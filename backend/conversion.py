@@ -67,17 +67,27 @@ class ConversionWorker(QThread):
                 self.source.unlink()
             except OSError as exc:
                 # Roll back only the output we just installed, never an unrelated file.
+                rollback_succeeded = False
                 try:
                     target_stat = target.stat()
                     temp_stat = temporary_target.stat()
                     if (target_stat.st_dev, target_stat.st_ino) == (temp_stat.st_dev, temp_stat.st_ino):
                         target.unlink()
+                        rollback_succeeded = True
                 except OSError:
                     pass
-                raise RuntimeError(
-                    "The converted file was prepared, but Digi could not remove the original. "
-                    "The original was preserved; check file locks and permissions."
-                ) from exc
+                if rollback_succeeded:
+                    message = (
+                        "Digi could not remove the original, so conversion was cancelled. "
+                        "The original remains unchanged; check file locks and permissions."
+                    )
+                else:
+                    message = (
+                        "Digi could not remove the original or safely roll back the new file. "
+                        "The original remains, and both filenames may exist. Check permissions "
+                        "and inspect the destination before trying again."
+                    )
+                raise RuntimeError(message) from exc
 
             try:
                 temporary_target.unlink(missing_ok=True)
