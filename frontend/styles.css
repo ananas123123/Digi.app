@@ -2778,3 +2778,54 @@ button.results-folder-icon:focus-visible { outline: 2px solid #e8bd62; outline-o
 .repo-browser-entry-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .repo-browser-entry-arrow { color: #8f8267; font-size: 20px; }
 .repo-browser-up { color: #d8cba9; }
+
+
+/* Digi-styled folder deletion confirmation */
+.digi-delete-dialog {
+  color: #29251d;
+  background: #fff;
+  border-radius: 12px;
+  padding: 22px;
+}
+.digi-delete-dialog p {
+  margin: 0 0 12px;
+  color: #29251d;
+  line-height: 1.5;
+}
+.digi-delete-dialog .digi-delete-warning {
+  color: #716b61;
+  font-size: 13px;
+}
+.digi-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+.digi-delete-actions button {
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background .15s ease, transform .15s ease, opacity .15s ease;
+}
+.digi-delete-no {
+  color: #fff;
+  background: #238447;
+  border: 1px solid #1d713b;
+}
+.digi-delete-no:hover { background: #1b733c; }
+.digi-delete-yes {
+  color: #fff;
+  background: #c83232;
+  border: 1px solid #b62626;
+}
+.digi-delete-yes:hover { background: #ad2525; }
+.digi-delete-actions button:disabled { opacity: .65; cursor: wait; }
+.digi-delete-error {
+  margin-top: 12px !important;
+  color: #b42318 !important;
+  font-size: 13px;
+}
