@@ -34,6 +34,37 @@ function startConversion(button){if(button.disabled)return;button.disabled=true;
 function finishConversion(button,success,message){if(!button)return;if(!success){button.disabled=false;button.classList.remove("conversion-active");button.textContent=button.dataset.original||"Convert";if(message)alert("Conversion failed: "+message);return}button.disabled=true;button.classList.remove("conversion-active");button.classList.add("conversion-success");button.innerHTML='<span class="success-check">✓</span> Success';setTimeout(()=>{button.classList.add("conversion-fading");setTimeout(()=>{button.classList.remove("conversion-success","conversion-fading");button.disabled=false;button.textContent=button.dataset.original||"Convert";refresh()},350)},3000);}
 
 function modal(title,body){let m=$("modal");m.classList.remove("hidden");m.innerHTML='<div class="modal-card"><div class="modal-head"><b>'+esc(title)+'</b><button class="ui-button" id="close-modal">Close</button></div><div class="modal-body">'+body+'</div></div>';$("close-modal").onclick=()=>m.classList.add("hidden");}
+function openDeleteConfirmation(path, name) {
+  const overlay = $("delete-confirm-overlay");
+  const nameLabel = $("delete-confirm-name");
+  const yes = $("delete-confirm-yes");
+  const no = $("delete-confirm-no");
+  if (!overlay || !nameLabel || !yes || !no) return;
+  nameLabel.textContent = name;
+  overlay.hidden = false;
+  document.body.classList.add("delete-confirm-open");
+  const close = () => {
+    overlay.hidden = true;
+    document.body.classList.remove("delete-confirm-open");
+    yes.onclick = null;
+    no.onclick = null;
+  };
+  no.onclick = close;
+  yes.onclick = () => {
+    close();
+    call("deleteFile", [path], raw => {
+      const ok = raw === true || raw === "true";
+      if (ok) refresh();
+      else window.alert("Digi could not delete this file. It may have moved, or it may be outside the Digi library.");
+    });
+  };
+  overlay.onclick = event => { if (event.target === overlay) close(); };
+  const onKey = event => {
+    if (event.key === "Escape" && !overlay.hidden) close();
+  };
+  document.addEventListener("keydown", onKey, { once: true });
+}
+
 function openNotes(){modal("Digi Notes",'<div class="note-layout"><div class="note-tree" id="note-tree"></div><div class="note-canvas-wrap"><div class="note-toolbar"><button class="small-button" id="pen">Pen</button><button class="small-button" id="eraser">Eraser</button><input id="note-color" type="color" value="#111111"><input id="note-size" type="range" min="1" max="30" value="3"><button class="small-button" id="new-book">Notebook</button><button class="small-button" id="new-page">Page</button><button class="small-button" id="save-note">Save</button></div><canvas id="note-canvas" class="note-canvas" width="1100" height="650"></canvas></div></div>');
 $("pen").onclick=()=>notes.tool="pen";$("eraser").onclick=()=>notes.tool="eraser";$("note-color").oninput=e=>notes.color=e.target.value;$("note-size").oninput=e=>notes.size=+e.target.value;$("new-book").onclick=()=>{let n=prompt("Notebook name");if(n)call("createNotebook",["",n],loadNotes)};$("new-page").onclick=()=>{if(!notes.current)return alert("Select a notebook first.");let n=prompt("Page name");if(n)call("createNotePage",[notes.current,n],p=>{notes.current=p;setupCanvas();loadNotes()})};$("save-note").onclick=saveNote;setupCanvas();loadNotes();}
 function setupCanvas(){let c=$("note-canvas");if(!c)return;notes.canvas=c;notes.ctx=c.getContext("2d");notes.ctx.fillStyle="#fff";notes.ctx.fillRect(0,0,c.width,c.height);let down=false,last=null,pos=e=>{let r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}};c.onpointerdown=e=>{if(e.pointerType==="touch")return;down=true;last=pos(e);c.setPointerCapture(e.pointerId)};c.onpointermove=e=>{if(!down)return;let p=pos(e),x=notes.ctx; x.beginPath();x.moveTo(last.x,last.y);x.lineTo(p.x,p.y);x.strokeStyle=notes.tool==="eraser"?"#fff":notes.color;x.lineWidth=notes.tool==="eraser"?notes.size*4:notes.size;x.lineCap="round";x.stroke();last=p;notes.dirty=true};c.onpointerup=()=>{down=false;last=null};c.onpointercancel=()=>{down=false};}
@@ -164,13 +195,7 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
         const name = button.dataset.name || path;
         if (!path || !target || !target.closest('.result[data-preview]')) return;
         hide();
-        if (window.confirm('Delete "' + name + '" permanently? This cannot be undone.')) {
-          call('deleteFile', [path], raw => {
-            const ok = raw === true || raw === 'true';
-            if (ok) refresh();
-            else window.alert('Digi could not delete this file. It may have moved, or it may be outside the Digi library.');
-          });
-        }
+        openDeleteConfirmation(path, name);
       }
       else if (action === 'select-all' && el) {
         el.focus();
