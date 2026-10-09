@@ -88,6 +88,7 @@
     if (requestInProgress || Date.now() - lastRemoteCheck < CHECK_INTERVAL_MS) return;
     requestInProgress = true;
     lastRemoteCheck = Date.now();
+    setStatus("checking", "Checking for Digi updates…");
     try {
       let manifest = null;
       let lastError = null;
@@ -113,7 +114,7 @@
 
       const relation = compareVersions(manifest.latest_version, CURRENT_VERSION);
       if (relation === null) {
-        setStatus("unknown", "Digi could not validate the published version.");
+        setStatus("offline", "Could not validate the published version.");
         return;
       }
       if (relation > 0) {
@@ -130,7 +131,7 @@
         ? "Digi is up to date."
         : "The published release is older than this installation; no downgrade will be suggested.");
     } catch (_) {
-      setStatus("unknown", "Update status unavailable. Could not reach or read the release repository.");
+      setStatus("offline", "Update status unavailable. Could not reach the release repository.");
     } finally {
       requestInProgress = false;
     }
@@ -149,7 +150,7 @@
       // Storage is optional; never interfere with Digi if unavailable.
     }
 
-    setStatus("unknown", "Checking for Digi updates…");
+    setStatus("checking", "Checking for Digi updates…");
     checkRemoteStatus();
     window.setInterval(checkRemoteStatus, CHECK_INTERVAL_MS);
   }
