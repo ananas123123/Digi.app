@@ -68,7 +68,7 @@ function openMoveBrowser(sourcePath, sourceName) {
       if (!data.entries.length) {
         const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'This folder is empty.'; list.appendChild(empty);
       }
-      const normalizePath = value => String(value || '').replace(/\\\\/g, '/').replace(/\\/$/, '').toLowerCase();
+      const normalizePath = value => String(value || '').replace(/\\\\/g, '/').replace(/\/$/, '').toLowerCase();
       data.entries.forEach(entry => {
         const row = document.createElement('button');
         row.type = 'button'; row.className = 'move-browser-entry';
