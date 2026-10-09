@@ -303,21 +303,20 @@ class DigiBridge(QObject):
             target = destination / source.name
             if target.exists():
                 if target.is_file() and filecmp.cmp(source, target, shallow=False):
-                    return json.dumps({"ok": True, "can_move": False, "identical": True,
+                    return json.dumps({"ok": True, "can_move": False, "conflict": True, "identical": True,
                                        "reason": "This file already exists here with identical contents."})
-                return json.dumps({"ok": True, "can_move": False, "identical": False,
-                                   "reason": "A file or folder with this name already exists here."})
-            return json.dumps({"ok": True, "can_move": True, "identical": False, "reason": ""})
+                return json.dumps({"ok": True, "can_move": False, "conflict": True, "identical": False,
+                                   "reason": "A file with this name already exists. Choose Move here to rename your file."})
+            return json.dumps({"ok": True, "can_move": True, "conflict": False, "identical": False, "reason": ""})
         except (OSError, ValueError) as exc:
             return json.dumps({"ok": False, "error": str(exc) or "Could not check this destination."})
 
-    @Slot(str, str, result=str)
-    def moveFile(self, source_path, destination_folder):
-        """Move a file within the configured repository without overwriting existing data."""
+    @Slot(str, str, str, result=str)
+    def moveFile(self, source_path, destination_folder, new_name):
+        """Move a file without overwriting existing data; optionally rename on collision."""
         if not self.search_service:
             return json.dumps({"ok": False, "error": "Search repository is not ready."})
         import shutil
-        import filecmp
         try:
             root = Path(self.search_service.root).resolve()
             source = Path(source_path).resolve()
@@ -328,11 +327,12 @@ class DigiBridge(QObject):
                 raise FileNotFoundError("The selected file no longer exists.")
             if not destination.is_dir():
                 raise NotADirectoryError("The destination folder no longer exists.")
-            target = destination / source.name
+            name = (new_name or "").strip() or source.name
+            if name in (".", "..") or Path(name).name != name or "/" in name or "\\\\" in name:
+                raise ValueError("Enter a valid filename without a folder path.")
+            target = destination / name
             if target.exists():
-                if target.is_file() and filecmp.cmp(source, target, shallow=False):
-                    raise FileExistsError("This file already exists here with identical contents.")
-                raise FileExistsError("A file or folder with this name already exists here.")
+                raise FileExistsError("Move failed — two files with the same name cannot be in one folder.")
             if source == target:
                 raise FileExistsError("The file is already in this folder.")
             shutil.move(str(source), str(target))
