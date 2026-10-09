@@ -1389,3 +1389,23 @@ body:not(:has(#search:not(:placeholder-shown))) .content-head .digi-home-logo {
   text-align: center !important;
   pointer-events: none;
 }
+
+
+/* Show the document pane only after an actual result has been selected. */
+body:has(#search:not(:placeholder-shown)) .results-workspace {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+body:has(#search:not(:placeholder-shown)) .results-workspace .preview-panel {
+  display: none !important;
+}
+body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-selected) {
+  grid-template-columns: minmax(280px, .88fr) minmax(360px, 1.12fr) !important;
+}
+body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-selected) .preview-panel {
+  display: flex !important;
+}
+@media (max-width: 980px) {
+  body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-selected) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
