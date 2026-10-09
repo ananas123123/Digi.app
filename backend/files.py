@@ -8,21 +8,10 @@ class FileService:
         if not p.is_file():
             raise FileNotFoundError("The selected file no longer exists: " + str(p))
 
-        # On Windows, explicitly open the existing DOCX path in Word. This avoids
-        # accidentally creating/activating a blank Doc1 document when shell
-        # association handling is misconfigured. If COM automation is unavailable,
-        # fall back to the normal operating-system file association.
-        if os.name == "nt" and p.suffix.lower() == ".docx":
-            try:
-                import win32com.client
-                word = win32com.client.Dispatch("Word.Application")
-                word.Visible = True
-                word.Documents.Open(str(p))
-                return
-            except Exception:
-                # The shell association remains the supported fallback.
-                pass
-
+        # Use Windows' normal document association for existing files. Word's COM
+        # automation can attach to an unrelated/stale Word instance and make it
+        # appear as though a new unsaved document is being edited. Passing the
+        # absolute existing path to the shell avoids that ambiguity.
         if hasattr(os, "startfile"):
             os.startfile(str(p))
         else:
