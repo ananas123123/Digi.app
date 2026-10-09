@@ -15,9 +15,12 @@ from .version_manager import initialize_version_file,version_integrity,recalibra
 
 class ReleaseManifestWorker(QThread):
     resultReady=Signal(str)
+    # Prefer GitHub's Contents API over raw.githubusercontent.com. The raw
+    # endpoint may serve a stale CDN copy even when latest.json has changed.
+    # The API response includes the file's current base64 content.
     URLS=(
-        "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/latest.json",
         "https://api.github.com/repos/ananas123123/digiwebversionreleases/contents/latest.json?ref=main",
+        "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/latest.json",
     )
     def run(self):
         # Add a unique query parameter and explicit no-cache headers so a
@@ -38,6 +41,8 @@ class ReleaseManifestWorker(QThread):
                 if "api.github.com" in base_url:
                     import base64
                     envelope=json.loads(payload.decode("utf-8"))
+                    if envelope.get("encoding") != "base64" or not envelope.get("content"):
+                        raise ValueError("GitHub API did not return base64 file content")
                     payload=base64.b64decode(envelope["content"])
                 manifest=json.loads(payload.decode("utf-8"))
                 self.resultReady.emit(json.dumps({"ok":True,"manifest":manifest}))
