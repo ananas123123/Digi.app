@@ -644,6 +644,8 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
         button.setAttribute('aria-expanded', String(newPinnedOpen));
       }
       else if (action === 'add-folder') {
+        // Capture the destination before modal() replaces the current browser DOM.
+        const folderParent = typeof button.dataset.parent === 'string' ? button.dataset.parent : '';
         hide();
         modal('Add folder', '<form id="context-new-folder-form" class="new-document-form"><label for="context-new-folder-name">Folder name</label><input id="context-new-folder-name" name="name" required maxlength="120" placeholder="New folder" autocomplete="off"><p>The folder will be created in your configured search repository.</p><div class="new-document-actions"><button type="button" class="small-button" id="context-new-folder-cancel">Cancel</button><button type="submit" class="small-button">Create folder</button></div></form>');
         const form = $('context-new-folder-form');
@@ -668,10 +670,6 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
           const submit = form.querySelector('[type="submit"]');
           submit.disabled = true;
           submit.textContent = 'Creating…';
-          const repositoryBrowser = document.querySelector('.repo-browser');
-          const pathLabel = repositoryBrowser ? repositoryBrowser.querySelector('#repo-browser-path') : null;
-          // Read the current folder from Digi's explorer itself, not the click event.
-          const folderParent = resultsArea ? '' : (pathLabel && typeof pathLabel.dataset.path === 'string' ? pathLabel.dataset.path : '');
           call('createFolder', [folderParent, name], raw => {
             const result = parseJson(raw, null, 'create folder');
             if (!result || !result.ok) {
