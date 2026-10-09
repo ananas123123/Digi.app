@@ -2171,6 +2171,24 @@ body.delete-confirm-open { overflow: hidden; }
   color: #f4d58b;
   font-size: 16px;
   font-weight: 700;
-  text-shadow: 0 0 5px rgba(232,189,98,.85), 0 0 13px rgba(232,189,98,.45);
+  text-shadow: 0 0 2px rgba(232,189,98,.3);
 }
 #modal:has(.move-browser) .move-browser-location { display: none !important; }
+
+/* Let the folder viewer fill the available dialog height, removing the gap below it. */
+#modal:has(.move-browser) .modal-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+#modal:has(.move-browser) .move-browser {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+}
+#modal:has(.move-browser) .move-browser-list {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 320px;
+}
