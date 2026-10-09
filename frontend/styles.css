@@ -1363,3 +1363,29 @@ body:not(:has(#search:not(:placeholder-shown))) .content-head #count,
 body:not(:has(#search:not(:placeholder-shown))) .content-head p#hint {
   display: none !important;
 }
+
+
+/* The landing wordmark is viewport-positioned, independent of the results/content layout. */
+body:not(:has(#search:not(:placeholder-shown))) .content-head {
+  position: static !important;
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+body:not(:has(#search:not(:placeholder-shown))) .content-head > div {
+  position: static !important;
+}
+body:not(:has(#search:not(:placeholder-shown))) .content-head .digi-home-logo {
+  display: block !important;
+  position: fixed !important;
+  z-index: 20;
+  left: 50% !important;
+  top: calc(50% - 180px) !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: max-content !important;
+  margin: 0 !important;
+  transform: translateX(-50%) !important;
+  text-align: center !important;
+  pointer-events: none;
+}
