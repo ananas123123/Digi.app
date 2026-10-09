@@ -71,13 +71,13 @@ function openMoveBrowser(sourcePath, sourceName) {
         row.textContent = (entry.type === 'folder' ? '▣  ' : '▤  ') + entry.name;
         row.title = entry.path;
         if (entry.type === 'folder') {
+          row.classList.add('move-browser-folder');
           row.onclick = () => render(entry.path);
         } else {
           row.classList.add('move-browser-file');
-          row.onclick = () => {
-            list.querySelectorAll('.move-browser-entry.is-selected').forEach(item => item.classList.remove('is-selected'));
-            row.classList.add('is-selected');
-          };
+          row.disabled = true;
+          row.setAttribute('aria-disabled', 'true');
+          row.tabIndex = -1;
         }
         list.appendChild(row);
       });
