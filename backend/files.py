@@ -32,17 +32,23 @@ class FileService:
                 return
             except Exception as exc:
                 print("[Digi Open] Direct Word open FAILED:", repr(exc), flush=True)
-                # Close only the dedicated Word instance created above, and only
-                # if it did not successfully open a document. Never quit the user's
-                # existing Word instance.
+                # DispatchEx created a dedicated Word process. If opening failed,
+                # Word may have left a blank Document1 behind; close only documents
+                # in this dedicated instance without saving, then quit that instance.
                 if word is not None:
                     try:
-                        if word.Documents.Count == 0:
-                            word.Quit()
+                        for index in range(word.Documents.Count, 0, -1):
+                            try:
+                                word.Documents(index).Close(SaveChanges=0)
+                            except Exception as close_exc:
+                                print("[Digi Open] Could not close failed-open document:", repr(close_exc), flush=True)
+                        word.Quit(SaveChanges=0)
+                        print("[Digi Open] Closed dedicated Word instance after failed open.", flush=True)
                     except Exception as cleanup_exc:
-                        print("[Digi Open] Could not close empty Word instance:", repr(cleanup_exc), flush=True)
-                # Fall back to the Windows file association so a COM incompatibility
-                # does not prevent opening the actual selected file.
+                        print("[Digi Open] Could not fully close dedicated Word instance:", repr(cleanup_exc), flush=True)
+                # Fall back to the registered Windows file association after cleaning
+                # up the blank automation instance, so it cannot steal focus with
+                # an unsaved Doc1 dialog.
                 try:
                     os.startfile(str(p), "open")
                     print("[Digi Open] Launched using Windows file association after COM failure:", str(p), flush=True)
