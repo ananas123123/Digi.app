@@ -2477,3 +2477,12 @@ body.delete-confirm-open { overflow: hidden; }
   outline-offset: 3px;
   border-radius: 3px;
 }
+
+
+/* Empty move-browser folders should retain the neutral panel background. */
+#modal:has(.move-browser) .move-browser-list.is-empty,
+#modal:has(.move-browser) .move-browser-list.is-empty > .empty {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
