@@ -1425,3 +1425,36 @@ body:has(#search:not(:placeholder-shown)) .results-workspace:has(.result.is-sele
   color: #ffe7a8 !important;
   text-shadow: 0 0 12px rgba(246, 203, 104, .22);
 }
+
+
+/* Compact the selected-document preview so it feels like a side pane, not a second full screen. */
+.results-workspace {
+  grid-template-columns: minmax(250px, .95fr) minmax(300px, .8fr) !important;
+  gap: 14px;
+  height: calc(100vh - 190px);
+  min-height: 300px;
+}
+.results-workspace:has(.result.is-selected) {
+  grid-template-columns: minmax(250px, .95fr) minmax(300px, .8fr) !important;
+}
+.preview-panel {
+  height: min(68vh, 650px);
+  max-height: calc(100vh - 190px);
+  align-self: start;
+  border-radius: 13px;
+}
+.pdf-preview, .word-preview { padding: 12px; }
+.pdf-page { width: min(100%, 520px); }
+.preview-head { padding: 11px 13px; }
+@media (max-width: 980px) {
+  .results-workspace,
+  .results-workspace:has(.result.is-selected) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    height: auto;
+  }
+  .preview-panel {
+    height: 48vh;
+    max-height: 520px;
+    min-height: 260px;
+  }
+}
