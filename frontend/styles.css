@@ -1089,3 +1089,47 @@ html.window-maximized body {
   scroll-behavior: auto !important;
   caret-color: auto;
 }
+
+
+/* Search mode: keep the search field in the header's flex layout so it always
+   occupies only the space between the brand and the action buttons. */
+body:has(#search:not(:placeholder-shown)) .search-wrap.ui-input-container {
+  position: relative !important;
+  inset: auto !important;
+  left: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  flex: 1 1 0% !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 560px;
+  margin: 0 auto !important;
+}
+body:has(#search:not(:placeholder-shown)) .header {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.2vw, 18px);
+}
+body:has(#search:not(:placeholder-shown)) .header .brand,
+body:has(#search:not(:placeholder-shown)) .header .header-actions {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+body:has(#search:not(:placeholder-shown)) .content-head .digi-home-logo {
+  display: none !important;
+}
+@media (max-width: 760px) {
+  body:has(#search:not(:placeholder-shown)) .header {
+    flex-wrap: wrap;
+  }
+  body:has(#search:not(:placeholder-shown)) .search-wrap.ui-input-container {
+    order: 3;
+    flex: 1 0 100% !important;
+    width: 100% !important;
+    max-width: none;
+    margin: 0 !important;
+  }
+}
