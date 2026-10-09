@@ -2597,3 +2597,57 @@ body.delete-confirm-open { overflow: hidden; }
   cursor: pointer;
 }
 #modal:has(.move-browser) #new-folder-create { border-color: #e8bd62; background: #e8bd62; color: #17130b; font-weight: 700; }
+
+/* Move-browser file deletion confirmation. */
+#modal:has(.move-browser) .delete-file-overlay[hidden] { display: none !important; }
+#modal:has(.move-browser) .folder-context-menu button[hidden] { display: none !important; }
+#modal:has(.move-browser) #folder-context-delete {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #ff6666;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+#modal:has(.move-browser) #folder-context-delete:hover { background: rgba(255,70,70,.12); }
+#modal:has(.move-browser) .delete-file-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100030;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0,0,0,.58);
+}
+#modal:has(.move-browser) .delete-file-confirm {
+  width: min(390px, calc(100vw - 36px));
+  padding: 26px;
+  border: 1px solid #e4e4e4;
+  border-radius: 12px;
+  background: #fff;
+  color: #191919;
+  box-shadow: 0 22px 70px rgba(0,0,0,.45);
+}
+#modal:has(.move-browser) .delete-file-confirm h3 { margin: 0 0 10px; font-size: 20px; }
+#modal:has(.move-browser) .delete-file-confirm p { margin: 0; color: #555; line-height: 1.5; overflow-wrap: anywhere; }
+#modal:has(.move-browser) .delete-file-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+#modal:has(.move-browser) .delete-file-actions button {
+  min-width: 82px;
+  min-height: 38px;
+  border: 0;
+  border-radius: 7px;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+#modal:has(.move-browser) #delete-file-yes { background: #d92736; }
+#modal:has(.move-browser) #delete-file-no { background: #23964b; }
+#modal:has(.move-browser) .delete-file-actions button:disabled { opacity: .6; cursor: wait; }
+
