@@ -1960,3 +1960,36 @@ body.delete-confirm-open > #digi-context-menu {
   user-select: none;
 }
 body.delete-confirm-open { overflow: hidden; }
+
+
+/* The delete overlay must inherit the same fixed, centered, blurred backdrop as Filters. */
+#delete-confirm-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 100001 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  background: rgba(0,0,0,.42) !important;
+  backdrop-filter: blur(7px) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
+}
+#delete-confirm-overlay[hidden] { display: none !important; }
+#delete-confirm-overlay .delete-confirm-dialog {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  width: min(440px, calc(100vw - 36px)) !important;
+  max-height: min(720px, calc(100vh - 48px)) !important;
+  overflow-y: auto !important;
+  padding: 22px !important;
+  border: 1px solid rgba(232,189,98,.32) !important;
+  border-radius: 18px !important;
+  background: #10100e !important;
+  color: #eee4cf !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,.62), 0 0 28px rgba(232,189,98,.07) !important;
+  filter: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
