@@ -243,6 +243,22 @@ class DigiBridge(QObject):
         return True
 
     @Slot(str, result=bool)
+    def deleteFile(self, path):
+        if not self.search_service:
+            return False
+        try:
+            root = Path(self.search_service.root).resolve()
+            target = Path(path).resolve()
+            target.relative_to(root)
+            if target == root or not target.is_file():
+                return False
+            target.unlink()
+            self.start_scan()
+            return True
+        except (OSError, ValueError):
+            return False
+
+    @Slot(str, result=bool)
     def openFolder(self, path):
         FileService.open_folder(path)
         return True
