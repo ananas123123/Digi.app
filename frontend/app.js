@@ -194,7 +194,12 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     target = event.target instanceof Element ? event.target : null;
     const editable = target && (target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]'));
     const resultsArea = target && target.closest('#results');
-    const resultCard = target && target.closest('#results .result[data-preview]');
+    // Only count a card when the actual right-click target is inside its bounds.
+    // This avoids stale/over-broad matches from delegated or nested elements.
+    const resultCard = resultsArea && target && target.closest('.result[data-preview]') &&
+      resultsArea.contains(target.closest('.result[data-preview]'))
+      ? target.closest('.result[data-preview]')
+      : null;
     const newWrapper = menu.querySelector('.digi-context-submenu');
     const newSeparator = newWrapper && newWrapper.previousElementSibling;
     // New is available only on empty space within the search-results area,
