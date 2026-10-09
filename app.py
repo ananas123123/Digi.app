@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys
 
-from PySide6.QtCore import QEvent, QUrl, Qt
+from PySide6.QtCore import QEvent, QUrl, Qt, Signal
 from PySide6.QtGui import QPainterPath, QRegion
 from PySide6.QtWidgets import (
     QApplication,
@@ -22,6 +22,47 @@ ACCENT = "#c5f36b"
 WINDOW_BG = "#10110f"
 TITLEBAR_BG = "#171916"
 TITLEBAR_BORDER = "#30352c"
+
+
+class DigiWebView(QWebEngineView):
+    localFoldersDropped = Signal("QStringList")
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        mime = event.mimeData()
+        if mime.hasUrls() and any(url.isLocalFile() and Path(url.toLocalFile()).is_dir() for url in mime.urls()):
+            event.setDropAction(Qt.DropAction.CopyAction)
+            event.accept()
+            return
+        event.ignore()
+
+    def dragMoveEvent(self, event):
+        mime = event.mimeData()
+        if mime.hasUrls() and any(url.isLocalFile() and Path(url.toLocalFile()).is_dir() for url in mime.urls()):
+            event.setDropAction(Qt.DropAction.CopyAction)
+            event.accept()
+            return
+        event.ignore()
+
+    def dropEvent(self, event):
+        mime = event.mimeData()
+        folders = []
+        if mime.hasUrls():
+            for url in mime.urls():
+                if not url.isLocalFile():
+                    continue
+                path = Path(url.toLocalFile())
+                if path.is_dir():
+                    folders.append(str(path.resolve()))
+        if folders:
+            self.localFoldersDropped.emit(folders)
+            event.setDropAction(Qt.DropAction.CopyAction)
+            event.accept()
+        else:
+            event.ignore()
 
 
 class DigiWindow(QMainWindow):
@@ -95,9 +136,10 @@ class DigiWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.view = QWebEngineView(root)
+        self.view = DigiWebView(root)
         self.view.setObjectName("DigiWebView")
         self.view.setStyleSheet("border: none; background: #10110f;")
+        self.view.localFoldersDropped.connect(self._handle_local_folders_dropped)
         layout.addWidget(self.view, 1)
         self.setCentralWidget(root)
         self._apply_window_shape()
@@ -111,6 +153,16 @@ class DigiWindow(QMainWindow):
         app = QApplication.instance()
         if app:
             app.installEventFilter(self)
+
+    def _handle_local_folders_dropped(self, folders):
+        # Pass actual native filesystem paths to the page; Chromium's HTML5
+        # DataTransfer intentionally does not expose reliable folder paths.
+        import json
+        payload = json.dumps(list(folders))
+        self.view.page().runJavaScript(
+            "if (window.handleNativeFolderDrop) window.handleNativeFolderDrop("
+            + json.dumps(payload) + ");"
+        )
 
     def _apply_window_shape(self):
         # Apply the shape to the native frameless window, not only the HTML.
