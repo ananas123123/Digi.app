@@ -36,16 +36,19 @@ function finishConversion(button,success,message){if(!button)return;if(!success)
 
 function modal(title,body){let m=$("modal");m.classList.remove("hidden");m.innerHTML='<div class="modal-card"><div class="modal-head"><b>'+esc(title)+'</b><button class="ui-button" id="close-modal">Close</button></div><div class="modal-body">'+body+'</div></div>';$("close-modal").onclick=()=>m.classList.add("hidden");}
 function openMoveBrowser(sourcePath, sourceName) {
-  modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div></div>');
-  const close = () => $('modal').classList.add('hidden');
+  modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div><div class="move-browser-actions"><span id="move-browser-message" role="status"></span><button class="ui-button move-here-button" id="move-here" type="button" disabled>Move here</button></div></div>');
+  let currentFolder = '';
+  let checkRequest = 0;
   const render = folder => {
-    call('listLibraryContents', [folder], raw => {
+    currentFolder = folder || '';
+    call('listLibraryContents', [currentFolder], raw => {
       const data = parseJson(raw, null, 'move browser contents');
       const list = $('move-browser-list');
       if (!list) return;
       if (!data || !data.ok) {
-        location.textContent = 'Could not open search repository';
         list.textContent = data && data.error ? data.error : 'The repository contents could not be loaded.';
+        $('move-here').disabled = true;
+        $('move-browser-message').textContent = 'Could not load this folder.';
         return;
       }
       list.innerHTML = '';
@@ -78,6 +81,39 @@ function openMoveBrowser(sourcePath, sourceName) {
         }
         list.appendChild(row);
       });
+      const requestId = ++checkRequest;
+      const moveButton = $('move-here');
+      const message = $('move-browser-message');
+      moveButton.disabled = true;
+      moveButton.textContent = 'Move here';
+      message.textContent = 'Checking destination…';
+      call('checkMoveDestination', [sourcePath, currentFolder], rawCheck => {
+        if (requestId !== checkRequest || !$('move-here')) return;
+        const check = parseJson(rawCheck, null, 'move destination check');
+        if (!check || !check.ok) {
+          moveButton.disabled = true;
+          message.textContent = check && check.error ? check.error : 'Could not check destination.';
+          return;
+        }
+        moveButton.disabled = !check.can_move;
+        message.textContent = check.reason || '';
+      });
+    });
+  };
+  $('move-here').onclick = () => {
+    const button = $('move-here');
+    if (button.disabled) return;
+    button.disabled = true;
+    $('move-browser-message').textContent = 'Moving file…';
+    call('moveFile', [sourcePath, currentFolder], raw => {
+      const result = parseJson(raw, null, 'move file');
+      if (result && result.ok) {
+        $('modal').classList.add('hidden');
+        refresh();
+      } else {
+        $('move-browser-message').textContent = result && result.error ? result.error : 'The file could not be moved.';
+        render(currentFolder);
+      }
     });
   };
   render('');
