@@ -36,7 +36,7 @@ function finishConversion(button,success,message){if(!button)return;if(!success)
 
 function modal(title,body){let m=$("modal");m.classList.remove("hidden");m.innerHTML='<div class="modal-card"><div class="modal-head"><b>'+esc(title)+'</b><button class="ui-button" id="close-modal">Close</button></div><div class="modal-body">'+body+'</div></div>';$("close-modal").onclick=()=>m.classList.add("hidden");}
 function openMoveBrowser(sourcePath, sourceName) {
-  modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div><div class="move-browser-actions"><span id="move-browser-message" role="status"></span><button class="ui-button move-here-button" id="move-here" type="button" disabled>Move here</button></div></div>');
+  modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div><div class="move-browser-actions"><span id="move-browser-message" role="status"></span><button class="ui-button move-here-button" id="move-here" type="button" disabled>Move here</button></div><div class="rename-popup-overlay" id="rename-popup-overlay" hidden><section class="rename-popup" role="dialog" aria-modal="true" aria-labelledby="rename-popup-title"><div class="rename-popup-tab"><span class="rename-popup-tab-mark" aria-hidden="true"></span><span>Rename file</span><button type="button" id="rename-popup-close" aria-label="Close rename popup">×</button></div><form id="rename-popup-form" class="rename-popup-form"><h3 id="rename-popup-title">Choose a new filename</h3><p>A file with this name already exists in the destination folder.</p><label for="rename-popup-input">New filename</label><input id="rename-popup-input" name="filename" type="text" maxlength="240" required autocomplete="off"><div class="rename-popup-actions"><button type="button" class="rename-popup-cancel" id="rename-popup-cancel">Cancel</button><button type="submit" class="rename-popup-confirm" id="rename-popup-confirm">Rename and move</button></div></form></section></div></div>');
   let currentFolder = '';
   let checkRequest = 0;
   let destinationConflict = false;
@@ -127,25 +127,46 @@ function openMoveBrowser(sourcePath, sourceName) {
   $('move-here').onclick = () => {
     const button = $('move-here');
     if (button.disabled) return;
-    let newName = '';
     if (destinationConflict) {
       const dot = sourceName.lastIndexOf('.');
       const suggestedName = dot > 0
         ? sourceName.slice(0, dot) + ' (1)' + sourceName.slice(dot)
         : sourceName + ' (1)';
-      newName = window.prompt(
-        'A file with this name already exists. Enter a new filename to continue moving your file:',
-        suggestedName
-      );
-      if (newName === null || !newName.trim()) {
-        $('move-browser-message').textContent = 'Move failed — two files of the same name cannot be in one folder.';
-        return;
-      }
-      newName = newName.trim();
+      const overlay = $('rename-popup-overlay');
+      const input = $('rename-popup-input');
+      const form = $('rename-popup-form');
+      const close = () => { overlay.hidden = true; };
+      input.value = suggestedName;
+      overlay.hidden = false;
+      $('rename-popup-close').onclick = close;
+      $('rename-popup-cancel').onclick = close;
+      input.focus();
+      input.select();
+      form.onsubmit = event => {
+        event.preventDefault();
+        const newName = input.value.trim();
+        if (!newName) { input.focus(); return; }
+        overlay.hidden = true;
+        button.disabled = true;
+        $('move-browser-message').textContent = 'Moving file…';
+        call('moveFile', [sourcePath, currentFolder, newName], raw => {
+          const result = parseJson(raw, null, 'move file');
+          if (result && result.ok) {
+            $('modal').classList.add('hidden');
+            refresh();
+          } else {
+            $('move-browser-message').textContent = result && result.error
+              ? result.error
+              : 'Move failed — two files of the same name cannot be in one folder.';
+            render(currentFolder);
+          }
+        });
+      };
+      return;
     }
     button.disabled = true;
     $('move-browser-message').textContent = 'Moving file…';
-    call('moveFile', [sourcePath, currentFolder, newName], raw => {
+    call('moveFile', [sourcePath, currentFolder, ''], raw => {
       const result = parseJson(raw, null, 'move file');
       if (result && result.ok) {
         $('modal').classList.add('hidden');
