@@ -34,12 +34,14 @@ function openSearchRepositoryBrowser(initialPath = "") {
   modal("Search repository", '<div class="repo-browser"><div class="repo-browser-path" id="repo-browser-path">Search repository</div><div class="repo-browser-list" id="repo-browser-list"><div class="empty">Loading folders…</div></div></div>');
   let current = "";
   const renderRepository = path => {
-    current = path || "";
+    // Never let an event object become a filesystem path.
+    current = typeof path === "string" ? path : "";
     const list = $("repo-browser-list");
     const pathLabel = $("repo-browser-path");
     if (!list || !pathLabel) return;
     pathLabel.textContent = current || "Search repository";
     pathLabel.dataset.path = current;
+    pathLabel.dataset.currentPath = current;
     const contextAddFolder = document.querySelector('#digi-context-menu [data-action="add-folder"]');
     if (contextAddFolder) contextAddFolder.dataset.parent = current;
     list.innerHTML = '<div class="empty">Loading…</div>';
@@ -561,7 +563,8 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
       addFolderButton.hidden = !resultsArea && !repositoryBrowser;
       if (repositoryBrowser) {
         const pathLabel = repositoryBrowser.querySelector('#repo-browser-path');
-        const parentPath = pathLabel ? (pathLabel.dataset.path || '') : '';
+        const candidatePath = pathLabel ? pathLabel.dataset.currentPath : '';
+        const parentPath = typeof candidatePath === 'string' ? candidatePath : '';
         addFolderButton.dataset.parent = parentPath;
         for (const action of ['new-docx', 'new-pdf']) {
           const createButton = menu.querySelector('[data-action="' + action + '"]');
@@ -645,7 +648,8 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
       }
       else if (action === 'add-folder') {
         // Capture the destination before modal() replaces the current browser DOM.
-        const folderParent = typeof button.dataset.parent === 'string' ? button.dataset.parent : '';
+        const requestedParent = button.dataset.parent;
+        const folderParent = typeof requestedParent === 'string' && requestedParent !== '[object PointerEvent]' ? requestedParent : '';
         hide();
         modal('Add folder', '<form id="context-new-folder-form" class="new-document-form"><label for="context-new-folder-name">Folder name</label><input id="context-new-folder-name" name="name" required maxlength="120" placeholder="New folder" autocomplete="off"><p>The folder will be created in your configured search repository.</p><div class="new-document-actions"><button type="button" class="small-button" id="context-new-folder-cancel">Cancel</button><button type="submit" class="small-button">Create folder</button></div></form>');
         const form = $('context-new-folder-form');
