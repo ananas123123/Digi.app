@@ -35,6 +35,47 @@ function startConversion(button){if(button.disabled)return;button.disabled=true;
 function finishConversion(button,success,message){if(!button)return;if(!success){button.disabled=false;button.classList.remove("conversion-active");button.textContent=button.dataset.original||"Convert";if(message)alert("Conversion failed: "+message);return}button.disabled=true;button.classList.remove("conversion-active");button.classList.add("conversion-success");button.innerHTML='<span class="success-check">✓</span> Success';const panel=$("preview-panel");if(panel)panel.innerHTML='<div class="preview-empty"><span class="preview-empty-icon">▤</span><strong>Document preview</strong><p>Conversion completed. Select the renamed file to preview it.</p></div>';setTimeout(()=>{button.classList.add("conversion-fading");setTimeout(()=>{button.classList.remove("conversion-success","conversion-fading");button.disabled=false;button.textContent=button.dataset.original||"Convert";refresh()},350)},3000);}
 
 function modal(title,body){let m=$("modal");m.classList.remove("hidden");m.innerHTML='<div class="modal-card"><div class="modal-head"><b>'+esc(title)+'</b><button class="ui-button" id="close-modal">Close</button></div><div class="modal-body">'+body+'</div></div>';$("close-modal").onclick=()=>m.classList.add("hidden");}
+function openMoveBrowser(sourcePath, sourceName) {
+  modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-location" id="move-browser-location">Loading search repository…</div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div><div class="move-browser-actions"><button type="button" class="small-button" id="move-browser-close">Close</button></div></div>');
+  let currentFolder = '';
+  const close = () => $('modal').classList.add('hidden');
+  $('move-browser-close').onclick = close;
+  const render = folder => {
+    call('listLibraryContents', [folder], raw => {
+      const data = parseJson(raw, null, 'move browser contents');
+      const location = $('move-browser-location');
+      const list = $('move-browser-list');
+      if (!location || !list) return;
+      if (!data || !data.ok) {
+        location.textContent = 'Could not open search repository';
+        list.textContent = data && data.error ? data.error : 'The repository contents could not be loaded.';
+        return;
+      }
+      currentFolder = data.current;
+      location.textContent = data.current;
+      list.innerHTML = '';
+      if (data.parent) {
+        const up = document.createElement('button');
+        up.type = 'button'; up.className = 'move-browser-entry move-browser-up'; up.textContent = '↰  ..';
+        up.onclick = () => render(data.parent); list.appendChild(up);
+      }
+      if (!data.entries.length) {
+        const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'This folder is empty.'; list.appendChild(empty);
+      }
+      data.entries.forEach(entry => {
+        const row = document.createElement('button');
+        row.type = 'button'; row.className = 'move-browser-entry';
+        row.textContent = (entry.type === 'folder' ? '▣  ' : '▤  ') + entry.name;
+        row.title = entry.path;
+        row.disabled = entry.type !== 'folder';
+        if (entry.type === 'folder') row.onclick = () => render(entry.path);
+        list.appendChild(row);
+      });
+    });
+  };
+  render('');
+}
+
 function openDeleteConfirmation(path, name) {
   const overlay = $("delete-confirm-overlay");
   const nameLabel = $("delete-confirm-name");
@@ -208,6 +249,12 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
       }
       if (newWrapper.hidden) closeNewSubmenu();
     }
+    const moveButton = menu.querySelector('[data-action="move-result"]');
+    if (moveButton) {
+      moveButton.hidden = !resultCard;
+      moveButton.dataset.path = resultCard ? resultCard.dataset.preview : '';
+      moveButton.dataset.name = resultCard ? (resultCard.dataset.name || '') : '';
+    }
     const deleteButton = menu.querySelector('[data-action="delete-result"]');
     if (deleteButton) {
       deleteButton.hidden = !resultCard;
@@ -292,6 +339,12 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
             if (typeof refresh === 'function') refresh();
           });
         };
+      }
+      else if (action === 'move-result') {
+        const path = button.dataset.path;
+        const name = button.dataset.name || path;
+        hide();
+        if (path) openMoveBrowser(path, name);
       }
       else if (action === 'back') history.back();
       else if (action === 'forward') history.forward();
