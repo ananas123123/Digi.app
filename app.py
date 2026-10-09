@@ -156,6 +156,27 @@ class DigiWindow(QMainWindow):
                     handle = self.windowHandle()
                     if handle and handle.startSystemResize(edges):
                         return True
+        # Forward drags from the embedded page's header to the native window.
+        # Interactive controls are excluded so their clicks continue to work.
+        if event.type() == QEvent.Type.MouseButtonPress and event.button() == Qt.MouseButton.LeftButton:
+            if watched is self.view or (isinstance(watched, QWidget) and self.view.isAncestorOf(watched)):
+                global_pos = event.globalPosition().toPoint()
+                local = self.view.mapFromGlobal(global_pos)
+                js = """
+                    (() => {
+                      const el = document.elementFromPoint(%d, %d);
+                      if (!el) return false;
+                      const header = el.closest('.header');
+                      if (!header) return false;
+                      return !el.closest('button, input, select, textarea, a, .search-wrap, .window-controls');
+                    })()
+                """ % (local.x(), local.y())
+                def begin_move(result):
+                    if result and not self.isMaximized():
+                        handle = self.windowHandle()
+                        if handle:
+                            handle.startSystemMove()
+                self.view.page().runJavaScript(js, begin_move)
         return super().eventFilter(watched, event)
 
 
