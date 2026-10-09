@@ -193,7 +193,19 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     event.preventDefault();
     target = event.target instanceof Element ? event.target : null;
     const editable = target && (target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]'));
-    const resultCard = target && target.closest('.result[data-preview]');
+    const resultsArea = target && target.closest('#results');
+    const resultCard = target && target.closest('#results .result[data-preview]');
+    const newWrapper = menu.querySelector('.digi-context-submenu');
+    const newSeparator = newWrapper && newWrapper.previousElementSibling;
+    // New is available only on empty space within the search-results area,
+    // never when the user right-clicks an actual result card or elsewhere.
+    if (newWrapper) {
+      newWrapper.hidden = !resultsArea || !!resultCard;
+      if (newSeparator && newSeparator.classList.contains('digi-context-separator')) {
+        newSeparator.hidden = newWrapper.hidden;
+      }
+      if (newWrapper.hidden) closeNewSubmenu();
+    }
     const deleteButton = menu.querySelector('[data-action="delete-result"]');
     if (deleteButton) {
       deleteButton.hidden = !resultCard;
