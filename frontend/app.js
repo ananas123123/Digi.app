@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"]/g,c=>(
 function parseJson(raw,fallback,label){try{return JSON.parse(raw)}catch(error){console.error("Digi received invalid JSON from "+label,error);return fallback}}
 function call(name,args,cb){if(backend)backend[name](...(args||[]),cb||function(){});}
 function showStartupError(message){$("hint").textContent="Digi could not start safely.";$("results").innerHTML='<div class="empty"><strong>Digi needs assistance to start.</strong><br><br>'+esc(message||"A required application data item is missing or invalid.")+'<br><br>Digi has not automatically moved, deleted, or repaired your existing data. Do not rename or delete data folders to try to fix this. Visit the official Digi website for troubleshooting, or contact Digi support if you cannot resolve the problem.</div>';$("count").textContent="Unavailable";}
-function openSelectedFile(path){call("openFile",[path],ok=>{if(!ok)alert("Digi could not open the selected file. Check the Digi launcher log for the exact path and error.");});}
+function openSelectedFile(path){call("openFile",[path],ok=>{if(ok!==true){alert("Digi could not open the selected file directly. No changes were made to the file. Check Digi Dependencies/Cache/launcher_output.txt for the requested path and the exact Word error.");}});}
 function showPreview(path,name,card){
 document.querySelectorAll(".result.is-selected").forEach(el=>el.classList.remove("is-selected"));
 if(card)card.classList.add("is-selected");
