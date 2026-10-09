@@ -400,13 +400,24 @@ function openMoveBrowser(sourcePath, sourceName) {
   };
   render('');
 }
-function openDeleteConfirmation(path, name) {
+function openDeleteConfirmation(path, name, kind = "file", onDeleted = null) {
   const overlay = $("delete-confirm-overlay");
+  const title = $("delete-confirm-title");
   const nameLabel = $("delete-confirm-name");
   const yes = $("delete-confirm-yes");
   const no = $("delete-confirm-no");
+  const message = overlay && overlay.querySelector(".delete-confirm-message");
+  const warning = overlay && overlay.querySelector(".delete-confirm-warning");
   if (!overlay || !nameLabel || !yes || !no) return;
+  if (title) title.textContent = kind === "folder" ? "DELETE FOLDER" : "DELETE FILE";
+  if (message) message.firstChild.textContent = kind === "folder"
+    ? "Are you sure you want to delete the folder "
+    : "Are you sure you want to delete ";
   nameLabel.textContent = name;
+  if (message && message.lastChild) message.lastChild.textContent = kind === "folder" ? " and all its contents?" : "?";
+  if (warning) warning.textContent = "This action cannot be undone.";
+  yes.textContent = kind === "folder" ? "Yes, delete folder" : "Yes, delete";
+  no.textContent = kind === "folder" ? "No, keep folder" : "No, keep it";
   overlay.hidden = false;
   document.body.classList.add("delete-confirm-open");
   const close = () => {
@@ -417,11 +428,29 @@ function openDeleteConfirmation(path, name) {
   };
   no.onclick = close;
   yes.onclick = () => {
-    close();
-    call("deleteFile", [path], raw => {
+    yes.disabled = true;
+    const originalLabel = yes.textContent;
+    yes.textContent = "Deleting…";
+    call(kind === "folder" ? "deleteFolder" : "deleteFile", [path], raw => {
       const ok = raw === true || raw === "true";
-      if (ok) refresh();
-      else window.alert("Digi could not delete this file. It may have moved, or it may be outside the Digi library.");
+      if (ok) {
+        close();
+        yes.disabled = false;
+        if (typeof onDeleted === "function") onDeleted();
+        else refresh();
+      } else {
+        yes.disabled = false;
+        yes.textContent = originalLabel;
+        let error = overlay.querySelector(".delete-confirm-error");
+        if (!error) {
+          error = document.createElement("p");
+          error.className = "delete-confirm-error";
+          warning.insertAdjacentElement("afterend", error);
+        }
+        error.textContent = kind === "folder"
+          ? "Digi could not delete this folder. It may have moved or be in use."
+          : "Digi could not delete this file. It may have moved or be outside the Digi library.";
+      }
     });
   };
   overlay.onclick = event => { if (event.target === overlay) close(); };
@@ -787,31 +816,12 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
         const folderTarget = target && target.closest('.repo-browser-entry[data-type="folder"]');
         if (!path || !folderTarget) return;
         hide();
-        modal('Delete folder', '<div class="digi-delete-dialog"><p>Delete <strong>' + esc(name) + '</strong> and all its contents?</p><p class="digi-delete-warning">This cannot be undone.</p><div class="digi-delete-actions"><button type="button" class="digi-delete-no" id="digi-delete-folder-no">No, keep folder</button><button type="button" class="digi-delete-yes" id="digi-delete-folder-yes">Yes, delete folder</button></div></div>');
-        $('digi-delete-folder-no').onclick = () => $('modal').classList.add('hidden');
-        $('digi-delete-folder-yes').onclick = () => {
-          const confirmButton = $('digi-delete-folder-yes');
-          confirmButton.disabled = true;
-          confirmButton.textContent = 'Deleting…';
-          call('deleteFolder', [path], ok => {
-            if (ok === true) {
-              const pathLabel = $('repo-browser-path');
-              const currentPath = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
-              openSearchRepositoryBrowser(currentPath);
-              if (typeof refresh === 'function') refresh();
-            } else {
-              confirmButton.disabled = false;
-              confirmButton.textContent = 'Yes, delete folder';
-              let error = $('modal').querySelector('.digi-delete-error');
-              if (!error) {
-                error = document.createElement('p');
-                error.className = 'digi-delete-error';
-                error.textContent = 'Digi could not delete this folder. Check whether it still exists or is in use.';
-                $('modal').querySelector('.digi-delete-dialog').insertBefore(error, $('modal').querySelector('.digi-delete-actions'));
-              }
-            }
-          });
-        };
+        openDeleteConfirmation(path, name, "folder", () => {
+          const pathLabel = $('repo-browser-path');
+          const currentPath = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
+          openSearchRepositoryBrowser(currentPath);
+          if (typeof refresh === 'function') refresh();
+        });
       }
       else if (action === 'select-all' && el) {
         el.focus();
