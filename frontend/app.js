@@ -79,7 +79,8 @@ function openSearchRepositoryBrowser(initialPath = "") {
           ? '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
           : '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></svg>') + '</span><span class="repo-browser-entry-name"></span><span class="repo-browser-entry-arrow">' + (isFolder ? "›" : "↗") + '</span>';
         button.querySelector(".repo-browser-entry-name").textContent = entry.name;
-        button.title = entry.path;
+        // Do not expose the full filesystem path as a native hover tooltip.
+        button.removeAttribute("title");
         button.onclick = () => {
           if (isFolder) renderRepository(entry.path);
           else call("openFile", [entry.path], ok => {
