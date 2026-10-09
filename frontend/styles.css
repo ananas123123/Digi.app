@@ -1658,3 +1658,43 @@ body.filters-open .sidebar {
   color: #ffdc80;
   text-shadow: 0 0 8px rgba(255,220,128,1), 0 0 20px rgba(232,189,98,.9);
 }
+
+
+/* Final header layout: search field and refresh icon sit directly together. */
+.header > .search-refresh-group {
+  display: flex !important;
+  flex: 0 1 744px !important;
+  width: min(744px, 60vw) !important;
+  max-width: 744px !important;
+  min-width: 0 !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+.header > .search-refresh-group .search-wrap {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+.header > .search-refresh-group .search-refresh {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  flex: 0 0 34px !important;
+  width: 34px !important;
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid #29251b !important;
+  border-radius: 50% !important;
+  background: #080808 !important;
+  box-shadow: none !important;
+  color: #e8bd62 !important;
+  text-shadow: 0 0 6px rgba(232,189,98,.9), 0 0 15px rgba(232,189,98,.65) !important;
+  font-size: 27px !important;
+}
+.header > .search-refresh-group .search-refresh:hover {
+  background: #080808 !important;
+  border-color: #514326 !important;
+  color: #ffdc80 !important;
+  text-shadow: 0 0 8px rgba(255,220,128,1), 0 0 20px rgba(232,189,98,.9) !important;
+}
