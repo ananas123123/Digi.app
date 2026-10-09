@@ -16,8 +16,14 @@ def executable_directory() -> Path:
     return Path(sys.executable).resolve().parent
 
 def source_directory() -> Path:
+    # Development mode loads the repository source directly. A packaged EXE
+    # loads the editable source tree beside the executable.
     configured = os.environ.get("DIGI_SOURCE_DIR")
-    return Path(configured).expanduser().resolve() if configured else executable_directory() / "Digi Source"
+    if configured:
+        return Path(configured).expanduser().resolve()
+    if not getattr(sys, "frozen", False):
+        return Path(__file__).resolve().parent
+    return executable_directory() / "Digi Source"
 
 def validate_sources(root: Path) -> list[str]:
     if not root.is_dir():
