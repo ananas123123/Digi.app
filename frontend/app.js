@@ -548,10 +548,9 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     const resultCard = target ? target.closest('#results .result[data-preview]') : null;
     const newWrapper = menu.querySelector('.digi-context-submenu');
     const newSeparator = newWrapper && newWrapper.previousElementSibling;
-    // New is available only on empty space within the search-results area,
-    // never when the user right-clicks an actual result card or elsewhere.
+    // Keep New available anywhere in the results area, including over a result card.
     if (newWrapper) {
-      newWrapper.hidden = !resultsArea || !!resultCard;
+      newWrapper.hidden = !resultsArea;
       if (newSeparator && newSeparator.classList.contains('digi-context-separator')) {
         newSeparator.hidden = newWrapper.hidden;
       }
@@ -565,7 +564,9 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     }
     const deleteButton = menu.querySelector('[data-action="delete-result"]');
     if (deleteButton) {
-      deleteButton.hidden = !resultCard;
+      // Keep Delete visible in the results context menu, but only enable it for a file card.
+      deleteButton.hidden = !resultsArea;
+      deleteButton.disabled = !resultCard;
       deleteButton.dataset.path = resultCard ? resultCard.dataset.preview : '';
       deleteButton.dataset.name = resultCard ? (resultCard.dataset.name || '') : '';
     }
@@ -649,7 +650,9 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
               error.textContent = result && result.error ? result.error : 'Digi could not create the folder.';
               return;
             }
-            $('modal').classList.add('hidden');
+            // The Add folder form uses Digi's shared modal. Reopen the in-app
+            // repository browser after creation instead of leaving it closed.
+            openSearchRepositoryBrowser();
             if (typeof refresh === 'function') refresh();
           });
         };
