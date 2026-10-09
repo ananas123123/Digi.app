@@ -289,6 +289,33 @@ class DigiBridge(QObject):
         except (OSError, ValueError) as exc:
             return json.dumps({"ok": False, "error": str(exc)})
 
+    @Slot(result=str)
+    def listSearchRepositoryFolders(self):
+        """Return every accessible folder under the configured search repository."""
+        if not self.search_service:
+            return json.dumps({"ok": False, "error": "Search repository is not ready.", "folders": []})
+        try:
+            root = Path(self.search_service.root).resolve()
+            folders = []
+            for current, dirnames, _filenames in os.walk(root, topdown=True, onerror=lambda _error: None, followlinks=False):
+                base = Path(current)
+                safe_dirs = []
+                for name in sorted(dirnames, key=str.casefold):
+                    candidate = base / name
+                    try:
+                        resolved = candidate.resolve()
+                        resolved.relative_to(root)
+                        if candidate.is_dir() and not candidate.is_symlink():
+                            safe_dirs.append(name)
+                            folders.append(resolved.relative_to(root).as_posix())
+                    except (OSError, ValueError):
+                        continue
+                dirnames[:] = safe_dirs
+            folders.sort(key=lambda value: (value.casefold(), value))
+            return json.dumps({"ok": True, "folders": folders})
+        except (OSError, ValueError) as exc:
+            return json.dumps({"ok": False, "error": str(exc), "folders": []})
+
     @Slot(str, str, result=str)
     def checkMoveDestination(self, source_path, destination_folder):
         """Check whether a file can safely be moved to a destination folder."""
