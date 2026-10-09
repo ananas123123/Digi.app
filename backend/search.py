@@ -46,18 +46,37 @@ class IndexWorker(QThread):
 class SearchService:
     def __init__(self):
         self.db = Database(); self.root = None
-        self.cache = []; self.worker = None
+        self.cache = []; self.worker = None; self.pending_scan = None
     def configure(self, root):
         self.root = Path(root).resolve()
         self.cache = self.db.rows()
     def scan(self, done, failed):
-        if self.worker and self.worker.isRunning(): return
+        # Queue one follow-up scan instead of silently dropping a refresh while
+        # an earlier scan is still running.
+        if self.worker and self.worker.isRunning():
+            self.pending_scan = (done, failed)
+            return
         cached = {r[0]: (r[3], r[4]) for r in self.db.rows()}
         self.worker = IndexWorker(self.root, cached)
-        self.worker.finished_scan.connect(lambda found, meta: self._finish(found, meta, done))
-        self.worker.failed.connect(failed); self.worker.start()
-    def _finish(self, found, meta, done):
-        self.db.replace_index(found, meta); self.cache = self.db.rows(); done()
+        self.worker.finished_scan.connect(lambda found, meta: self._finish(found, meta, done, failed))
+        self.worker.failed.connect(lambda message: self._scan_failed(message, failed))
+        self.worker.start()
+    def _finish(self, found, meta, done, failed):
+        try:
+            self.db.replace_index(found, meta)
+            self.cache = self.db.rows()
+            done()
+        except Exception as exc:
+            failed(str(exc))
+        finally:
+            self._run_pending_scan()
+    def _scan_failed(self, message, failed):
+        failed(message)
+        self._run_pending_scan()
+    def _run_pending_scan(self):
+        pending, self.pending_scan = self.pending_scan, None
+        if pending:
+            self.scan(*pending)
     def query(self, text, typ, status, source, method, sort):
         if not text.strip(): return []
         candidates = self.db.search(text) if method == "Normal" else self.cache
