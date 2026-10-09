@@ -1925,3 +1925,38 @@ body.filters-dialog-open { overflow: hidden; }
   background: #17140f;
   color: #e6dfd2;
 }
+
+
+/* Branded delete confirmation, matching the Filters overlay. */
+#delete-confirm-overlay[hidden] { display: none !important; }
+#delete-confirm-overlay { z-index: 100001 !important; }
+#delete-confirm-overlay .delete-confirm-dialog { gap: 14px; }
+.delete-confirm-message { margin: 0; color: #eee4cf; font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+.delete-confirm-message strong { color: #fff2d7; font-weight: 700; }
+.delete-confirm-warning { margin: 0; color: #a79b86; font-size: 12px; }
+.delete-confirm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+.delete-confirm-actions button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+}
+#delete-confirm-yes { background: #a92f36; border-color: #d34a50; }
+#delete-confirm-no { background: #286b48; border-color: #3f9868; }
+.delete-confirm-actions button:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.delete-confirm-actions button:focus-visible { outline: 2px solid #e8bd62; outline-offset: 3px; }
+body.delete-confirm-open > header,
+body.delete-confirm-open > .layout,
+body.delete-confirm-open > .home-cards,
+body.delete-confirm-open > #digi-context-menu {
+  filter: blur(5px);
+  pointer-events: none;
+  user-select: none;
+}
+body.delete-confirm-open { overflow: hidden; }
