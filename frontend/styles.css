@@ -2024,3 +2024,11 @@ body.delete-confirm-open { overflow: hidden; }
 .new-document-form input:focus { border-color: #e8bd62; }
 .new-document-form p, .new-document-created p { color: #a99d86; font-size: 12px; line-height: 1.5; }
 .new-document-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+
+
+/* Keep the New submenu inside the window; flip it left when there is no room on the right. */
+.digi-context-submenu-items { right: auto; }
+.digi-context-submenu.submenu-opens-left > .digi-context-submenu-items {
+  left: auto !important;
+  right: calc(100% - 3px) !important;
+}
