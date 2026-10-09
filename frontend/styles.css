@@ -2486,3 +2486,14 @@ body.delete-confirm-open { overflow: hidden; }
   background-color: transparent !important;
   box-shadow: none !important;
 }
+
+
+/* Remove the empty-state card itself in the move browser; show only its message. */
+#modal:has(.move-browser) .move-browser-list.is-empty > .empty {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
