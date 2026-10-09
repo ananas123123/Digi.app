@@ -1350,3 +1350,12 @@ body:has(#search:not(:placeholder-shown)) .content {
   .results-workspace > .results { height: auto; max-height: 38vh; }
   .preview-panel { height: 58vh; min-height: 300px; }
 }
+
+
+/* Keep the document preview completely out of the landing screen until a query is entered. */
+body:not(:has(#search:not(:placeholder-shown))) .results-workspace {
+  display: none !important;
+}
+body:not(:has(#search:not(:placeholder-shown))) .content-head {
+  display: none !important;
+}
