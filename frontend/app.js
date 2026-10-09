@@ -71,6 +71,9 @@ function openSearchRepositoryBrowser(initialPath = "") {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "repo-browser-entry";
+        button.dataset.type = entry.type;
+        button.dataset.path = entry.path;
+        button.dataset.name = entry.name;
         const isFolder = entry.type === "folder";
         button.innerHTML = '<span class="repo-browser-entry-icon" aria-hidden="true">' + (isFolder
           ? '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
@@ -581,6 +584,8 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     // Delete is available only when right-clicking the individual file card,
     // not the surrounding results container or preview panel.
     const resultCard = target ? target.closest('#results .result[data-preview]') : null;
+    const repositoryEntry = target ? target.closest('.repo-browser-entry') : null;
+    const repositoryFile = repositoryEntry && repositoryEntry.dataset.type === 'file' ? repositoryEntry : null;
     const newWrapper = menu.querySelector('.digi-context-submenu');
     const newSeparator = newWrapper && newWrapper.previousElementSibling;
     // Keep New available anywhere in the results area, including over a result card.
@@ -599,11 +604,11 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     }
     const deleteButton = menu.querySelector('[data-action="delete-result"]');
     if (deleteButton) {
-      // Keep Delete visible in the results context menu, but only enable it for a file card.
-      deleteButton.hidden = !resultsArea;
-      deleteButton.disabled = !resultCard;
-      deleteButton.dataset.path = resultCard ? resultCard.dataset.preview : '';
-      deleteButton.dataset.name = resultCard ? (resultCard.dataset.name || '') : '';
+      // Show Delete for results and files inside Digi's repository explorer.
+      deleteButton.hidden = !resultsArea && !repositoryBrowser;
+      deleteButton.disabled = !resultCard && !repositoryFile;
+      deleteButton.dataset.path = resultCard ? resultCard.dataset.preview : (repositoryFile ? repositoryFile.dataset.path : '');
+      deleteButton.dataset.name = resultCard ? (resultCard.dataset.name || '') : (repositoryFile ? (repositoryFile.dataset.name || '') : '');
     }
     const selection = window.getSelection();
     const hasSelection = !!(selection && String(selection).length);
@@ -748,9 +753,25 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
       else if (action === 'delete-result') {
         const path = button.dataset.path;
         const name = button.dataset.name || path;
-        if (!path || !target || !target.closest('#results .result[data-preview]')) return;
+        const resultTarget = target && target.closest('#results .result[data-preview]');
+        const repositoryTarget = target && target.closest('.repo-browser-entry[data-type="file"]');
+        if (!path || (!resultTarget && !repositoryTarget)) return;
         hide();
-        openDeleteConfirmation(path, name);
+        if (repositoryTarget) {
+          if (!window.confirm('Delete "' + name + '"? This cannot be undone.')) return;
+          call('deleteFile', [path], ok => {
+            if (ok === true) {
+              const pathLabel = $('repo-browser-path');
+              const currentPath = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
+              openSearchRepositoryBrowser(currentPath);
+              if (typeof refresh === 'function') refresh();
+            } else {
+              alert('Digi could not delete this file.');
+            }
+          });
+        } else {
+          openDeleteConfirmation(path, name);
+        }
       }
       else if (action === 'select-all' && el) {
         el.focus();
