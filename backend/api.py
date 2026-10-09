@@ -220,8 +220,35 @@ class DigiBridge(QObject):
                         blocks.append("<table>" + "".join(rows) + "</table>")
                     body = "".join(blocks) or "<p>This Word document contains no extractable text. Use Open to view it in Word.</p>"
                     return json.dumps({"kind": "word", "name": source.name, "html": body})
-                except Exception:
-                    return json.dumps({"kind": "error", "message": "Digi could not read this Word document. Use Open to view it in Word."})
+                except Exception as exc:
+                    return json.dumps({"kind": "error", "message": "Could not read this Word document (" + type(exc).__name__ + "). Use Open to view it in Word."})
+            if suffix == ".doc":
+                try:
+                    import pythoncom
+                    import win32com.client
+                    pythoncom.CoInitialize()
+                    word = None
+                    document = None
+                    try:
+                        word = win32com.client.DispatchEx("Word.Application")
+                        word.Visible = False
+                        word.DisplayAlerts = 0
+                        document = word.Documents.Open(str(source.resolve()), ReadOnly=True, AddToRecentFiles=False)
+                        blocks = []
+                        for paragraph in document.Paragraphs:
+                            text = paragraph.Range.Text.strip("\r\x07\n ")
+                            if text:
+                                blocks.append("<p>" + escape(text) + "</p>")
+                        body = "".join(blocks) or "<p>This Word document contains no extractable text. Use Open to view it in Word.</p>"
+                        return json.dumps({"kind": "word", "name": source.name, "html": body})
+                    finally:
+                        if document is not None:
+                            document.Close(False)
+                        if word is not None:
+                            word.Quit()
+                        pythoncom.CoUninitialize()
+                except Exception as exc:
+                    return json.dumps({"kind": "error", "message": "Previewing legacy .doc files requires Microsoft Word. Details: " + type(exc).__name__ + ". You can still use Open to view the file."})
             return json.dumps({"kind": "error", "message": "Preview is available for PDF and Word documents only."})
         except Exception as exc:
             return json.dumps({"kind": "error", "message": "Preview could not be loaded: " + str(exc)})
