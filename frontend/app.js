@@ -123,6 +123,56 @@ function openSearchRepositoryBrowser(initialPath = "") {
       renderRepository(typed);
     });
   }
+  const rootPathInput = $("repo-browser-path");
+  if (rootPathInput) {
+    let repositoryFolders = [];
+    let folderCycleIndex = 0;
+    let folderCycleTimer = null;
+    let folderRefreshTimer = null;
+    const stopFolderPlaceholderTimers = () => {
+      if (folderCycleTimer) clearInterval(folderCycleTimer);
+      if (folderRefreshTimer) clearInterval(folderRefreshTimer);
+      folderCycleTimer = null;
+      folderRefreshTimer = null;
+    };
+    const rotateFolderPlaceholder = () => {
+      if (!rootPathInput.isConnected) {
+        stopFolderPlaceholderTimers();
+        return;
+      }
+      // Only animate the placeholder at the repository root. Never overwrite
+      // a path the user is editing or a path for a subfolder.
+      if (rootPathInput.dataset.currentPath) return;
+      if (document.activeElement === rootPathInput && rootPathInput.value.trim()) return;
+      if (!repositoryFolders.length) {
+        rootPathInput.placeholder = "(root)";
+        return;
+      }
+      rootPathInput.placeholder = repositoryFolders[folderCycleIndex % repositoryFolders.length];
+      folderCycleIndex = (folderCycleIndex + 1) % repositoryFolders.length;
+    };
+    const refreshRepositoryFolderCycle = () => {
+      if (!rootPathInput.isConnected) {
+        stopFolderPlaceholderTimers();
+        return;
+      }
+      call("listSearchRepositoryFolders", [], raw => {
+        if (!rootPathInput.isConnected) {
+          stopFolderPlaceholderTimers();
+          return;
+        }
+        const result = parseJson(raw, null, "repository folder placeholder list");
+        if (result && result.ok && Array.isArray(result.folders)) {
+          repositoryFolders = result.folders.filter(path => typeof path === "string" && path.trim());
+          folderCycleIndex = 0;
+          rotateFolderPlaceholder();
+        }
+      });
+    };
+    refreshRepositoryFolderCycle();
+    folderCycleTimer = setInterval(rotateFolderPlaceholder, 2000);
+    folderRefreshTimer = setInterval(refreshRepositoryFolderCycle, 20000);
+  }
   const browser = $("repo-browser-list");
   if (browser) {
     browser.oncontextmenu = event => {
