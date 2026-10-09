@@ -69,11 +69,15 @@ function openSearchRepositoryBrowser(initialPath = "") {
         const visibleRootFolders = data.entries
           .filter(entry => entry.type === "folder" && typeof entry.name === "string")
           .map(entry => entry.name);
-        if (visibleRootFolders.length) {
-          window.digiRepositoryFolderCache = Array.from(new Set([
-            ...visibleRootFolders,
-            ...(Array.isArray(window.digiRepositoryFolderCache) ? window.digiRepositoryFolderCache : [])
-          ]));
+        window.digiRepositoryFolderCache = Array.from(new Set([
+          ...visibleRootFolders,
+          ...(Array.isArray(window.digiRepositoryFolderCache) ? window.digiRepositoryFolderCache : [])
+        ]));
+        // Immediately update the placeholder when returning to the root.
+        // Don't wait for the recursive background scan to finish.
+        const pathInput = $("repo-browser-path");
+        if (pathInput && pathInput.dataset.isRoot === "true" && pathInput.placeholder === "(root)" && window.digiRepositoryFolderCache.length) {
+          pathInput.placeholder = window.digiRepositoryFolderCache[0];
         }
       }
       list.innerHTML = "";
@@ -192,12 +196,23 @@ function openSearchRepositoryBrowser(initialPath = "") {
         const updatedFolders = result.folders
           .filter(path => typeof path === "string" && path.trim())
           .sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base"}));
+        // Include currently visible root folders immediately, even if the
+        // recursive scan races with a newly-created folder.
+        const rootListing = document.querySelector("#repo-browser-list");
+        if (rootPathInput.dataset.isRoot === "true" && rootListing) {
+          rootListing.querySelectorAll(".repo-browser-entry").forEach(entry => {
+            const name = entry.dataset.name;
+            if (name) updatedFolders.push(name);
+          });
+        }
+        const uniqueUpdatedFolders = Array.from(new Set(updatedFolders))
+          .sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base"}));
         // Do not reset the cycle when a scan completes; scanning must not
         // affect the 2-second animation or make it restart from the first item.
         const currentFolder = repositoryFolders.length
           ? repositoryFolders[folderCycleIndex % repositoryFolders.length] : "";
-        repositoryFolders = updatedFolders;
-        window.digiRepositoryFolderCache = updatedFolders.slice();
+        repositoryFolders = uniqueUpdatedFolders;
+        window.digiRepositoryFolderCache = uniqueUpdatedFolders.slice();
         if (currentFolder) {
           const sameIndex = repositoryFolders.indexOf(currentFolder);
           folderCycleIndex = sameIndex >= 0 ? sameIndex : folderCycleIndex % Math.max(repositoryFolders.length, 1);
@@ -206,7 +221,7 @@ function openSearchRepositoryBrowser(initialPath = "") {
         }
       });
     };
-    // Restore the animation immediately from cache before starting a new scan.
+    // Start the animation immediately from cached/root-visible folders.
     rotateFolderPlaceholder();
     refreshRepositoryFolderCycle();
     folderCycleTimer = setInterval(rotateFolderPlaceholder, 2000);
