@@ -193,13 +193,9 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     event.preventDefault();
     target = event.target instanceof Element ? event.target : null;
     const editable = target && (target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]'));
-    const resultsArea = target && target.closest('#results');
-    // Only count a card when the actual right-click target is inside its bounds.
-    // This avoids stale/over-broad matches from delegated or nested elements.
-    const resultCard = resultsArea && target && target.closest('.result[data-preview]') &&
-      resultsArea.contains(target.closest('.result[data-preview]'))
-      ? target.closest('.result[data-preview]')
-      : null;
+    // The Delete action is tied strictly to the individual file card (for example,
+    // the box containing "rawr"), not the overall results container or preview panel.
+    const resultCard = target ? target.closest('#results .result[data-preview]') : null;
     const newWrapper = menu.querySelector('.digi-context-submenu');
     const newSeparator = newWrapper && newWrapper.previousElementSibling;
     // New is available only on empty space within the search-results area,
@@ -302,7 +298,7 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
       else if (action === 'delete-result') {
         const path = button.dataset.path;
         const name = button.dataset.name || path;
-        if (!path || !target || !target.closest('.result[data-preview]')) return;
+        if (!path || !target || !target.closest('#results .result[data-preview]')) return;
         hide();
         openDeleteConfirmation(path, name);
       }
