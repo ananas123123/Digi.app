@@ -36,10 +36,8 @@ function finishConversion(button,success,message){if(!button)return;if(!success)
 
 function modal(title,body){let m=$("modal");m.classList.remove("hidden");m.innerHTML='<div class="modal-card"><div class="modal-head"><b>'+esc(title)+'</b><button class="ui-button" id="close-modal">Close</button></div><div class="modal-body">'+body+'</div></div>';$("close-modal").onclick=()=>m.classList.add("hidden");}
 function openMoveBrowser(sourcePath, sourceName) {
-  modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-location" id="move-browser-location">Loading search repository…</div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div><div class="move-browser-actions"><button type="button" class="small-button" id="move-browser-close">Close</button></div></div>');
-  let currentFolder = '';
+  modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-location" id="move-browser-location">Loading search repository…</div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div></div>');
   const close = () => $('modal').classList.add('hidden');
-  $('move-browser-close').onclick = close;
   const render = folder => {
     call('listLibraryContents', [folder], raw => {
       const data = parseJson(raw, null, 'move browser contents');
@@ -51,7 +49,6 @@ function openMoveBrowser(sourcePath, sourceName) {
         list.textContent = data && data.error ? data.error : 'The repository contents could not be loaded.';
         return;
       }
-      currentFolder = data.current;
       location.textContent = data.current;
       list.innerHTML = '';
       if (data.parent) {
@@ -67,15 +64,21 @@ function openMoveBrowser(sourcePath, sourceName) {
         row.type = 'button'; row.className = 'move-browser-entry';
         row.textContent = (entry.type === 'folder' ? '▣  ' : '▤  ') + entry.name;
         row.title = entry.path;
-        row.disabled = entry.type !== 'folder';
-        if (entry.type === 'folder') row.onclick = () => render(entry.path);
+        if (entry.type === 'folder') {
+          row.onclick = () => render(entry.path);
+        } else {
+          row.classList.add('move-browser-file');
+          row.onclick = () => {
+            list.querySelectorAll('.move-browser-entry.is-selected').forEach(item => item.classList.remove('is-selected'));
+            row.classList.add('is-selected');
+          };
+        }
         list.appendChild(row);
       });
     });
   };
   render('');
 }
-
 function openDeleteConfirmation(path, name) {
   const overlay = $("delete-confirm-overlay");
   const nameLabel = $("delete-confirm-name");
