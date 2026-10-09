@@ -75,14 +75,45 @@ class FileService:
     def create_folder(parent,name):
         p=Path(parent)/name.strip(); p.mkdir(); return str(p)
     @staticmethod
-    def create_document(parent,name,kind):
-        p=Path(parent); ext={"docx":".docx","doc":".doc","pdf":".pdf"}[kind]
-        target=p/(name if name.lower().endswith(ext) else name+ext)
-        if kind=="docx":
-            from docx import Document; Document().save(str(target))
-        elif kind=="pdf":
-            import fitz; pdf=fitz.open(); pdf.save(str(target)); pdf.close()
-        else: raise RuntimeError("Legacy .doc creation requires Microsoft Word.")
+    def create_document(parent, name, kind):
+        import zipfile
+
+        if kind not in ("docx", "pdf"):
+            raise ValueError("Only DOCX and PDF creation are supported.")
+        if not name or not name.strip():
+            raise ValueError("Enter a file name.")
+        cleaned = name.strip()
+        if any(ch in cleaned for ch in '<>:"/\\|?*') or cleaned in (".", ".."):
+            raise ValueError("The file name contains characters that are not allowed.")
+
+        parent_path = Path(parent).expanduser().resolve()
+        if not parent_path.exists() or not parent_path.is_dir():
+            raise FileNotFoundError("The configured search repository does not exist. Choose a valid repository folder first.")
+        ext = "." + kind
+        target = (parent_path / (cleaned if cleaned.lower().endswith(ext) else cleaned + ext)).resolve()
+        if target.parent != parent_path:
+            raise ValueError("The file must be created inside the configured search repository.")
+        if target.exists():
+            raise FileExistsError("A file with that name already exists in the search repository.")
+
+        if kind == "docx":
+            # Build a minimal valid Office Open XML document without depending
+            # on python-docx being installed or discoverable in a frozen build.
+            content_types = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'
+            rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'
+            document = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p/><w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>'
+            with zipfile.ZipFile(str(target), "x", compression=zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr("[Content_Types].xml", content_types)
+                archive.writestr("_rels/.rels", rels)
+                archive.writestr("word/document.xml", document)
+        else:
+            import fitz
+            pdf = fitz.open()
+            try:
+                pdf.new_page()
+                pdf.save(str(target))
+            finally:
+                pdf.close()
         return str(target)
     @staticmethod
     def delete_folder(path):
