@@ -217,33 +217,61 @@ function showRepositoryDropMessage(title, message) {
   document.body.appendChild(overlay);
   overlay.querySelector('.repo-drop-alert-ok').focus();
 }
-window.handleNativeFolderDrop = function (serializedPaths, dropX, dropY) {
-  const dropTarget = document.elementFromPoint(Number(dropX) || 0, Number(dropY) || 0);
-  if (!dropTarget || !dropTarget.closest('.repo-browser-list')) return;
+function nativeDropTarget(x, y) {
+  const target = document.elementFromPoint(Number(x) || 0, Number(y) || 0);
+  return target && target.closest('.repo-browser-list');
+}
+function clearNativeDropState() {
+  document.querySelectorAll('.repo-browser-list.repo-browser-native-drop').forEach(list => {
+    list.classList.remove('repo-browser-native-drop');
+    const hint = list.querySelector('.repo-browser-native-drop-hint');
+    if (hint) hint.remove();
+  });
+}
+window.handleNativeItemsDragLeave = function () { clearNativeDropState(); };
+window.handleNativeItemsDragMove = function (serializedPaths, x, y) {
+  clearNativeDropState();
+  const list = nativeDropTarget(x, y);
+  if (!list) return;
+  let paths = [];
+  try { paths = JSON.parse(serializedPaths || '[]'); } catch (_) {}
+  const hasFolder = Array.isArray(paths) && paths.some(path => {
+    const name = String(path).split(/[\\/]/).pop();
+    return name && !/\.[^./\\]+$/.test(name);
+  });
+  list.classList.add('repo-browser-native-drop');
+  const hint = document.createElement('div');
+  hint.className = 'repo-browser-native-drop-hint';
+  hint.textContent = hasFolder ? 'Move folder(s)' : 'Move file(s)';
+  list.appendChild(hint);
+};
+window.handleNativeItemsDrop = function (serializedPaths, x, y) {
+  const list = nativeDropTarget(x, y);
+  clearNativeDropState();
+  if (!list) return;
   let paths = [];
   try { paths = JSON.parse(serializedPaths || '[]'); } catch (_) {}
   paths = Array.isArray(paths) ? paths.filter(path => typeof path === 'string' && path.trim()) : [];
   const browser = document.querySelector('.repo-browser');
   if (!browser || !paths.length) {
-    showRepositoryDropMessage('Open Search Repository', 'Open Digi’s Search Repository explorer, then drop the folder into its folder list.');
+    showRepositoryDropMessage('Nothing to add', 'Drop files or folders directly into the Search Repository folder list.');
     return;
   }
   const pathLabel = browser.querySelector('#repo-browser-path');
   const destination = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
-  const list = browser.querySelector('#repo-browser-list');
-  if (list) list.classList.add('repo-browser-importing');
+  list.classList.add('repo-browser-importing');
   const importNext = index => {
     if (index >= paths.length) {
-      if (list) list.classList.remove('repo-browser-importing');
+      list.classList.remove('repo-browser-importing');
       openSearchRepositoryBrowser(destination);
       if (typeof refresh === 'function') refresh();
       return;
     }
-    call('importFolder', [paths[index], destination], raw => {
-      const result = parseJson(raw, null, 'folder import');
+    call('importDroppedItem', [paths[index], destination], raw => {
+      const result = parseJson(raw, null, 'dropped item import');
       if (!result || !result.ok) {
-        if (list) list.classList.remove('repo-browser-importing');
-        showRepositoryDropMessage('Could not add folder', result && result.error ? result.error : 'Digi could not read or copy this folder.');
+        list.classList.remove('repo-browser-importing');
+        showRepositoryDropMessage('Could not add item', result && result.error ? result.error : 'Digi could not copy this file or folder.');
         return;
       }
       importNext(index + 1);
