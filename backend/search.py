@@ -22,19 +22,35 @@ class IndexWorker(QThread):
     def run(self):
         found, metadata = set(), {}
         try:
-            for p in self.root.rglob("*"):
-                if not p.is_file() or p.suffix.lower() not in SUPPORTED: continue
-                p = p.resolve()
-                if self._excluded(p): continue
-                try: modified = p.stat().st_mtime
-                except OSError: continue
-                old = self.cached.get(str(p))
-                pages = old[1] if old and old[0] == modified else None
-                if pages is None and p.suffix.lower() == ".pdf" and fitz:
+            if not self.root.is_dir():
+                raise FileNotFoundError(f"Search repository does not exist: {self.root}")
+
+            # Walk directory-by-directory so one unreadable or temporarily
+            # unavailable folder cannot abort the entire indexing pass.
+            for folder, dirs, files in __import__("os").walk(self.root, onerror=lambda _error: None):
+                base = Path(folder)
+                dirs[:] = [name for name in dirs if not self._excluded(base / name)]
+                for name in files:
+                    p = base / name
+                    if p.suffix.lower() not in SUPPORTED:
+                        continue
                     try:
-                        with fitz.open(str(p)) as doc: pages = len(doc)
-                    except Exception: pages = None
-                found.add(str(p)); metadata[str(p)] = (p, modified, pages)
+                        p = p.resolve()
+                        if self._excluded(p) or not p.is_file():
+                            continue
+                        modified = p.stat().st_mtime
+                    except OSError:
+                        continue
+                    old = self.cached.get(str(p))
+                    pages = old[1] if old and old[0] == modified else None
+                    if pages is None and p.suffix.lower() == ".pdf" and fitz:
+                        try:
+                            with fitz.open(str(p)) as doc:
+                                pages = len(doc)
+                        except Exception:
+                            pages = None
+                    found.add(str(p))
+                    metadata[str(p)] = (p, modified, pages)
             self.finished_scan.emit(found, metadata)
         except Exception as exc:
             self.failed.emit(str(exc))
