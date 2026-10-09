@@ -2,6 +2,7 @@ from pathlib import Path
 import sys
 
 from PySide6.QtCore import QEvent, QUrl, Qt
+from PySide6.QtGui import QPainterPath, QRegion
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -35,7 +36,7 @@ class DigiWindow(QMainWindow):
         )
         self.resize(1180, 720)
         self.setMinimumSize(900, 600)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, False)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
         root = QWidget(self)
         root.setObjectName("DigiWindowRoot")
@@ -44,6 +45,7 @@ class DigiWindow(QMainWindow):
             QWidget#DigiWindowRoot {{
                 background: {WINDOW_BG};
                 border: 1px solid {TITLEBAR_BORDER};
+                border-radius: 18px;
             }}
             QWidget#DigiTitleBar {{
                 background: {TITLEBAR_BG};
@@ -98,6 +100,7 @@ class DigiWindow(QMainWindow):
         self.view.setStyleSheet("border: none; background: #10110f;")
         layout.addWidget(self.view, 1)
         self.setCentralWidget(root)
+        self._apply_window_shape()
 
         self.bridge = DigiBridge(self)
         self.channel = QWebChannel(self.view.page())
@@ -109,8 +112,24 @@ class DigiWindow(QMainWindow):
         if app:
             app.installEventFilter(self)
 
+    def _apply_window_shape(self):
+        # Apply the shape to the native frameless window, not only the HTML.
+        # Maximized/full-screen mode must fill the screen with square corners.
+        if self.isMaximized() or self.isFullScreen():
+            self.clearMask()
+            return
+        path = QPainterPath()
+        path.addRoundedRect(0, 0, self.width(), self.height(), 18, 18)
+        self.setMask(QRegion(path.toFillPolygon().toPolygon()))
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._apply_window_shape()
+
     def changeEvent(self, event):
         super().changeEvent(event)
+        if event.type() == QEvent.Type.WindowStateChange:
+            self._apply_window_shape()
 
     def eventFilter(self, watched, event):
         # FramelessWindowHint removes Windows' native resize frame. Restore
