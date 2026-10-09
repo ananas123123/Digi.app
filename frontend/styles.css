@@ -2118,8 +2118,8 @@ body.delete-confirm-open { overflow: hidden; }
 .move-browser-back {
   position: absolute;
   z-index: 3;
-  top: 10px;
-  left: 10px;
+  top: 12px;
+  left: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
