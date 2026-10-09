@@ -992,3 +992,14 @@ body:not(:has(#search:not(:placeholder-shown))) #repository { display: none; }
   box-shadow: 0 0 4px 1px rgba(180,180,180,.22);
 }
 body:not(:has(#search:not(:placeholder-shown))) .content-head p#hint { display: none !important; }
+
+
+/* Subtle outline around the full Digi application window. */
+html {
+  min-height: 100%;
+  border: 1px solid rgba(255,255,255,.32);
+}
+body {
+  min-height: calc(100vh - 2px);
+  border: 1px solid rgba(255,255,255,.12);
+}
