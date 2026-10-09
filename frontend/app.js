@@ -126,7 +126,9 @@ function openSearchRepositoryBrowser(initialPath = "") {
   }
   const rootPathInput = $("repo-browser-path");
   if (rootPathInput) {
-    let repositoryFolders = [];
+    // Keep the last scan across explorer navigation/modal reopen so the
+    // placeholder can resume immediately when returning to the repository root.
+    let repositoryFolders = Array.isArray(window.digiRepositoryFolderCache) ? window.digiRepositoryFolderCache.slice() : [];
     let folderCycleIndex = 0;
     let folderCycleTimer = null;
     let folderRefreshTimer = null;
@@ -189,6 +191,7 @@ function openSearchRepositoryBrowser(initialPath = "") {
           return;
         }
         repositoryFolders = Array.from(found).sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base"}));
+        window.digiRepositoryFolderCache = repositoryFolders.slice();
         folderCycleIndex = 0;
         rotateFolderPlaceholder();
       };
@@ -219,7 +222,7 @@ function openSearchRepositoryBrowser(initialPath = "") {
     };
     refreshRepositoryFolderCycle();
     folderCycleTimer = setInterval(rotateFolderPlaceholder, 2000);
-    folderRefreshTimer = setInterval(refreshRepositoryFolderCycle, 20000);
+    folderRefreshTimer = setInterval(refreshRepositoryFolderCycle, 3000);
   }
   const browser = $("repo-browser-list");
   if (browser) {
