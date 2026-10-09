@@ -1707,3 +1707,104 @@ body.filters-open .sidebar {
   color: #ffdc80 !important;
   text-shadow: 0 0 8px rgba(255,220,128,1), 0 0 20px rgba(232,189,98,.9) !important;
 }
+
+
+/* Independent filters dialog: isolated styles, overlay, and background blur. */
+#filters-toggle {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  height: 42px !important;
+  padding: 0 16px !important;
+  border: 1px solid rgba(232,189,98,.24) !important;
+  border-radius: 12px !important;
+  background: #15130f !important;
+  color: #eadfc7 !important;
+  font: inherit !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+}
+#filters-toggle:hover,
+#filters-toggle[aria-expanded="true"] {
+  border-color: rgba(232,189,98,.55) !important;
+  background: #1b1811 !important;
+}
+#filters-overlay[hidden] { display: none !important; }
+#filters-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 100000 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0,0,0,.42);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+#filters-overlay .filters-dialog {
+  display: flex !important;
+  flex-direction: column;
+  gap: 17px;
+  width: min(440px, calc(100vw - 36px));
+  max-height: min(720px, calc(100vh - 48px));
+  overflow-y: auto;
+  padding: 22px;
+  border: 1px solid rgba(232,189,98,.32);
+  border-radius: 18px;
+  background: #10100e;
+  color: #eee4cf;
+  box-shadow: 0 24px 80px rgba(0,0,0,.62), 0 0 28px rgba(232,189,98,.07);
+  filter: none !important;
+}
+#filters-overlay .filters-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+#filters-overlay .filters-dialog-head h2 {
+  margin: 0;
+  color: #e8bd62;
+  font-size: 13px;
+  letter-spacing: .14em;
+}
+#filters-overlay #filters-close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(232,189,98,.2);
+  border-radius: 9px;
+  background: #171613;
+  color: #eee4cf;
+  font-size: 22px;
+  cursor: pointer;
+}
+#filters-overlay .filters-dialog label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  color: #bcb3a1;
+  font-size: 13px;
+}
+#filters-overlay .filters-dialog select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid #3a3324;
+  border-radius: 11px;
+  background: #171612;
+  color: #eee4cf;
+}
+body.filters-dialog-open > header,
+body.filters-dialog-open > .layout,
+body.filters-dialog-open > .home-cards,
+body.filters-dialog-open > #digi-context-menu {
+  filter: blur(5px);
+  pointer-events: none;
+  user-select: none;
+}
+body.filters-dialog-open { overflow: hidden; }
