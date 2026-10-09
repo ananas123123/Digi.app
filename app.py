@@ -2,14 +2,9 @@ from pathlib import Path
 import sys
 
 from PySide6.QtCore import QEvent, QUrl, Qt
-from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
     QApplication,
-    QHBoxLayout,
-    QLabel,
     QMainWindow,
-    QPushButton,
-    QVBoxLayout,
     QWidget,
 )
 from PySide6.QtWebChannel import QWebChannel
@@ -20,101 +15,11 @@ from backend.version_manager import repair_after_close
 
 BASE_DIR = Path(__file__).resolve().parent
 
-TITLEBAR_HEIGHT = 42
 RESIZE_MARGIN = 8
 ACCENT = "#c5f36b"
 WINDOW_BG = "#10110f"
 TITLEBAR_BG = "#171916"
 TITLEBAR_BORDER = "#30352c"
-
-
-class DigiTitleBar(QWidget):
-    """Custom Digi title bar with native window move and window controls."""
-
-    def __init__(self, window):
-        super().__init__(window)
-        self.window = window
-        self.setObjectName("DigiTitleBar")
-        self.setFixedHeight(TITLEBAR_HEIGHT)
-
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(14, 0, 0, 0)
-        layout.setSpacing(0)
-
-        mark = QLabel("D")
-        mark.setObjectName("DigiTitleMark")
-        mark.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        mark.setFixedSize(23, 23)
-
-        title = QLabel("Digi")
-        title.setObjectName("DigiTitleText")
-
-        subtitle = QLabel("SEARCH ENGINE")
-        subtitle.setObjectName("DigiTitleSubtitle")
-
-        brand = QHBoxLayout()
-        brand.setContentsMargins(0, 0, 0, 0)
-        brand.setSpacing(9)
-        brand.addWidget(mark)
-        brand.addWidget(title)
-        brand.addWidget(subtitle)
-        brand.addStretch(1)
-
-        brand_widget = QWidget()
-        brand_widget.setLayout(brand)
-        brand_widget.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-        layout.addWidget(brand_widget, 1)
-
-        self.min_button = self._button("—", "Minimise Digi", "DigiMinButton")
-        self.max_button = self._button("□", "Maximise Digi", "DigiMaxButton")
-        self.close_button = self._button("×", "Close Digi", "DigiCloseButton")
-        self.min_button.clicked.connect(self.window.showMinimized)
-        self.max_button.clicked.connect(self.toggle_maximized)
-        self.close_button.clicked.connect(self.window.close)
-        layout.addWidget(self.min_button)
-        layout.addWidget(self.max_button)
-        layout.addWidget(self.close_button)
-
-    def _button(self, text, tooltip, name):
-        button = QPushButton(text)
-        button.setObjectName(name)
-        button.setToolTip(tooltip)
-        button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        button.setFixedSize(46, TITLEBAR_HEIGHT)
-        return button
-
-    def toggle_maximized(self):
-        if self.window.isMaximized():
-            self.window.showNormal()
-        else:
-            self.window.showMaximized()
-
-    def sync_maximize_button(self):
-        maximized = self.window.isMaximized()
-        self.max_button.setText("❐" if maximized else "□")
-        self.max_button.setToolTip("Restore Digi" if maximized else "Maximise Digi")
-
-    def mouseDoubleClickEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.toggle_maximized()
-            event.accept()
-            return
-        super().mouseDoubleClickEvent(event)
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton and not self.window.isMaximized():
-            handle = self.window.windowHandle()
-            if handle and handle.startSystemMove():
-                event.accept()
-                return
-        elif event.button() == Qt.MouseButton.LeftButton and self.window.isMaximized():
-            # Native move allows dragging a maximised window down to restore it
-            # on platforms that support startSystemMove.
-            handle = self.window.windowHandle()
-            if handle and handle.startSystemMove():
-                event.accept()
-                return
-        super().mousePressEvent(event)
 
 
 class DigiWindow(QMainWindow):
@@ -186,8 +91,6 @@ class DigiWindow(QMainWindow):
         layout = QVBoxLayout(root)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        self.title_bar = DigiTitleBar(self)
-        layout.addWidget(self.title_bar)
 
         self.view = QWebEngineView(root)
         self.view.setObjectName("DigiWebView")
@@ -207,8 +110,6 @@ class DigiWindow(QMainWindow):
 
     def changeEvent(self, event):
         super().changeEvent(event)
-        if event.type() == QEvent.Type.WindowStateChange and hasattr(self, "title_bar"):
-            self.title_bar.sync_maximize_button()
 
     def eventFilter(self, watched, event):
         # FramelessWindowHint removes Windows' native resize frame. Restore
