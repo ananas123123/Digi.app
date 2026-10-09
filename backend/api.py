@@ -284,6 +284,63 @@ class DigiBridge(QObject):
         except (OSError, ValueError) as exc:
             return json.dumps({"ok": False, "error": str(exc)})
 
+    @Slot(str, str, result=str)
+    def checkMoveDestination(self, source_path, destination_folder):
+        """Check whether a file can safely be moved to a destination folder."""
+        if not self.search_service:
+            return json.dumps({"ok": False, "error": "Search repository is not ready."})
+        import filecmp
+        try:
+            root = Path(self.search_service.root).resolve()
+            source = Path(source_path).resolve()
+            destination = Path(destination_folder).resolve() if destination_folder else root
+            source.relative_to(root)
+            destination.relative_to(root)
+            if not source.is_file():
+                return json.dumps({"ok": False, "error": "The selected file no longer exists."})
+            if not destination.is_dir():
+                return json.dumps({"ok": False, "error": "The destination folder no longer exists."})
+            target = destination / source.name
+            if target.exists():
+                if target.is_file() and filecmp.cmp(source, target, shallow=False):
+                    return json.dumps({"ok": True, "can_move": False, "identical": True,
+                                       "reason": "This file already exists here with identical contents."})
+                return json.dumps({"ok": True, "can_move": False, "identical": False,
+                                   "reason": "A file or folder with this name already exists here."})
+            return json.dumps({"ok": True, "can_move": True, "identical": False, "reason": ""})
+        except (OSError, ValueError) as exc:
+            return json.dumps({"ok": False, "error": str(exc) or "Could not check this destination."})
+
+    @Slot(str, str, result=str)
+    def moveFile(self, source_path, destination_folder):
+        """Move a file within the configured repository without overwriting existing data."""
+        if not self.search_service:
+            return json.dumps({"ok": False, "error": "Search repository is not ready."})
+        import shutil
+        import filecmp
+        try:
+            root = Path(self.search_service.root).resolve()
+            source = Path(source_path).resolve()
+            destination = Path(destination_folder).resolve() if destination_folder else root
+            source.relative_to(root)
+            destination.relative_to(root)
+            if not source.is_file():
+                raise FileNotFoundError("The selected file no longer exists.")
+            if not destination.is_dir():
+                raise NotADirectoryError("The destination folder no longer exists.")
+            target = destination / source.name
+            if target.exists():
+                if target.is_file() and filecmp.cmp(source, target, shallow=False):
+                    raise FileExistsError("This file already exists here with identical contents.")
+                raise FileExistsError("A file or folder with this name already exists here.")
+            if source == target:
+                raise FileExistsError("The file is already in this folder.")
+            shutil.move(str(source), str(target))
+            self.start_scan()
+            return json.dumps({"ok": True, "path": str(target)})
+        except (OSError, ValueError) as exc:
+            return json.dumps({"ok": False, "error": str(exc) or "The file could not be moved."})
+
     @Slot(str, result=bool)
     def openFolder(self, path):
         FileService.open_folder(path)
