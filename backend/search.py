@@ -1,7 +1,7 @@
 from datetime import date
 from pathlib import Path
 from PySide6.QtCore import QThread, Signal
-from .config import DEFAULT_INCOMING, CACHE_DIR, SUPPORTED
+from .config import CACHE_DIR, SUPPORTED
 from .database import Database
 
 try:
@@ -16,9 +16,9 @@ except ImportError:
 class IndexWorker(QThread):
     finished_scan = Signal(object, object)
     failed = Signal(str)
-    def __init__(self, root, cached, incoming):
+    def __init__(self, root, cached):
         super().__init__()
-        self.root, self.cached, self.incoming = Path(root), cached, Path(incoming).resolve()
+        self.root, self.cached = Path(root), cached
     def run(self):
         found, metadata = set(), {}
         try:
@@ -39,21 +39,21 @@ class IndexWorker(QThread):
         except Exception as exc:
             self.failed.emit(str(exc))
     def _excluded(self, p):
-        for blocked in (CACHE_DIR.resolve(), self.incoming):
+        for blocked in (CACHE_DIR.resolve(),):
             if p == blocked or blocked in p.parents: return True
         return False
 
 class SearchService:
     def __init__(self):
-        self.db = Database(); self.root = None; self.incoming = DEFAULT_INCOMING
+        self.db = Database(); self.root = None
         self.cache = []; self.worker = None
-    def configure(self, root, incoming):
-        self.root, self.incoming = Path(root).resolve(), Path(incoming).resolve()
+    def configure(self, root):
+        self.root = Path(root).resolve()
         self.cache = self.db.rows()
     def scan(self, done, failed):
         if self.worker and self.worker.isRunning(): return
         cached = {r[0]: (r[3], r[4]) for r in self.db.rows()}
-        self.worker = IndexWorker(self.root, cached, self.incoming)
+        self.worker = IndexWorker(self.root, cached)
         self.worker.finished_scan.connect(lambda found, meta: self._finish(found, meta, done))
         self.worker.failed.connect(failed); self.worker.start()
     def _finish(self, found, meta, done):
