@@ -1,4 +1,5 @@
 import json
+import time
 import urllib.request
 from pathlib import Path
 from PySide6.QtCore import QObject,Signal,Slot,QThread
@@ -19,12 +20,22 @@ class ReleaseManifestWorker(QThread):
         "https://api.github.com/repos/ananas123123/digiwebversionreleases/contents/latest.json?ref=main",
     )
     def run(self):
-        for url in self.URLS:
+        # Add a unique query parameter and explicit no-cache headers so a
+        # CDN/proxy cannot keep serving an older latest.json during checks.
+        cache_buster=str(int(time.time() * 1000))
+        for index,base_url in enumerate(self.URLS):
             try:
-                request=urllib.request.Request(url,headers={"Accept":"application/vnd.github+json","User-Agent":"Digi-Update-Checker"})
+                separator="&" if "?" in base_url else "?"
+                url=base_url+separator+"_digi_check="+cache_buster
+                request=urllib.request.Request(url,headers={
+                    "Accept":"application/vnd.github+json",
+                    "User-Agent":"Digi-Update-Checker",
+                    "Cache-Control":"no-cache, no-store, max-age=0",
+                    "Pragma":"no-cache",
+                })
                 with urllib.request.urlopen(request,timeout=8) as response:
                     payload=response.read()
-                if "api.github.com" in url:
+                if "api.github.com" in base_url:
                     import base64
                     envelope=json.loads(payload.decode("utf-8"))
                     payload=base64.b64decode(envelope["content"])
