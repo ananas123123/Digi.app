@@ -420,6 +420,7 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     }
   });
   document.addEventListener('contextmenu', event => {
+    if (event.target instanceof Element && event.target.closest('.move-browser')) return;
     event.preventDefault();
     target = event.target instanceof Element ? event.target : null;
     const editable = target && (target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]'));
