@@ -14,6 +14,7 @@
       <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" d="M21 21L16.65 16.65M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z"></path>
     </svg>
   </div>
+  <button id="scan" class="icon-button search-refresh" aria-label="Refresh index" title="Refresh index">↻</button>
   <button id="clear" class="icon-button" aria-label="Clear search" title="Clear search">×</button>
 </div>
 <div class="header-actions"><button class="ui-button" id="incoming">Incoming</button><button class="ui-button" id="repository">Repository</button><span class="window-controls"><button class="window-control" id="window-minimize" aria-label="Minimise" title="Minimise">−</button><button class="window-control" id="window-maximize" aria-label="Maximise or restore" title="Maximise or restore">□</button><button class="window-control window-close" id="window-close" aria-label="Close" title="Close">×</button></span></div>
@@ -25,7 +26,7 @@
 <label>Source<select id="source"><option>All sources</option><option>ExamPro</option><option>PMT</option></select></label>
 <label>Search<select id="method"><option>Normal</option><option>Fuzzy</option></select></label>
 <label>Sort<select id="sort"><option>Relevance</option><option>Name A-Z</option><option>Name Z-A</option><option>Newest modified</option><option>Oldest modified</option><option>Most pages</option><option>Fewest pages</option></select></label>
-<button class="wide-button" id="scan">Update index</button><button class="wide-button" id="recent">Recent searches</button></aside>
+<button class="wide-button" id="recent">Recent searches</button></aside>
 <section class="content"><div class="content-head"><div><h1 class="digi-home-logo" aria-label="Digi">Digi<span class="digi-home-logo-dot" aria-hidden="true"></span></h1><p id="hint" hidden></p></div><span id="count">0 results</span></div><div class="results-workspace"><div id="results" class="results"></div><aside id="preview-panel" class="preview-panel" aria-label="Document preview"><div class="preview-empty"><span class="preview-empty-icon">▤</span><strong>Document preview</strong><p>Select a search result to view it here.</p></div></aside></div></section></main>
 <nav class="home-cards" aria-label="Digi tools">
   <button class="home-card" id="home-notes" type="button"><span class="home-card-icon" aria-hidden="true">✎</span><span class="home-card-title">Notes</span><span class="home-card-copy">Your notebooks and pages</span><span class="home-card-arrow" aria-hidden="true">↗</span></button>
