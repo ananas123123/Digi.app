@@ -314,7 +314,10 @@ class DigiBridge(QObject):
         self.worker = ConversionWorker(path, target)
         self.worker.progress.connect(lambda value: self.conversionProgress.emit(str(path), value))
         self.worker.finished.connect(
-            lambda ok, msg, out: self.conversionFinished.emit(ok, msg, str(path))
+            lambda ok, msg, out: (
+                self.start_scan() if ok else None,
+                self.conversionFinished.emit(ok, msg, str(path)),
+            )
         )
         self.worker.start()
         return True
