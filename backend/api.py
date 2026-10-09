@@ -27,8 +27,8 @@ class ReleaseManifestWorker(QThread):
                 if "api.github.com" in url:
                     import base64
                     envelope=json.loads(payload.decode("utf-8"))
-                    payload=base64.b64decode(envelope["content"]).decode("utf-8")
-                manifest=json.loads(payload.decode("utf-8") if isinstance(payload,bytes) else payload)
+                    payload=base64.b64decode(envelope["content"])
+                manifest=json.loads(payload.decode("utf-8"))
                 self.resultReady.emit(json.dumps({"ok":True,"manifest":manifest}))
                 return
             except Exception:
