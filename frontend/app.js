@@ -50,3 +50,35 @@ if(ok){backend.state(updated=>{let next=parseJson(updated,null,"updated startup 
 else showStartupError(state.version_problem||"Digi could not initialise its backend.")
 });
 });});
+
+
+// Let the wordmark dot be dragged temporarily; it snaps back on release.
+(() => {
+  const dot = document.querySelector('.digi-home-logo-dot');
+  if (!dot) return;
+  dot.style.cursor = 'grab';
+  dot.style.touchAction = 'none';
+  dot.addEventListener('pointerdown', event => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    dot.style.cursor = 'grabbing';
+    dot.setPointerCapture(event.pointerId);
+    const move = e => {
+      dot.style.translate = (e.clientX - startX) + 'px ' + (e.clientY - startY) + 'px';
+    };
+    const finish = () => {
+      dot.style.translate = '';
+      dot.style.cursor = 'grab';
+      dot.removeEventListener('pointermove', move);
+      dot.removeEventListener('pointerup', finish);
+      dot.removeEventListener('pointercancel', finish);
+      dot.removeEventListener('lostpointercapture', finish);
+    };
+    dot.addEventListener('pointermove', move);
+    dot.addEventListener('pointerup', finish);
+    dot.addEventListener('pointercancel', finish);
+    dot.addEventListener('lostpointercapture', finish);
+  });
+})();
