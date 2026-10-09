@@ -22,23 +22,30 @@ echo Logs, if needed, will be saved to:
 echo %LOG_FILE%
 echo.
 
-"%PYTHON%" "%~dp0digi_search_engine.py" > "%LOG_FILE%" 2>&1
+"%PYTHON%" -u "%~dp0digi_search_engine.py" > "%LOG_FILE%" 2>&1
 set "APP_EXIT=%ERRORLEVEL%"
 
+echo.
 if not "%APP_EXIT%"=="0" (
-    echo.
     echo ==========================================
-    echo DIGI SEARCH ENGINE FAILED TO START
+    echo DIGI SEARCH ENGINE FAILED OR EXITED WITH AN ERROR
     echo ==========================================
     echo Exit code: %APP_EXIT%
-    echo.
-    type "%LOG_FILE%"
-    echo.
-    echo Full output saved to:
-    echo %LOG_FILE%
-    echo.
-    pause
-    exit /b %APP_EXIT%
+) else (
+    echo Digi process exited with code 0.
+    echo If the window never appeared, this was an unexpected early exit.
 )
-
-exit /b 0
+echo.
+echo -------- Launcher log --------
+if exist "%LOG_FILE%" (
+    type "%LOG_FILE%"
+) else (
+    echo No launcher log was created.
+)
+echo.
+echo Full output, if available:
+echo %LOG_FILE%
+echo.
+echo This window will stay open so the exit status and log remain visible.
+pause
+exit /b %APP_EXIT%
