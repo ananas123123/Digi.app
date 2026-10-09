@@ -4,7 +4,7 @@
 <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 <link rel="stylesheet" href="./styles.css"></head>
 <body>
-<header class="header"><div class="brand"><div class="brand-mark" aria-label="Digi logo">D</div><div class="brand-home"><span aria-hidden="true">•</span> Home</div></div>
+<header class="header"><div class="brand"><div class="brand-mark" aria-label="Digi logo">D</div><div class="brand-home"><span class="home-status-slot" aria-hidden="true">•</span> Home</div></div>
 <div class="ui-input-container search-wrap">
   <input id="search" required class="ui-input search-input" placeholder="Search files..." autocomplete="off" type="text">
   <div class="ui-input-underline"></div>
@@ -17,7 +17,7 @@
   <button id="clear" class="icon-button" aria-label="Clear search" title="Clear search">×</button>
 </div>
 <div class="header-actions"><button class="ui-button" id="incoming">Incoming</button><button class="ui-button" id="repository">Repository</button><span class="window-controls"><button class="window-control" id="window-minimize" aria-label="Minimise" title="Minimise">−</button><button class="window-control" id="window-maximize" aria-label="Maximise or restore" title="Maximise or restore">□</button><button class="window-control window-close" id="window-close" aria-label="Close" title="Close">×</button></span></div>
-<div class="update-status-wrap" title="Update status"><span id="digi-update-status" class="update-status-dot" data-status="checking" role="status" aria-label="Checking for Digi updates" title="Checking for Digi updates…"></span></div></header>
+</header>
 <main class="layout"><aside class="sidebar"><div class="section-label">FILTERS</div>
 <label>Type<select id="type"><option>All types</option><option>PDF</option><option>Word</option></select></label>
 <label>Status<select id="status"><option>All statuses</option><option>Not started</option><option>In progress</option><option>Finished</option><option>Due</option><option>Due late</option></select></label>
@@ -25,7 +25,7 @@
 <label>Search<select id="method"><option>Normal</option><option>Fuzzy</option></select></label>
 <label>Sort<select id="sort"><option>Relevance</option><option>Name A-Z</option><option>Name Z-A</option><option>Newest modified</option><option>Oldest modified</option><option>Most pages</option><option>Fewest pages</option></select></label>
 <button class="wide-button" id="scan">Update index</button><button class="wide-button" id="recent">Recent searches</button></aside>
-<section class="content"><div class="content-head"><div><h1 class="digi-home-logo" aria-label="Digi">Digi<span class="digi-home-logo-dot" aria-hidden="true"></span></h1><p id="hint">Search your repository to get started.</p></div><span id="count">0 results</span></div><div id="results" class="results"></div></section></main>
+<section class="content"><div class="content-head"><div><h1 class="digi-home-logo" aria-label="Digi">Digi<span class="digi-home-logo-dot" aria-hidden="true"></span></h1><p id="hint" hidden></p></div><span id="count">0 results</span></div><div id="results" class="results"></div></section></main>
 <nav class="home-cards" aria-label="Digi tools">
   <button class="home-card" id="home-notes" type="button"><span class="home-card-icon" aria-hidden="true">✎</span><span class="home-card-title">Notes</span><span class="home-card-copy">Your notebooks and pages</span><span class="home-card-arrow" aria-hidden="true">↗</span></button>
   <button class="home-card" id="home-cloud" type="button"><span class="home-card-icon" aria-hidden="true">☁</span><span class="home-card-title">Cloud</span><span class="home-card-copy">Your files, anywhere</span><span class="home-card-arrow" aria-hidden="true">↗</span></button>
