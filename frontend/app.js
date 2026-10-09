@@ -188,7 +188,42 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     const action = button.dataset.action;
     const el = target && target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]');
     try {
-      if (action === 'back') history.back();
+      if (action === 'new-menu') {
+        const wrapper = button.closest('.digi-context-submenu');
+        const isOpen = wrapper && wrapper.classList.toggle('submenu-open');
+        button.setAttribute('aria-expanded', String(!!isOpen));
+      }
+      else if (action === 'new-docx' || action === 'new-pdf') {
+        hide();
+        const kind = action === 'new-docx' ? 'docx' : 'pdf';
+        const label = kind === 'docx' ? 'Word document' : 'PDF document';
+        modal('New ' + (kind === 'docx' ? 'DOCX' : 'PDF'),
+          '<form id="new-document-form" class="new-document-form"><label for="new-document-name">File name</label><input id="new-document-name" name="name" required maxlength="180" placeholder="My document" autocomplete="off"><p>The file will be created in your configured search repository.</p><div class="new-document-actions"><button type="button" class="small-button" id="new-document-cancel">Cancel</button><button type="submit" class="small-button">Create ' + (kind === 'docx' ? 'DOCX' : 'PDF') + '</button></div></form>');
+        const form = $('new-document-form');
+        const input = $('new-document-name');
+        if (input) input.focus();
+        $('new-document-cancel').onclick = () => $('modal').classList.add('hidden');
+        form.onsubmit = event => {
+          event.preventDefault();
+          const name = input.value.trim();
+          if (!name) { input.focus(); return; }
+          const submit = form.querySelector('[type="submit"]');
+          submit.disabled = true;
+          submit.textContent = 'Creating…';
+          call('createDocument', ['', name, kind], path => {
+            if (!path) {
+              submit.disabled = false;
+              submit.textContent = 'Try again';
+              return;
+            }
+            $('modal').classList.add('hidden');
+            if (typeof refresh === 'function') refresh();
+            modal('Document created', '<div class="new-document-created"><p>' + esc(name + (name.toLowerCase().endsWith('.' + kind) ? '' : '.' + kind)) + ' was created in your search repository.</p><button type="button" class="small-button" id="new-document-open">Open document</button></div>');
+            $('new-document-open').onclick = () => { $('modal').classList.add('hidden'); call('openFile', [path]); };
+          });
+        };
+      }
+      else if (action === 'back') history.back();
       else if (action === 'forward') history.forward();
       else if (action === 'reload') window.location.reload();
       else if (action === 'delete-result') {
