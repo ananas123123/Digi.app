@@ -229,16 +229,10 @@ function clearNativeDropState() {
   });
 }
 window.handleNativeItemsDragLeave = function () { clearNativeDropState(); };
-window.handleNativeItemsDragMove = function (serializedPaths, x, y) {
+window.handleNativeItemsDragMove = function (serializedPaths, x, y, hasFolder) {
   clearNativeDropState();
   const list = nativeDropTarget(x, y);
   if (!list) return;
-  let paths = [];
-  try { paths = JSON.parse(serializedPaths || '[]'); } catch (_) {}
-  const hasFolder = Array.isArray(paths) && paths.some(path => {
-    const name = String(path).split(/[\\/]/).pop();
-    return name && !/\.[^./\\]+$/.test(name);
-  });
   list.classList.add('repo-browser-native-drop');
   const hint = document.createElement('div');
   hint.className = 'repo-browser-native-drop-hint';
