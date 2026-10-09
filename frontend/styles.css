@@ -2673,3 +2673,40 @@ body.delete-confirm-open { overflow: hidden; }
 #modal:has(.move-browser) #delete-file-no { background: #23964b; }
 #modal:has(.move-browser) .delete-file-actions button:disabled { opacity: .6; cursor: wait; }
 
+
+
+/* Folder marker at the far-left edge of the results heading. */
+.content-head-title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+}
+.results-folder-icon {
+  display: inline-flex;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(232,189,98,.24);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(232,189,98,.10), rgba(232,189,98,.025));
+  color: #d8b967;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+.results-folder-icon svg { display: block; }
+body:not(:has(#search:not(:placeholder-shown))) .content-head-title {
+  justify-content: center;
+}
+body:not(:has(#search:not(:placeholder-shown))) .results-folder-icon {
+  display: none;
+}
+@media (max-width: 760px) {
+  body:has(#search:not(:placeholder-shown)) .content-head-title { gap: 10px; }
+  body:has(#search:not(:placeholder-shown)) .results-folder-icon {
+    flex-basis: 36px;
+    width: 36px;
+    height: 36px;
+  }
+}
