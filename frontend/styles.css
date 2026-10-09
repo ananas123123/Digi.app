@@ -2068,3 +2068,9 @@ body.delete-confirm-open { overflow: hidden; }
   justify-content: center;
   padding: 24px;
 }
+
+
+/* Empty folders should not show a scrollable listing; populated folders can scroll. */
+.move-browser-list.is-empty {
+  overflow: hidden;
+}
