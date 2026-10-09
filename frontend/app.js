@@ -61,7 +61,11 @@ function openMoveBrowser(sourcePath, sourceName) {
         return;
       }
       list.innerHTML = '';
-      list.classList.toggle('is-empty', data.entries.length === 0);
+      const normalizePath = value => String(value || '').replace(/\\\\/g, '/').replace(/\/$/, '').toLowerCase();
+      const visibleEntries = data.entries.filter(entry =>
+        entry.type === 'folder' || normalizePath(entry.path) === normalizePath(sourcePath)
+      );
+      list.classList.toggle('is-empty', visibleEntries.length === 0);
       if (data.parent || currentFolder) {
         const nav = document.createElement('div');
         nav.className = 'move-browser-nav';
@@ -100,7 +104,7 @@ function openMoveBrowser(sourcePath, sourceName) {
         nav.appendChild(breadcrumb);
         list.appendChild(nav);
       }
-      if (!data.entries.length) {
+      if (!visibleEntries.length) {
         const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'This folder is empty.'; list.appendChild(empty);
       }
       const contextMenu = $('folder-context-menu');
@@ -152,8 +156,7 @@ function openMoveBrowser(sourcePath, sourceName) {
       };
       $('folder-context-add').onclick = openNewFolderPopup;
       $('move-add-folder').onclick = openNewFolderPopup;
-      const normalizePath = value => String(value || '').replace(/\\\\/g, '/').replace(/\/$/, '').toLowerCase();
-      data.entries.forEach(entry => {
+      visibleEntries.forEach(entry => {
         const row = document.createElement('button');
         row.type = 'button'; row.className = 'move-browser-entry';
         const isSourceFile = entry.type === 'file' && normalizePath(entry.path) === normalizePath(sourcePath);
