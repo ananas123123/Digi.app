@@ -8,14 +8,15 @@ function showPreview(path,name,card){
 document.querySelectorAll(".result.is-selected").forEach(el=>el.classList.remove("is-selected"));
 if(card)card.classList.add("is-selected");
 const panel=$("preview-panel");
+panel.hidden=false;
 panel.innerHTML='<div class="preview-loading"><span class="preview-spinner"></span><strong>Preparing preview</strong><p>'+esc(name)+'</p></div>';
 call("previewFile",[path],raw=>{
 const data=parseJson(raw,null,"document preview");
 if(!data){panel.innerHTML='<div class="preview-empty"><strong>Preview unavailable</strong><p>Digi could not read the preview response.</p></div>';return}
 if(data.kind==="error"){panel.innerHTML='<div class="preview-empty"><strong>Preview unavailable</strong><p>'+esc(data.message||"This file cannot be previewed.")+'</p><button class="small-button" id="preview-open">Open in app</button></div>';const b=$("preview-open");if(b)b.onclick=()=>call("openFile",[path]);return}
 if(data.kind==="word"){
-panel.innerHTML='<div class="preview-head"><div><span class="preview-type">WORD DOCUMENT</span><strong>'+esc(data.name||name)+'</strong></div><button class="small-button" id="preview-open">Open</button></div><div class="word-preview">'+(data.html||"")+'</div>';
-const b=$("preview-open");if(b)b.onclick=()=>call("openFile",[path]);return;
+panel.innerHTML='<div class="preview-head"><div><span class="preview-type">WORD DOCUMENT</span><strong>'+esc(data.name||name)+'</strong></div><div class="preview-head-actions"><button class="small-button" id="preview-open">Open</button><button class="small-button preview-close" id="preview-close" aria-label="Close preview" title="Close preview">×</button></div></div><div class="word-preview">'+(data.html||"")+'</div>';
+const b=$("preview-open");if(b)b.onclick=()=>call("openFile",[path]);const close=$("preview-close");if(close)close.onclick=()=>{$("preview-panel").hidden=true;};return;
 }
 if(data.kind==="pdf"){
 panel.innerHTML='<div class="preview-head"><div><span class="preview-type">PDF DOCUMENT</span><strong>'+esc(data.name||name)+'</strong><small>'+esc(String(data.total||0))+' pages</small></div><button class="small-button" id="preview-open">Open</button></div><div class="pdf-preview">'+(data.pages||[]).map(p=>'<figure class="pdf-page"><img alt="Page '+esc(p.number)+'" src="'+p.image+'"><figcaption>Page '+esc(p.number)+'</figcaption></figure>').join("")+(data.truncated?'<p class="preview-note">Showing the first 20 pages. Open the document to view the rest.</p>':"")+'</div>';
@@ -158,3 +159,8 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     hide();
   });
 })();
+
+// Close preview from its header; refresh is placed beside the search field.
+document.addEventListener('click', event => {
+  if (event.target && event.target.id === 'preview-close') $('preview-panel').hidden = true;
+});
