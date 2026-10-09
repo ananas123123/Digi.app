@@ -65,6 +65,17 @@ function openSearchRepositoryBrowser(initialPath = "") {
       const relativePath = normalizedCurrent.startsWith(rootPath) ? normalizedCurrent.slice(rootPath.length).replace(/^\/+/, '') : '';
       pathLabel.value = relativePath;
       pathLabel.dataset.isRoot = relativePath ? "false" : "true";
+      if (!relativePath && Array.isArray(data.entries)) {
+        const visibleRootFolders = data.entries
+          .filter(entry => entry.type === "folder" && typeof entry.name === "string")
+          .map(entry => entry.name);
+        if (visibleRootFolders.length) {
+          window.digiRepositoryFolderCache = Array.from(new Set([
+            ...visibleRootFolders,
+            ...(Array.isArray(window.digiRepositoryFolderCache) ? window.digiRepositoryFolderCache : [])
+          ]));
+        }
+      }
       list.innerHTML = "";
       if (data.parent) {
         const backButton = document.createElement("button");
@@ -141,6 +152,10 @@ function openSearchRepositoryBrowser(initialPath = "") {
       folderRefreshTimer = null;
     };
     const rotateFolderPlaceholder = () => {
+      const sharedFolderCache = window.digiRepositoryFolderCache;
+      if (Array.isArray(sharedFolderCache) && sharedFolderCache.length) {
+        repositoryFolders = sharedFolderCache.slice();
+      }
       if (!rootPathInput.isConnected) {
         stopFolderPlaceholderTimers();
         return;
@@ -168,7 +183,12 @@ function openSearchRepositoryBrowser(initialPath = "") {
           return;
         }
         const result = parseJson(raw, null, "repository folder placeholder scan");
-        if (!result || !result.ok || !Array.isArray(result.folders)) return;
+        if (!result || !result.ok || !Array.isArray(result.folders)) {
+          // Keep cycling through the folders already visible in the explorer
+          // instead of falling back to "(root)" when the background scan fails.
+          rotateFolderPlaceholder();
+          return;
+        }
         const updatedFolders = result.folders
           .filter(path => typeof path === "string" && path.trim())
           .sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base"}));
