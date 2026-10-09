@@ -381,11 +381,27 @@ class DigiBridge(QObject):
 
     @Slot(str, str, result=str)
     def createFolder(self, parent, name):
+        """Create a folder only inside the configured search repository."""
         if not self.search_service:
-            return ""
-        result = FileService.create_folder(parent, name)
-        self.start_scan()
-        return result
+            return json.dumps({"ok": False, "error": "Search repository is not ready."})
+        try:
+            root = Path(self.search_service.root).resolve()
+            destination = Path(parent).resolve() if parent else root
+            destination.relative_to(root)
+            if not destination.is_dir():
+                raise NotADirectoryError("The selected destination folder no longer exists.")
+            cleaned = (name or "").strip()
+            if not cleaned or cleaned in (".", "..") or any(ch in cleaned for ch in '<>:"/\\\\|?*'):
+                raise ValueError("Enter a valid folder name.")
+            target = (destination / cleaned).resolve()
+            target.relative_to(root)
+            if target.exists():
+                raise FileExistsError("A folder or file with that name already exists.")
+            result = FileService.create_folder(str(destination), cleaned)
+            self.start_scan()
+            return json.dumps({"ok": True, "path": result})
+        except (OSError, ValueError) as exc:
+            return json.dumps({"ok": False, "error": str(exc) or "Could not create folder."})
 
     @Slot(str, result=bool)
     def deleteFolder(self, path):
