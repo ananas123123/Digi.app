@@ -2032,3 +2032,9 @@ body.delete-confirm-open { overflow: hidden; }
   left: auto !important;
   right: calc(100% - 3px) !important;
 }
+
+
+/* New submenu is transient on hover and persistent only after clicking New. */
+.digi-context-submenu .digi-context-submenu-items { display: none; }
+.digi-context-submenu.submenu-open .digi-context-submenu-items,
+.digi-context-submenu.submenu-hover-open .digi-context-submenu-items { display: block; }
