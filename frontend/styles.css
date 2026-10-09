@@ -2141,3 +2141,17 @@ body.delete-confirm-open { overflow: hidden; }
   outline: 2px solid #e8bd62;
   outline-offset: 2px;
 }
+
+
+/* In the move browser, folders are interactive; files are visibly unavailable. */
+.move-browser-entry.move-browser-folder { cursor: pointer; }
+.move-browser-entry.move-browser-file,
+.move-browser-entry.move-browser-file:hover,
+.move-browser-entry.move-browser-file:disabled {
+  opacity: .2 !important;
+  color: #d98b8b !important;
+  cursor: not-allowed !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
