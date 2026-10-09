@@ -121,6 +121,13 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
     event.preventDefault();
     target = event.target instanceof Element ? event.target : null;
     const editable = target && (target.closest('input, textarea, [contenteditable="true"], [contenteditable=""]'));
+    const resultCard = target && target.closest('.result[data-preview]');
+    const deleteButton = menu.querySelector('[data-action="delete-result"]');
+    if (deleteButton) {
+      deleteButton.hidden = !resultCard;
+      deleteButton.dataset.path = resultCard ? resultCard.dataset.preview : '';
+      deleteButton.dataset.name = resultCard ? (resultCard.dataset.name || '') : '';
+    }
     const selection = window.getSelection();
     const hasSelection = !!(selection && String(selection).length);
     for (const action of ['cut','copy','paste','select-all']) {
@@ -152,6 +159,19 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
       if (action === 'back') history.back();
       else if (action === 'forward') history.forward();
       else if (action === 'reload') window.location.reload();
+      else if (action === 'delete-result') {
+        const path = button.dataset.path;
+        const name = button.dataset.name || path;
+        if (!path || !target || !target.closest('.result[data-preview]')) return;
+        hide();
+        if (window.confirm('Delete "' + name + '" permanently? This cannot be undone.')) {
+          call('deleteFile', [path], raw => {
+            const ok = raw === true || raw === 'true';
+            if (ok) refresh();
+            else window.alert('Digi could not delete this file. It may have moved, or it may be outside the Digi library.');
+          });
+        }
+      }
       else if (action === 'select-all' && el) {
         el.focus();
         if (typeof el.select === 'function') el.select();
