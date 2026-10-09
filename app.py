@@ -175,7 +175,7 @@ class DigiWindow(QMainWindow):
         payload = json.dumps(list(paths))
         self.view.page().runJavaScript(
             "if (window.handleNativeItemsDrop) window.handleNativeItemsDrop("
-            + json.dumps(payload) + ", " + str(int(x)) + ", " + str(int(y)) + ", " + ("true" if has_folder else "false") + ");"
+            + json.dumps(payload) + ", " + str(int(x)) + ", " + str(int(y)) + ");"
         )
 
     def _handle_native_items_drag_moved(self, paths, x, y, has_folder):
@@ -183,7 +183,8 @@ class DigiWindow(QMainWindow):
         payload = json.dumps(list(paths))
         self.view.page().runJavaScript(
             "if (window.handleNativeItemsDragMove) window.handleNativeItemsDragMove("
-            + json.dumps(payload) + ", " + str(int(x)) + ", " + str(int(y)) + ");"
+            + json.dumps(payload) + ", " + str(int(x)) + ", " + str(int(y)) + ", "
+            + ("true" if has_folder else "false") + ");"
         )
 
     def _handle_native_items_drag_left(self):
