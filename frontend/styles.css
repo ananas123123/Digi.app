@@ -2231,3 +2231,46 @@ body.delete-confirm-open { overflow: hidden; }
   #modal:has(.move-browser) .move-browser-actions { align-items: stretch; flex-direction: column; }
   #modal:has(.move-browser) .move-here-button { width: 100%; }
 }
+
+
+/* In the move browser, clearly mark the selected source file; keep other files subdued. */
+#modal:has(.move-browser) .move-browser-entry.move-browser-current-file,
+#modal:has(.move-browser) .move-browser-entry.move-browser-current-file:disabled {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid rgba(91,170,255,.78);
+  border-radius: 8px;
+  background: rgba(37,111,190,.2);
+  color: #8fc8ff;
+  opacity: 1 !important;
+  cursor: default !important;
+  outline: 1px solid rgba(91,170,255,.16);
+  box-shadow: inset 0 0 0 1px rgba(91,170,255,.08);
+}
+#modal:has(.move-browser) .move-browser-current-arrow {
+  flex: 0 0 auto;
+  color: #64b4ff;
+  font-size: 20px;
+  font-weight: 800;
+}
+#modal:has(.move-browser) .move-browser-current-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #c5e4ff;
+  font-weight: 650;
+}
+#modal:has(.move-browser) .move-browser-current-badge {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 5px 8px;
+  border: 1px solid rgba(91,170,255,.7);
+  border-radius: 6px;
+  background: rgba(32,111,190,.32);
+  color: #a8d7ff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .07em;
+}
