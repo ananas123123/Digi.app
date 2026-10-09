@@ -740,6 +740,12 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
       else if (action === 'new-docx' || action === 'new-pdf') {
         const requestedParent = button.dataset.parent;
         const documentParent = typeof requestedParent === 'string' && requestedParent !== '[object PointerEvent]' ? requestedParent : '';
+        // Capture the explorer state before modal() replaces its DOM.
+        const repositoryBrowser = !!document.querySelector('.repo-browser');
+        const repositoryPathLabel = document.querySelector('.repo-browser-path');
+        const repositoryPath = repositoryPathLabel && typeof repositoryPathLabel.dataset.currentPath === 'string'
+          ? repositoryPathLabel.dataset.currentPath
+          : documentParent;
         hide();
         const kind = action === 'new-docx' ? 'docx' : 'pdf';
         const label = kind === 'docx' ? 'Word document' : 'PDF document';
@@ -778,12 +784,10 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
             // Keep the user in the place where they initiated New.
             $('modal').classList.add('hidden');
             $('modal').classList.remove('new-document-modal');
-            if (repositoryBrowser) {
-              const pathLabel = repositoryBrowser.querySelector('#repo-browser-path');
-              const currentPath = pathLabel && typeof pathLabel.dataset.currentPath === 'string' ? pathLabel.dataset.currentPath : '';
-              openSearchRepositoryBrowser(currentPath);
-            }
-            // Refresh the underlying index without navigating away from the explorer.
+            // Reopen the explorer only when creation started there; Results-box
+            // creation must not unexpectedly open or switch to another view.
+            if (repositoryBrowser) openSearchRepositoryBrowser(repositoryPath);
+            // Refresh the index without changing the current view.
             if (typeof refresh === 'function') refresh();
           });
         };
