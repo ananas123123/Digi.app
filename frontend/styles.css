@@ -1003,3 +1003,26 @@ body {
   min-height: calc(100vh - 2px);
   border: 1px solid rgba(255,255,255,.12);
 }
+
+
+/* Frameless app window: hide embedded page scrollbars and soften all outer corners. */
+html {
+  overflow: hidden !important;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.32);
+  background: #090909;
+}
+body {
+  width: 100%;
+  height: 100%;
+  min-height: 0 !important;
+  margin: 0;
+  overflow: hidden !important;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 11px;
+  clip-path: inset(0 round 11px);
+}
+::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
+* { scrollbar-width: none !important; }
