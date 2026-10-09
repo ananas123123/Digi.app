@@ -38,6 +38,7 @@ function modal(title,body){let m=$("modal");m.classList.remove("hidden");m.inner
 function openMoveBrowser(sourcePath, sourceName) {
   modal('Move file', '<div class="move-browser"><div class="move-source-label">Selected file: <strong>'+esc(sourceName)+'</strong></div><div class="move-browser-list" id="move-browser-list"><div class="empty">Loading contents…</div></div><div class="move-browser-actions"><span id="move-browser-message" role="status"></span><button class="ui-button move-here-button" id="move-here" type="button" disabled>Move here</button></div><div class="rename-popup-overlay" id="rename-popup-overlay" hidden><section class="rename-popup" role="dialog" aria-modal="true" aria-labelledby="rename-popup-title"><div class="rename-popup-tab"><span class="rename-popup-tab-mark" aria-hidden="true"></span><span>Rename file</span><button type="button" id="rename-popup-close" aria-label="Close rename popup">×</button></div><form id="rename-popup-form" class="rename-popup-form"><h3 id="rename-popup-title">Choose a new filename</h3><p>A file with this name already exists in the destination folder.</p><label for="rename-popup-input">New filename</label><input id="rename-popup-input" name="filename" type="text" maxlength="240" required autocomplete="off"><div class="rename-popup-actions"><button type="button" class="rename-popup-cancel" id="rename-popup-cancel">Cancel</button><button type="submit" class="rename-popup-confirm" id="rename-popup-confirm">Rename and move</button></div></form></section></div></div>');
   let currentFolder = '';
+  let breadcrumbFolders = [];
   let checkRequest = 0;
   let destinationConflict = false;
   let identicalConflict = false;
@@ -49,6 +50,7 @@ function openMoveBrowser(sourcePath, sourceName) {
   };
   const render = folder => {
     currentFolder = folder || '';
+    breadcrumbFolders = currentFolder ? breadcrumbFolders.filter(item => item.path === currentFolder || currentFolder.startsWith(item.path.replace(/[\\\\/]+$/, '') + '\\\\') || currentFolder.startsWith(item.path.replace(/[\\\\/]+$/, '') + '/')) : [];
     call('listLibraryContents', [currentFolder], raw => {
       const data = parseJson(raw, null, 'move browser contents');
       const list = $('move-browser-list');
@@ -71,15 +73,14 @@ function openMoveBrowser(sourcePath, sourceName) {
           up.title = 'Go to parent folder';
           up.setAttribute('aria-label', 'Go to parent folder');
           up.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>';
-          up.onclick = () => render(data.parent);
+          up.onclick = () => { breadcrumbFolders = breadcrumbFolders.filter(item => item.path !== currentFolder && (data.parent.startsWith(item.path.replace(/[\\\\/]+$/, '') + '\\\\') || data.parent.startsWith(item.path.replace(/[\\\\/]+$/, '') + '/'))); render(data.parent); };
           nav.appendChild(up);
         }
         const breadcrumb = document.createElement('div');
         breadcrumb.className = 'move-browser-breadcrumb';
         breadcrumb.setAttribute('aria-label', 'Current directory');
-        const parts = String(currentFolder).replace(/\\\\/g, '/').split('/').filter(Boolean);
-        let accumulated = '';
-        parts.forEach((part, index) => {
+        const parts = breadcrumbFolders;
+        parts.forEach((item, index) => {
           if (index) {
             const arrow = document.createElement('span');
             arrow.className = 'move-browser-breadcrumb-arrow';
@@ -87,11 +88,11 @@ function openMoveBrowser(sourcePath, sourceName) {
             arrow.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 3 5 5-5 5"/></svg>';
             breadcrumb.appendChild(arrow);
           }
-          accumulated = accumulated ? accumulated + '/' + part : part;
+          const accumulated = item.path;
           const segment = document.createElement('button');
           segment.type = 'button';
           segment.className = 'move-browser-breadcrumb-segment' + (index === parts.length - 1 ? ' is-current' : '');
-          segment.textContent = part;
+          segment.textContent = item.name;
           segment.title = 'Open ' + accumulated;
           segment.disabled = index === parts.length - 1;
           segment.onclick = () => render(accumulated);
@@ -128,7 +129,7 @@ function openMoveBrowser(sourcePath, sourceName) {
           row.textContent = (entry.type === 'folder' ? '▣  ' : '▤  ') + entry.name;
           if (entry.type === 'folder') {
             row.classList.add('move-browser-folder');
-            row.onclick = () => render(entry.path);
+            row.onclick = () => { breadcrumbFolders = breadcrumbFolders.filter(item => item.path !== entry.path && (entry.path.startsWith(item.path.replace(/[\\\\/]+$/, '') + '\\\\') || entry.path.startsWith(item.path.replace(/[\\\\/]+$/, '') + '/'))); breadcrumbFolders.push({ path: entry.path, name: entry.name }); render(entry.path); };
           } else {
             row.classList.add('move-browser-file');
             row.disabled = true;
