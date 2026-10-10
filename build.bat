@@ -158,6 +158,14 @@ if errorlevel 1 (echo FATAL: Could not create "%INSTALL_DIR%".&pause&exit /b 1)
 if not exist "%INSTALL_DIR%\Logs\." mkdir "%INSTALL_DIR%\Logs"
 if errorlevel 1 (echo FATAL: Could not create the updater log folder.&pause&exit /b 1)
 
+rem Create required user-data directories without deleting or replacing existing contents.
+if not exist "%INSTALL_DIR%\Search Repository\." mkdir "%INSTALL_DIR%\Search Repository"
+if errorlevel 1 (echo FATAL: Could not create Search Repository.&pause&exit /b 1)
+if not exist "%INSTALL_DIR%\Search Repository\Digi Notes\." mkdir "%INSTALL_DIR%\Search Repository\Digi Notes"
+if errorlevel 1 (echo FATAL: Could not create the Digi Notes folder.&pause&exit /b 1)
+if not exist "%INSTALL_DIR%\Cache\." mkdir "%INSTALL_DIR%\Cache"
+if errorlevel 1 (echo FATAL: Could not create Cache.&pause&exit /b 1)
+
 set "STAGED_APP=%INSTALL_DIR%\.Digi Search Engine.exe.new"
 set "STAGED_HELPER=%INSTALL_DIR%\.DigiUpdater.exe.new"
 set "BUILD_BACKUP_ID=%APP_VERSION%-%RANDOM%-%RANDOM%"
