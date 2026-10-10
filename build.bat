@@ -165,18 +165,35 @@ if not exist "%UPDATER_DIST_CACHE%\DigiUpdater.exe" (
     exit /b 1
 )
 
-echo Installing main executable into LocalAppData...
-echo Source: "%DIST_CACHE%\Digi Search Engine.exe"
-echo Target: "%FINAL_DIR%\"
-copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%FINAL_DIR%\"
+set "STAGED_APP=%FINAL_DIR%\.Digi Search Engine.exe.new"
+set "STAGED_HELPER=%FINAL_DIR%\.DigiUpdater.exe.new"
+echo Staging both executables before touching the installed copy...
+copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%STAGED_APP%" >nul
+if errorlevel 1 (echo FATAL: Could not stage the main executable.&pause&exit /b 1)
+copy /y "%UPDATER_DIST_CACHE%\DigiUpdater.exe" "%STAGED_HELPER%" >nul
 if errorlevel 1 (
-    echo FATAL: Could not copy the main executable to the Digi installation.
+    del /q "%STAGED_APP%" 2>nul
+    echo FATAL: Could not stage DigiUpdater.exe. Installed files were not changed.
     pause
     exit /b 1
 )
 
-copy /y "%UPDATER_DIST_CACHE%\DigiUpdater.exe" "%FINAL_DIR%\DigiUpdater.exe" >nul
-if errorlevel 1 (echo FATAL: Could not copy DigiUpdater.exe to the output folder.&pause&exit /b 1)
+echo Installing updater helper...
+move /y "%STAGED_HELPER%" "%FINAL_DIR%\DigiUpdater.exe" >nul
+if errorlevel 1 (
+    del /q "%STAGED_APP%" 2>nul
+    del /q "%STAGED_HELPER%" 2>nul
+    echo FATAL: Could not replace DigiUpdater.exe. The main executable was not changed.
+    pause
+    exit /b 1
+)
+echo Installing main executable...
+move /y "%STAGED_APP%" "%FINAL_DIR%\Digi Search Engine.exe" >nul
+if errorlevel 1 (
+    echo FATAL: Could not replace the main executable. Check file permissions and close any Digi process.
+    pause
+    exit /b 1
+)
 
 if not exist "%FINAL_DIR%\Logs\." mkdir "%FINAL_DIR%\Logs"
 if errorlevel 1 (
