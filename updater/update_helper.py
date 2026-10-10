@@ -323,7 +323,9 @@ def install_update(
         # has launched and confirmed startup. This is version metadata, not user data.
         version_file = local_app_data / "Digi" / "Version manager" / "version.txt"
         version_marker = local_app_data / "Digi" / "Version manager" / ".version_initialized"
-        temporary_version = version_file.with_name(version_file.name + ".update-tmp")
+        # Keep the temporary file outside Version manager: its strict contents
+        # check must not observe a transient extra file during atomic replacement.
+        temporary_version = local_app_data / "Digi" / "Logs" / f".Digi-version-{os.getpid()}.tmp"
         try:
             if (
                 version_file.is_file()
