@@ -19,7 +19,7 @@ USER_DATA_ROOT = Path(
 ) / "Digi"
 
 if IS_FROZEN:
-    INSTALL_ROOT = Path(sys.executable).resolve().parent
+    INSTALL_ROOT = USER_DATA_ROOT
     DEPENDENCIES_ROOT = USER_DATA_ROOT
 else:
     INSTALL_ROOT = APP_DIR
