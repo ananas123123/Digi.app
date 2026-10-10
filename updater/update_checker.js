@@ -27,8 +27,8 @@
   }
 
 
-  function showUpdatePrompt(manifest, version) {
-    if (!manifest || promptedVersion === version) return;
+  function showUpdatePrompt(manifest, version, forceOpen = false) {
+    if (!manifest || (promptedVersion === version && !forceOpen)) return;
     const validation = window.DigiVersionComparison.validatePackageMetadata(manifest);
     if (!validation.valid) return;
     activeManifest = manifest;
@@ -67,8 +67,8 @@
     progress.textContent = result.ok && result.verified
       ? "Download complete. Size and SHA-256 verified. Package staged at: " + result.path + ". Digi has not installed it."
       : "Download rejected: " + (result.message || "verification failed") + " No installation was performed.";
-    download.disabled = true;
-    download.textContent = result.ok && result.verified ? "Verified" : "Download failed";
+    download.disabled = !!(result.ok && result.verified);
+    download.textContent = result.ok && result.verified ? "Verified" : "Retry download";
     later.disabled = false;
   }
 
@@ -81,7 +81,28 @@
   function bindPromptButtons() {
     const download = document.getElementById("digi-update-details");
     const later = document.getElementById("digi-update-later");
+    const statusDot = document.getElementById("digi-update-status");
     if (later) later.onclick = closeUpdatePrompt;
+    if (statusDot) {
+      statusDot.title = "Check for Digi updates / open update prompt";
+      statusDot.style.cursor = "pointer";
+      statusDot.addEventListener("click", () => {
+        if (activeManifest && promptedVersion) {
+          showUpdatePrompt(activeManifest, promptedVersion, true);
+        } else {
+          checkRemoteStatus(true);
+        }
+      });
+      statusDot.addEventListener("keydown", event => {
+        if ((event.key === "Enter" || event.key === " ") && activeManifest && promptedVersion) {
+          event.preventDefault();
+          showUpdatePrompt(activeManifest, promptedVersion, true);
+        }
+      });
+      statusDot.tabIndex = 0;
+      statusDot.setAttribute("role", "button");
+      statusDot.setAttribute("aria-label", "Open Digi update prompt");
+    }
     if (download) download.onclick = async () => {
       if (downloadInProgress || !activeManifest) return;
       const validation = window.DigiVersionComparison.validatePackageMetadata(activeManifest);
@@ -191,8 +212,8 @@
     });
   }
 
-  async function checkRemoteStatus() {
-    if (requestInProgress || Date.now() - lastRemoteCheck < CHECK_INTERVAL_MS) return;
+  async function checkRemoteStatus(force = false) {
+    if (requestInProgress || (!force && Date.now() - lastRemoteCheck < CHECK_INTERVAL_MS)) return;
     requestInProgress = true;
     lastRemoteCheck = Date.now();
     setStatus("checking", "Checking Digi's installed version and the latest release…");
