@@ -91,9 +91,9 @@ class UpdateHelperPathTests(unittest.TestCase):
         (version_manager / "version.txt").write_text("1.1.0.0\n", encoding="utf-8")
         (version_manager / ".version_initialized").write_text("initialized\n", encoding="utf-8")
 
-        with patch("updater.update_helper.wait_for_process_exit"), \\
-             patch("updater.update_helper.wait_for_confirmation", return_value=True), \\
-             patch("updater.update_helper.refresh_digi_shortcuts", return_value=True), \\
+        with patch("updater.update_helper.wait_for_process_exit"), \
+             patch("updater.update_helper.wait_for_confirmation", return_value=True), \
+             patch("updater.update_helper.refresh_digi_shortcuts", return_value=True), \
              patch("updater.update_helper.subprocess.Popen"):
             install_update(
                 helper_path=self.helper,
@@ -117,8 +117,8 @@ class UpdateHelperPathTests(unittest.TestCase):
         self._write_valid_pe_candidate()
         old_bytes = self.target.read_bytes()
 
-        with patch("updater.update_helper.wait_for_process_exit"), \\
-             patch("updater.update_helper.wait_for_confirmation", return_value=False), \\
+        with patch("updater.update_helper.wait_for_process_exit"), \
+             patch("updater.update_helper.wait_for_confirmation", return_value=False), \
              patch("updater.update_helper.subprocess.Popen"):
             with self.assertRaisesRegex(RuntimeError, "previous executable will be restored"):
                 install_update(
