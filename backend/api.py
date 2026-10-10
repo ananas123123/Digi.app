@@ -200,7 +200,7 @@ class ReleaseManifestWorker(QThread):
                 if latest.get("schema_version") != 1 or latest.get("product") != "Digi":
                     raise ValueError("latest.json has an unsupported schema or product.")
                 version = latest.get("latest_version")
-                if not isinstance(version, str) or not version.strip() or not re.fullmatch(r"\\d+(?:\\.\\d+)*", version.strip()):
+                if not isinstance(version, str) or not version.strip() or not re.fullmatch(r"\d+(?:\.\d+)*", version.strip()):
                     raise ValueError("latest.json does not contain a valid latest_version.")
                 if latest.get("release_status") not in {"published", "unpublished"}:
                     raise ValueError("latest.json has an invalid release_status.")
@@ -237,7 +237,7 @@ class PackageDownloadWorker(QThread):
                 raise ValueError("The update announcement is invalid.")
             if requested.get("release_status") != "published":
                 raise ValueError("This release is not published for download.")
-            if not re.fullmatch(r"\\d+(?:\\.\\d+)*", version):
+            if not re.fullmatch(r"\d+(?:\.\d+)*", version):
                 raise ValueError("The announced version is invalid.")
 
             # Re-read latest.json at download time and resolve the exact version
