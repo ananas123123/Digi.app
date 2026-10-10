@@ -221,6 +221,19 @@ def install_update(
             )
         confirmed = True
 
+        # Record the new installed version only after the replacement executable
+        # has launched and confirmed startup. This is version metadata, not user data.
+        version_file = local_app_data / "Digi" / "Version manager" / "version.txt"
+        version_marker = local_app_data / "Digi" / "Version manager" / ".version_initialized"
+        try:
+            if version_marker.is_file() and version_marker.read_text(encoding="utf-8").strip() == "initialized":
+                temporary_version = version_file.with_name(version_file.name + ".update-tmp")
+                temporary_version.write_text(version + "\\n", encoding="utf-8")
+                os.replace(temporary_version, version_file)
+        except OSError:
+            # Do not undo a confirmed executable update because optional version
+            # bookkeeping could not be written. The app still uses the same user data.
+
         # Keep the rollback copy after success for now. A later cleanup policy may
         # remove it only after the startup confirmation has been observed and recorded.
     except Exception:
