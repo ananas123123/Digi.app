@@ -99,7 +99,7 @@ class ReleaseManifestWorker(QThread):
         if latest.get("schema_version") != 1 or latest.get("product") != "Digi":
             raise ValueError("latest.json has an unsupported schema or product.")
         version = latest.get("latest_version")
-        if not isinstance(version, str) or not version.strip() or not re.fullmatch(r"\\d+(?:\\.\\d+)*", version.strip()):
+        if not isinstance(version, str) or not version.strip() or not re.fullmatch(r"\d+(?:\.\d+)*", version.strip()):
             raise ValueError("latest.json does not contain a valid latest_version.")
         version = version.strip()
         status = latest.get("release_status")
