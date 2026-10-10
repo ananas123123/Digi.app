@@ -40,6 +40,23 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def validate_pe_executable(path: Path) -> None:
+    """Reject a non-Windows executable before it can replace the installed app."""
+    with path.open("rb") as stream:
+        if stream.read(2) != b"MZ":
+            raise ValueError("The update candidate is not a Windows executable.")
+        stream.seek(0x3C)
+        raw_offset = stream.read(4)
+        if len(raw_offset) != 4:
+            raise ValueError("The update candidate has an invalid executable header.")
+        pe_offset = int.from_bytes(raw_offset, "little")
+        if pe_offset < 64 or pe_offset > 16 * 1024 * 1024:
+            raise ValueError("The update candidate has an invalid executable header.")
+        stream.seek(pe_offset)
+        if stream.read(4) != b"PE\\0\\0":
+            raise ValueError("The update candidate has an invalid PE signature.")
+
+
 def expected_install_dir(local_app_data: Path) -> Path:
     return (local_app_data / "Programs" / "Digi").resolve()
 
@@ -146,6 +163,7 @@ def install_update(
     expected = expected_sha256.lower()
     if sha256_file(candidate) != expected:
         raise ValueError("The update candidate failed SHA-256 verification.")
+    validate_pe_executable(candidate)
 
     wait_for_process_exit(parent_pid)
 
@@ -158,9 +176,11 @@ def install_update(
     confirmed = False
     try:
         # Stage on the same volume as the target so the final rename is not cross-volume.
-        shutil.copyfile(candidate, stage)
+        with candidate.open("rb") as source, stage.open("xb") as destination:
+            shutil.copyfileobj(source, destination, length=CHUNK_SIZE)
         if sha256_file(stage) != expected:
             raise ValueError("The staged update failed SHA-256 verification.")
+        validate_pe_executable(stage)
 
         # Never overwrite an existing recovery file.
         if backup.exists():
