@@ -135,6 +135,30 @@ if not exist "%DIST_CACHE%\Digi Search Engine.exe" (
 copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%EXE_PATH%" >nul
 if errorlevel 1 (echo FATAL: Could not copy the executable to the output folder.&pause&exit /b 1)
 
+set "UPDATER_BUILD_CACHE=%FACTORY_DIR%Cache\build\updater-helper-%APP_VERSION%"
+set "UPDATER_DIST_CACHE=%FACTORY_DIR%Cache\dist\updater-helper-%APP_VERSION%"
+set "UPDATER_SPEC_CACHE=%FACTORY_DIR%Cache\spec\updater-helper-%APP_VERSION%"
+if not exist "%UPDATER_BUILD_CACHE%" mkdir "%UPDATER_BUILD_CACHE%"
+if not exist "%UPDATER_DIST_CACHE%" mkdir "%UPDATER_DIST_CACHE%"
+if not exist "%UPDATER_SPEC_CACHE%" mkdir "%UPDATER_SPEC_CACHE%"
+
+echo Building Digi's separate update helper...
+"%PYTHON_EXE%" -m PyInstaller --noconfirm --clean --windowed --onefile ^
+  --name "DigiUpdater" ^
+  --workpath "%UPDATER_BUILD_CACHE%" ^
+  --distpath "%UPDATER_DIST_CACHE%" ^
+  --specpath "%UPDATER_SPEC_CACHE%" ^
+  "%FACTORY_DIR%updater\update_helper.py"
+if errorlevel 1 (echo FATAL: DigiUpdater build failed.&pause&exit /b 1)
+
+if not exist "%UPDATER_DIST_CACHE%\DigiUpdater.exe" (
+    echo FATAL: PyInstaller reported success but DigiUpdater.exe is missing.
+    pause
+    exit /b 1
+)
+copy /y "%UPDATER_DIST_CACHE%\DigiUpdater.exe" "%FINAL_DIR%\DigiUpdater.exe" >nul
+if errorlevel 1 (echo FATAL: Could not copy DigiUpdater.exe to the output folder.&pause&exit /b 1)
+
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$desktop=[Environment]::GetFolderPath('Desktop'); $shell=New-Object -ComObject WScript.Shell; $shortcut=$shell.CreateShortcut((Join-Path $desktop 'Digi Search Engine.lnk')); $shortcut.TargetPath='%EXE_PATH%'; $shortcut.WorkingDirectory='%FINAL_DIR%'; $shortcut.IconLocation='%EXE_PATH%,0'; $shortcut.Save()"
 if errorlevel 1 (echo WARNING: Desktop shortcut could not be created.) else (echo DESKTOP SHORTCUT CREATED.)
 
