@@ -45,16 +45,64 @@ if not exist "%BUILD_CACHE%" mkdir "%BUILD_CACHE%"
 if not exist "%DIST_CACHE%" mkdir "%DIST_CACHE%"
 if not exist "%SPEC_CACHE%" mkdir "%SPEC_CACHE%"
 
-set "AUTO_HIDDEN_IMPORTS="
-for /f "usebackq delims=" %%I in (`"%PYTHON_EXE%" "%FACTORY_DIR%tools\pyinstaller_imports.py"`) do set "AUTO_HIDDEN_IMPORTS=%%I"
-if not defined AUTO_HIDDEN_IMPORTS (echo FATAL: Could not analyse application imports.&pause&exit /b 1)
+echo Checking application imports...
+"%PYTHON_EXE%" "%FACTORY_DIR%tools\pyinstaller_imports.py" > "%FACTORY_DIR%Cache\import-analysis-output.txt"
+if errorlevel 1 (
+    echo FATAL: Could not analyse application imports.
+    type "%FACTORY_DIR%Cache\import-analysis-output.txt"
+    pause
+    exit /b 1
+)
+findstr /r /c:"--hidden-import=" "%FACTORY_DIR%Cache\import-analysis-output.txt" >nul
+if errorlevel 1 (
+    echo FATAL: Import analysis produced no hidden imports.
+    type "%FACTORY_DIR%Cache\import-analysis-output.txt"
+    pause
+    exit /b 1
+)
+echo Import analysis passed.
 
 echo Building Digi with application code bundled inside the executable...
 "%PYTHON_EXE%" -m PyInstaller --noconfirm --clean --windowed --onefile ^
   --name "Digi Search Engine" ^
   --version-file "%VERSION_INFO_FILE%" ^
   --icon "%FACTORY_DIR%mbappe.ico" ^
-  %AUTO_HIDDEN_IMPORTS% ^
+  --hidden-import "PySide6.QtCore" ^
+  --hidden-import "PySide6.QtGui" ^
+  --hidden-import "PySide6.QtWebChannel" ^
+  --hidden-import "PySide6.QtWebEngineWidgets" ^
+  --hidden-import "PySide6.QtWidgets" ^
+  --hidden-import "base64" ^
+  --hidden-import "ctypes" ^
+  --hidden-import "datetime" ^
+  --hidden-import "docx" ^
+  --hidden-import "docx.enum.section" ^
+  --hidden-import "docx.enum.text" ^
+  --hidden-import "docx.shared" ^
+  --hidden-import "filecmp" ^
+  --hidden-import "fitz" ^
+  --hidden-import "html" ^
+  --hidden-import "io" ^
+  --hidden-import "json" ^
+  --hidden-import "os" ^
+  --hidden-import "pathlib" ^
+  --hidden-import "pythoncom" ^
+  --hidden-import "rapidfuzz" ^
+  --hidden-import "re" ^
+  --hidden-import "shutil" ^
+  --hidden-import "sqlite3" ^
+  --hidden-import "subprocess" ^
+  --hidden-import "sys" ^
+  --hidden-import "tempfile" ^
+  --hidden-import "time" ^
+  --hidden-import "unittest" ^
+  --hidden-import "unittest.mock" ^
+  --hidden-import "urllib.parse" ^
+  --hidden-import "urllib.request" ^
+  --hidden-import "uuid" ^
+  --hidden-import "win32com.client" ^
+  --hidden-import "xml.etree.ElementTree" ^
+  --hidden-import "zipfile" ^
   --add-data "%FACTORY_DIR%app.py;." ^
   --add-data "%FACTORY_DIR%backend\__init__.py;backend" ^
   --add-data "%FACTORY_DIR%backend\api.py;backend" ^
