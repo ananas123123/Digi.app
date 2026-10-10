@@ -155,6 +155,7 @@ def install_update(
     token = secrets.token_urlsafe(32)
 
     replaced = False
+    confirmed = False
     try:
         # Stage on the same volume as the target so the final rename is not cross-volume.
         shutil.copyfile(candidate, stage)
@@ -183,17 +184,25 @@ def install_update(
                 process.wait(timeout=5)
             except Exception:
                 pass
-            if target.exists():
-                failed = install_dir / f".Digi-failed-{version}-{os.getpid()}.exe"
-                os.replace(target, failed)
-            os.replace(backup, target)
             raise RuntimeError(
-                "The updated Digi did not confirm startup. The previous executable was restored."
+                "The updated Digi did not confirm startup. The previous executable will be restored."
             )
+        confirmed = True
 
-        # Keep the rollback copy for now. A later cleanup policy may remove it only
-        # after successful confirmation has been observed and recorded.
+        # Keep the rollback copy after success for now. A later cleanup policy may
+        # remove it only after the startup confirmation has been observed and recorded.
     except Exception:
+        if replaced and not confirmed and backup.exists():
+            try:
+                if target.exists():
+                    failed = install_dir / f".Digi-failed-{version}-{os.getpid()}.exe"
+                    os.replace(target, failed)
+                os.replace(backup, target)
+            except OSError as rollback_error:
+                raise RuntimeError(
+                    f"Update failed and automatic rollback could not complete. "
+                    f"Recovery copy retained at {backup}: {rollback_error}"
+                )
         if not replaced and stage.exists():
             try:
                 stage.unlink()
