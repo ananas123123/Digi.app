@@ -3358,3 +3358,30 @@ textarea:hover, textarea:focus, select:hover, select:focus {
 .digi-download-progress-wrap[hidden]{display:none!important;}
 .digi-download-progress-wrap progress{display:block;flex:1;width:100%;height:10px;accent-color:#b88627;}
 .digi-download-progress-wrap span{font-size:11px;color:#73736d;white-space:nowrap;font-variant-numeric:tabular-nums;}
+
+
+
+/* Persistent local updater diagnostics console. */
+#updater-log-button{
+ position:fixed;right:18px;bottom:16px;z-index:9500;width:34px;height:34px;
+ border:1px solid #b88627;border-radius:10px;background:#1a1a18;color:#f0cc78;
+ font:800 13px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em;
+ box-shadow:0 4px 18px rgba(0,0,0,.22);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;
+}
+#updater-log-button:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(184,134,39,.24)}
+.updater-log-overlay{position:fixed;inset:0;z-index:9600;background:rgba(7,10,12,.62);display:grid;place-items:center;padding:22px}
+.updater-log-overlay[hidden]{display:none!important}
+.updater-log-window{width:min(920px,96vw);height:min(650px,88vh);display:flex;flex-direction:column;overflow:hidden;border:1px solid #303d43;border-radius:14px;background:#0c1114;color:#d7e1e5;box-shadow:0 24px 80px rgba(0,0,0,.45);font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+.updater-log-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid #253138;background:#11191d}
+.updater-log-kicker{font-size:10px;letter-spacing:.18em;color:#d2a64b}
+.updater-log-header h2{margin:5px 0 0;font:700 19px ui-monospace,SFMono-Regular,Consolas,monospace;color:#f0f4f5}
+.updater-log-actions{display:flex;gap:8px}
+.updater-log-actions button{border:1px solid #34444b;border-radius:7px;background:#182328;color:#dce7ea;padding:7px 12px;cursor:pointer}
+.updater-log-actions button:hover{border-color:#b88627;color:#f4d58e}
+.updater-log-meta{display:flex;align-items:center;gap:9px;padding:10px 20px;border-bottom:1px solid #202c31;color:#83a1a9;font-size:10px;letter-spacing:.08em}
+.updater-log-led{width:7px;height:7px;border-radius:50%;background:#55d68b;box-shadow:0 0 8px rgba(85,214,139,.55)}
+#updater-log-path{margin-left:auto;color:#68838b;font-size:10px;letter-spacing:0;text-align:right;overflow-wrap:anywhere}
+#updater-log-output{flex:1;min-height:0;overflow:auto;margin:0;padding:18px 20px;background:repeating-linear-gradient(180deg,#0c1114 0,#0c1114 23px,#0e1417 24px);color:#b7d7c6;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.75 ui-monospace,SFMono-Regular,Consolas,monospace}
+.updater-log-footer{display:flex;justify-content:space-between;gap:12px;padding:10px 20px;border-top:1px solid #253138;background:#11191d;color:#70878e;font-size:10px}
+#updater-log-state{color:#d2a64b;letter-spacing:.1em}
+@media(max-width:620px){.updater-log-overlay{padding:8px}.updater-log-window{width:100%;height:90vh}.updater-log-meta{align-items:flex-start;flex-wrap:wrap}#updater-log-path{width:100%;margin-left:16px;text-align:left}.updater-log-footer{flex-direction:column}}
