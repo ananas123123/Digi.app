@@ -11,6 +11,10 @@
 
   let lastRemoteCheck = 0;
   let requestInProgress = false;
+  let promptedVersion = "";
+  let activeManifest = null;
+  let downloadInProgress = false;
+  let downloadResultConnected = false;
 
   const compareVersions = window.DigiVersionComparison.compareVersions;
 
@@ -20,6 +24,87 @@
     dot.dataset.status = status;
     dot.title = title;
     dot.setAttribute("aria-label", title);
+  }
+
+
+  function showUpdatePrompt(manifest, version) {
+    if (!manifest || promptedVersion === version) return;
+    const validation = window.DigiVersionComparison.validatePackageMetadata(manifest);
+    if (!validation.valid) return;
+    activeManifest = manifest;
+    promptedVersion = version;
+    const dialog = document.getElementById("digi-update-dialog");
+    const versionNode = document.getElementById("digi-update-version");
+    const progress = document.getElementById("digi-update-progress");
+    const download = document.getElementById("digi-update-details");
+    const later = document.getElementById("digi-update-later");
+    if (!dialog || !versionNode || !progress || !download || !later) return;
+    versionNode.textContent = version;
+    progress.hidden = true;
+    progress.textContent = "";
+    download.disabled = false;
+    later.disabled = false;
+    download.textContent = "Download update";
+    dialog.classList.remove("hidden");
+  }
+
+  function closeUpdatePrompt() {
+    const dialog = document.getElementById("digi-update-dialog");
+    if (dialog) dialog.classList.add("hidden");
+  }
+
+  function displayDownloadResult(raw) {
+    let result;
+    try { result = JSON.parse(raw); } catch (_) {
+      result = { ok: false, verified: false, message: "Digi returned an invalid download result." };
+    }
+    const progress = document.getElementById("digi-update-progress");
+    const download = document.getElementById("digi-update-details");
+    const later = document.getElementById("digi-update-later");
+    if (!progress || !download || !later) return;
+    downloadInProgress = false;
+    progress.hidden = false;
+    progress.textContent = result.ok && result.verified
+      ? "Download complete. Size and SHA-256 verified. Package staged at: " + result.path + ". Digi has not installed it."
+      : "Download rejected: " + (result.message || "verification failed") + " No installation was performed.";
+    download.disabled = true;
+    download.textContent = result.ok && result.verified ? "Verified" : "Download failed";
+    later.disabled = false;
+  }
+
+  function connectDownloadResult(backend) {
+    if (downloadResultConnected || !backend || !backend.packageDownloadResult) return;
+    backend.packageDownloadResult.connect(displayDownloadResult);
+    downloadResultConnected = true;
+  }
+
+  function bindPromptButtons() {
+    const download = document.getElementById("digi-update-details");
+    const later = document.getElementById("digi-update-later");
+    if (later) later.onclick = closeUpdatePrompt;
+    if (download) download.onclick = async () => {
+      if (downloadInProgress || !activeManifest) return;
+      const validation = window.DigiVersionComparison.validatePackageMetadata(activeManifest);
+      if (!validation.valid) {
+        displayDownloadResult(JSON.stringify({ ok: false, verified: false, message: "Package metadata rejected: " + validation.reason }));
+        return;
+      }
+      try {
+        const backend = await waitForBridge();
+        connectDownloadResult(backend);
+        downloadInProgress = true;
+        download.disabled = true;
+        later.disabled = true;
+        download.textContent = "Downloading…";
+        const progress = document.getElementById("digi-update-progress");
+        progress.hidden = false;
+        progress.textContent = "Downloading package to a temporary file…";
+        backend.downloadReleasePackage(JSON.stringify(activeManifest));
+      } catch (error) {
+        downloadInProgress = false;
+        displayDownloadResult(JSON.stringify({ ok: false, verified: false, message: error.message || "Digi backend unavailable." }));
+      }
+    };
   }
 
   function showTestModeBanner() {
@@ -150,6 +235,7 @@
       setStatus("update", announcementOnly
         ? "RED: version " + decision.latestVersion + " has been announced, but its package is not yet published. Installed Digi version is " + currentVersion + ". No download or installation is available."
         : "RED: latest.json says " + decision.latestVersion + "; installed Digi version is " + currentVersion + ".");
+      if (!announcementOnly) showUpdatePrompt(manifest, decision.latestVersion);
       try {
         localStorage.setItem(PENDING_KEY, decision.latestVersion);
       } catch (_) {
@@ -165,6 +251,8 @@
 
   function start() {
     if (!document.getElementById("digi-update-status")) return;
+    bindPromptButtons();
+    waitForBridge().then(connectDownloadResult).catch(() => {});
     setStatus("checking", "Checking Digi's installed version and the latest release…");
     checkRemoteStatus();
     window.setInterval(checkRemoteStatus, CHECK_INTERVAL_MS);
