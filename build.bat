@@ -128,12 +128,31 @@ echo Building Digi with application code bundled inside the executable...
 if errorlevel 1 (echo BUILD FAILED. Existing output was not intentionally deleted.&pause&exit /b 1)
 
 if not exist "%DIST_CACHE%\Digi Search Engine.exe" (
-    echo FATAL: PyInstaller reported success but the executable is missing.
+    echo FATAL: PyInstaller reported success but the executable is missing:
+    echo "%DIST_CACHE%\Digi Search Engine.exe"
     pause
     exit /b 1
 )
-copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%EXE_PATH%" >nul
-if errorlevel 1 (echo FATAL: Could not copy the executable to the output folder.&pause&exit /b 1)
+
+rem Ensure the destination directory exists immediately before copying.
+if not exist "%FINAL_DIR%\." mkdir "%FINAL_DIR%"
+if errorlevel 1 (
+    echo FATAL: Could not create the output directory:
+    echo "%FINAL_DIR%"
+    pause
+    exit /b 1
+)
+
+echo Copying main executable...
+echo Source: "%DIST_CACHE%\Digi Search Engine.exe"
+echo Target: "%FINAL_DIR%\"
+copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%FINAL_DIR%\"
+if errorlevel 1 (
+    echo FATAL: Could not copy the executable to the output folder.
+    echo Confirm the source and destination paths shown above.
+    pause
+    exit /b 1
+)
 
 set "UPDATER_BUILD_CACHE=%FACTORY_DIR%Cache\build\updater-helper-%APP_VERSION%"
 set "UPDATER_DIST_CACHE=%FACTORY_DIR%Cache\dist\updater-helper-%APP_VERSION%"
