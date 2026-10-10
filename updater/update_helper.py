@@ -191,24 +191,26 @@ $failures = 0
 foreach ($folder in $folders) {
   Get-ChildItem -LiteralPath $folder -Filter '*.lnk' -File -Recurse -ErrorAction SilentlyContinue |
     ForEach-Object {
-      if ($seen.ContainsKey($_.FullName)) { return }
-      $seen[$_.FullName] = $true
-      try {
-        $link = $shell.CreateShortcut($_.FullName)
-        $linkTarget = [string]$link.TargetPath
-        $leaf = [IO.Path]::GetFileName($linkTarget)
-        if ($leaf -ieq 'Digi Search Engine.exe' -or $leaf -ieq 'Digi.exe' -or $leaf -ieq 'Digi Search Engine') {
-          if ([IO.Path]::GetFullPath($linkTarget) -ine $target) {
-            $link.TargetPath = $target
-            $link.WorkingDirectory = $work
-            $link.IconLocation = $target + ',0'
-            $link.Description = 'Launch Digi Search Engine'
-            $link.Save()
+      $shortcutPath = $_.FullName
+      if (-not $seen.ContainsKey($shortcutPath)) {
+        $seen[$shortcutPath] = $true
+        try {
+          $link = $shell.CreateShortcut($shortcutPath)
+          $linkTarget = [string]$link.TargetPath
+          $leaf = [IO.Path]::GetFileName($linkTarget)
+          if ($leaf -ieq 'Digi Search Engine.exe' -or $leaf -ieq 'Digi.exe' -or $leaf -ieq 'Digi Search Engine') {
+            if ([IO.Path]::GetFullPath($linkTarget) -ine $target) {
+              $link.TargetPath = $target
+              $link.WorkingDirectory = $work
+              $link.IconLocation = $target + ',0'
+              $link.Description = 'Launch Digi Search Engine'
+              $link.Save()
+            }
           }
+        } catch {
+          $failures++
+          Write-Output ('WARNING: Could not update shortcut ' + $shortcutPath + ': ' + $_.Exception.Message)
         }
-      } catch {
-        $failures++
-        Write-Output ('WARNING: Could not update shortcut ' + $_.FullName + ': ' + $_.Exception.Message)
       }
     }
 }
