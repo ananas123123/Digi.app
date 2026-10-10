@@ -1,0 +1,3 @@
+Digi 1.2.0.0 update-download test file.
+
+This is a plain-text test package, not an installer. It verifies that Update now downloads a file into Digi's update dependencies/package installer folder and stops without installing or replacing anything.
