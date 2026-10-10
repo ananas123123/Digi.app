@@ -215,7 +215,8 @@ $dataFull = $DataRoot.TrimEnd('\') + '\'
 if ($stageFull.StartsWith($dataFull, [StringComparison]::OrdinalIgnoreCase) -eq $false) {
     throw 'Staging directory is outside Digi updater storage.'
 }
-if ($InstallRoot.StartsWith($DataRoot, [StringComparison]::OrdinalIgnoreCase)) {
+if ($InstallRoot.Equals($DataRoot, [StringComparison]::OrdinalIgnoreCase) -or
+    $InstallRoot.StartsWith($dataFull, [StringComparison]::OrdinalIgnoreCase)) {
     throw 'Refusing to install application files inside user-data storage.'
 }
 $payloadExe = Join-Path $StageRoot 'payload\Digi Search Engine.exe'
