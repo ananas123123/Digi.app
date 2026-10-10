@@ -215,9 +215,11 @@ $dataFull = $DataRoot.TrimEnd('\') + '\'
 if ($stageFull.StartsWith($dataFull, [StringComparison]::OrdinalIgnoreCase) -eq $false) {
     throw 'Staging directory is outside Digi updater storage.'
 }
+$installFull = $InstallRoot.TrimEnd('\') + '\'
 if ($InstallRoot.Equals($DataRoot, [StringComparison]::OrdinalIgnoreCase) -or
-    $InstallRoot.StartsWith($dataFull, [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Refusing to install application files inside user-data storage.'
+    $installFull.StartsWith($dataFull, [StringComparison]::OrdinalIgnoreCase) -or
+    $DataRoot.StartsWith($installFull, [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Refusing to install application files inside or above user-data storage.'
 }
 $payloadExe = Join-Path $StageRoot 'payload\Digi Search Engine.exe'
 $payloadSource = Join-Path $StageRoot 'payload\Digi Source'
@@ -289,11 +291,23 @@ catch {
 
 
 def _quote_windows_arg(value: str) -> str:
-    # Quote a Windows command-line argument, including embedded quotes and backslashes.
+    """Quote one argument using the Windows command-line escaping rules."""
     value = str(value)
-    return '"' + re.sub(r'(\\*)"', r'\1\1\"', value).replace(
-        "\\", "\\"
-    ) + '"'
+    output = []
+    backslashes = 0
+    for char in value:
+        if char == "\\":
+            backslashes += 1
+        elif char == '"':
+            output.append("\\" * (backslashes * 2 + 1))
+            output.append('"')
+            backslashes = 0
+        else:
+            output.append("\\" * backslashes)
+            output.append(char)
+            backslashes = 0
+    output.append("\\" * (backslashes * 2))
+    return '"' + "".join(output) + '"'
 
 
 def _launch_elevated_helper(stage_root: Path, install_root: Path, version: str) -> None:
