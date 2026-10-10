@@ -62,7 +62,13 @@ def _unexpected_existing_root():
 
 
 def _bootstrap_first_run():
-    """Create the initial data layout only when no Digi data root exists."""
+    """Create missing first-run layout without replacing existing user folders.
+
+    The builder may create USER_DATA_ROOT (and Logs) before the app starts.
+    That root alone must not suppress the first-run data bootstrap. This
+    bootstrap is only called when version metadata and the Version manager
+    directory are absent; partial existing metadata is an integrity error.
+    """
     unexpected = _unexpected_existing_root()
     if unexpected is not None:
         raise RuntimeError(
@@ -70,13 +76,12 @@ def _bootstrap_first_run():
             "Digi did not move or change it. Contact Digi support for guidance."
         )
 
-    USER_DATA_ROOT.mkdir(parents=True, exist_ok=False)
+    USER_DATA_ROOT.mkdir(parents=True, exist_ok=True)
     for path in EXPECTED_DIRECTORIES:
-        path.mkdir(parents=True, exist_ok=False)
+        path.mkdir(parents=True, exist_ok=True)
 
     VERSION_FILE.write_text(expected_version() + "\n", encoding="utf-8")
     MARKER_FILE.write_text("initialized\n", encoding="utf-8")
-
 
 def _integrity_problem():
     if not USER_DATA_ROOT.is_dir():
@@ -227,7 +232,17 @@ def initialize_version_file():
     if not IS_FROZEN:
         return True
     try:
-        if not USER_DATA_ROOT.exists():
+        # build.bat creates the root and Logs before the app starts. Bootstrap
+        # must therefore also run when the root exists but its data layout has
+        # never been initialized. Never overwrite partial version metadata.
+        if (
+            not USER_DATA_ROOT.exists()
+            or (
+                not VERSION_MANAGER.exists()
+                and not VERSION_FILE.exists()
+                and not MARKER_FILE.exists()
+            )
+        ):
             _bootstrap_first_run()
         problem = _integrity_problem()
         if problem:
