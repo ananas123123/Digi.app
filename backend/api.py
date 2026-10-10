@@ -449,7 +449,12 @@ class DigiBridge(QObject):
         try:
             recorded_version = (VERSION_MANAGER / "version.txt").read_text(encoding="utf-8").strip()
             if re.fullmatch(r"\d+(?:\.\d+){1,4}", recorded_version):
-                installed_version = recorded_version
+                recorded_parts = tuple(int(part) for part in recorded_version.split("."))
+                build_parts = tuple(int(part) for part in APP_VERSION.split("."))
+                width = max(len(recorded_parts), len(build_parts))
+                recorded_parts += (0,) * (width - len(recorded_parts))
+                build_parts += (0,) * (width - len(build_parts))
+                installed_version = recorded_version if recorded_parts >= build_parts else APP_VERSION
         except OSError:
             pass
         return json.dumps({
