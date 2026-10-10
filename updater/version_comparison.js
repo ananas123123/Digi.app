@@ -17,7 +17,7 @@
     const b = right.trim().split(".");
     const valid = value =>
       value.length > 0 &&
-      value.every(part => /^\\d+$/.test(part) && Number.isSafeInteger(Number(part)));
+      value.every(part => /^\d+$/.test(part) && Number.isSafeInteger(Number(part)));
     if (!valid(a) || !valid(b)) return null;
 
     // Missing trailing components count as zero.
