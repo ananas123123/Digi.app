@@ -21,6 +21,15 @@
 
   const compareVersions = window.DigiVersionComparison.compareVersions;
 
+  function logDiagnostic(message) {
+    try {
+      const bridge = window.digiBackend;
+      if (bridge && typeof bridge.logUpdaterEvent === "function") {
+        bridge.logUpdaterEvent(String(message));
+      }
+    } catch (_) { /* Logging must never block the update UI. */ }
+  }
+
   function setStatus(status, title) {
     const dot = document.getElementById("digi-update-status");
     if (!dot) return;
@@ -120,6 +129,7 @@
     } else {
       verifiedPackagePath = "";
       progress.textContent = "Download rejected: " + (result.message || "verification failed") + " No installation was performed.";
+      logDiagnostic("Download rejected: " + (result.message || "verification failed"));
       download.disabled = false;
       download.textContent = "Retry download";
     }
@@ -164,6 +174,7 @@
       later.disabled = false;
       confirm.textContent = "Retry update";
       progress.textContent = result.message || "The update helper could not be started. The installed executable was not changed.";
+      logDiagnostic("Install rejected: " + (result.message || "The update helper could not be started."));
     }
   }
 
@@ -229,6 +240,7 @@
         if (progress) {
           progress.hidden = false;
           progress.textContent = error && error.message ? error.message : "Could not start the update helper.";
+          logDiagnostic("Install UI exception: " + (error && error.message ? error.message : String(error)));
         }
       }
     };
@@ -279,6 +291,7 @@
         download.textContent = "Downloading…";
         progress.hidden = false;
         progress.textContent = "Preparing download…";
+        logDiagnostic("User requested download of version " + (promptedVersion || "unknown"));
         const progressWrap = document.getElementById("digi-download-progress-wrap");
         const progressBar = document.getElementById("digi-download-progress-bar");
         const progressLabel = document.getElementById("digi-download-progress-label");
