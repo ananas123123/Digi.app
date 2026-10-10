@@ -213,11 +213,14 @@ class ProtectedDataLock:
                 lock = _open_directory_lock(directory)
                 if lock:
                     self.handles.append(lock)
-        for file_path in (VERSION_FILE, MARKER_FILE):
-            if file_path.is_file():
-                lock = _open_file_lock(file_path)
-                if lock:
-                    self.handles.append(lock)
+        # The updater atomically replaces version.txt only after the new
+        # executable confirms startup. Locking that file without FILE_SHARE_DELETE
+        # prevents os.replace on Windows and silently leaves the old version recorded.
+        # Keep the initialization marker protected; validate version.txt on every launch.
+        if MARKER_FILE.is_file():
+            lock = _open_file_lock(MARKER_FILE)
+            if lock:
+                self.handles.append(lock)
 
     def release(self):
         for handle in self.handles:
