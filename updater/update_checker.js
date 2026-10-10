@@ -110,41 +110,30 @@
         throw new Error("Release metadata schema is not supported.");
       }
 
-      // A planned/unpublished version is not an installable update. Do not
-      // turn a newer version number into an update alert until it is published.
-      if (manifest.release_status !== "published") {
-        const statusMessage = typeof manifest.message === "string" && manifest.message.trim()
-          ? manifest.message.trim()
-          : "No published Digi update is currently available.";
-        setStatus("current", "Update check succeeded. " + statusMessage);
+      const decision = window.DigiVersionComparison.evaluateRelease(currentVersion, manifest);
+      if (decision.status === "invalid") {
+        setStatus("offline", "Version comparison or release metadata validation failed.");
+        return;
+      }
+
+      if (decision.status === "current") {
+        const message = decision.reason === "unpublished"
+          ? (typeof manifest.message === "string" && manifest.message.trim()
+              ? manifest.message.trim()
+              : "No published Digi update is currently available.")
+          : decision.reason === "no-latest-version"
+            ? "No latest version is published in latest.json."
+            : "Installed Digi version: " + currentVersion + ". Release metadata is valid and no update is available.";
+        setStatus("current", "Update check succeeded. " + message);
         try { localStorage.removeItem(PENDING_KEY); } catch (_) {}
         return;
       }
 
-      const latestVersion = manifest.latest_version;
-      if (typeof latestVersion !== "string" || !latestVersion.trim()) {
-        setStatus("current", "Installed Digi version: " + currentVersion + ". No latest version is published in latest.json.");
-        try { localStorage.removeItem(PENDING_KEY); } catch (_) {}
-        return;
-      }
-
-      const normalizedLatest = latestVersion.trim();
-      const relation = compareVersions(normalizedLatest, currentVersion);
-      if (relation === null) {
-        setStatus("offline", "Version comparison failed. Installed: " + currentVersion + "; latest.json: " + normalizedLatest + ".");
-        return;
-      }
-
-      if (relation > 0) {
-        setStatus("update", "RED: latest.json says " + normalizedLatest + "; installed Digi version is " + currentVersion + ".");
-        try {
-          localStorage.setItem(PENDING_KEY, normalizedLatest);
-        } catch (_) {
-          // Storage is optional; the status indicator still works without it.
-        }
-      } else {
-        setStatus("current", "GREEN: latest.json says " + normalizedLatest + "; installed Digi version is " + currentVersion + ".");
-        try { localStorage.removeItem(PENDING_KEY); } catch (_) {}
+      setStatus("update", "RED: latest.json says " + decision.latestVersion + "; installed Digi version is " + currentVersion + ".");
+      try {
+        localStorage.setItem(PENDING_KEY, decision.latestVersion);
+      } catch (_) {
+        // Storage is optional; the status indicator still works without it.
       }
     } catch (error) {
       const reason = error && error.message ? error.message : "Unknown update-check error.";
