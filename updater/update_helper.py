@@ -332,7 +332,7 @@ def install_update(
                 and version_marker.is_file()
                 and version_marker.read_text(encoding="utf-8").strip() == "initialized"
             ):
-                temporary_version.write_text(version + "\\n", encoding="utf-8")
+                temporary_version.write_text(version + "\n", encoding="utf-8")
                 os.replace(temporary_version, version_file)
             else:
                 log_event("WARNING", "Confirmed update could not record its version because version metadata is incomplete.")
