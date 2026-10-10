@@ -7,7 +7,7 @@ SUPPORTED = {".pdf", ".doc", ".docx"}
 
 IS_FROZEN = bool(getattr(sys, "frozen", False))
 
-# Development/source execution stays entirely inside the repository.
+# Development stays in the repository. Packaged user data belongs in LocalAppData.
 APP_DIR = (
     Path(sys.executable).resolve().parent
     if IS_FROZEN
@@ -19,7 +19,7 @@ USER_DATA_ROOT = Path(
 ) / "Digi"
 
 if IS_FROZEN:
-    INSTALL_ROOT = Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Digi"
+    INSTALL_ROOT = Path(sys.executable).resolve().parent
     DEPENDENCIES_ROOT = USER_DATA_ROOT
 else:
     INSTALL_ROOT = APP_DIR
@@ -33,22 +33,12 @@ LIBRARY_CONFIG = CACHE_DIR / "library_folder.txt"
 
 
 def ensure_directories():
-    """Prepare development folders, but never repair a packaged user's data."""
+    """Create the required runtime folders without touching user files."""
     required = (
         SEARCH_REPOSITORY,
         CACHE_DIR,
         VERSION_MANAGER,
     )
-
-    if IS_FROZEN:
-        missing = [str(path) for path in required if not path.is_dir()]
-        if missing:
-            raise FileNotFoundError(
-                "Required Digi data folders are missing: " + ", ".join(missing)
-            )
-        return
-
-    # Source/test mode uses repository-local disposable dependencies only.
     for path in required:
         path.mkdir(parents=True, exist_ok=True)
 
