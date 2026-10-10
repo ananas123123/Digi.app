@@ -1,6 +1,6 @@
 /* Digi update checker.
  * Reads public release metadata and updates only its own status indicator/dialog.
- * It never downloads, installs, removes, or modifies application/user files.
+ * It delegates download verification and installation to the Python backend and helper.
  */
 (() => {
   "use strict";
@@ -15,6 +15,7 @@
   let activeManifest = null;
   let downloadInProgress = false;
   let downloadResultConnected = false;
+  let verifiedPackagePath = "";
 
   const compareVersions = window.DigiVersionComparison.compareVersions;
 
@@ -33,6 +34,7 @@
     if (!validation.valid) return;
     activeManifest = manifest;
     promptedVersion = version;
+    verifiedPackagePath = "";
     const dialog = document.getElementById("digi-update-dialog");
     const versionNode = document.getElementById("digi-update-version");
     const progress = document.getElementById("digi-update-progress");
@@ -64,11 +66,17 @@
     if (!progress || !download || !later) return;
     downloadInProgress = false;
     progress.hidden = false;
-    progress.textContent = result.ok && result.verified
-      ? "Download complete. Size and SHA-256 verified. Package staged at: " + result.path + ". Digi has not installed it."
-      : "Download rejected: " + (result.message || "verification failed") + " No installation was performed.";
-    download.disabled = !!(result.ok && result.verified);
-    download.textContent = result.ok && result.verified ? "Verified" : "Retry download";
+    if (result.ok && result.verified && typeof result.path === "string" && result.path) {
+      verifiedPackagePath = result.path;
+      progress.textContent = "Download complete. Size and SHA-256 verified. Select Install update to replace the application safely.";
+      download.disabled = false;
+      download.textContent = "Install update";
+    } else {
+      verifiedPackagePath = "";
+      progress.textContent = "Download rejected: " + (result.message || "verification failed") + " No installation was performed.";
+      download.disabled = false;
+      download.textContent = "Retry download";
+    }
     later.disabled = false;
   }
 
@@ -113,11 +121,33 @@
       try {
         const backend = await waitForBridge();
         connectDownloadResult(backend);
+        const progress = document.getElementById("digi-update-progress");
+        if (verifiedPackagePath) {
+          downloadInProgress = true;
+          download.disabled = true;
+          later.disabled = true;
+          download.textContent = "Installing…";
+          progress.hidden = false;
+          progress.textContent = "Starting the separate updater. Digi will close and reopen after installation.";
+          let installResult;
+          try {
+            installResult = JSON.parse(await backend.installReleaseUpdate(JSON.stringify(activeManifest), verifiedPackagePath));
+          } catch (_) {
+            installResult = { ok: false, message: "The update helper could not be started." };
+          }
+          if (!installResult.ok) {
+            downloadInProgress = false;
+            download.disabled = false;
+            later.disabled = false;
+            download.textContent = "Install update";
+            progress.textContent = installResult.message || "The update could not be started. No installation was performed.";
+          }
+          return;
+        }
         downloadInProgress = true;
         download.disabled = true;
         later.disabled = true;
         download.textContent = "Downloading…";
-        const progress = document.getElementById("digi-update-progress");
         progress.hidden = false;
         progress.textContent = "Downloading package to a temporary file…";
         backend.downloadReleasePackage(JSON.stringify(activeManifest));
