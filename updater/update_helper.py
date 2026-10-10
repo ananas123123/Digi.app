@@ -166,10 +166,10 @@ def wait_for_confirmation(marker: Path, token: str, timeout: float = STARTUP_CON
 
 
 
-def refresh_digi_shortcuts(target: Path, install_dir: Path) -> None:
+def refresh_digi_shortcuts(target: Path, install_dir: Path) -> bool:
     """Repair existing Digi shortcuts in standard Windows locations and create Desktop shortcut."""
     if os.name != "nt":
-        return
+        return False
 
     # Only rewrite links that clearly target a Digi executable. Do not touch
     # unrelated shortcuts, and keep all shortcuts pointing at one stable target.
@@ -232,10 +232,12 @@ $link.Save()
             log_event("SHORTCUT", line)
         if result.returncode:
             log_event("WARNING", "Shortcut refresh failed: " + (result.stderr or result.stdout or f"exit {result.returncode}"))
-        else:
-            log_event("SUCCESS", "Digi shortcuts refreshed to the stable executable path.")
+            return False
+        log_event("SUCCESS", "Digi shortcuts refreshed to the stable executable path.")
+        return True
     except (OSError, subprocess.SubprocessError) as exc:
         log_event("WARNING", f"Shortcut refresh could not run: {type(exc).__name__}: {exc}")
+        return False
 
 def install_update(
     *,
@@ -375,11 +377,13 @@ def install_update(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Safely replace Digi's installed executable.")
-    parser.add_argument("--parent-pid", type=int, required=True)
-    parser.add_argument("--target-exe", required=True)
-    parser.add_argument("--candidate-exe", required=True)
-    parser.add_argument("--sha256", required=True)
-    parser.add_argument("--version", required=True)
+    parser.add_argument("--refresh-shortcuts", action="store_true",
+                        help="Repair existing Digi shortcuts without performing an update.")
+    parser.add_argument("--parent-pid", type=int)
+    parser.add_argument("--target-exe")
+    parser.add_argument("--candidate-exe")
+    parser.add_argument("--sha256")
+    parser.add_argument("--version")
     args = parser.parse_args()
 
     local_app_data_value = os.environ.get("LOCALAPPDATA")
@@ -389,6 +393,26 @@ def main() -> int:
         return 2
 
     helper_path = Path(sys.executable).resolve()
+    install_dir = expected_install_dir(Path(local_app_data_value))
+    if args.refresh_shortcuts:
+        target = install_dir / APP_EXE_NAME
+        if not target.is_file():
+            log_event("ERROR", f"Cannot refresh shortcuts because the installed app is missing: {target}")
+            return 1
+        return 0 if refresh_digi_shortcuts(target, install_dir) else 1
+
+    missing = [
+        name for name, value in (
+            ("--parent-pid", args.parent_pid),
+            ("--target-exe", args.target_exe),
+            ("--candidate-exe", args.candidate_exe),
+            ("--sha256", args.sha256),
+            ("--version", args.version),
+        ) if value is None
+    ]
+    if missing:
+        parser.error("required unless --refresh-shortcuts is used: " + ", ".join(missing))
+
     try:
         install_update(
             helper_path=helper_path,
