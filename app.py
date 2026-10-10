@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import sys
 
 from PySide6.QtCore import QEvent, QUrl, Qt, Signal
@@ -164,11 +165,34 @@ class DigiWindow(QMainWindow):
         self.channel = QWebChannel(self.view.page())
         self.channel.registerObject("backend", self.bridge)
         self.view.page().setWebChannel(self.channel)
+        self.view.loadFinished.connect(self._confirm_update_startup)
         self.view.load(QUrl.fromLocalFile(str(BASE_DIR / "frontend" / "index.html")))
 
         app = QApplication.instance()
         if app:
             app.installEventFilter(self)
+
+    def _confirm_update_startup(self, loaded):
+        """Confirm successful frontend startup to the separate update helper."""
+        if not loaded:
+            return
+        marker_value = os.environ.get("DIGI_UPDATE_CONFIRMATION_FILE", "").strip()
+        token = os.environ.get("DIGI_UPDATE_CONFIRMATION_TOKEN", "").strip()
+        if not marker_value or len(token) < 20:
+            return
+        try:
+            marker = Path(marker_value).resolve()
+            executable_dir = Path(sys.executable).resolve().parent
+            if marker.parent != executable_dir:
+                return
+            if not marker.name.startswith(".Digi-startup-") or marker.suffix != ".confirm":
+                return
+            temporary = marker.with_name(marker.name + ".tmp")
+            temporary.write_text(token + "\\n", encoding="utf-8")
+            os.replace(temporary, marker)
+        except OSError:
+            # Startup should not fail merely because update confirmation could not be written.
+            return
 
     def _handle_native_items_dropped(self, paths, x, y):
         import json
