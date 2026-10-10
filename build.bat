@@ -106,6 +106,7 @@ echo Building Digi with application code bundled inside the executable...
   --add-data "%FACTORY_DIR%app.py;." ^
   --add-data "%FACTORY_DIR%backend\__init__.py;backend" ^
   --add-data "%FACTORY_DIR%backend\api.py;backend" ^
+  --add-data "%FACTORY_DIR%backend\updater_download.py;backend" ^
   --add-data "%FACTORY_DIR%backend\config.py;backend" ^
   --add-data "%FACTORY_DIR%backend\conversion.py;backend" ^
   --add-data "%FACTORY_DIR%backend\database.py;backend" ^
