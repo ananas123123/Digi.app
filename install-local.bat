@@ -41,43 +41,53 @@ if exist "%TARGET_HELPER%" (
     exit /b 1
 )
 
-if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
-if errorlevel 1 (
-    echo FATAL: Could not create the installation directory.
-    exit /b 1
+set "INSTALL_DIR_CREATED="
+if not exist "%INSTALL_DIR%\." (
+    mkdir "%INSTALL_DIR%"
+    if errorlevel 1 (
+        echo FATAL: Could not create the installation directory.
+        exit /b 1
+    )
+    set "INSTALL_DIR_CREATED=1"
 )
 
 set "STAGING_DIR=%INSTALL_DIR%\.install-staging-%RANDOM%-%RANDOM%"
 mkdir "%STAGING_DIR%"
 if errorlevel 1 (
     echo FATAL: Could not create a staging directory.
+    if defined INSTALL_DIR_CREATED rmdir "%INSTALL_DIR%" 2>nul
     exit /b 1
 )
 
 copy /b "%SOURCE_APP%" "%STAGING_DIR%\Digi Search Engine.exe" >nul
 if errorlevel 1 (
     echo FATAL: Could not stage Digi Search Engine.exe.
-    rmdir /s /q "%STAGING_DIR%"
+    rmdir /s /q "%STAGING_DIR%" 2>nul
+    if defined INSTALL_DIR_CREATED rmdir "%INSTALL_DIR%" 2>nul
     exit /b 1
 )
 copy /b "%SOURCE_HELPER%" "%STAGING_DIR%\DigiUpdater.exe" >nul
 if errorlevel 1 (
     echo FATAL: Could not stage DigiUpdater.exe.
-    rmdir /s /q "%STAGING_DIR%"
+    rmdir /s /q "%STAGING_DIR%" 2>nul
+    if defined INSTALL_DIR_CREATED rmdir "%INSTALL_DIR%" 2>nul
     exit /b 1
 )
 
 move /y "%STAGING_DIR%\Digi Search Engine.exe" "%TARGET_APP%" >nul
 if errorlevel 1 (
     echo FATAL: Could not install Digi Search Engine.exe.
-    rmdir /s /q "%STAGING_DIR%"
+    rmdir /s /q "%STAGING_DIR%" 2>nul
+    if defined INSTALL_DIR_CREATED rmdir "%INSTALL_DIR%" 2>nul
     exit /b 1
 )
 move /y "%STAGING_DIR%\DigiUpdater.exe" "%TARGET_HELPER%" >nul
 if errorlevel 1 (
-    echo FATAL: Could not install DigiUpdater.exe. Removing the incomplete first install.
+    echo FATAL: Could not install DigiUpdater.exe. Rolling back the incomplete first install.
+    del /q "%TARGET_HELPER%" 2>nul
     del /q "%TARGET_APP%" 2>nul
-    rmdir /s /q "%STAGING_DIR%"
+    rmdir /s /q "%STAGING_DIR%" 2>nul
+    if defined INSTALL_DIR_CREATED rmdir "%INSTALL_DIR%" 2>nul
     exit /b 1
 )
 rmdir /s /q "%STAGING_DIR%" 2>nul
