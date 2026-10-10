@@ -12,7 +12,7 @@ const checkerSource = fs.readFileSync(
   "utf8"
 );
 
-function runChecker({ installedVersion = "1.0.0.0", response } = {}) {
+async function runChecker({ installedVersion = "1.0.0.0", response } = {}) {
   const listeners = new Map();
   const storage = new Map();
   const dot = {
@@ -60,6 +60,7 @@ function runChecker({ installedVersion = "1.0.0.0", response } = {}) {
   };
   const context = { window, document, localStorage, Date, Promise, JSON, String, Error };
   vm.runInNewContext(checkerSource, context, { filename: "update_checker.js" });
+  await new Promise(resolve => setImmediate(resolve));
   return { dot, storage };
 }
 
@@ -73,39 +74,39 @@ function manifest(overrides = {}) {
   };
 }
 
-test("integration: newer published release sets update status and pending version", () => {
-  const { dot, storage } = runChecker({
+test("integration: newer published release sets update status and pending version", async () => {
+  const { dot, storage } = await runChecker({
     response: { ok: true, manifest: manifest() }
   });
   assert.equal(dot.dataset.status, "update");
   assert.equal(storage.get("digi.updateChecker.pendingVersion"), "1.1.0.0");
 });
 
-test("integration: same version sets current status and clears pending version", () => {
-  const { dot, storage } = runChecker({
+test("integration: same version sets current status and clears pending version", async () => {
+  const { dot, storage } = await runChecker({
     response: { ok: true, manifest: manifest({ latest_version: "1.0.0.0" }) }
   });
   assert.equal(dot.dataset.status, "current");
   assert.equal(storage.has("digi.updateChecker.pendingVersion"), false);
 });
 
-test("integration: unpublished newer release does not offer an update", () => {
-  const { dot, storage } = runChecker({
+test("integration: unpublished newer release does not offer an update", async () => {
+  const { dot, storage } = await runChecker({
     response: { ok: true, manifest: manifest({ release_status: "unpublished" }) }
   });
   assert.equal(dot.dataset.status, "current");
   assert.equal(storage.has("digi.updateChecker.pendingVersion"), false);
 });
 
-test("integration: invalid metadata sets failure status", () => {
-  const { dot } = runChecker({
+test("integration: invalid metadata sets failure status", async () => {
+  const { dot } = await runChecker({
     response: { ok: true, manifest: manifest({ schema_version: 99 }) }
   });
   assert.equal(dot.dataset.status, "offline");
 });
 
-test("integration: failed manifest request sets failure status", () => {
-  const { dot } = runChecker({
+test("integration: failed manifest request sets failure status", async () => {
+  const { dot } = await runChecker({
     response: { ok: false, manifest: null }
   });
   assert.equal(dot.dataset.status, "offline");
