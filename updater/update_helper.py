@@ -228,7 +228,7 @@ def install_update(
         try:
             if version_marker.is_file() and version_marker.read_text(encoding="utf-8").strip() == "initialized":
                 temporary_version = version_file.with_name(version_file.name + ".update-tmp")
-                temporary_version.write_text(version + "\\n", encoding="utf-8")
+                temporary_version.write_text(version + "\n", encoding="utf-8")
                 os.replace(temporary_version, version_file)
         except OSError:
             # Do not undo a confirmed executable update because optional version
