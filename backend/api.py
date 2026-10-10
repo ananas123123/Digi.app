@@ -224,6 +224,7 @@ class ReleaseManifestWorker(QThread):
                 }
                 result = {"ok": True, "manifest": manifest}
         except Exception as exc:
+            log_updater_event("ERROR", f"Release check failed: {type(exc).__name__}: {exc}")
             result = {"ok": False, "manifest": None, "error": str(exc)}
             if test_url:
                 result["test_mode"] = True
@@ -287,6 +288,7 @@ class PackageDownloadWorker(QThread):
                 "message": "File downloaded and verified in Digi Dependencies\\update dependencies\\package installer. No installation or replacement was performed."
             }
         except Exception as exc:
+            log_updater_event("ERROR", f"Download failed: {type(exc).__name__}: {exc}")
             result = {"ok": False, "verified": False, "message": str(exc) or "The update package could not be downloaded and verified."}
         self.resultReady.emit(json.dumps(result))
 
