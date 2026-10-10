@@ -58,13 +58,16 @@
     const updatedVersionNode = document.getElementById("digi-update-version");
     if (updatedVersionNode) updatedVersionNode.textContent = version;
     dialog.classList.remove("hidden");
+    dialog.style.removeProperty("display");
     dialog.setAttribute("data-update-version", version);
-    dialog.style.display = "grid";
   }
 
   function closeUpdatePrompt() {
     const dialog = document.getElementById("digi-update-dialog");
-    if (dialog) dialog.classList.add("hidden");
+    if (dialog) {
+      dialog.style.removeProperty("display");
+      dialog.classList.add("hidden");
+    }
   }
 
   function displayDownloadResult(raw) {
