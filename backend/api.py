@@ -127,6 +127,7 @@ class DigiBridge(QObject):
     indexUpdated = Signal()
     releaseManifestResult = Signal(str)
     packageDownloadResult = Signal(str)
+    updateInstallResult = Signal(str)
     conversionProgress = Signal(str, int)
     conversionFinished = Signal(bool, str, str)
     error = Signal(str)
@@ -176,7 +177,7 @@ class DigiBridge(QObject):
         self.package_download_worker.resultReady.connect(self.packageDownloadResult.emit)
         self.package_download_worker.start()
 
-    @Slot(str, str, result=str)
+    @Slot(str, str)
     def installReleaseUpdate(self, manifest_json, downloaded_path):
         """Hand a verified update to the separate helper, only from the stable install."""
         try:
@@ -228,9 +229,9 @@ class DigiBridge(QObject):
                 "--version", version,
             ], cwd=str(install_dir), close_fds=True)
             QTimer.singleShot(700, self.parent().close if self.parent() else lambda: None)
-            return json.dumps({"ok": True, "message": "Digi is closing to install the verified update."})
+            self.updateInstallResult.emit(json.dumps({"ok": True, "message": "Digi is closing to install the verified update."}))
         except Exception as exc:
-            return json.dumps({"ok": False, "message": str(exc) or "Could not start the update helper."})
+            self.updateInstallResult.emit(json.dumps({"ok": False, "message": str(exc) or "Could not start the update helper."}))
 
     @Slot(result=str)
     def state(self):
