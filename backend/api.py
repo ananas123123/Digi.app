@@ -230,7 +230,7 @@ class DigiBridge(QObject):
                 if pe_offset < 64 or pe_offset > 16 * 1024 * 1024:
                     raise ValueError("The downloaded executable header is invalid.")
                 executable.seek(pe_offset)
-                if executable.read(4) != b"PE\\x00\\x00":
+                if executable.read(4) != b"PE\x00\x00":
                     raise ValueError("The downloaded package is not a valid Windows executable.")
 
             subprocess.Popen([
