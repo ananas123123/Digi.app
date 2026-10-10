@@ -21,13 +21,12 @@ MARKER_FILE = VERSION_MANAGER / MARKER_FILE_NAME
 
 EXPECTED_DIRECTORIES = (
     SEARCH_REPOSITORY,
-    SEARCH_REPOSITORY / "Incoming",
     SEARCH_REPOSITORY / "Digi Notes",
     CACHE_DIR,
     VERSION_MANAGER,
 )
 
-VERSION_PATTERN = re.compile(r"^\\d+(?:\\.\\d+){1,4}$")
+VERSION_PATTERN = re.compile(r"^\d+(?:\.\d+){1,4}$")
 
 
 def expected_version():
@@ -75,8 +74,8 @@ def _bootstrap_first_run():
     for path in EXPECTED_DIRECTORIES:
         path.mkdir(parents=True, exist_ok=False)
 
-    VERSION_FILE.write_text(expected_version() + "\\n", encoding="utf-8")
-    MARKER_FILE.write_text("initialized\\n", encoding="utf-8")
+    VERSION_FILE.write_text(expected_version() + "\n", encoding="utf-8")
+    MARKER_FILE.write_text("initialized\n", encoding="utf-8")
 
 
 def _integrity_problem():
@@ -106,8 +105,7 @@ def _integrity_problem():
         return f"Could not inspect Digi version metadata: {exc}"
 
     # This records the version that first initialized the data layout. It is
-    # intentionally not compared with APP_VERSION: app upgrades/downgrades must
-    # reuse the same user data without rewriting this file.
+    # intentionally not compared with APP_VERSION: upgrades must reuse user data.
     if not VERSION_PATTERN.fullmatch(version_text):
         return f"Version metadata is invalid: {VERSION_FILE}"
     if marker_text != "initialized":
