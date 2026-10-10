@@ -13,6 +13,7 @@ from .files import FileService
 from .conversion import ConversionWorker
 from .notes import NotesService
 from .version_manager import initialize_version_file, version_integrity, recalibrate_version
+from .updater_download import download_package_to_temp
 
 
 class ReleaseManifestWorker(QThread):
@@ -79,6 +80,22 @@ class ReleaseManifestWorker(QThread):
         self.resultReady.emit(json.dumps(result))
 
 
+class PackageDownloadWorker(QThread):
+    resultReady = Signal(str)
+
+    def __init__(self, manifest_json, parent=None):
+        super().__init__(parent)
+        self.manifest_json = manifest_json
+
+    def run(self):
+        try:
+            manifest = json.loads(self.manifest_json)
+            path = download_package_to_temp(manifest)
+            result = {"ok": True, "path": path, "version": manifest.get("latest_version", ""), "verified": True, "message": "Package downloaded and verified. Installation has not started."}
+        except Exception as exc:
+            result = {"ok": False, "verified": False, "message": str(exc) or "The update package could not be downloaded and verified."}
+        self.resultReady.emit(json.dumps(result))
+
 class DigiBridge(QObject):
     @Slot()
     def minimizeWindow(self):
@@ -98,6 +115,7 @@ class DigiBridge(QObject):
 
     indexUpdated = Signal()
     releaseManifestResult = Signal(str)
+    packageDownloadResult = Signal(str)
     conversionProgress = Signal(str, int)
     conversionFinished = Signal(bool, str, str)
     error = Signal(str)
@@ -111,6 +129,7 @@ class DigiBridge(QObject):
         self.notes = None
         self.worker = None
         self.release_worker = None
+        self.package_download_worker = None
         if self.version_ok:
             try:
                 ensure_directories()
@@ -136,6 +155,15 @@ class DigiBridge(QObject):
         self.release_worker = ReleaseManifestWorker(self)
         self.release_worker.resultReady.connect(self.releaseManifestResult.emit)
         self.release_worker.start()
+
+    @Slot(str)
+    def downloadReleasePackage(self, manifest_json):
+        if self.package_download_worker and self.package_download_worker.isRunning():
+            self.packageDownloadResult.emit(json.dumps({"ok": False, "verified": False, "message": "An update download is already in progress."}))
+            return
+        self.package_download_worker = PackageDownloadWorker(manifest_json, self)
+        self.package_download_worker.resultReady.connect(self.packageDownloadResult.emit)
+        self.package_download_worker.start()
 
     @Slot(result=str)
     def state(self):
