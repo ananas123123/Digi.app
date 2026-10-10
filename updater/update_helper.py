@@ -53,7 +53,7 @@ def validate_pe_executable(path: Path) -> None:
         if pe_offset < 64 or pe_offset > 16 * 1024 * 1024:
             raise ValueError("The update candidate has an invalid executable header.")
         stream.seek(pe_offset)
-        if stream.read(4) != b"PE\\x00\\x00":
+        if stream.read(4) != b"PE\x00\x00":
             raise ValueError("The update candidate has an invalid PE signature.")
 
 
