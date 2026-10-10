@@ -7,6 +7,7 @@ from updater.update_helper import (
     expected_install_dir,
     sha256_file,
     validate_paths,
+    validate_pe_executable,
 )
 
 
@@ -50,6 +51,18 @@ class UpdateHelperPathTests(unittest.TestCase):
                 self.helper, self.target, self.candidate.with_name("missing.download"),
                 self.local_app_data
             )
+
+    def test_rejects_non_pe_candidate(self):
+        with self.assertRaisesRegex(ValueError, "not a Windows executable"):
+            validate_pe_executable(self.candidate)
+
+    def test_accepts_minimal_pe_header(self):
+        data = bytearray(128)
+        data[0:2] = b"MZ"
+        data[0x3C:0x40] = (64).to_bytes(4, "little")
+        data[64:68] = b"PE\\x00\\x00"
+        self.candidate.write_bytes(data)
+        validate_pe_executable(self.candidate)
 
     def test_sha256_matches_file_contents(self):
         self.assertEqual(
