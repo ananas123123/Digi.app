@@ -12,23 +12,7 @@
   let lastRemoteCheck = 0;
   let requestInProgress = false;
 
-  function compareVersions(left, right) {
-    const a = String(left).trim().split(".");
-    const b = String(right).trim().split(".");
-    if (!a.length || !b.length) return null;
-    const valid = value => value.every(part => /^\d+$/.test(part));
-    if (!valid(a) || !valid(b)) return null;
-
-    // Compare numeric components; missing trailing components count as zero.
-    const length = Math.max(a.length, b.length);
-    for (let i = 0; i < length; i += 1) {
-      const x = Number(a[i] ?? 0);
-      const y = Number(b[i] ?? 0);
-      if (x > y) return 1;
-      if (x < y) return -1;
-    }
-    return 0;
-  }
+  const compareVersions = window.DigiVersionComparison.compareVersions;
 
   function setStatus(status, title) {
     const dot = document.getElementById("digi-update-status");
