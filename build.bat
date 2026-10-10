@@ -21,7 +21,7 @@ if exist "%INSTALLED_DIGI_DIR%\DigiUpdater.exe" (
     exit /b 1
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$keys=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'); $found=Get-ItemProperty $keys -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -and $_.DisplayName -like '*Digi*' } | ForEach-Object { if ($_.DisplayIcon) { ($_.DisplayIcon -replace ',.*
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$keys=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'); $found=Get-ItemProperty $keys -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -and $_.DisplayName -like '*Digi*' } | Select-Object -First 1; if ($found) { Write-Output 'DIGI_FOUND'; Write-Output $found.DisplayName; exit 1 }; exit 0"
 set "FACTORY_DIR=%~dp0"
 set "OUTPUT_DIR=%~dp0.."
 set "VERSION_FILE=%FACTORY_DIR%version.txt"
