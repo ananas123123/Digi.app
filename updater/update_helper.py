@@ -187,6 +187,7 @@ $folders = @(
   (Join-Path $env:APPDATA 'Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar')
 ) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Container) } | Select-Object -Unique
 $seen = @{}
+$failures = 0
 foreach ($folder in $folders) {
   Get-ChildItem -LiteralPath $folder -Filter '*.lnk' -File -Recurse -ErrorAction SilentlyContinue |
     ForEach-Object {
@@ -206,6 +207,7 @@ foreach ($folder in $folders) {
           }
         }
       } catch {
+        $failures++
         Write-Output ('WARNING: Could not update shortcut ' + $_.FullName + ': ' + $_.Exception.Message)
       }
     }
@@ -219,6 +221,7 @@ $link.WorkingDirectory = $work
 $link.IconLocation = $target + ',0'
 $link.Description = 'Launch Digi Search Engine'
 $link.Save()
+if ($failures -gt 0) { exit 2 }
 """
     environment = os.environ.copy()
     environment["DIGI_SHORTCUT_TARGET"] = str(target.resolve())
