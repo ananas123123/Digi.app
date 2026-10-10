@@ -385,7 +385,9 @@
       setStatus("update", announcementOnly
         ? "RED: version " + decision.latestVersion + " has been announced, but its package is not yet published. Installed Digi version is " + currentVersion + ". No download or installation is available."
         : "RED: latest.json says " + decision.latestVersion + "; installed Digi version is " + currentVersion + ".");
-      if (!announcementOnly) showUpdatePrompt(manifest, decision.latestVersion);
+      // Always show the prompt for a newer version, including announced-but-unpublished
+      // releases. The prompt itself disables Download until the release is published.
+      showUpdatePrompt(manifest, decision.latestVersion);
       try {
         localStorage.setItem(PENDING_KEY, decision.latestVersion);
       } catch (_) {
