@@ -122,6 +122,7 @@
     const confirm = document.getElementById("digi-install-confirm");
     const later = document.getElementById("digi-install-later");
     if (!dialog || !progress || !confirm || !later) return;
+    downloadInProgress = false;
     progress.hidden = false;
     if (result.ok) {
       confirm.disabled = true;
@@ -183,7 +184,16 @@
       statusDot.style.cursor = "pointer";
       statusDot.addEventListener("click", () => {
         if (activeManifest && promptedVersion) {
-          showUpdatePrompt(activeManifest, promptedVersion, true);
+          const pkg = activeManifest.release && activeManifest.release.package;
+          if (verifiedPackagePath && pkg && typeof pkg.file_name === "string" && pkg.file_name.toLowerCase().endsWith(".exe")) {
+            const installDialog = document.getElementById("digi-install-dialog");
+            if (installDialog) {
+              installDialog.classList.remove("hidden");
+              installDialog.style.removeProperty("display");
+            }
+          } else {
+            showUpdatePrompt(activeManifest, promptedVersion, true);
+          }
         } else {
           checkRemoteStatus(true);
         }
