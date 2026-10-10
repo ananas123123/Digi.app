@@ -159,6 +159,24 @@ if errorlevel 1 (echo FATAL: Could not create the updater log folder.&pause&exit
 
 set "STAGED_APP=%INSTALL_DIR%\.Digi Search Engine.exe.new"
 set "STAGED_HELPER=%INSTALL_DIR%\.DigiUpdater.exe.new"
+set "BACKUP_APP=%INSTALL_DIR%\.Digi Search Engine.exe.build-backup"
+set "BACKUP_HELPER=%INSTALL_DIR%\.DigiUpdater.exe.build-backup"
+set "HAD_APP=0"
+set "HAD_HELPER=0"
+
+if exist "%BACKUP_APP%" (
+    echo FATAL: Recovery file already exists: "%BACKUP_APP%"
+    echo Inspect it before rebuilding; it will not be overwritten.
+    pause
+    exit /b 1
+)
+if exist "%BACKUP_HELPER%" (
+    echo FATAL: Recovery file already exists: "%BACKUP_HELPER%"
+    echo Inspect it before rebuilding; it will not be overwritten.
+    pause
+    exit /b 1
+)
+
 copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%STAGED_APP%" >nul
 if errorlevel 1 (echo FATAL: Could not stage the main executable. Installed files were not changed.&pause&exit /b 1)
 copy /y "%UPDATER_DIST_CACHE%\DigiUpdater.exe" "%STAGED_HELPER%" >nul
@@ -169,21 +187,55 @@ if errorlevel 1 (
     exit /b 1
 )
 
-move /y "%STAGED_HELPER%" "%HELPER_TARGET%" >nul
-if errorlevel 1 (
-    del /q "%STAGED_APP%" 2>nul
-    del /q "%STAGED_HELPER%" 2>nul
-    echo FATAL: Could not install DigiUpdater.exe. The main executable was not changed.
-    pause
-    exit /b 1
+rem Keep the old pair until both new files have been installed successfully.
+if exist "%APP_TARGET%" (
+    move /y "%APP_TARGET%" "%BACKUP_APP%" >nul
+    if errorlevel 1 (
+        del /q "%STAGED_APP%" "%STAGED_HELPER%" 2>nul
+        echo FATAL: Could not preserve the previous application executable.
+        pause
+        exit /b 1
+    )
+    set "HAD_APP=1"
 )
-move /y "%STAGED_APP%" "%APP_TARGET%" >nul
-if errorlevel 1 (
-    echo FATAL: Could not install the main executable. Close Digi and retry.
-    pause
-    exit /b 1
+if exist "%HELPER_TARGET%" (
+    move /y "%HELPER_TARGET%" "%BACKUP_HELPER%" >nul
+    if errorlevel 1 (
+        if "%HAD_APP%"=="1" move /y "%BACKUP_APP%" "%APP_TARGET%" >nul
+        del /q "%STAGED_APP%" "%STAGED_HELPER%" 2>nul
+        echo FATAL: Could not preserve the previous updater helper.
+        pause
+        exit /b 1
+    )
+    set "HAD_HELPER=1"
 )
 
+move /y "%STAGED_HELPER%" "%HELPER_TARGET%" >nul
+if errorlevel 1 goto :rollback_install
+move /y "%STAGED_APP%" "%APP_TARGET%" >nul
+if errorlevel 1 goto :rollback_install
+
+rem Both files are in place. Retain the previous pair as recovery copies.
+echo Previous application/helper backups, if any, are retained with .build-backup suffixes.
+goto :install_succeeded
+
+:rollback_install
+echo FATAL: New executables could not both be installed. Restoring the previous pair...
+del /q "%APP_TARGET%" "%HELPER_TARGET%" 2>nul
+if "%HAD_HELPER%"=="1" (
+    move /y "%BACKUP_HELPER%" "%HELPER_TARGET%" >nul
+    if errorlevel 1 echo CRITICAL: Could not restore the previous helper. Recovery copy: "%BACKUP_HELPER%"
+)
+if "%HAD_APP%"=="1" (
+    move /y "%BACKUP_APP%" "%APP_TARGET%" >nul
+    if errorlevel 1 echo CRITICAL: Could not restore the previous application. Recovery copy: "%BACKUP_APP%"
+)
+del /q "%STAGED_APP%" "%STAGED_HELPER%" 2>nul
+echo Build installation failed. Check the messages above before retrying.
+pause
+exit /b 1
+
+:install_succeeded
 set "DIGI_SHORTCUT_TARGET=%APP_TARGET%"
 set "DIGI_SHORTCUT_WORKDIR=%INSTALL_DIR%"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$desktop=[Environment]::GetFolderPath('Desktop'); $target=$env:DIGI_SHORTCUT_TARGET; $work=$env:DIGI_SHORTCUT_WORKDIR; $shell=New-Object -ComObject WScript.Shell; $shortcut=$shell.CreateShortcut((Join-Path $desktop 'Digi.lnk')); $shortcut.TargetPath=$target; $shortcut.WorkingDirectory=$work; $shortcut.IconLocation=$target+',0'; $shortcut.Description='Launch Digi Search Engine'; $shortcut.Save()"
