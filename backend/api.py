@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 from PySide6.QtCore import QObject, Signal, Slot, QThread, QTimer
 from PySide6.QtWidgets import QFileDialog
-from .config import APP_VERSION, DEPENDENCIES_ROOT, LIBRARY_CONFIG, get_library_root, ensure_directories
+from .config import APP_VERSION, DEPENDENCIES_ROOT, LIBRARY_CONFIG, VERSION_MANAGER, get_library_root, ensure_directories
 from .database import Database
 from .search import SearchService
 from .files import FileService
