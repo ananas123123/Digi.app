@@ -66,19 +66,17 @@ class ReleaseManifestWorker(QThread):
                         raise ValueError("GitHub API did not return base64 file content")
                     payload = base64.b64decode(envelope["content"])
                 manifest = json.loads(payload.decode("utf-8"))
-                self.resultReady.emit(json.dumps({
-                    "ok": True,
-                    "manifest": manifest,
-                    "test_mode": bool(test_url),
-                }))
+                result = {"ok": True, "manifest": manifest}
+                if test_url:
+                    result["test_mode"] = True
+                self.resultReady.emit(json.dumps(result))
                 return
             except Exception:
                 continue
-        self.resultReady.emit(json.dumps({
-            "ok": False,
-            "manifest": None,
-            "test_mode": bool(test_url),
-        }))
+        result = {"ok": False, "manifest": None}
+        if test_url:
+            result["test_mode"] = True
+        self.resultReady.emit(json.dumps(result))
 
 
 class DigiBridge(QObject):
