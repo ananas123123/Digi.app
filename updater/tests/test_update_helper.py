@@ -80,7 +80,7 @@ class UpdateHelperPathTests(unittest.TestCase):
         data = bytearray(128)
         data[0:2] = b"MZ"
         data[0x3C:0x40] = (64).to_bytes(4, "little")
-        data[64:68] = b"PE\\x00\\x00"
+        data[64:68] = b"PE\x00\x00"
         self.candidate.write_bytes(data)
         return bytes(data)
 
@@ -88,8 +88,8 @@ class UpdateHelperPathTests(unittest.TestCase):
         candidate_bytes = self._write_valid_pe_candidate()
         version_manager = self.install_dir / "Version manager"
         version_manager.mkdir()
-        (version_manager / "version.txt").write_text("1.1.0.0\\n", encoding="utf-8")
-        (version_manager / ".version_initialized").write_text("initialized\\n", encoding="utf-8")
+        (version_manager / "version.txt").write_text("1.1.0.0\n", encoding="utf-8")
+        (version_manager / ".version_initialized").write_text("initialized\n", encoding="utf-8")
 
         with patch("updater.update_helper.wait_for_process_exit"), \\
              patch("updater.update_helper.wait_for_confirmation", return_value=True), \\
@@ -109,7 +109,7 @@ class UpdateHelperPathTests(unittest.TestCase):
         self.assertFalse(self.candidate.exists())
         self.assertEqual(
             (version_manager / "version.txt").read_text(encoding="utf-8"),
-            "1.2.0.0\\n",
+            "1.2.0.0\n",
         )
         self.assertEqual(list(self.install_dir.glob(".Digi-rollback-*.exe")), [])
 
