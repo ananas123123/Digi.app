@@ -321,15 +321,27 @@ def install_update(
         # has launched and confirmed startup. This is version metadata, not user data.
         version_file = local_app_data / "Digi" / "Version manager" / "version.txt"
         version_marker = local_app_data / "Digi" / "Version manager" / ".version_initialized"
+        temporary_version = version_file.with_name(version_file.name + ".update-tmp")
         try:
-            if version_marker.is_file() and version_marker.read_text(encoding="utf-8").strip() == "initialized":
-                temporary_version = version_file.with_name(version_file.name + ".update-tmp")
-                temporary_version.write_text(version + "\n", encoding="utf-8")
+            if (
+                version_file.is_file()
+                and version_marker.is_file()
+                and version_marker.read_text(encoding="utf-8").strip() == "initialized"
+            ):
+                temporary_version.write_text(version + "\\n", encoding="utf-8")
                 os.replace(temporary_version, version_file)
-        except OSError:
+            else:
+                log_event("WARNING", "Confirmed update could not record its version because version metadata is incomplete.")
+        except OSError as metadata_error:
             # Do not undo a confirmed executable update because optional version
-            # bookkeeping could not be written. The app still uses the same user data.
-            pass
+            # bookkeeping could not be written, but do not leave a temp file that
+            # would make the strict version-manager integrity check fail next launch.
+            log_event("WARNING", f"Could not record confirmed installed version {version}: {metadata_error}")
+        finally:
+            try:
+                temporary_version.unlink(missing_ok=True)
+            except OSError as cleanup_error:
+                log_event("WARNING", f"Could not remove temporary version metadata {temporary_version}: {cleanup_error}")
 
         # Startup was confirmed. Repair known Digi shortcuts before removing
         # recovery/download copies; shortcut repair is best-effort and cannot undo
