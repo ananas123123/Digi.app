@@ -61,13 +61,31 @@ def _validate_manifest(manifest):
     return url, size, checksum.lower()
 
 
+def verify_package_sha256(path, expected_sha256):
+    """Verify a completed package against its published SHA-256 checksum."""
+    if not isinstance(expected_sha256, str) or len(expected_sha256) != 64 or any(
+        ch not in "0123456789abcdefABCDEF" for ch in expected_sha256
+    ):
+        raise ValueError("Package SHA-256 checksum is invalid.")
+    digest = hashlib.sha256()
+    with open(path, "rb") as package_file:
+        while True:
+            chunk = package_file.read(CHUNK_SIZE)
+            if not chunk:
+                break
+            digest.update(chunk)
+    if digest.hexdigest().lower() != expected_sha256.lower():
+        raise ValueError("Downloaded package SHA-256 does not match the published checksum.")
+    return digest.hexdigest()
+
+
 def download_package_to_temp(manifest, temp_dir=None, opener=None):
     """Download a package to a new temporary file and return its path.
 
-    The caller must verify the final file's SHA-256 in the next updater step.
+    The file is returned only after both published size and SHA-256 are verified.
     Any failed or interrupted download is removed. No existing file is overwritten.
     """
-    url, expected_size, _expected_sha256 = _validate_manifest(manifest)
+    url, expected_size, expected_sha256 = _validate_manifest(manifest)
     directory = Path(temp_dir) if temp_dir is not None else None
     if directory is not None:
         directory.mkdir(parents=True, exist_ok=True)
@@ -100,6 +118,7 @@ def download_package_to_temp(manifest, temp_dir=None, opener=None):
 
         if downloaded != expected_size:
             raise ValueError("Downloaded package size does not match the published size.")
+        verify_package_sha256(temp_path, expected_sha256)
         return temp_path
     except Exception:
         try:
