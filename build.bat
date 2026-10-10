@@ -118,6 +118,7 @@ echo Building Digi application executable...
   --add-data "%FACTORY_DIR%backend\notes.py;backend" ^
   --add-data "%FACTORY_DIR%backend\search.py;backend" ^
   --add-data "%FACTORY_DIR%backend\version_manager.py;backend" ^
+  --add-data "%FACTORY_DIR%backend\updater_logging.py;backend" ^
   --add-data "%FACTORY_DIR%frontend\index.html;frontend" ^
   --add-data "%FACTORY_DIR%frontend\app.js;frontend" ^
   --add-data "%FACTORY_DIR%frontend\styles.css;frontend" ^
