@@ -98,16 +98,21 @@ class PackageDownloadWorker(QThread):
             safe_version = re.sub(r"[^0-9A-Za-z._-]", "_", version)
             if not safe_version or safe_version in {".", ".."}:
                 raise ValueError("Release version cannot be used as a package folder name.")
-            destination = DEPENDENCIES_ROOT / "update dependencies" / "package installer" / safe_version / "Digi Search Engine.exe"
-            path = download_package_to_path(manifest, destination)
             package = manifest.get("release", {}).get("package", {})
+            filename = package.get("file_name", "Digi Search Engine.exe")
+            if not isinstance(filename, str) or not filename.strip() or Path(filename).name != filename or filename in {".", ".."}:
+                raise ValueError("Package filename is invalid.")
+            if Path(filename).suffix.lower() not in {".exe", ".txt"}:
+                raise ValueError("Only .exe and .txt update downloads are supported.")
+            destination = DEPENDENCIES_ROOT / "update dependencies" / "package installer" / safe_version / filename
+            path = download_package_to_path(manifest, destination)
             result = {
                 "ok": True,
                 "path": path,
                 "version": manifest.get("latest_version", ""),
                 "sha256": package.get("sha256", ""),
                 "verified": True,
-                "message": "Package downloaded and verified. Saved to the package installer folder; no installation was performed."
+                "message": "File downloaded and verified. Saved to the package installer folder; no installation or replacement was performed."
             }
         except Exception as exc:
             result = {"ok": False, "verified": False, "message": str(exc) or "The update package could not be downloaded and verified."}
