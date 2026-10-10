@@ -12,23 +12,7 @@
   let lastRemoteCheck = 0;
   let requestInProgress = false;
 
-  function compareVersions(left, right) {
-    const a = String(left).trim().split(".");
-    const b = String(right).trim().split(".");
-    if (!a.length || !b.length) return null;
-    const valid = value => value.every(part => /^\d+$/.test(part));
-    if (!valid(a) || !valid(b)) return null;
-
-    // Compare numeric components; missing trailing components count as zero.
-    const length = Math.max(a.length, b.length);
-    for (let i = 0; i < length; i += 1) {
-      const x = Number(a[i] ?? 0);
-      const y = Number(b[i] ?? 0);
-      if (x > y) return 1;
-      if (x < y) return -1;
-    }
-    return 0;
-  }
+  const compareVersions = window.DigiVersionComparison.compareVersions;
 
   function setStatus(status, title) {
     const dot = document.getElementById("digi-update-status");
@@ -36,6 +20,22 @@
     dot.dataset.status = status;
     dot.title = title;
     dot.setAttribute("aria-label", title);
+  }
+
+  function showTestModeBanner() {
+    if (document.getElementById("digi-updater-test-banner")) return;
+    const banner = document.createElement("div");
+    banner.id = "digi-updater-test-banner";
+    banner.setAttribute("role", "status");
+    banner.textContent = "DEVELOPMENT TEST MODE — LOCAL UPDATE FEED — NO INSTALLS";
+    Object.assign(banner.style, {
+      position: "fixed", left: "12px", bottom: "12px", zIndex: "20000",
+      padding: "9px 12px", border: "1px solid #e0b83e", borderRadius: "9px",
+      background: "#29230f", color: "#ffe28a", font: "600 11px Segoe UI, Arial, sans-serif",
+      letterSpacing: ".04em", boxShadow: "0 4px 20px rgba(0,0,0,.45)",
+      pointerEvents: "none"
+    });
+    document.body.appendChild(banner);
   }
 
   function waitForBridge() {
@@ -121,46 +121,39 @@
         throw new Error("Could not reach the release repository.");
       }
 
+      if (response.test_mode === true) showTestModeBanner();
       const manifest = response.manifest;
       if (manifest.product !== "Digi" || manifest.schema_version !== 1) {
         throw new Error("Release metadata schema is not supported.");
       }
 
-      // A planned/unpublished version is not an installable update. Do not
-      // turn a newer version number into an update alert until it is published.
-      if (manifest.release_status !== "published") {
-        const statusMessage = typeof manifest.message === "string" && manifest.message.trim()
-          ? manifest.message.trim()
-          : "No published Digi update is currently available.";
-        setStatus("current", "Update check succeeded. " + statusMessage);
+      const decision = window.DigiVersionComparison.evaluateRelease(currentVersion, manifest);
+      if (decision.status === "invalid") {
+        setStatus("offline", "Version comparison or release metadata validation failed.");
+        return;
+      }
+
+      if (decision.status === "current") {
+        const message = decision.reason === "unpublished"
+          ? (typeof manifest.message === "string" && manifest.message.trim()
+              ? manifest.message.trim()
+              : "No published Digi update is currently available.")
+          : decision.reason === "no-latest-version"
+            ? "No latest version is published in latest.json."
+            : "Installed Digi version: " + currentVersion + ". Release metadata is valid and no update is available.";
+        setStatus("current", "Update check succeeded. " + message);
         try { localStorage.removeItem(PENDING_KEY); } catch (_) {}
         return;
       }
 
-      const latestVersion = manifest.latest_version;
-      if (typeof latestVersion !== "string" || !latestVersion.trim()) {
-        setStatus("current", "Installed Digi version: " + currentVersion + ". No latest version is published in latest.json.");
-        try { localStorage.removeItem(PENDING_KEY); } catch (_) {}
-        return;
-      }
-
-      const normalizedLatest = latestVersion.trim();
-      const relation = compareVersions(normalizedLatest, currentVersion);
-      if (relation === null) {
-        setStatus("offline", "Version comparison failed. Installed: " + currentVersion + "; latest.json: " + normalizedLatest + ".");
-        return;
-      }
-
-      if (relation > 0) {
-        setStatus("update", "RED: latest.json says " + normalizedLatest + "; installed Digi version is " + currentVersion + ".");
-        try {
-          localStorage.setItem(PENDING_KEY, normalizedLatest);
-        } catch (_) {
-          // Storage is optional; the status indicator still works without it.
-        }
-      } else {
-        setStatus("current", "GREEN: latest.json says " + normalizedLatest + "; installed Digi version is " + currentVersion + ".");
-        try { localStorage.removeItem(PENDING_KEY); } catch (_) {}
+      const announcementOnly = decision.packagePublished === false;
+      setStatus("update", announcementOnly
+        ? "RED: version " + decision.latestVersion + " has been announced, but its package is not yet published. Installed Digi version is " + currentVersion + ". No download or installation is available."
+        : "RED: latest.json says " + decision.latestVersion + "; installed Digi version is " + currentVersion + ".");
+      try {
+        localStorage.setItem(PENDING_KEY, decision.latestVersion);
+      } catch (_) {
+        // Storage is optional; the status indicator still works without it.
       }
     } catch (error) {
       const reason = error && error.message ? error.message : "Unknown update-check error.";

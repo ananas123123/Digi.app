@@ -1,0 +1,46 @@
+{
+  "scenarios": [
+    {
+      "name": "newer published release",
+      "installed_version": "1.0.0.0",
+      "manifest": { "product": "Digi", "schema_version": 1, "release_status": "published", "latest_version": "1.1.0.0" },
+      "expected_status": "update"
+    },
+    {
+      "name": "same published release",
+      "installed_version": "1.0.0.0",
+      "manifest": { "product": "Digi", "schema_version": 1, "release_status": "published", "latest_version": "1.0.0.0" },
+      "expected_status": "current"
+    },
+    {
+      "name": "older published release",
+      "installed_version": "1.1.0.0",
+      "manifest": { "product": "Digi", "schema_version": 1, "release_status": "published", "latest_version": "1.0.0.0" },
+      "expected_status": "current"
+    },
+    {
+      "name": "newer but unpublished release",
+      "installed_version": "1.0.0.0",
+      "manifest": { "product": "Digi", "schema_version": 1, "release_status": "unpublished", "latest_version": "1.1.0.0" },
+      "expected_status": "current"
+    },
+    {
+      "name": "wrong product metadata",
+      "installed_version": "1.0.0.0",
+      "manifest": { "product": "Other", "schema_version": 1, "release_status": "published", "latest_version": "1.1.0.0" },
+      "expected_status": "invalid"
+    },
+    {
+      "name": "unsupported schema metadata",
+      "installed_version": "1.0.0.0",
+      "manifest": { "product": "Digi", "schema_version": 99, "release_status": "published", "latest_version": "1.1.0.0" },
+      "expected_status": "invalid"
+    },
+    {
+      "name": "malformed latest version",
+      "installed_version": "1.0.0.0",
+      "manifest": { "product": "Digi", "schema_version": 1, "release_status": "published", "latest_version": "1.x.0.0" },
+      "expected_status": "invalid"
+    }
+  ]
+}
