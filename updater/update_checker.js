@@ -46,12 +46,15 @@
     progress.hidden = true;
     progress.textContent = "";
     later.disabled = false;
-    if (validation.valid) {
-      if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> is available. Download and verify the release package first. A separate confirmation will be shown before replacing the installed executable.';
+    const packageResolved = Boolean(manifest.release && manifest.release.package);
+    if (manifest.release_status === "published") {
+      if (copy) copy.innerHTML = packageResolved
+        ? 'Version <strong id="digi-update-version"></strong> is available. Download and verify the release package first. A separate confirmation will be shown before replacing the installed executable.'
+        : 'Version <strong id="digi-update-version"></strong> is published. Download will locate its package through releases/directory.json and validate the version metadata.';
       download.disabled = false;
       download.textContent = "Download";
     } else {
-      if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> has been announced, but its package is not available yet. No download or update can be performed.';
+      if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> has been announced but is not published. No download or update can be performed.';
       download.disabled = true;
       download.textContent = "Package unavailable";
     }
@@ -82,6 +85,10 @@
     downloadInProgress = false;
     progress.hidden = false;
     if (result.ok && result.verified && typeof result.path === "string" && result.path) {
+      if (result.manifest && result.manifest.release && result.manifest.release.package) {
+        activeManifest = result.manifest;
+        promptedVersion = result.version || promptedVersion;
+      }
       verifiedPackagePath = result.path;
       progress.textContent = "Download complete. Size and SHA-256 verified. Saved to: " + result.path + ". Digi has not been installed or replaced.";
       download.disabled = true;
@@ -210,9 +217,10 @@
     }
     if (download) download.onclick = async () => {
       if (downloadInProgress || !activeManifest) return;
-      const validation = window.DigiVersionComparison.validatePackageMetadata(activeManifest);
-      if (!validation.valid) {
-        displayDownloadResult(JSON.stringify({ ok: false, verified: false, message: "Package metadata rejected: " + validation.reason }));
+      if (activeManifest.release_status !== "published" ||
+          !activeManifest.release ||
+          activeManifest.release.version !== activeManifest.latest_version) {
+        displayDownloadResult(JSON.stringify({ ok: false, verified: false, message: "The latest.json announcement is not a published, valid release." }));
         return;
       }
       try {
