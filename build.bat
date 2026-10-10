@@ -238,13 +238,13 @@ pause
 exit /b 1
 
 :install_succeeded
-set "DIGI_SHORTCUT_TARGET=%APP_TARGET%"
-set "DIGI_SHORTCUT_WORKDIR=%INSTALL_DIR%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$desktop=[Environment]::GetFolderPath('Desktop'); $target=$env:DIGI_SHORTCUT_TARGET; $work=$env:DIGI_SHORTCUT_WORKDIR; $shell=New-Object -ComObject WScript.Shell; $shortcut=$shell.CreateShortcut((Join-Path $desktop 'Digi.lnk')); $shortcut.TargetPath=$target; $shortcut.WorkingDirectory=$work; $shortcut.IconLocation=$target+',0'; $shortcut.Description='Launch Digi Search Engine'; $shortcut.Save()"
+echo Refreshing Digi shortcuts across Desktop, Start menu, and known pinned-shortcut folders...
+"%HELPER_TARGET%" --refresh-shortcuts
 if errorlevel 1 (
-    echo WARNING: Build installed, but the desktop shortcut could not be created.
+    echo WARNING: Build installed, but one or more Digi shortcuts could not be refreshed.
+    echo Run "%HELPER_TARGET%" --refresh-shortcuts after resolving the logged error.
 ) else (
-    echo Desktop shortcut created.
+    echo Digi shortcuts refreshed to the stable installed executable.
 )
 
 echo.
