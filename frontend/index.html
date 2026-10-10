@@ -52,8 +52,17 @@
 <div id="digi-update-dialog" class="digi-update-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="digi-update-title">
   <div class="digi-update-card">
     <div id="digi-update-title" class="digi-update-title">Digi update available</div>
-    <p class="digi-update-copy">Version <strong id="digi-update-version"></strong> is available. The checker will not install or change anything automatically. You can review the release details, or be reminded again next time you launch Digi.</p>
-    <div class="digi-update-actions"><button class="ui-button" id="digi-update-later">Later</button><button class="ui-button digi-update-primary" id="digi-update-details">Release details</button></div>
+    <p class="digi-update-copy">Version <strong id="digi-update-version"></strong> is available. Download and verify the release package first.</p>
+    <p class="digi-update-copy" id="digi-update-progress" role="status" hidden></p>
+    <div class="digi-update-actions"><button class="ui-button" id="digi-update-later">Not now</button><button class="ui-button digi-update-primary" id="digi-update-details">Download</button></div>
+  </div>
+</div>
+<div id="digi-install-dialog" class="digi-update-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="digi-install-title">
+  <div class="digi-update-card">
+    <div id="digi-install-title" class="digi-update-title">Update?</div>
+    <p id="digi-install-copy" class="digi-update-copy">The verified Digi executable is downloaded and ready. Continue to replace the installed application executable?</p>
+    <p id="digi-install-progress" class="digi-update-copy" role="status" hidden></p>
+    <div class="digi-update-actions"><button class="ui-button" id="digi-install-later">Not now</button><button class="ui-button digi-update-primary" id="digi-install-confirm">Update</button></div>
   </div>
 </div>
 

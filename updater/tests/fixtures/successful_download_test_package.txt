@@ -1,0 +1,3 @@
+Digi updater successful-download test fixture
+Purpose: verify HTTPS download, byte size, and SHA-256 validation.
+This is a plain-text test file, not an installer.
