@@ -45,16 +45,16 @@ class VersionManagerBootstrapTests(unittest.TestCase):
         self.assertTrue(self.notes.is_dir())
         self.assertTrue(self.cache.is_dir())
         self.assertTrue(self.manager.is_dir())
-        self.assertEqual(self.version_file.read_text(encoding="utf-8"), "1.2.0.0\\n")
-        self.assertEqual(self.marker_file.read_text(encoding="utf-8"), "initialized\\n")
+        self.assertEqual(self.version_file.read_text(encoding="utf-8"), "1.2.0.0\n")
+        self.assertEqual(self.marker_file.read_text(encoding="utf-8"), "initialized\n")
         self.assertEqual(existing_log.read_text(encoding="utf-8"), "keep me")
 
     def test_does_not_overwrite_partial_existing_version_metadata(self):
         self.manager.mkdir()
-        self.version_file.write_text("1.0.0.0\\n", encoding="utf-8")
+        self.version_file.write_text("1.0.0.0\n", encoding="utf-8")
 
         self.assertFalse(vm.initialize_version_file())
-        self.assertEqual(self.version_file.read_text(encoding="utf-8"), "1.0.0.0\\n")
+        self.assertEqual(self.version_file.read_text(encoding="utf-8"), "1.0.0.0\n")
         self.assertFalse(self.marker_file.exists())
 
     def test_preserves_existing_search_repository_contents(self):
