@@ -1,21 +1,22 @@
-# Digi external application sources
+# Digi executable architecture
 
-The stable executable loads its application implementation from this folder. Application backend/frontend code is not bundled as a fallback.
+## Packaged build
+- `build.bat` creates a single `Digi Search Engine.exe` and a Desktop shortcut.
+- The executable bundles the application entry point, backend Python source, frontend files, updater JavaScript, Python runtime, and required native dependencies.
+- No external `Digi Source` folder is required.
+- The `Incoming` folder and mechanism are not included.
+- Build intermediates and the generated PyInstaller spec remain under version-specific folders in `Cache`; existing cache folders are not deleted by the build script.
 
-## Editable files
-- `app.py`: application window and frontend/backend bridge.
-- `backend/`: Python application functionality.
-- `frontend/`: HTML, CSS, JavaScript and assets.
-- `updater/`: update checker scripts.
-- `requirements.txt`: dependency reference; changing it does not install packages automatically.
+## Runtime data
+Persistent user data is stored under `%LOCALAPPDATA%\Digi`. On first launch, Digi initializes:
+- `Search Repository`
+- `Search Repository\Digi Notes`
+- `Cache`
+- `Version manager`
 
-## Workflow
-1. Edit files in this folder.
-2. Restart Digi after Python changes.
-3. Reload the frontend or restart Digi after HTML/CSS/JavaScript changes.
-4. Required files missing or empty cause a startup error. Digi does not silently use stale bundled source.
+Digi does not create an `Incoming` folder. User data remains separate from the executable so application updates can replace the executable without replacing user data.
 
-## Limitations
-The executable bundles Python/PySide and native runtime dependencies. Compatible ordinary Python source and frontend changes do not require rebuilding. New packages, runtime changes, or compiled/native components may require installation or a new build.
-
-Persistent user data stays under `%LOCALAPPDATA%\Digi`, separate from this folder.
+## Development workflow
+- Run `run.bat` to launch source code from the repository.
+- Edit `app.py`, `backend/`, `frontend/`, and `updater/` in the repository.
+- Rebuild the executable when changes need to be included in the packaged release.
