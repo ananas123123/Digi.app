@@ -233,6 +233,7 @@ def install_update(
         except OSError:
             # Do not undo a confirmed executable update because optional version
             # bookkeeping could not be written. The app still uses the same user data.
+            pass
 
         # Keep the rollback copy after success for now. A later cleanup policy may
         # remove it only after the startup confirmation has been observed and recorded.
