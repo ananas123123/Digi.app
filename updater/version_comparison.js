@@ -1,4 +1,4 @@
-/* Pure version comparison and release-package validation shared by Digi and tests. */
+/* Version comparison and validation for the resolved latest.json -> directory.json -> version metadata protocol. */
 (function (root, factory) {
   "use strict";
   const api = factory();
@@ -73,6 +73,14 @@
     if (!pkg || typeof pkg !== "object") {
       return { valid: false, reason: "missing-package" };
     }
+    if (typeof pkg.file_name !== "string" || !pkg.file_name.trim() ||
+        pkg.file_name !== pkg.file_name.split(/[\\\\/]/).pop()) {
+      return { valid: false, reason: "invalid-package-filename" };
+    }
+    const extension = pkg.file_name.toLowerCase().split(".").pop();
+    if (extension !== "exe" && !(extension === "txt" && pkg.kind === "test-fixture")) {
+      return { valid: false, reason: "unsupported-package-file-type" };
+    }
     if (typeof pkg.url !== "string") {
       return { valid: false, reason: "invalid-package-url" };
     }
@@ -95,6 +103,7 @@
     return {
       valid: true,
       url: parsed.href,
+      fileName: pkg.file_name,
       sizeBytes: pkg.size_bytes,
       sha256: pkg.sha256.toLowerCase(),
       version: latest.trim()
