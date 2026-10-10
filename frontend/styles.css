@@ -3351,3 +3351,10 @@ textarea:hover, textarea:focus, select:hover, select:focus {
 .update-status-dot[data-status="update"] { background: #e53935 !important; }
 .digi-update-primary, .version-primary { background: #f0e4c8 !important; color: #3a2b0d !important; border-color: #d5bd83 !important; }
 .digi-home-logo-dot { background: #d4a13c !important; box-shadow: 0 0 8px rgba(212,161,60,.45) !important; }
+
+
+/* Download progress indicator for the release updater. */
+.digi-download-progress-wrap{display:flex;align-items:center;gap:10px;margin:-8px 0 18px;}
+.digi-download-progress-wrap[hidden]{display:none!important;}
+.digi-download-progress-wrap progress{display:block;flex:1;width:100%;height:10px;accent-color:#b88627;}
+.digi-download-progress-wrap span{font-size:11px;color:#73736d;white-space:nowrap;font-variant-numeric:tabular-nums;}
