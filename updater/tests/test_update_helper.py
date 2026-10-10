@@ -20,9 +20,13 @@ class UpdateHelperPathTests(unittest.TestCase):
         self.install_dir.mkdir(parents=True)
         self.helper = self.install_dir / "DigiUpdater.exe"
         self.target = self.install_dir / "Digi Search Engine.exe"
-        self.candidate = Path(self.temp.name) / "digi-update.download"
+        self.candidate = (
+            self.install_dir / "update dependencies" / "package installer"
+            / "1.2.0.0" / "Digi Search Engine.exe"
+        )
         self.helper.write_bytes(b"helper")
         self.target.write_bytes(b"old-app")
+        self.candidate.parent.mkdir(parents=True)
         self.candidate.write_bytes(b"new-app")
 
     def test_accepts_expected_install_paths_and_download_candidate(self):
