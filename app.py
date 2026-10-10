@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 import sys
 
-from PySide6.QtCore import QEvent, QUrl, Qt, Signal
+from PySide6.QtCore import QEvent, QUrl, Qt, Signal, QTimer
 from PySide6.QtGui import QPainterPath, QRegion
 from PySide6.QtWidgets import (
     QApplication,
@@ -290,5 +290,17 @@ def main():
     app.setStyle("Fusion")
     window = DigiWindow()
     window.show()
+
+    # The replacement helper rolls back unless the new executable confirms startup.
+    marker_value = os.environ.get("DIGI_UPDATE_CONFIRMATION_FILE")
+    token_value = os.environ.get("DIGI_UPDATE_CONFIRMATION_TOKEN")
+    if marker_value and token_value:
+        def confirm_update_startup():
+            try:
+                Path(marker_value).resolve().write_text(token_value, encoding="utf-8")
+            except OSError:
+                pass
+        QTimer.singleShot(2000, confirm_update_startup)
+
     app.aboutToQuit.connect(repair_after_close)
     sys.exit(app.exec())
