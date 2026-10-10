@@ -1,11 +1,12 @@
-"""Regression tests for the real Qt WebChannel-to-browser-event wiring.
+// Regression tests for the real Qt WebChannel-to-browser-event wiring.
+//
+// These tests inspect the production frontend source to ensure the bridge
+// signal and updater listener use the same event contract. They do not claim
+// to simulate a running Qt WebEngine instance.
+//
+// Run from the repository root:
+//   node --test updater/tests/bridge_event_wiring.test.js
 
-These tests inspect the actual frontend source to ensure the production bridge
-signal and updater listener remain connected by the expected event contract.
-They do not claim to simulate a running Qt WebEngine instance.
-Run from the repository root:
-    node --test updater/tests/bridge_event_wiring.test.js
-"""
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -44,8 +45,8 @@ test("update checker listens for the same browser event", () => {
 });
 
 test("version comparison module loads before the update checker", () => {
-  const comparisonIndex = htmlSource.indexOf('../updater/version_comparison.js');
-  const checkerIndex = htmlSource.indexOf('../updater/update_checker.js');
+  const comparisonIndex = htmlSource.indexOf("../updater/version_comparison.js");
+  const checkerIndex = htmlSource.indexOf("../updater/update_checker.js");
 
   assert.notEqual(comparisonIndex, -1, "version comparison script should be loaded");
   assert.notEqual(checkerIndex, -1, "update checker script should be loaded");
