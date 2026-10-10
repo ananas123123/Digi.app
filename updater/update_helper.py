@@ -58,7 +58,7 @@ def validate_pe_executable(path: Path) -> None:
 
 
 def expected_install_dir(local_app_data: Path) -> Path:
-    return (local_app_data / "Programs" / "Digi").resolve()
+    return (local_app_data / "Digi").resolve()
 
 
 def validate_paths(
