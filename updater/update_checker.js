@@ -47,7 +47,7 @@
     progress.textContent = "";
     later.disabled = false;
     if (validation.valid) {
-      if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> is available. Download and verify the package first. You can then install it safely; Digi will close and restart.';
+      if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> is available. Download and verify the test file. This action only saves the file; it will not install or replace Digi.';
       download.disabled = false;
       download.textContent = "Update now";
     } else {
@@ -83,7 +83,7 @@
     progress.hidden = false;
     if (result.ok && result.verified && typeof result.path === "string" && result.path) {
       verifiedPackagePath = result.path;
-      progress.textContent = "Download complete. Size and SHA-256 verified. Saved to: " + result.path + ". Digi has not been installed or changed.";
+      progress.textContent = "Download complete. Size and SHA-256 verified. Saved to: " + result.path + ". Digi has not been installed or replaced.";
       download.disabled = true;
       download.textContent = "Downloaded";
     } else {
@@ -172,7 +172,7 @@
         later.disabled = true;
         download.textContent = "Downloading…";
         progress.hidden = false;
-        progress.textContent = "Downloading package to a temporary file…";
+        progress.textContent = "Downloading the file to a temporary location for verification…";
         backend.downloadReleasePackage(JSON.stringify(activeManifest));
       } catch (error) {
         downloadInProgress = false;
