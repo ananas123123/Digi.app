@@ -54,6 +54,10 @@
     <div id="digi-update-title" class="digi-update-title">Digi update available</div>
     <p class="digi-update-copy">Version <strong id="digi-update-version"></strong> is available. Download and verify the release package first.</p>
     <p class="digi-update-copy" id="digi-update-progress" role="status" hidden></p>
+    <div id="digi-download-progress-wrap" class="digi-download-progress-wrap" hidden>
+      <progress id="digi-download-progress-bar" max="100" value="0" aria-label="Download progress"></progress>
+      <span id="digi-download-progress-label">0%</span>
+    </div>
     <div class="digi-update-actions"><button class="ui-button" id="digi-update-later">Not now</button><button class="ui-button digi-update-primary" id="digi-update-details">Download</button></div>
   </div>
 </div>
