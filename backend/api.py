@@ -285,7 +285,7 @@ class PackageDownloadWorker(QThread):
                 "sha256": package.get("sha256", ""),
                 "manifest": manifest,
                 "verified": True,
-                "message": "File downloaded and verified in Digi Dependencies\\update dependencies\\package installer. No installation or replacement was performed."
+                "message": "File downloaded and verified in %LOCALAPPDATA%\\Digi\\update dependencies\\package installer. No installation or replacement was performed."
             }
         except Exception as exc:
             log_updater_event("ERROR", f"Download failed: {type(exc).__name__}: {exc}")
