@@ -28,6 +28,8 @@ else:
 SEARCH_REPOSITORY = DEPENDENCIES_ROOT / "Search Repository"
 CACHE_DIR = DEPENDENCIES_ROOT / "Cache"
 VERSION_MANAGER = DEPENDENCIES_ROOT / "Version manager"
+UPDATE_DEPENDENCIES_ROOT = DEPENDENCIES_ROOT / "update dependencies"
+PACKAGE_INSTALLER_ROOT = UPDATE_DEPENDENCIES_ROOT / "package installer"
 DB_PATH = CACHE_DIR / "study_index.db"
 LIBRARY_CONFIG = CACHE_DIR / "library_folder.txt"
 
@@ -38,6 +40,8 @@ def ensure_directories():
         SEARCH_REPOSITORY,
         CACHE_DIR,
         VERSION_MANAGER,
+        UPDATE_DEPENDENCIES_ROOT,
+        PACKAGE_INSTALLER_ROOT / APP_VERSION,
     )
     for path in required:
         path.mkdir(parents=True, exist_ok=True)
