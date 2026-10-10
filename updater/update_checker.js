@@ -47,15 +47,19 @@
     progress.textContent = "";
     later.disabled = false;
     if (validation.valid) {
-      if (copy) copy.textContent = "Version " + version + " is available. Download and verify the package first. You can then install it safely; Digi will close and restart.";
+      if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> is available. Download and verify the package first. You can then install it safely; Digi will close and restart.';
       download.disabled = false;
       download.textContent = "Download update";
     } else {
-      if (copy) copy.textContent = "Version " + version + " has been announced, but its installable package is not available yet. No download or installation can be performed.";
+      if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> has been announced, but its installable package is not available yet. No download or installation can be performed.';
       download.disabled = true;
       download.textContent = "Package unavailable";
     }
+    const updatedVersionNode = document.getElementById("digi-update-version");
+    if (updatedVersionNode) updatedVersionNode.textContent = version;
     dialog.classList.remove("hidden");
+    dialog.setAttribute("data-update-version", version);
+    dialog.style.display = "grid";
   }
 
   function closeUpdatePrompt() {
