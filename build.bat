@@ -49,16 +49,27 @@ set "AUTO_HIDDEN_IMPORTS="
 for /f "usebackq delims=" %%I in (`"%PYTHON_EXE%" "%FACTORY_DIR%tools\pyinstaller_imports.py"`) do set "AUTO_HIDDEN_IMPORTS=%%I"
 if not defined AUTO_HIDDEN_IMPORTS (echo FATAL: Could not analyse application imports.&pause&exit /b 1)
 
-echo Building a standalone executable with application source bundled inside it...
+echo Building Digi with application code bundled inside the executable...
 "%PYTHON_EXE%" -m PyInstaller --noconfirm --clean --windowed --onefile ^
   --name "Digi Search Engine" ^
   --version-file "%VERSION_INFO_FILE%" ^
   --icon "%FACTORY_DIR%mbappe.ico" ^
   %AUTO_HIDDEN_IMPORTS% ^
   --add-data "%FACTORY_DIR%app.py;." ^
-  --add-data "%FACTORY_DIR%backend;backend" ^
-  --add-data "%FACTORY_DIR%frontend;frontend" ^
-  --add-data "%FACTORY_DIR%updater;updater" ^
+  --add-data "%FACTORY_DIR%backend\__init__.py;backend" ^
+  --add-data "%FACTORY_DIR%backend\api.py;backend" ^
+  --add-data "%FACTORY_DIR%backend\config.py;backend" ^
+  --add-data "%FACTORY_DIR%backend\conversion.py;backend" ^
+  --add-data "%FACTORY_DIR%backend\database.py;backend" ^
+  --add-data "%FACTORY_DIR%backend\files.py;backend" ^
+  --add-data "%FACTORY_DIR%backend\notes.py;backend" ^
+  --add-data "%FACTORY_DIR%backend\search.py;backend" ^
+  --add-data "%FACTORY_DIR%backend\version_manager.py;backend" ^
+  --add-data "%FACTORY_DIR%frontend\index.html;frontend" ^
+  --add-data "%FACTORY_DIR%frontend\app.js;frontend" ^
+  --add-data "%FACTORY_DIR%frontend\styles.css;frontend" ^
+  --add-data "%FACTORY_DIR%updater\version_comparison.js;updater" ^
+  --add-data "%FACTORY_DIR%updater\update_checker.js;updater" ^
   --collect-all "PySide6.QtWebEngineCore" ^
   --collect-all "PySide6.QtWebEngineWidgets" ^
   --collect-all "PySide6.QtWebChannel" ^
@@ -74,15 +85,15 @@ if not exist "%DIST_CACHE%\Digi Search Engine.exe" (
     exit /b 1
 )
 copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%EXE_PATH%" >nul
-if errorlevel 1 (echo FATAL: Could not copy the executable to the release folder.&pause&exit /b 1)
+if errorlevel 1 (echo FATAL: Could not copy the executable to the output folder.&pause&exit /b 1)
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$desktop=[Environment]::GetFolderPath('Desktop'); $shell=New-Object -ComObject WScript.Shell; $shortcut=$shell.CreateShortcut((Join-Path $desktop 'Digi Search Engine.lnk')); $shortcut.TargetPath='%EXE_PATH%'; $shortcut.WorkingDirectory='%FINAL_DIR%'; $shortcut.IconLocation='%EXE_PATH%,0'; $shortcut.Save()"
 if errorlevel 1 (echo WARNING: Desktop shortcut could not be created.) else (echo DESKTOP SHORTCUT CREATED.)
 
 echo.
 echo BUILD COMPLETE: "%EXE_PATH%"
-echo Bundled files: app.py, backend, frontend and updater.
-echo Incoming is not included.
-echo Persistent runtime data will be created under %%LOCALAPPDATA%%\Digi on first launch.
-echo No external Digi Source folder is created by this build.
+echo Application code and runtime dependencies are bundled in the executable.
+echo Persistent user data is initialized under %%LOCALAPPDATA%%\Digi on first launch.
+echo The Incoming folder and mechanism are not included.
+echo No external Digi Source folder is created.
 pause
