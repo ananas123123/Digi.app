@@ -2,7 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { compareVersions } = require("../version_comparison");
+const { compareVersions, evaluateRelease } = require("../version_comparison");
 
 test("detects a newer remote version", () => {
   assert.equal(compareVersions("1.1.0.0", "1.0.0.0"), 1);
@@ -34,4 +34,27 @@ test("rejects non-string values and unsafe numeric components", () => {
   assert.equal(compareVersions(null, "1.0"), null);
   assert.equal(compareVersions("1.0", 1), null);
   assert.equal(compareVersions("999999999999999999999.0", "1.0"), null);
+});
+
+
+function manifest(overrides = {}) {
+  return { product: "Digi", schema_version: 1, release_status: "published", latest_version: "1.1.0.0", ...overrides };
+}
+
+test("offers a newer published version", () => {
+  assert.equal(evaluateRelease("1.0.0.0", manifest()).status, "update");
+});
+
+test("does not offer an equal or older published version", () => {
+  assert.equal(evaluateRelease("1.1.0.0", manifest()).status, "current");
+  assert.equal(evaluateRelease("1.2.0.0", manifest()).status, "current");
+});
+
+test("does not offer an unpublished release even when its version is newer", () => {
+  assert.equal(evaluateRelease("1.0.0.0", manifest({ release_status: "unpublished" })).status, "current");
+});
+
+test("rejects invalid release metadata and version strings", () => {
+  assert.equal(evaluateRelease("1.0.0.0", manifest({ product: "Other" })).status, "invalid");
+  assert.equal(evaluateRelease("1.0.0.0", manifest({ latest_version: "1.x" })).status, "invalid");
 });
