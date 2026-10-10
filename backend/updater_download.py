@@ -129,15 +129,15 @@ def download_package_to_temp(manifest, temp_dir=None, opener=None):
 
 
 def download_package_to_path(manifest, destination_path, opener=None):
-    """Download and verify a package, then save it at a caller-selected .exe path.
+    """Download and verify a package, then save it at a caller-selected .exe or .txt path.
 
     The destination is only replaced after the complete download passes size and
     SHA-256 verification. Failed downloads leave any existing destination intact.
     This function downloads only; it never launches or installs the package.
     """
     destination = Path(destination_path)
-    if destination.suffix.lower() != ".exe":
-        raise ValueError("Update package destination must have an .exe extension.")
+    if destination.suffix.lower() not in {".exe", ".txt"}:
+        raise ValueError("Update download destination must have a .exe or .txt extension.")
     destination.parent.mkdir(parents=True, exist_ok=True)
     temp_path = download_package_to_temp(manifest, temp_dir=destination.parent, opener=opener)
     try:
