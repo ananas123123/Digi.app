@@ -151,6 +151,19 @@ class ReleaseManifestWorker(QThread):
         if not isinstance(checksum, str) or not re.fullmatch(r"[a-fA-F0-9]{64}", checksum):
             raise ValueError("Package SHA-256 checksum is invalid.")
 
+        artifacts = release_metadata.get("files")
+        if not isinstance(artifacts, list):
+            raise ValueError("Version metadata must list its downloadable files.")
+        artifact = next(
+            (item for item in artifacts if isinstance(item, dict) and item.get("path") == package.get("path")),
+            None
+        )
+        if not isinstance(artifact, dict) or any(
+            artifact.get(key) != package.get(key)
+            for key in ("file_name", "path", "kind", "size_bytes", "sha256")
+        ):
+            raise ValueError("Package details do not match the files inventory in version metadata.")
+
         package_url = cls.RELEASES_RAW_ROOT + "/" + folder + "/" + relative_file
         return {
             "schema_version": 1,
