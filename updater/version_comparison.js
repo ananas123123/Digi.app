@@ -31,5 +31,27 @@
     return 0;
   }
 
-  return Object.freeze({ compareVersions });
+
+  function evaluateRelease(currentVersion, manifest) {
+    if (typeof currentVersion !== "string" || !manifest ||
+        manifest.product !== "Digi" || manifest.schema_version !== 1) {
+      return { status: "invalid" };
+    }
+    if (manifest.release_status !== "published") {
+      return { status: "current", reason: "unpublished" };
+    }
+    if (typeof manifest.latest_version !== "string" || !manifest.latest_version.trim()) {
+      return { status: "current", reason: "no-latest-version" };
+    }
+    const latestVersion = manifest.latest_version.trim();
+    const relation = compareVersions(latestVersion, currentVersion);
+    if (relation === null) return { status: "invalid", reason: "invalid-version" };
+    return {
+      status: relation > 0 ? "update" : "current",
+      latestVersion,
+      relation
+    };
+  }
+
+  return Object.freeze({ compareVersions, evaluateRelease });
 });
