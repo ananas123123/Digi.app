@@ -188,7 +188,7 @@ class DigiWindow(QMainWindow):
             if not marker.name.startswith(".Digi-startup-") or marker.suffix != ".confirm":
                 return
             temporary = marker.with_name(marker.name + ".tmp")
-            temporary.write_text(token + "\\n", encoding="utf-8")
+            temporary.write_text(token + "\n", encoding="utf-8")
             os.replace(temporary, marker)
         except OSError:
             # Startup should not fail merely because update confirmation could not be written.
