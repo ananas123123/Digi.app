@@ -3269,3 +3269,12 @@ button.results-folder-icon:focus-visible { outline: 2px solid #e8bd62; outline-o
   opacity: .96;
   text-shadow: 0 0 5px rgba(255, 255, 255, .16), 0 0 10px rgba(255, 255, 255, .07);
 }
+
+
+/* User-approved update prompt and download progress. */
+.digi-update-version-line{margin:0 0 18px;color:#9ca591;font-size:12px}
+.digi-update-version-line strong{color:var(--digi-text,#f3f5ed);font-variant-numeric:tabular-nums}
+.digi-update-progress{height:5px;margin:0 0 18px;border-radius:8px;background:#30352c;overflow:hidden}
+.digi-update-progress[hidden]{display:none}
+.digi-update-progress-fill{width:0;height:100%;border-radius:8px;background:#c5f36b;transition:width .2s ease}
+#digi-update-yes:disabled,#digi-update-no:disabled{opacity:.55;cursor:wait;transform:none}

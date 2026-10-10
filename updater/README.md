@@ -1,27 +1,34 @@
-# Digi Update Checker
+# Digi User-Approved Updater
 
-This folder contains the isolated update-status checker. It is deliberately separate from Digi's existing application functions.
+The updater checks the stable release manifest and waits for an explicit user decision before downloading or applying an update.
 
-## Scope
+## User flow
 
-- Read the public `latest.json` release manifest.
-- Compare numeric version components against the installed application version.
-- Set the header status dot to green when no newer published version is available, red when a newer published version is found, and grey when the check cannot be trusted.
-- Remember a detected version so a prompt can be shown on the next launch.
-- Link to the release repository for details.
+1. Read the installed version and the public `latest.json` manifest.
+2. Show the update prompt only when a newer published stable version is available.
+3. If the user selects **No**, remember that decision for that version and do not download or change application files.
+4. If the user selects **Yes, update**, fetch the matching `release.json`, validate it, download the full package, verify the exact byte size and SHA-256, and validate the ZIP paths.
+5. Stage only the expected application files: `Digi Search Engine.exe` and `Digi Source/`.
+6. Request Windows elevation for a separate PowerShell helper. Digi closes before the helper replaces the application files. The helper retains the previous executable and source tree for rollback and attempts to launch the updated application.
+7. Never extract over or delete the Search Repository, library, Incoming folder, notes, database, caches, indexes, or other user data.
 
-## Explicit non-goals
+## Release package contract
 
-The checker does **not** download packages, install updates, modify application code, delete files, move or replace existing functions, or touch Digi user documents/settings. It does not perform an automatic downgrade.
+The full ZIP must have these items at its root:
 
-The prompt is informational only. Actual update installation is intentionally not implemented here.
+- `Digi Search Engine.exe`
+- `Digi Source/` containing the required runtime source files
 
-## Release source
+The matching `release.json` must declare `product: "Digi"`, `schema_version: 1`, the matching version, a published status, and `package.download_url`, `package.size_bytes`, and `package.sha256` (or the equivalent fields under `packages.full`). Package URLs must use HTTPS.
 
-`https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/latest.json`
+## Important limitations before production publishing
 
-The release repository currently marks its stable channel as unpublished. Until a real release is published, a valid manifest means there is no published update to offer.
+- The updater only operates in a frozen/packaged Windows build, not a source checkout.
+- The release repository's current `latest.json` and versioned release metadata are inconsistent and there is no package asset attached to the existing GitHub release. Do not mark a release published until those metadata and package defects have been corrected.
+- A SHA-256 value stored in the same public repository protects against accidental corruption but does not independently prove publisher identity. Code signing should be added before broad public distribution.
+- The update helper keeps the prior application files under `%LOCALAPPDATA%\Digi\Updater\Backups`. A later maintenance policy can remove old backups only after a confirmed successful launch.
+- This implementation requires manual testing on a disposable Windows installation before production use, especially elevation, interrupted replacement, and rollback.
 
 ## Polling
 
-The checker currently polls once per second as requested. This creates a continuous request to the public release metadata endpoint while Digi is open; if this proves noisy or rate-limited, increase `CHECK_INTERVAL_MS` in `update_checker.js`.
+The status checker polls once per minute while Digi is open.

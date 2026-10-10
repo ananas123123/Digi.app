@@ -4,7 +4,8 @@ import urllib.request
 from pathlib import Path
 from PySide6.QtCore import QObject, Signal, Slot, QThread
 from PySide6.QtWidgets import QFileDialog
-from .config import APP_VERSION, LIBRARY_CONFIG, get_library_root, ensure_directories
+from .config import APP_VERSION, APP_DIR, USER_DATA_ROOT, IS_FROZEN, LIBRARY_CONFIG, get_library_root, ensure_directories
+from .updater import UpdateWorker
 from .database import Database
 from .search import SearchService
 from .files import FileService
@@ -67,6 +68,8 @@ class DigiBridge(QObject):
 
     indexUpdated = Signal()
     releaseManifestResult = Signal(str)
+    updateProgress = Signal(int, str)
+    updateFinished = Signal(str)
     conversionProgress = Signal(str, int)
     conversionFinished = Signal(bool, str, str)
     error = Signal(str)
@@ -80,6 +83,7 @@ class DigiBridge(QObject):
         self.notes = None
         self.worker = None
         self.release_worker = None
+        self.update_worker = None
         if self.version_ok:
             try:
                 ensure_directories()
@@ -106,11 +110,27 @@ class DigiBridge(QObject):
         self.release_worker.resultReady.connect(self.releaseManifestResult.emit)
         self.release_worker.start()
 
+    @Slot(str, result=bool)
+    def startUpdate(self, version):
+        """Start an update only after the frontend receives explicit user approval."""
+        if not IS_FROZEN or not self.version_ok:
+            return False
+        if self.update_worker and self.update_worker.isRunning():
+            return False
+        if not isinstance(version, str) or not version.strip():
+            return False
+        self.update_worker = UpdateWorker(version.strip(), APP_VERSION, APP_DIR, USER_DATA_ROOT, self)
+        self.update_worker.progress.connect(self.updateProgress.emit)
+        self.update_worker.finishedResult.connect(self.updateFinished.emit)
+        self.update_worker.start()
+        return True
+
     @Slot(result=str)
     def state(self):
         return json.dumps({
             "library": str(self.search_service.root) if self.search_service else "",
             "version": APP_VERSION,
+            "is_frozen": IS_FROZEN,
             "version_ok": self.version_ok,
             "version_problem": self.version_problem,
             "ready": bool(self.db and self.search_service and self.notes),
