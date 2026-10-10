@@ -5,7 +5,9 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const { DigiVersionComparison } = { DigiVersionComparison: require("../version_comparison") };
+const { DigiVersionComparison } = {
+  DigiVersionComparison: require("../version_comparison")
+};
 
 const checkerSource = fs.readFileSync(
   path.join(__dirname, "..", "update_checker.js"),
@@ -90,6 +92,18 @@ test("integration: same version sets current status and clears pending version",
   assert.equal(storage.has("digi.updateChecker.pendingVersion"), false);
 });
 
+test("integration: older published release does not offer a downgrade", async () => {
+  const { dot, storage } = await runChecker({
+    installedVersion: "1.1.0.0",
+    response: {
+      ok: true,
+      manifest: manifest({ latest_version: "1.0.0.0" })
+    }
+  });
+  assert.equal(dot.dataset.status, "current");
+  assert.equal(storage.has("digi.updateChecker.pendingVersion"), false);
+});
+
 test("integration: unpublished newer release does not offer an update", async () => {
   const { dot, storage } = await runChecker({
     response: { ok: true, manifest: manifest({ release_status: "unpublished" }) }
@@ -101,6 +115,16 @@ test("integration: unpublished newer release does not offer an update", async ()
 test("integration: invalid metadata sets failure status", async () => {
   const { dot } = await runChecker({
     response: { ok: true, manifest: manifest({ schema_version: 99 }) }
+  });
+  assert.equal(dot.dataset.status, "offline");
+});
+
+test("integration: malformed latest version sets failure status", async () => {
+  const { dot } = await runChecker({
+    response: {
+      ok: true,
+      manifest: manifest({ latest_version: "1.x.0.0" })
+    }
   });
   assert.equal(dot.dataset.status, "offline");
 });
