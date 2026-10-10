@@ -164,6 +164,79 @@ def wait_for_confirmation(marker: Path, token: str, timeout: float = STARTUP_CON
     return False
 
 
+
+
+def refresh_digi_shortcuts(target: Path, install_dir: Path) -> None:
+    """Repair existing Digi shortcuts in standard Windows locations and create Desktop shortcut."""
+    if os.name != "nt":
+        return
+
+    # Only rewrite links that clearly target a Digi executable. Do not touch
+    # unrelated shortcuts, and keep all shortcuts pointing at one stable target.
+    script = r"""
+$ErrorActionPreference = 'Stop'
+$target = [IO.Path]::GetFullPath($env:DIGI_SHORTCUT_TARGET)
+$work = [IO.Path]::GetFullPath($env:DIGI_SHORTCUT_WORKDIR)
+$shell = New-Object -ComObject WScript.Shell
+$folders = @(
+  [Environment]::GetFolderPath('Desktop'),
+  [Environment]::GetFolderPath('CommonDesktopDirectory'),
+  [Environment]::GetFolderPath('Programs'),
+  [Environment]::GetFolderPath('CommonPrograms'),
+  (Join-Path $env:APPDATA 'Microsoft\Internet Explorer\Quick Launch'),
+  (Join-Path $env:APPDATA 'Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar')
+) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Container) } | Select-Object -Unique
+$seen = @{}
+foreach ($folder in $folders) {
+  Get-ChildItem -LiteralPath $folder -Filter '*.lnk' -File -Recurse -ErrorAction SilentlyContinue |
+    ForEach-Object {
+      if ($seen.ContainsKey($_.FullName)) { return }
+      $seen[$_.FullName] = $true
+      try {
+        $link = $shell.CreateShortcut($_.FullName)
+        $linkTarget = [string]$link.TargetPath
+        $leaf = [IO.Path]::GetFileName($linkTarget)
+        if ($leaf -ieq 'Digi Search Engine.exe' -or $leaf -ieq 'Digi.exe' -or $leaf -ieq 'Digi Search Engine') {
+          if ([IO.Path]::GetFullPath($linkTarget) -ine $target) {
+            $link.TargetPath = $target
+            $link.WorkingDirectory = $work
+            $link.IconLocation = $target + ',0'
+            $link.Description = 'Launch Digi Search Engine'
+            $link.Save()
+          }
+        }
+      } catch {
+        Write-Output ('WARNING: Could not update shortcut ' + $_.FullName + ': ' + $_.Exception.Message)
+      }
+    }
+}
+$desktop = [Environment]::GetFolderPath('Desktop')
+if (-not $desktop) { throw 'Windows did not provide the Desktop folder.' }
+$desktopLink = Join-Path $desktop 'Digi.lnk'
+$link = $shell.CreateShortcut($desktopLink)
+$link.TargetPath = $target
+$link.WorkingDirectory = $work
+$link.IconLocation = $target + ',0'
+$link.Description = 'Launch Digi Search Engine'
+$link.Save()
+"""
+    environment = os.environ.copy()
+    environment["DIGI_SHORTCUT_TARGET"] = str(target.resolve())
+    environment["DIGI_SHORTCUT_WORKDIR"] = str(install_dir.resolve())
+    try:
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+            env=environment, capture_output=True, text=True, timeout=60, check=False,
+        )
+        for line in (result.stdout or "").splitlines():
+            log_event("SHORTCUT", line)
+        if result.returncode:
+            log_event("WARNING", "Shortcut refresh failed: " + (result.stderr or result.stdout or f"exit {result.returncode}"))
+        else:
+            log_event("SUCCESS", "Digi shortcuts refreshed to the stable executable path.")
+    except (OSError, subprocess.SubprocessError) as exc:
+        log_event("WARNING", f"Shortcut refresh could not run: {type(exc).__name__}: {exc}")
+
 def install_update(
     *,
     helper_path: Path,
@@ -253,15 +326,29 @@ def install_update(
             # bookkeeping could not be written. The app still uses the same user data.
             pass
 
-        # Keep the rollback copy after success for now. A later cleanup policy may
-        # remove it only after the startup confirmation has been observed and recorded.
+        # Startup was confirmed. Repair known Digi shortcuts before removing
+        # recovery/download copies; shortcut repair is best-effort and cannot undo
+        # an otherwise successful executable update.
+        refresh_digi_shortcuts(target, install_dir)
+
+        # Remove redundant package and rollback copies only after successful startup.
+        # If cleanup fails, keep the file and record its exact location for recovery.
+        for redundant in (backup, candidate):
+            try:
+                redundant.unlink(missing_ok=True)
+                log_event("CLEANUP", f"Removed confirmed-update artifact: {redundant}")
+            except OSError as cleanup_error:
+                log_event("WARNING", f"Could not remove confirmed-update artifact {redundant}: {cleanup_error}")
     except Exception as exc:
         log_event("ERROR", f"Helper update failed: {type(exc).__name__}: {exc}")
         if replaced and not confirmed and backup.exists():
             try:
                 if target.exists():
-                    failed = install_dir / f".Digi-failed-{version}-{os.getpid()}.exe"
+                    failed_dir = install_dir / "Logs" / "failed-updates"
+                    failed_dir.mkdir(parents=True, exist_ok=True)
+                    failed = failed_dir / f"Digi-failed-{version}-{os.getpid()}.exe"
                     os.replace(target, failed)
+                    log_event("ROLLBACK", f"Retained failed candidate for diagnosis at {failed}")
                 os.replace(backup, target)
                 log_event("ROLLBACK", f"Restored previous executable from {backup}")
             except OSError as rollback_error:
