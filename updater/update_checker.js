@@ -22,6 +22,22 @@
     dot.setAttribute("aria-label", title);
   }
 
+  function showTestModeBanner() {
+    if (document.getElementById("digi-updater-test-banner")) return;
+    const banner = document.createElement("div");
+    banner.id = "digi-updater-test-banner";
+    banner.setAttribute("role", "status");
+    banner.textContent = "DEVELOPMENT TEST MODE — LOCAL UPDATE FEED — NO INSTALLS";
+    Object.assign(banner.style, {
+      position: "fixed", left: "12px", bottom: "12px", zIndex: "20000",
+      padding: "9px 12px", border: "1px solid #e0b83e", borderRadius: "9px",
+      background: "#29230f", color: "#ffe28a", font: "600 11px Segoe UI, Arial, sans-serif",
+      letterSpacing: ".04em", boxShadow: "0 4px 20px rgba(0,0,0,.45)",
+      pointerEvents: "none"
+    });
+    document.body.appendChild(banner);
+  }
+
   function waitForBridge() {
     return new Promise((resolve, reject) => {
       const started = Date.now();
@@ -105,6 +121,7 @@
         throw new Error("Could not reach the release repository.");
       }
 
+      if (response.test_mode === true) showTestModeBanner();
       const manifest = response.manifest;
       if (manifest.product !== "Digi" || manifest.schema_version !== 1) {
         throw new Error("Release metadata schema is not supported.");
