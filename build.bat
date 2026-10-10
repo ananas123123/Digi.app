@@ -185,7 +185,9 @@ if errorlevel 1 (
     exit /b 1
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$desktop=[Environment]::GetFolderPath('Desktop'); $target='%EXE_PATH%'; $work='%FINAL_DIR%'; $shell=New-Object -ComObject WScript.Shell; $shortcut=$shell.CreateShortcut((Join-Path $desktop 'Digi.lnk')); $shortcut.TargetPath=$target; $shortcut.WorkingDirectory=$work; $shortcut.IconLocation=$target+',0'; $shortcut.Description='Launch Digi Search Engine'; $shortcut.Save()"
+set "DIGI_SHORTCUT_TARGET=%EXE_PATH%"
+set "DIGI_SHORTCUT_WORKDIR=%FINAL_DIR%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$desktop=[Environment]::GetFolderPath('Desktop'); $target=$env:DIGI_SHORTCUT_TARGET; $work=$env:DIGI_SHORTCUT_WORKDIR; $shell=New-Object -ComObject WScript.Shell; $shortcut=$shell.CreateShortcut((Join-Path $desktop 'Digi.lnk')); $shortcut.TargetPath=$target; $shortcut.WorkingDirectory=$work; $shortcut.IconLocation=$target+',0'; $shortcut.Description='Launch Digi Search Engine'; $shortcut.Save()"
 if errorlevel 1 (
     echo WARNING: Digi was built, but the desktop shortcut could not be created.
 ) else (
