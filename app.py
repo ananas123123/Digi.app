@@ -19,10 +19,10 @@ from backend.version_manager import repair_after_close
 BASE_DIR = Path(__file__).resolve().parent
 
 RESIZE_MARGIN = 8
-ACCENT = "#c5f36b"
-WINDOW_BG = "#10110f"
-TITLEBAR_BG = "#171916"
-TITLEBAR_BORDER = "#30352c"
+ACCENT = "#e8bd62"
+WINDOW_BG = "#ffffff"
+TITLEBAR_BG = "#f7f7f5"
+TITLEBAR_BORDER = "#deded9"
 
 
 class DigiWebView(QWebEngineView):
@@ -109,18 +109,18 @@ class DigiWindow(QMainWindow):
             }}
             QLabel#DigiTitleMark {{
                 background: {ACCENT};
-                color: #1b2410;
+                color: #35270a;
                 border-radius: 7px;
                 font-size: 14px;
                 font-weight: 900;
             }}
             QLabel#DigiTitleText {{
-                color: #f3f5ed;
+                color: #242424;
                 font-size: 13px;
                 font-weight: 750;
             }}
             QLabel#DigiTitleSubtitle {{
-                color: #8f9884;
+                color: #77776f;
                 font-size: 9px;
                 font-weight: 700;
                 letter-spacing: 1px;
@@ -129,7 +129,7 @@ class DigiWindow(QMainWindow):
             QPushButton#DigiMinButton, QPushButton#DigiMaxButton,
             QPushButton#DigiCloseButton {{
                 background: transparent;
-                color: #c5cbbd;
+                color: #5c5c56;
                 border: none;
                 border-radius: 0;
                 font-size: 15px;
@@ -137,8 +137,8 @@ class DigiWindow(QMainWindow):
                 padding: 0;
             }}
             QPushButton#DigiMinButton:hover, QPushButton#DigiMaxButton:hover {{
-                background: #2a2e25;
-                color: #ffffff;
+                background: #e9e9e4;
+                color: #242424;
             }}
             QPushButton#DigiCloseButton:hover {{
                 background: #d83b43;
