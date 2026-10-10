@@ -31,6 +31,7 @@ class VersionManagerBootstrapTests(unittest.TestCase):
             patch.object(vm, "EXPECTED_DIRECTORIES", (self.search, self.notes, self.cache, self.manager)),
             patch.object(vm, "expected_version", return_value="1.2.0.0"),
             patch.object(vm, "_unexpected_existing_root", return_value=None),
+            patch.object(vm._PROTECTED_LOCK, "acquire"),
         ]
         for item in self.patches:
             item.start()
