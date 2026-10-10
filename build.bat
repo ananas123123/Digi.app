@@ -178,13 +178,15 @@ if not exist "%UPDATER_DIST_CACHE%\DigiUpdater.exe" (
 copy /y "%UPDATER_DIST_CACHE%\DigiUpdater.exe" "%FINAL_DIR%\DigiUpdater.exe" >nul
 if errorlevel 1 (echo FATAL: Could not copy DigiUpdater.exe to the output folder.&pause&exit /b 1)
 
-if not exist "%FINAL_DIR%\\Logs\\." mkdir "%FINAL_DIR%\\Logs"
+if not exist "%FINAL_DIR%\Logs\." mkdir "%FINAL_DIR%\Logs"
 if errorlevel 1 (
     echo FATAL: Could not create the Digi logs folder.
     pause
     exit /b 1
 )
 
+set "DIGI_SHORTCUT_TARGET=%EXE_PATH%"
+set "DIGI_SHORTCUT_WORKDIR=%FINAL_DIR%"
 set "DIGI_SHORTCUT_TARGET=%EXE_PATH%"
 set "DIGI_SHORTCUT_WORKDIR=%FINAL_DIR%"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$desktop=[Environment]::GetFolderPath('Desktop'); $target=$env:DIGI_SHORTCUT_TARGET; $work=$env:DIGI_SHORTCUT_WORKDIR; $shell=New-Object -ComObject WScript.Shell; $shortcut=$shell.CreateShortcut((Join-Path $desktop 'Digi.lnk')); $shortcut.TargetPath=$target; $shortcut.WorkingDirectory=$work; $shortcut.IconLocation=$target+',0'; $shortcut.Description='Launch Digi Search Engine'; $shortcut.Save()"
@@ -376,14 +378,16 @@ if not exist "%UPDATER_DIST_CACHE%\DigiUpdater.exe" (
 copy /y "%UPDATER_DIST_CACHE%\DigiUpdater.exe" "%FINAL_DIR%\DigiUpdater.exe" >nul
 if errorlevel 1 (echo FATAL: Could not copy DigiUpdater.exe to the output folder.&pause&exit /b 1)
 
-if not exist "%FINAL_DIR%\\Logs\\." mkdir "%FINAL_DIR%\\Logs"
+if not exist "%FINAL_DIR%\Logs\." mkdir "%FINAL_DIR%\Logs"
 if errorlevel 1 (
     echo FATAL: Could not create the Digi logs folder.
     pause
     exit /b 1
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$desktop=[Environment]::GetFolderPath('Desktop'); $target='%EXE_PATH%'; $work='%FINAL_DIR%'; $shell=New-Object -ComObject WScript.Shell; $shortcut=$shell.CreateShortcut((Join-Path $desktop 'Digi.lnk')); $shortcut.TargetPath=$target; $shortcut.WorkingDirectory=$work; $shortcut.IconLocation=$target+',0'; $shortcut.Description='Launch Digi Search Engine'; $shortcut.Save()"
+set "DIGI_SHORTCUT_TARGET=%EXE_PATH%"
+set "DIGI_SHORTCUT_WORKDIR=%FINAL_DIR%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$desktop=[Environment]::GetFolderPath('Desktop'); $target=$env:DIGI_SHORTCUT_TARGET; $work=$env:DIGI_SHORTCUT_WORKDIR; $shell=New-Object -ComObject WScript.Shell; $shortcut=$shell.CreateShortcut((Join-Path $desktop 'Digi.lnk')); $shortcut.TargetPath=$target; $shortcut.WorkingDirectory=$work; $shortcut.IconLocation=$target+',0'; $shortcut.Description='Launch Digi Search Engine'; $shortcut.Save()"
 if errorlevel 1 (
     echo WARNING: Digi was built, but the desktop shortcut could not be created.
 ) else (
@@ -392,7 +396,7 @@ if errorlevel 1 (
 
 echo.
 echo BUILD AND INSTALL COMPLETE: "%EXE_PATH%"
-echo Separate updater helper: "%FINAL_DIR%\\DigiUpdater.exe"
-echo Application and persistent Digi data are located under "%LOCALAPPDATA%\\Digi".
+echo Separate updater helper: "%FINAL_DIR%\DigiUpdater.exe"
+echo Application and persistent Digi data are located under "%LOCALAPPDATA%\Digi".
 echo Existing Search Repository, Cache, notes, and other user data were not deleted.
 pause
