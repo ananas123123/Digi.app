@@ -1,10 +1,13 @@
 import json
 import os
+import subprocess
+import sys
+import tempfile
 import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from PySide6.QtCore import QObject, Signal, Slot, QThread
+from PySide6.QtCore import QObject, Signal, Slot, QThread, QTimer
 from PySide6.QtWidgets import QFileDialog
 from .config import APP_VERSION, LIBRARY_CONFIG, get_library_root, ensure_directories
 from .database import Database
@@ -13,7 +16,7 @@ from .files import FileService
 from .conversion import ConversionWorker
 from .notes import NotesService
 from .version_manager import initialize_version_file, version_integrity, recalibrate_version
-from .updater_download import download_package_to_temp
+from .updater_download import download_package_to_temp, verify_package_sha256
 
 
 class ReleaseManifestWorker(QThread):
@@ -91,7 +94,15 @@ class PackageDownloadWorker(QThread):
         try:
             manifest = json.loads(self.manifest_json)
             path = download_package_to_temp(manifest)
-            result = {"ok": True, "path": path, "version": manifest.get("latest_version", ""), "verified": True, "message": "Package downloaded and verified. Installation has not started."}
+            package = manifest.get("release", {}).get("package", {})
+            result = {
+                "ok": True,
+                "path": path,
+                "version": manifest.get("latest_version", ""),
+                "sha256": package.get("sha256", ""),
+                "verified": True,
+                "message": "Package downloaded and verified. Ready to install."
+            }
         except Exception as exc:
             result = {"ok": False, "verified": False, "message": str(exc) or "The update package could not be downloaded and verified."}
         self.resultReady.emit(json.dumps(result))
@@ -164,6 +175,62 @@ class DigiBridge(QObject):
         self.package_download_worker = PackageDownloadWorker(manifest_json, self)
         self.package_download_worker.resultReady.connect(self.packageDownloadResult.emit)
         self.package_download_worker.start()
+
+    @Slot(str, str, result=str)
+    def installReleaseUpdate(self, manifest_json, downloaded_path):
+        """Hand a verified update to the separate helper, only from the stable install."""
+        try:
+            manifest = json.loads(manifest_json)
+            release = manifest.get("release")
+            package = release.get("package") if isinstance(release, dict) else None
+            version = manifest.get("latest_version")
+            if (
+                manifest.get("product") != "Digi"
+                or manifest.get("schema_version") != 1
+                or manifest.get("release_status") != "published"
+                or not isinstance(version, str)
+                or not isinstance(release, dict)
+                or release.get("version") != version
+                or not isinstance(package, dict)
+            ):
+                raise ValueError("Release metadata is invalid.")
+            expected_hash = package.get("sha256")
+            expected_size = package.get("size_bytes")
+            if not isinstance(expected_hash, str) or not isinstance(expected_size, int) or isinstance(expected_size, bool):
+                raise ValueError("Release package verification metadata is invalid.")
+
+            local_app_data = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))).resolve()
+            install_dir = (local_app_data / "Programs" / "Digi").resolve()
+            target = Path(sys.executable).resolve()
+            helper = install_dir / "DigiUpdater.exe"
+            candidate = Path(downloaded_path).resolve()
+            temp_root = Path(tempfile.gettempdir()).resolve()
+
+            if target != (install_dir / "Digi Search Engine.exe").resolve():
+                raise ValueError(
+                    "Self-update is available only from Digi's stable installation at "
+                    "%LOCALAPPDATA%\\Programs\\Digi. This copy was not changed."
+                )
+            if not helper.is_file():
+                raise FileNotFoundError("DigiUpdater.exe is missing from the installation directory.")
+            if candidate.parent != temp_root or not candidate.name.startswith("digi-update-") or candidate.suffix != ".download":
+                raise ValueError("The downloaded update file is not in Digi's expected temporary location.")
+            if not candidate.is_file() or candidate.stat().st_size != expected_size:
+                raise ValueError("The downloaded update size does not match the release metadata.")
+            verify_package_sha256(candidate, expected_hash)
+
+            subprocess.Popen([
+                str(helper),
+                "--parent-pid", str(os.getpid()),
+                "--target-exe", str(target),
+                "--candidate-exe", str(candidate),
+                "--sha256", expected_hash,
+                "--version", version,
+            ], cwd=str(install_dir), close_fds=True)
+            QTimer.singleShot(700, self.parent().close if self.parent() else lambda: None)
+            return json.dumps({"ok": True, "message": "Digi is closing to install the verified update."})
+        except Exception as exc:
+            return json.dumps({"ok": False, "message": str(exc) or "Could not start the update helper."})
 
     @Slot(result=str)
     def state(self):
