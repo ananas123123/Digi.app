@@ -47,7 +47,7 @@
     progress.textContent = "";
     later.disabled = false;
     if (validation.valid) {
-      if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> is available. Download and verify the test file. This action only saves the file; it will not install or replace Digi.';
+      if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> is available. Download and verify the release package. This action only saves the file; it will not install or replace Digi.';
       download.disabled = false;
       download.textContent = "Update now";
     } else {
@@ -277,7 +277,7 @@
       const response = await readManifest(backend);
 
       if (!response || !response.ok || !response.manifest) {
-        throw new Error("Could not reach the release repository.");
+        throw new Error(response && response.error ? response.error : "Could not resolve latest.json through releases/directory.json and version metadata.");
       }
 
       if (response.test_mode === true) showTestModeBanner();
