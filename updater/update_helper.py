@@ -8,6 +8,7 @@ It never touches Digi's persistent user-data directory.
 from __future__ import annotations
 
 import argparse
+import ctypes
 import hashlib
 import os
 from pathlib import Path
@@ -65,26 +66,50 @@ def validate_paths(
         raise FileNotFoundError("The verified update candidate was not found.")
     if candidate == target or candidate == helper:
         raise ValueError("The update candidate cannot be an installed application file.")
-    if candidate.suffix.lower() != ".exe":
-        raise ValueError("The update candidate must be an executable.")
     return install_dir, target, candidate
 
 
 def wait_for_process_exit(pid: int, timeout: float = WAIT_FOR_APP_SECONDS) -> None:
+    """Wait using Windows process handles; never use os.kill(pid, 0) on Windows."""
+    if os.name != "nt":
+        raise OSError("Digi's executable updater can only run on Windows.")
     if pid <= 0 or pid == os.getpid():
         raise ValueError("The Digi process ID is invalid.")
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    open_process = kernel32.OpenProcess
+    open_process.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32]
+    open_process.restype = ctypes.c_void_p
+    wait_for_single_object = kernel32.WaitForSingleObject
+    wait_for_single_object.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+    wait_for_single_object.restype = ctypes.c_uint32
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = [ctypes.c_void_p]
+    close_handle.restype = ctypes.c_int
+
+    SYNCHRONIZE = 0x00100000
+    WAIT_OBJECT_0 = 0x00000000
+    WAIT_TIMEOUT = 0x00000102
+    handle = open_process(SYNCHRONIZE, False, pid)
+    if not handle:
+        error = ctypes.get_last_error()
+        # ERROR_INVALID_PARAMETER means the process no longer exists.
+        if error == 87:
             return
-        except PermissionError:
-            # The process exists but is inaccessible; do not replace its executable.
-            time.sleep(POLL_SECONDS)
-        else:
-            time.sleep(POLL_SECONDS)
-    raise TimeoutError("Digi did not close in time. The installed executable was not changed.")
+        raise OSError(error, "Could not safely open Digi's process to wait for exit.")
+
+    try:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            remaining_ms = max(1, min(1000, int((deadline - time.monotonic()) * 1000)))
+            result = wait_for_single_object(handle, remaining_ms)
+            if result == WAIT_OBJECT_0:
+                return
+            if result != WAIT_TIMEOUT:
+                raise OSError(ctypes.get_last_error(), "Could not safely wait for Digi to exit.")
+        raise TimeoutError("Digi did not close in time. The installed executable was not changed.")
+    finally:
+        close_handle(handle)
 
 
 def wait_for_confirmation(marker: Path, token: str, timeout: float = STARTUP_CONFIRM_SECONDS) -> bool:
