@@ -152,9 +152,9 @@ if not exist "%UPDATER_DIST_CACHE%\DigiUpdater.exe" (
 )
 
 echo Both builds passed. Staging executables before installation...
-if not exist "%INSTALL_DIR%\" mkdir "%INSTALL_DIR%"
+if not exist "%INSTALL_DIR%\." mkdir "%INSTALL_DIR%"
 if errorlevel 1 (echo FATAL: Could not create "%INSTALL_DIR%".&pause&exit /b 1)
-if not exist "%INSTALL_DIR%\Logs\" mkdir "%INSTALL_DIR%\Logs"
+if not exist "%INSTALL_DIR%\Logs\." mkdir "%INSTALL_DIR%\Logs"
 if errorlevel 1 (echo FATAL: Could not create the updater log folder.&pause&exit /b 1)
 
 set "STAGED_APP=%INSTALL_DIR%\.Digi Search Engine.exe.new"
