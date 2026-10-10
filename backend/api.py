@@ -22,10 +22,12 @@ from .updater_download import download_package_to_path, verify_package_sha256
 
 class ReleaseManifestWorker(QThread):
     resultReady = Signal(str)
-    URLS = (
+
+    LATEST_URLS = (
         "https://api.github.com/repos/ananas123123/digiwebversionreleases/contents/latest.json?ref=main",
         "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/latest.json",
     )
+    RELEASES_RAW_ROOT = "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/releases"
 
     @staticmethod
     def _local_test_url():
@@ -48,39 +50,144 @@ class ReleaseManifestWorker(QThread):
         except (TypeError, ValueError):
             return None
 
+    @staticmethod
+    def _read_json(url, github_api=False):
+        separator = "&" if "?" in url else "?"
+        request_url = url + separator + "_digi_check=" + str(int(time.time() * 1000))
+        request = urllib.request.Request(request_url, headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "Digi-Update-Checker",
+            "Cache-Control": "no-cache, no-store, max-age=0",
+            "Pragma": "no-cache",
+        })
+        with urllib.request.urlopen(request, timeout=10) as response:
+            payload = response.read()
+        if github_api:
+            import base64
+            envelope = json.loads(payload.decode("utf-8"))
+            if envelope.get("encoding") != "base64" or not envelope.get("content"):
+                raise ValueError("GitHub API did not return base64 file content.")
+            payload = base64.b64decode(envelope["content"])
+        value = json.loads(payload.decode("utf-8"))
+        if not isinstance(value, dict):
+            raise ValueError("Release metadata must be a JSON object.")
+        return value
+
+    @classmethod
+    def _read_first_json(cls, urls):
+        last_error = None
+        for url, is_api in urls:
+            try:
+                return cls._read_json(url, github_api=is_api)
+            except Exception as exc:
+                last_error = exc
+        raise ValueError("Could not read release metadata: " + (str(last_error) if last_error else "no metadata URLs configured"))
+
+    @staticmethod
+    def _safe_relative_path(value, label):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(label + " is missing.")
+        normalized = value.replace("\\\\", "/").strip()
+        parsed = urllib.parse.urlparse(normalized)
+        parts = normalized.split("/")
+        if parsed.scheme or parsed.netloc or normalized.startswith("/") or any(part in {"", ".", ".."} for part in parts):
+            raise ValueError(label + " must be a safe relative path.")
+        return "/".join(urllib.parse.quote(part, safe="._- ") for part in parts).replace(" ", "%20")
+
+    @classmethod
+    def _resolve_latest_manifest(cls, latest):
+        if latest.get("schema_version") != 1 or latest.get("product") != "Digi":
+            raise ValueError("latest.json has an unsupported schema or product.")
+        version = latest.get("latest_version")
+        if not isinstance(version, str) or not version.strip() or not re.fullmatch(r"\\d+(?:\\.\\d+)*", version.strip()):
+            raise ValueError("latest.json does not contain a valid latest_version.")
+        version = version.strip()
+        status = latest.get("release_status")
+        if status not in {"published", "unpublished"}:
+            raise ValueError("latest.json has an invalid release_status.")
+        if status == "unpublished":
+            return {
+                "schema_version": 1, "product": "Digi", "channel": latest.get("channel", "stable"),
+                "latest_version": version, "release_status": status, "message": latest.get("message", ""),
+                "release": {"version": version}
+            }
+
+        directory_index = cls._read_json(cls.RELEASES_RAW_ROOT + "/directory.json")
+        if directory_index.get("schema_version") != 1 or directory_index.get("product") != "Digi":
+            raise ValueError("releases/directory.json has an unsupported schema or product.")
+        entries = directory_index.get("releases")
+        entry = entries.get(version) if isinstance(entries, dict) else None
+        if not isinstance(entry, dict):
+            raise ValueError("directory.json does not contain latest version " + version + ".")
+
+        folder = cls._safe_relative_path(entry.get("directory"), "Release directory")
+        metadata_path = cls._safe_relative_path(entry.get("metadata_file"), "Release metadata_file")
+        if "/" in folder or not metadata_path.startswith(folder + "/"):
+            raise ValueError("directory.json points to a metadata file outside the selected release folder.")
+
+        metadata_url = cls.RELEASES_RAW_ROOT + "/" + metadata_path
+        release_metadata = cls._read_json(metadata_url)
+        if (
+            release_metadata.get("schema_version") != 1
+            or release_metadata.get("product") != "Digi"
+            or release_metadata.get("version") != version
+            or release_metadata.get("directory") != folder
+        ):
+            raise ValueError("Version-specific release metadata does not match latest.json and directory.json.")
+
+        package = release_metadata.get("package")
+        if not isinstance(package, dict):
+            raise ValueError("The selected release metadata has no package entry.")
+        filename = package.get("file_name")
+        relative_file = cls._safe_relative_path(package.get("path"), "Package path")
+        if "/" in relative_file or not isinstance(filename, str) or not filename.strip() or filename != package.get("path"):
+            raise ValueError("Package filename and relative path must identify one file inside the release folder.")
+        if Path(filename).name != filename or Path(filename).suffix.lower() not in {".exe", ".txt"}:
+            raise ValueError("The selected release package must be a .exe or .txt file.")
+        size = package.get("size_bytes")
+        checksum = package.get("sha256")
+        if isinstance(size, bool) or not isinstance(size, int) or size <= 0:
+            raise ValueError("Package size_bytes must be a positive integer.")
+        if not isinstance(checksum, str) or not re.fullmatch(r"[a-fA-F0-9]{64}", checksum):
+            raise ValueError("Package SHA-256 checksum is invalid.")
+
+        package_url = cls.RELEASES_RAW_ROOT + "/" + folder + "/" + relative_file
+        return {
+            "schema_version": 1,
+            "product": "Digi",
+            "channel": latest.get("channel", "stable"),
+            "latest_version": version,
+            "release_status": status,
+            "message": latest.get("message", ""),
+            "release": {
+                "version": version,
+                "url": "https://github.com/ananas123123/digiwebversionreleases/tree/main/releases/" + folder,
+                "published_at": release_metadata.get("published_at"),
+                "notes": release_metadata.get("release_notes", ""),
+                "package": {
+                    "url": package_url,
+                    "file_name": filename,
+                    "size_bytes": size,
+                    "sha256": checksum.lower(),
+                    "kind": package.get("kind", "installer")
+                }
+            }
+        }
+
     def run(self):
         test_url = self._local_test_url()
-        urls = (test_url,) if test_url else self.URLS
-        cache_buster = str(int(time.time() * 1000))
-        for base_url in urls:
-            try:
-                separator = "&" if "?" in base_url else "?"
-                url = base_url + separator + "_digi_check=" + cache_buster
-                request = urllib.request.Request(url, headers={
-                    "Accept": "application/vnd.github+json",
-                    "User-Agent": "Digi-Update-Checker",
-                    "Cache-Control": "no-cache, no-store, max-age=0",
-                    "Pragma": "no-cache",
-                })
-                with urllib.request.urlopen(request, timeout=8) as response:
-                    payload = response.read()
-                if "api.github.com" in base_url:
-                    import base64
-                    envelope = json.loads(payload.decode("utf-8"))
-                    if envelope.get("encoding") != "base64" or not envelope.get("content"):
-                        raise ValueError("GitHub API did not return base64 file content")
-                    payload = base64.b64decode(envelope["content"])
-                manifest = json.loads(payload.decode("utf-8"))
+        try:
+            if test_url:
+                manifest = self._read_json(test_url)
+                result = {"ok": True, "manifest": manifest, "test_mode": True}
+            else:
+                latest = self._read_first_json(tuple((url, "api.github.com" in url) for url in self.LATEST_URLS))
+                manifest = self._resolve_latest_manifest(latest)
                 result = {"ok": True, "manifest": manifest}
-                if test_url:
-                    result["test_mode"] = True
-                self.resultReady.emit(json.dumps(result))
-                return
-            except Exception:
-                continue
-        result = {"ok": False, "manifest": None}
-        if test_url:
-            result["test_mode"] = True
+        except Exception as exc:
+            result = {"ok": False, "manifest": None, "error": str(exc)}
+            if test_url:
+                result["test_mode"] = True
         self.resultReady.emit(json.dumps(result))
 
 
