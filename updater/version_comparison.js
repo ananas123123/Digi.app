@@ -1,4 +1,4 @@
-/* Pure version comparison shared by Digi's updater and automated tests. */
+/* Pure version comparison and release-package validation shared by Digi and tests. */
 (function (root, factory) {
   "use strict";
   const api = factory();
@@ -39,8 +39,6 @@
     const relation = compareVersions(latestVersion, currentVersion);
     if (relation === null) return { status: "invalid", reason: "invalid-version" };
 
-    // Announced version comparison is independent of package publication.
-    // A red indicator means a newer version was announced, not that a package exists.
     if (relation > 0) {
       return {
         status: "update",
@@ -52,5 +50,56 @@
     return { status: "current", latestVersion, relation };
   }
 
-  return Object.freeze({ compareVersions, evaluateRelease });
+  /*
+   * Validate package details before any future downloader is permitted to run.
+   * This does not download a file or establish publisher identity.
+   */
+  function validatePackageMetadata(manifest) {
+    if (!manifest || manifest.product !== "Digi" || manifest.schema_version !== 1) {
+      return { valid: false, reason: "invalid-manifest" };
+    }
+    if (manifest.release_status !== "published") {
+      return { valid: false, reason: "release-unpublished" };
+    }
+    const latest = manifest.latest_version;
+    const release = manifest.release;
+    if (typeof latest !== "string" || compareVersions(latest, latest) === null ||
+        !release || typeof release !== "object" ||
+        typeof release.version !== "string" ||
+        compareVersions(release.version, latest) !== 0) {
+      return { valid: false, reason: "release-version-mismatch" };
+    }
+    const pkg = release.package;
+    if (!pkg || typeof pkg !== "object") {
+      return { valid: false, reason: "missing-package" };
+    }
+    if (typeof pkg.url !== "string") {
+      return { valid: false, reason: "invalid-package-url" };
+    }
+    let parsed;
+    try {
+      parsed = new URL(pkg.url);
+    } catch (_) {
+      return { valid: false, reason: "invalid-package-url" };
+    }
+    if (parsed.protocol !== "https:" || !parsed.hostname ||
+        parsed.username || parsed.password || parsed.hash) {
+      return { valid: false, reason: "invalid-package-url" };
+    }
+    if (!Number.isSafeInteger(pkg.size_bytes) || pkg.size_bytes <= 0) {
+      return { valid: false, reason: "invalid-package-size" };
+    }
+    if (typeof pkg.sha256 !== "string" || !/^[a-fA-F0-9]{64}$/.test(pkg.sha256)) {
+      return { valid: false, reason: "invalid-package-sha256" };
+    }
+    return {
+      valid: true,
+      url: parsed.href,
+      sizeBytes: pkg.size_bytes,
+      sha256: pkg.sha256.toLowerCase(),
+      version: latest.trim()
+    };
+  }
+
+  return Object.freeze({ compareVersions, evaluateRelease, validatePackageMetadata });
 });
