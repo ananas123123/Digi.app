@@ -143,17 +143,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Copying main executable...
-echo Source: "%DIST_CACHE%\Digi Search Engine.exe"
-echo Target: "%FINAL_DIR%\"
-copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%FINAL_DIR%\"
-if errorlevel 1 (
-    echo FATAL: Could not copy the executable to the output folder.
-    echo Confirm the source and destination paths shown above.
-    pause
-    exit /b 1
-)
-
 set "UPDATER_BUILD_CACHE=%FACTORY_DIR%Cache\build\updater-helper-%APP_VERSION%"
 set "UPDATER_DIST_CACHE=%FACTORY_DIR%Cache\dist\updater-helper-%APP_VERSION%"
 set "UPDATER_SPEC_CACHE=%FACTORY_DIR%Cache\spec\updater-helper-%APP_VERSION%"
@@ -175,6 +164,17 @@ if not exist "%UPDATER_DIST_CACHE%\DigiUpdater.exe" (
     pause
     exit /b 1
 )
+
+echo Installing main executable into LocalAppData...
+echo Source: "%DIST_CACHE%\Digi Search Engine.exe"
+echo Target: "%FINAL_DIR%\"
+copy /y "%DIST_CACHE%\Digi Search Engine.exe" "%FINAL_DIR%\"
+if errorlevel 1 (
+    echo FATAL: Could not copy the main executable to the Digi installation.
+    pause
+    exit /b 1
+)
+
 copy /y "%UPDATER_DIST_CACHE%\DigiUpdater.exe" "%FINAL_DIR%\DigiUpdater.exe" >nul
 if errorlevel 1 (echo FATAL: Could not copy DigiUpdater.exe to the output folder.&pause&exit /b 1)
 
