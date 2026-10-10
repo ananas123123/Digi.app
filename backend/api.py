@@ -219,6 +219,19 @@ class DigiBridge(QObject):
             if not candidate.is_file() or candidate.stat().st_size != expected_size:
                 raise ValueError("The downloaded update size does not match the release metadata.")
             verify_package_sha256(candidate, expected_hash)
+            with candidate.open("rb") as executable:
+                if executable.read(2) != b"MZ":
+                    raise ValueError("The downloaded package is not a Windows executable.")
+                executable.seek(0x3C)
+                pe_offset_bytes = executable.read(4)
+                if len(pe_offset_bytes) != 4:
+                    raise ValueError("The downloaded executable header is invalid.")
+                pe_offset = int.from_bytes(pe_offset_bytes, "little")
+                if pe_offset < 64 or pe_offset > 16 * 1024 * 1024:
+                    raise ValueError("The downloaded executable header is invalid.")
+                executable.seek(pe_offset)
+                if executable.read(4) != b"PE\\x00\\x00":
+                    raise ValueError("The downloaded package is not a valid Windows executable.")
 
             subprocess.Popen([
                 str(helper),
