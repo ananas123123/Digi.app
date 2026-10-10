@@ -2,28 +2,17 @@
 setlocal EnableExtensions
 cd /d "%~dp0"
 
-echo Checking for an installed Digi copy...
-set "INSTALLED_DIGI_DIR=%LOCALAPPDATA%\Programs\Digi"
-if exist "%INSTALLED_DIGI_DIR%\Digi Search Engine.exe" (
-    echo.
-    echo FATAL: Installed Digi executable found:
-    echo "%INSTALLED_DIGI_DIR%\Digi Search Engine.exe"
-    echo Build cancelled to avoid interfering with an installed copy.
-    pause
-    exit /b 1
-)
-if exist "%INSTALLED_DIGI_DIR%\DigiUpdater.exe" (
-    echo.
-    echo FATAL: Installed Digi updater helper found:
-    echo "%INSTALLED_DIGI_DIR%\DigiUpdater.exe"
-    echo Build cancelled to avoid interfering with an installed copy.
+echo Checking whether Digi is currently running...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Process -Name 'Digi Search Engine' -ErrorAction SilentlyContinue) { exit 1 }; exit 0"
+if errorlevel 1 (
+    echo FATAL: Close Digi before rebuilding. The installed executable cannot be safely replaced while it is running.
     pause
     exit /b 1
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$keys=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'); $found=Get-ItemProperty $keys -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -and $_.DisplayName -like '*Digi*' } | Select-Object -First 1; if ($found) { Write-Output 'DIGI_FOUND'; Write-Output $found.DisplayName; exit 1 }; exit 0"
 set "FACTORY_DIR=%~dp0"
-set "OUTPUT_DIR=%~dp0.."
+
+set "OUTPUT_DIR=%LOCALAPPDATA%"
 set "VERSION_FILE=%FACTORY_DIR%version.txt"
 set "VERSION_INFO_FILE=%FACTORY_DIR%version_info.txt"
 set "PYTHON_EXE=%FACTORY_DIR%.venv\Scripts\python.exe"
@@ -44,7 +33,7 @@ echo Installing/checking build dependencies in the project virtual environment..
 "%PYTHON_EXE%" -m pip install --disable-pip-version-check -r "%FACTORY_DIR%requirements.txt"
 if errorlevel 1 (echo Package installation failed.&pause&exit /b 1)
 
-set "FINAL_DIR=%OUTPUT_DIR%\Digi SE %APP_VERSION%"
+set "FINAL_DIR=%OUTPUT_DIR%\Digi"
 set "BUILD_CACHE=%FACTORY_DIR%Cache\build\test-exe-%APP_VERSION%"
 set "DIST_CACHE=%FACTORY_DIR%Cache\dist\test-exe-%APP_VERSION%"
 set "SPEC_CACHE=%FACTORY_DIR%Cache\spec\test-exe-%APP_VERSION%"
@@ -189,12 +178,25 @@ if not exist "%UPDATER_DIST_CACHE%\DigiUpdater.exe" (
 copy /y "%UPDATER_DIST_CACHE%\DigiUpdater.exe" "%FINAL_DIR%\DigiUpdater.exe" >nul
 if errorlevel 1 (echo FATAL: Could not copy DigiUpdater.exe to the output folder.&pause&exit /b 1)
 
+if not exist "%FINAL_DIR%\\Logs\\." mkdir "%FINAL_DIR%\\Logs"
+if errorlevel 1 (
+    echo FATAL: Could not create the Digi logs folder.
+    pause
+    exit /b 1
+)
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$desktop=[Environment]::GetFolderPath('Desktop'); $target='%EXE_PATH%'; $work='%FINAL_DIR%'; $shell=New-Object -ComObject WScript.Shell; $shortcut=$shell.CreateShortcut((Join-Path $desktop 'Digi.lnk')); $shortcut.TargetPath=$target; $shortcut.WorkingDirectory=$work; $shortcut.IconLocation=$target+',0'; $shortcut.Description='Launch Digi Search Engine'; $shortcut.Save()"
+if errorlevel 1 (
+    echo WARNING: Digi was built, but the desktop shortcut could not be created.
+) else (
+    echo Desktop shortcut created.
+)
+
 echo.
-echo BUILD COMPLETE: "%EXE_PATH%"
+echo BUILD AND INSTALL COMPLETE: "%EXE_PATH%"
 echo Separate updater helper: "%FINAL_DIR%\DigiUpdater.exe"
-echo Build outputs are not installed automatically.
-echo For a guarded first-time local install, run install-local.bat.
-echo Persistent user data remains under %%LOCALAPPDATA%%\Digi.
+echo Application and persistent Digi data are located under "%LOCALAPPDATA%\Digi".
+echo Existing Search Repository, Cache, notes, and other user data were not deleted.
 pause
 ,'').Trim([char]34) } elseif ($_.InstallLocation) { Join-Path $_.InstallLocation 'Digi Search Engine.exe' } } | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -First 1; if ($found) { Write-Output 'DIGI_FOUND'; Write-Output $found; exit 1 }; exit 0"
 if errorlevel 1 (
