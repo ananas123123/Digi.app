@@ -164,7 +164,14 @@ class ReleaseManifestWorker(QThread):
         ):
             raise ValueError("Package details do not match the files inventory in version metadata.")
 
-        package_url = cls.RELEASES_RAW_ROOT + "/" + folder + "/" + relative_file
+        package_url = package.get("url")
+        if package_url is None:
+            package_url = cls.RELEASES_RAW_ROOT + "/" + folder + "/" + relative_file
+        if not isinstance(package_url, str):
+            raise ValueError("Package URL must be an HTTPS URL.")
+        parsed_package_url = urllib.parse.urlparse(package_url)
+        if (parsed_package_url.scheme != "https" or not parsed_package_url.hostname or parsed_package_url.username or parsed_package_url.password or parsed_package_url.fragment):
+            raise ValueError("Package URL must be a valid HTTPS URL.")
         return {
             "schema_version": 1,
             "product": "Digi",
@@ -224,6 +231,7 @@ class ReleaseManifestWorker(QThread):
 
 class PackageDownloadWorker(QThread):
     resultReady = Signal(str)
+    progress = Signal(int, int)
 
     def __init__(self, manifest_json, parent=None):
         super().__init__(parent)
@@ -263,7 +271,11 @@ class PackageDownloadWorker(QThread):
             if Path(filename).suffix.lower() not in {".exe", ".txt"}:
                 raise ValueError("Only .exe and .txt update downloads are supported.")
             destination = DEPENDENCIES_ROOT / "update dependencies" / "package installer" / safe_version / filename
-            path = download_package_to_path(manifest, destination)
+            path = download_package_to_path(
+                manifest,
+                destination,
+                progress_callback=lambda downloaded, total: self.progress.emit(downloaded, total)
+            )
             result = {
                 "ok": True,
                 "path": path,
@@ -297,6 +309,7 @@ class DigiBridge(QObject):
     indexUpdated = Signal()
     releaseManifestResult = Signal(str)
     packageDownloadResult = Signal(str)
+    packageDownloadProgress = Signal(int, int)
     updateInstallResult = Signal(str)
     conversionProgress = Signal(str, int)
     conversionFinished = Signal(bool, str, str)
@@ -344,6 +357,7 @@ class DigiBridge(QObject):
             self.packageDownloadResult.emit(json.dumps({"ok": False, "verified": False, "message": "An update download is already in progress."}))
             return
         self.package_download_worker = PackageDownloadWorker(manifest_json, self)
+        self.package_download_worker.progress.connect(self.packageDownloadProgress.emit)
         self.package_download_worker.resultReady.connect(self.packageDownloadResult.emit)
         self.package_download_worker.start()
 
