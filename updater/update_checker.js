@@ -146,7 +146,10 @@
         return;
       }
 
-      setStatus("update", "RED: latest.json says " + decision.latestVersion + "; installed Digi version is " + currentVersion + ".");
+      const announcementOnly = decision.packagePublished === false;
+      setStatus("update", announcementOnly
+        ? "RED: version " + decision.latestVersion + " has been announced, but its package is not yet published. Installed Digi version is " + currentVersion + ". No download or installation is available."
+        : "RED: latest.json says " + decision.latestVersion + "; installed Digi version is " + currentVersion + ".");
       try {
         localStorage.setItem(PENDING_KEY, decision.latestVersion);
       } catch (_) {
