@@ -194,8 +194,44 @@
       const dialog = document.getElementById("digi-install-dialog");
       if (dialog) dialog.classList.add("hidden");
     };
-    // Deliberately inert in this development build; installation is not enabled yet.
-    if (installConfirm) installConfirm.onclick = event => event.preventDefault();
+    // Start the verified, rollback-capable helper only after the user confirms.
+    if (installConfirm) installConfirm.onclick = async event => {
+      event.preventDefault();
+      if (downloadInProgress || !activeManifest || !verifiedPackagePath) return;
+      const pkg = activeManifest.release && activeManifest.release.package;
+      if (!pkg || typeof pkg.file_name !== "string" || !pkg.file_name.toLowerCase().endsWith(".exe")) {
+        const progress = document.getElementById("digi-install-progress");
+        if (progress) {
+          progress.hidden = false;
+          progress.textContent = "Update rejected: the verified package is not a Windows executable.";
+        }
+        return;
+      }
+      try {
+        const backend = await waitForBridge();
+        if (typeof backend.installReleaseUpdate !== "function") {
+          throw new Error("The installed updater helper interface is unavailable. Rebuild Digi with the latest updater changes.");
+        }
+        installConfirm.disabled = true;
+        installLater.disabled = true;
+        installConfirm.textContent = "Preparing update…";
+        const progress = document.getElementById("digi-install-progress");
+        if (progress) {
+          progress.hidden = false;
+          progress.textContent = "Rechecking the downloaded executable and preparing a safe replacement. Your Search Repository and user data will not be moved or deleted.";
+        }
+        backend.installReleaseUpdate(JSON.stringify(activeManifest), verifiedPackagePath);
+      } catch (error) {
+        installConfirm.disabled = false;
+        installLater.disabled = false;
+        installConfirm.textContent = "Retry update";
+        const progress = document.getElementById("digi-install-progress");
+        if (progress) {
+          progress.hidden = false;
+          progress.textContent = error && error.message ? error.message : "Could not start the update helper.";
+        }
+      }
+    };
     if (statusDot) {
       statusDot.title = "Check for Digi updates / open update prompt";
       statusDot.style.cursor = "pointer";
