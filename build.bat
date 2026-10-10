@@ -159,8 +159,9 @@ if errorlevel 1 (echo FATAL: Could not create the updater log folder.&pause&exit
 
 set "STAGED_APP=%INSTALL_DIR%\.Digi Search Engine.exe.new"
 set "STAGED_HELPER=%INSTALL_DIR%\.DigiUpdater.exe.new"
-set "BACKUP_APP=%INSTALL_DIR%\.Digi Search Engine.exe.build-backup"
-set "BACKUP_HELPER=%INSTALL_DIR%\.DigiUpdater.exe.build-backup"
+set "BUILD_BACKUP_ID=%APP_VERSION%-%RANDOM%-%RANDOM%"
+set "BACKUP_APP=%INSTALL_DIR%\.Digi Search Engine.exe.build-backup-%BUILD_BACKUP_ID%"
+set "BACKUP_HELPER=%INSTALL_DIR%\.DigiUpdater.exe.build-backup-%BUILD_BACKUP_ID%"
 set "HAD_APP=0"
 set "HAD_HELPER=0"
 
