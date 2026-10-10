@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 from PySide6.QtCore import QObject, Signal, Slot, QThread, QTimer
 from PySide6.QtWidgets import QFileDialog
-from .config import APP_VERSION, DEPENDENCIES_ROOT, LIBRARY_CONFIG, get_library_root, ensure_directories
+from .config import APP_VERSION, DEPENDENCIES_ROOT, LIBRARY_CONFIG, VERSION_MANAGER, get_library_root, ensure_directories
 from .database import Database
 from .search import SearchService
 from .files import FileService
@@ -18,6 +18,7 @@ from .conversion import ConversionWorker
 from .notes import NotesService
 from .version_manager import initialize_version_file, version_integrity, recalibrate_version
 from .updater_download import download_package_to_path, verify_package_sha256
+from .updater_logging import log_updater_event, read_updater_log
 
 
 class ReleaseManifestWorker(QThread):
@@ -164,7 +165,14 @@ class ReleaseManifestWorker(QThread):
         ):
             raise ValueError("Package details do not match the files inventory in version metadata.")
 
-        package_url = cls.RELEASES_RAW_ROOT + "/" + folder + "/" + relative_file
+        package_url = package.get("url")
+        if package_url is None:
+            package_url = cls.RELEASES_RAW_ROOT + "/" + folder + "/" + relative_file
+        if not isinstance(package_url, str):
+            raise ValueError("Package URL must be an HTTPS URL.")
+        parsed_package_url = urllib.parse.urlparse(package_url)
+        if (parsed_package_url.scheme != "https" or not parsed_package_url.hostname or parsed_package_url.username or parsed_package_url.password or parsed_package_url.fragment):
+            raise ValueError("Package URL must be a valid HTTPS URL.")
         return {
             "schema_version": 1,
             "product": "Digi",
@@ -216,6 +224,7 @@ class ReleaseManifestWorker(QThread):
                 }
                 result = {"ok": True, "manifest": manifest}
         except Exception as exc:
+            log_updater_event("ERROR", f"Release check failed: {type(exc).__name__}: {exc}")
             result = {"ok": False, "manifest": None, "error": str(exc)}
             if test_url:
                 result["test_mode"] = True
@@ -224,6 +233,7 @@ class ReleaseManifestWorker(QThread):
 
 class PackageDownloadWorker(QThread):
     resultReady = Signal(str)
+    progress = Signal(int, int)
 
     def __init__(self, manifest_json, parent=None):
         super().__init__(parent)
@@ -263,7 +273,11 @@ class PackageDownloadWorker(QThread):
             if Path(filename).suffix.lower() not in {".exe", ".txt"}:
                 raise ValueError("Only .exe and .txt update downloads are supported.")
             destination = DEPENDENCIES_ROOT / "update dependencies" / "package installer" / safe_version / filename
-            path = download_package_to_path(manifest, destination)
+            path = download_package_to_path(
+                manifest,
+                destination,
+                progress_callback=lambda downloaded, total: self.progress.emit(downloaded, total)
+            )
             result = {
                 "ok": True,
                 "path": path,
@@ -271,9 +285,10 @@ class PackageDownloadWorker(QThread):
                 "sha256": package.get("sha256", ""),
                 "manifest": manifest,
                 "verified": True,
-                "message": "File downloaded and verified in Digi Dependencies\\update dependencies\\package installer. No installation or replacement was performed."
+                "message": "File downloaded and verified in %LOCALAPPDATA%\\Digi\\update dependencies\\package installer. No installation or replacement was performed."
             }
         except Exception as exc:
+            log_updater_event("ERROR", f"Download failed: {type(exc).__name__}: {exc}")
             result = {"ok": False, "verified": False, "message": str(exc) or "The update package could not be downloaded and verified."}
         self.resultReady.emit(json.dumps(result))
 
@@ -297,6 +312,7 @@ class DigiBridge(QObject):
     indexUpdated = Signal()
     releaseManifestResult = Signal(str)
     packageDownloadResult = Signal(str)
+    packageDownloadProgress = Signal(int, int)
     updateInstallResult = Signal(str)
     conversionProgress = Signal(str, int)
     conversionFinished = Signal(bool, str, str)
@@ -344,8 +360,17 @@ class DigiBridge(QObject):
             self.packageDownloadResult.emit(json.dumps({"ok": False, "verified": False, "message": "An update download is already in progress."}))
             return
         self.package_download_worker = PackageDownloadWorker(manifest_json, self)
+        self.package_download_worker.progress.connect(self.packageDownloadProgress.emit)
         self.package_download_worker.resultReady.connect(self.packageDownloadResult.emit)
         self.package_download_worker.start()
+
+    @Slot(result=str)
+    def getUpdaterLog(self):
+        return read_updater_log()
+
+    @Slot(str)
+    def logUpdaterEvent(self, message):
+        log_updater_event("FRONTEND", str(message))
 
     @Slot(str, str)
     def installReleaseUpdate(self, manifest_json, downloaded_path):
@@ -381,7 +406,7 @@ class DigiBridge(QObject):
                 raise ValueError("Only a verified .exe package can be installed.")
 
             local_app_data = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))).resolve()
-            install_dir = (local_app_data / "Programs" / "Digi").resolve()
+            install_dir = (local_app_data / "Digi").resolve()
             target = Path(sys.executable).resolve()
             helper = install_dir / "DigiUpdater.exe"
             candidate = Path(downloaded_path).resolve()
@@ -389,7 +414,12 @@ class DigiBridge(QObject):
             expected_candidate = (local_app_data / "Digi" / "update dependencies" / "package installer" / safe_version / filename).resolve()
 
             if target != (install_dir / "Digi Search Engine.exe").resolve():
-                raise ValueError("Self-update is available only from Digi's stable installation at %LOCALAPPDATA%\\Programs\\Digi. This copy was not changed.")
+                raise ValueError(
+                    "Self-update path check failed.\n"
+                    f"Running executable: {target}\nExpected executable: {(install_dir / 'Digi Search Engine.exe').resolve()}\n"
+                    f"LOCALAPPDATA: {local_app_data}\n"
+                    "Launch Digi from the LocalAppData\\Digi installation, not from a repository build folder."
+                )
             if not helper.is_file():
                 raise FileNotFoundError("DigiUpdater.exe is missing from the installation directory.")
             if candidate != expected_candidate or candidate.suffix.lower() != ".exe":
@@ -411,6 +441,7 @@ class DigiBridge(QObject):
                 if executable.read(4) != b"PE\x00\x00":
                     raise ValueError("The downloaded package is not a valid Windows executable.")
 
+            log_updater_event("INSTALL", f"Validated update {version}; target={target}; candidate={candidate}; helper={helper}")
             subprocess.Popen([
                 str(helper),
                 "--parent-pid", str(os.getpid()),
@@ -425,13 +456,29 @@ class DigiBridge(QObject):
                 "message": "Digi is closing. The helper will replace only the application executable, verify startup, and restore the previous executable if startup fails. Your Search Repository and persistent user data are kept separate."
             }))
         except Exception as exc:
+            log_updater_event("ERROR", f"Update could not be started: {type(exc).__name__}: {exc}")
+            log_updater_event("DIAGNOSTIC", f"sys.executable={Path(sys.executable).resolve()}; LOCALAPPDATA={os.environ.get('LOCALAPPDATA', '<unset>')}; expected_install=%LOCALAPPDATA%\\Digi\\Digi Search Engine.exe")
             self.updateInstallResult.emit(json.dumps({"ok": False, "message": str(exc) or "Could not start the update helper."}))
 
     @Slot(result=str)
     def state(self):
+        # The helper records the installed executable's confirmed release version here.
+        # Fall back to the build version if the version file cannot be read.
+        installed_version = APP_VERSION
+        try:
+            recorded_version = (VERSION_MANAGER / "version.txt").read_text(encoding="utf-8").strip()
+            if re.fullmatch(r"\d+(?:\.\d+){1,4}", recorded_version):
+                recorded_parts = tuple(int(part) for part in recorded_version.split("."))
+                build_parts = tuple(int(part) for part in APP_VERSION.split("."))
+                width = max(len(recorded_parts), len(build_parts))
+                recorded_parts += (0,) * (width - len(recorded_parts))
+                build_parts += (0,) * (width - len(build_parts))
+                installed_version = recorded_version if recorded_parts >= build_parts else APP_VERSION
+        except OSError:
+            pass
         return json.dumps({
             "library": str(self.search_service.root) if self.search_service else "",
-            "version": APP_VERSION,
+            "version": installed_version,
             "version_ok": self.version_ok,
             "version_problem": self.version_problem,
             "ready": bool(self.db and self.search_service and self.notes),

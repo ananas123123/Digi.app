@@ -11,6 +11,7 @@ REQUIRED_FILES = (
     Path("app.py"),
     Path("backend/__init__.py"),
     Path("backend/api.py"),
+    Path("backend/updater_logging.py"),
     Path("frontend/index.html"),
     Path("frontend/app.js"),
     Path("frontend/styles.css"),

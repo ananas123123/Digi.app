@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 import sys
 
-APP_VERSION = "1.0.0.0"
+APP_VERSION = "1.1.0.0"
 SUPPORTED = {".pdf", ".doc", ".docx"}
 
 IS_FROZEN = bool(getattr(sys, "frozen", False))
@@ -19,7 +19,7 @@ USER_DATA_ROOT = Path(
 ) / "Digi"
 
 if IS_FROZEN:
-    INSTALL_ROOT = Path(sys.executable).resolve().parent
+    INSTALL_ROOT = USER_DATA_ROOT
     DEPENDENCIES_ROOT = USER_DATA_ROOT
 else:
     INSTALL_ROOT = APP_DIR

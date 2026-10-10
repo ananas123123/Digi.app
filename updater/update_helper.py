@@ -8,6 +8,7 @@ It never touches Digi's persistent user-data directory.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import ctypes
 import hashlib
 import os
@@ -27,6 +28,18 @@ WAIT_FOR_APP_SECONDS = 180
 STARTUP_CONFIRM_SECONDS = 30
 POLL_SECONDS = 0.25
 CHUNK_SIZE = 1024 * 1024
+
+
+def log_event(level: str, message: str) -> None:
+    """Write helper diagnostics where the Digi console can display them."""
+    try:
+        root = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))).resolve() / "Digi" / "Logs"
+        root.mkdir(parents=True, exist_ok=True)
+        line = f"{datetime.now(timezone.utc).astimezone().isoformat(timespec='seconds')} [{level}] {str(message).replace(chr(10), ' | ')}\n"
+        with (root / "updater.log").open("a", encoding="utf-8") as stream:
+            stream.write(line)
+    except OSError:
+        pass
 
 
 def sha256_file(path: Path) -> str:
@@ -58,7 +71,7 @@ def validate_pe_executable(path: Path) -> None:
 
 
 def expected_install_dir(local_app_data: Path) -> Path:
-    return (local_app_data / "Programs" / "Digi").resolve()
+    return (local_app_data / "Digi").resolve()
 
 
 def validate_paths(
@@ -151,6 +164,86 @@ def wait_for_confirmation(marker: Path, token: str, timeout: float = STARTUP_CON
     return False
 
 
+
+
+def refresh_digi_shortcuts(target: Path, install_dir: Path) -> bool:
+    """Repair existing Digi shortcuts in standard Windows locations and create Desktop shortcut."""
+    if os.name != "nt":
+        return False
+
+    # Only rewrite links that clearly target a Digi executable. Do not touch
+    # unrelated shortcuts, and keep all shortcuts pointing at one stable target.
+    script = r"""
+$ErrorActionPreference = 'Stop'
+$target = [IO.Path]::GetFullPath($env:DIGI_SHORTCUT_TARGET)
+$work = [IO.Path]::GetFullPath($env:DIGI_SHORTCUT_WORKDIR)
+$shell = New-Object -ComObject WScript.Shell
+$folders = @(
+  [Environment]::GetFolderPath('Desktop'),
+  [Environment]::GetFolderPath('CommonDesktopDirectory'),
+  [Environment]::GetFolderPath('Programs'),
+  [Environment]::GetFolderPath('CommonPrograms'),
+  (Join-Path $env:APPDATA 'Microsoft\Internet Explorer\Quick Launch'),
+  (Join-Path $env:APPDATA 'Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar')
+) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Container) } | Select-Object -Unique
+$seen = @{}
+$failures = 0
+foreach ($folder in $folders) {
+  Get-ChildItem -LiteralPath $folder -Filter '*.lnk' -File -Recurse -ErrorAction SilentlyContinue |
+    ForEach-Object {
+      $shortcutPath = $_.FullName
+      if (-not $seen.ContainsKey($shortcutPath)) {
+        $seen[$shortcutPath] = $true
+        try {
+          $link = $shell.CreateShortcut($shortcutPath)
+          $linkTarget = [string]$link.TargetPath
+          $leaf = [IO.Path]::GetFileName($linkTarget)
+          if ($leaf -ieq 'Digi Search Engine.exe' -or $leaf -ieq 'Digi.exe' -or $leaf -ieq 'Digi Search Engine') {
+            if ([IO.Path]::GetFullPath($linkTarget) -ine $target) {
+              $link.TargetPath = $target
+              $link.WorkingDirectory = $work
+              $link.IconLocation = $target + ',0'
+              $link.Description = 'Launch Digi Search Engine'
+              $link.Save()
+            }
+          }
+        } catch {
+          $failures++
+          Write-Output ('WARNING: Could not update shortcut ' + $shortcutPath + ': ' + $_.Exception.Message)
+        }
+      }
+    }
+}
+$desktop = [Environment]::GetFolderPath('Desktop')
+if (-not $desktop) { throw 'Windows did not provide the Desktop folder.' }
+$desktopLink = Join-Path $desktop 'Digi.lnk'
+$link = $shell.CreateShortcut($desktopLink)
+$link.TargetPath = $target
+$link.WorkingDirectory = $work
+$link.IconLocation = $target + ',0'
+$link.Description = 'Launch Digi Search Engine'
+$link.Save()
+if ($failures -gt 0) { exit 2 }
+"""
+    environment = os.environ.copy()
+    environment["DIGI_SHORTCUT_TARGET"] = str(target.resolve())
+    environment["DIGI_SHORTCUT_WORKDIR"] = str(install_dir.resolve())
+    try:
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+            env=environment, capture_output=True, text=True, timeout=60, check=False,
+        )
+        for line in (result.stdout or "").splitlines():
+            log_event("SHORTCUT", line)
+        if result.returncode:
+            log_event("WARNING", "Shortcut refresh failed: " + (result.stderr or result.stdout or f"exit {result.returncode}"))
+            return False
+        log_event("SUCCESS", "Digi shortcuts refreshed to the stable executable path.")
+        return True
+    except (OSError, subprocess.SubprocessError) as exc:
+        log_event("WARNING", f"Shortcut refresh could not run: {type(exc).__name__}: {exc}")
+        return False
+
 def install_update(
     *,
     helper_path: Path,
@@ -167,9 +260,11 @@ def install_update(
     if not version or any(ch not in "0123456789." for ch in version):
         raise ValueError("Update version is invalid.")
 
+    log_event("INFO", f"Helper started for version {version}; helper={helper_path}; target={target_path}; candidate={candidate_path}; parent_pid={parent_pid}")
     install_dir, target, candidate = validate_paths(
         helper_path, target_path, candidate_path, local_app_data
     )
+    log_event("INFO", f"Path validation passed; install_dir={install_dir}")
     if candidate.parent.name != version:
         raise ValueError("The update candidate folder does not match the requested version.")
     expected = expected_sha256.lower()
@@ -197,6 +292,7 @@ def install_update(
         # Never overwrite an existing recovery file.
         if backup.exists():
             raise FileExistsError(f"Recovery file already exists: {backup.name}")
+        log_event("INFO", f"Staged and verified candidate; creating rollback copy {backup}")
         os.replace(target, backup)
         try:
             os.replace(stage, target)
@@ -208,6 +304,7 @@ def install_update(
         environment = os.environ.copy()
         environment[CONFIRM_ENV] = str(marker)
         environment[TOKEN_ENV] = token
+        log_event("INFO", "Replacement completed; launching updated Digi for startup confirmation")
         process = subprocess.Popen([str(target)], cwd=str(install_dir), env=environment)
 
         if not wait_for_confirmation(marker, token, timeout=startup_timeout):
@@ -220,16 +317,61 @@ def install_update(
                 "The updated Digi did not confirm startup. The previous executable will be restored."
             )
         confirmed = True
+        log_event("SUCCESS", f"Version {version} confirmed startup successfully")
 
-        # Keep the rollback copy after success for now. A later cleanup policy may
-        # remove it only after the startup confirmation has been observed and recorded.
-    except Exception:
+        # Record the new installed version only after the replacement executable
+        # has launched and confirmed startup. This is version metadata, not user data.
+        version_file = local_app_data / "Digi" / "Version manager" / "version.txt"
+        version_marker = local_app_data / "Digi" / "Version manager" / ".version_initialized"
+        # Keep the temporary file outside Version manager: its strict contents
+        # check must not observe a transient extra file during atomic replacement.
+        temporary_version = local_app_data / "Digi" / "Logs" / f".Digi-version-{os.getpid()}.tmp"
+        try:
+            if (
+                version_file.is_file()
+                and version_marker.is_file()
+                and version_marker.read_text(encoding="utf-8").strip() == "initialized"
+            ):
+                temporary_version.write_text(version + "\n", encoding="utf-8")
+                os.replace(temporary_version, version_file)
+            else:
+                log_event("WARNING", "Confirmed update could not record its version because version metadata is incomplete.")
+        except OSError as metadata_error:
+            # Do not undo a confirmed executable update because optional version
+            # bookkeeping could not be written, but do not leave a temp file that
+            # would make the strict version-manager integrity check fail next launch.
+            log_event("WARNING", f"Could not record confirmed installed version {version}: {metadata_error}")
+        finally:
+            try:
+                temporary_version.unlink(missing_ok=True)
+            except OSError as cleanup_error:
+                log_event("WARNING", f"Could not remove temporary version metadata {temporary_version}: {cleanup_error}")
+
+        # Startup was confirmed. Repair known Digi shortcuts before removing
+        # recovery/download copies; shortcut repair is best-effort and cannot undo
+        # an otherwise successful executable update.
+        refresh_digi_shortcuts(target, install_dir)
+
+        # Remove redundant package and rollback copies only after successful startup.
+        # If cleanup fails, keep the file and record its exact location for recovery.
+        for redundant in (backup, candidate):
+            try:
+                redundant.unlink(missing_ok=True)
+                log_event("CLEANUP", f"Removed confirmed-update artifact: {redundant}")
+            except OSError as cleanup_error:
+                log_event("WARNING", f"Could not remove confirmed-update artifact {redundant}: {cleanup_error}")
+    except Exception as exc:
+        log_event("ERROR", f"Helper update failed: {type(exc).__name__}: {exc}")
         if replaced and not confirmed and backup.exists():
             try:
                 if target.exists():
-                    failed = install_dir / f".Digi-failed-{version}-{os.getpid()}.exe"
+                    failed_dir = install_dir / "Logs" / "failed-updates"
+                    failed_dir.mkdir(parents=True, exist_ok=True)
+                    failed = failed_dir / f"Digi-failed-{version}-{os.getpid()}.exe"
                     os.replace(target, failed)
+                    log_event("ROLLBACK", f"Retained failed candidate for diagnosis at {failed}")
                 os.replace(backup, target)
+                log_event("ROLLBACK", f"Restored previous executable from {backup}")
             except OSError as rollback_error:
                 raise RuntimeError(
                     f"Update failed and automatic rollback could not complete. "
@@ -254,19 +396,42 @@ def install_update(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Safely replace Digi's installed executable.")
-    parser.add_argument("--parent-pid", type=int, required=True)
-    parser.add_argument("--target-exe", required=True)
-    parser.add_argument("--candidate-exe", required=True)
-    parser.add_argument("--sha256", required=True)
-    parser.add_argument("--version", required=True)
+    parser.add_argument("--refresh-shortcuts", action="store_true",
+                        help="Repair existing Digi shortcuts without performing an update.")
+    parser.add_argument("--parent-pid", type=int)
+    parser.add_argument("--target-exe")
+    parser.add_argument("--candidate-exe")
+    parser.add_argument("--sha256")
+    parser.add_argument("--version")
     args = parser.parse_args()
 
     local_app_data_value = os.environ.get("LOCALAPPDATA")
     if not local_app_data_value:
+        log_event("ERROR", "LOCALAPPDATA is unavailable; Digi was not updated.")
         print("FATAL: LOCALAPPDATA is unavailable; Digi was not updated.", file=sys.stderr)
         return 2
 
     helper_path = Path(sys.executable).resolve()
+    install_dir = expected_install_dir(Path(local_app_data_value))
+    if args.refresh_shortcuts:
+        target = install_dir / APP_EXE_NAME
+        if not target.is_file():
+            log_event("ERROR", f"Cannot refresh shortcuts because the installed app is missing: {target}")
+            return 1
+        return 0 if refresh_digi_shortcuts(target, install_dir) else 1
+
+    missing = [
+        name for name, value in (
+            ("--parent-pid", args.parent_pid),
+            ("--target-exe", args.target_exe),
+            ("--candidate-exe", args.candidate_exe),
+            ("--sha256", args.sha256),
+            ("--version", args.version),
+        ) if value is None
+    ]
+    if missing:
+        parser.error("required unless --refresh-shortcuts is used: " + ", ".join(missing))
+
     try:
         install_update(
             helper_path=helper_path,
@@ -280,6 +445,7 @@ def main() -> int:
         print("Update completed and startup was confirmed.")
         return 0
     except Exception as exc:
+        log_event("ERROR", f"Update failed: {type(exc).__name__}: {exc}")
         print(f"Update failed: {exc}", file=sys.stderr)
         return 1
 

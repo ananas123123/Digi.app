@@ -79,7 +79,7 @@ def verify_package_sha256(path, expected_sha256):
     return digest.hexdigest()
 
 
-def download_package_to_temp(manifest, temp_dir=None, opener=None):
+def download_package_to_temp(manifest, temp_dir=None, opener=None, progress_callback=None):
     """Download a package to a new temporary file and return its path.
 
     The file is returned only after both published size and SHA-256 are verified.
@@ -115,6 +115,11 @@ def download_package_to_temp(manifest, temp_dir=None, opener=None):
                     if downloaded > expected_size or downloaded > MAX_PACKAGE_SIZE_BYTES:
                         raise ValueError("Downloaded package is larger than the published size.")
                     output.write(chunk)
+                    if progress_callback is not None:
+                        try:
+                            progress_callback(downloaded, expected_size)
+                        except Exception:
+                            pass
 
         if downloaded != expected_size:
             raise ValueError("Downloaded package size does not match the published size.")
@@ -128,7 +133,7 @@ def download_package_to_temp(manifest, temp_dir=None, opener=None):
         raise
 
 
-def download_package_to_path(manifest, destination_path, opener=None):
+def download_package_to_path(manifest, destination_path, opener=None, progress_callback=None):
     """Download and verify a package, then save it at a caller-selected .exe or .txt path.
 
     The destination is only replaced after the complete download passes size and
@@ -139,7 +144,10 @@ def download_package_to_path(manifest, destination_path, opener=None):
     if destination.suffix.lower() not in {".exe", ".txt"}:
         raise ValueError("Update download destination must have a .exe or .txt extension.")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    temp_path = download_package_to_temp(manifest, temp_dir=destination.parent, opener=opener)
+    temp_path = download_package_to_temp(
+        manifest, temp_dir=destination.parent, opener=opener,
+        progress_callback=progress_callback
+    )
     try:
         os.replace(temp_path, destination)
     except Exception:

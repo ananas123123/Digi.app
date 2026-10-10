@@ -2,9 +2,11 @@ import hashlib
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from updater.update_helper import (
     expected_install_dir,
+    install_update,
     sha256_file,
     validate_paths,
     validate_pe_executable,
@@ -20,9 +22,13 @@ class UpdateHelperPathTests(unittest.TestCase):
         self.install_dir.mkdir(parents=True)
         self.helper = self.install_dir / "DigiUpdater.exe"
         self.target = self.install_dir / "Digi Search Engine.exe"
-        self.candidate = Path(self.temp.name) / "digi-update.download"
+        self.candidate = (
+            self.install_dir / "update dependencies" / "package installer"
+            / "1.2.0.0" / "Digi Search Engine.exe"
+        )
         self.helper.write_bytes(b"helper")
         self.target.write_bytes(b"old-app")
+        self.candidate.parent.mkdir(parents=True)
         self.candidate.write_bytes(b"new-app")
 
     def test_accepts_expected_install_paths_and_download_candidate(self):
@@ -69,6 +75,68 @@ class UpdateHelperPathTests(unittest.TestCase):
             sha256_file(self.candidate),
             hashlib.sha256(b"new-app").hexdigest()
         )
+
+    def _write_valid_pe_candidate(self):
+        data = bytearray(128)
+        data[0:2] = b"MZ"
+        data[0x3C:0x40] = (64).to_bytes(4, "little")
+        data[64:68] = b"PE\x00\x00"
+        self.candidate.write_bytes(data)
+        return bytes(data)
+
+    def test_successful_update_removes_download_and_rollback_copy(self):
+        candidate_bytes = self._write_valid_pe_candidate()
+        version_manager = self.install_dir / "Version manager"
+        version_manager.mkdir()
+        (version_manager / "version.txt").write_text("1.1.0.0\n", encoding="utf-8")
+        (version_manager / ".version_initialized").write_text("initialized\n", encoding="utf-8")
+
+        with patch("updater.update_helper.wait_for_process_exit"), \
+             patch("updater.update_helper.wait_for_confirmation", return_value=True), \
+             patch("updater.update_helper.refresh_digi_shortcuts", return_value=True), \
+             patch("updater.update_helper.subprocess.Popen"):
+            install_update(
+                helper_path=self.helper,
+                target_path=self.target,
+                candidate_path=self.candidate,
+                local_app_data=self.local_app_data,
+                parent_pid=12345,
+                expected_sha256=hashlib.sha256(candidate_bytes).hexdigest(),
+                version="1.2.0.0",
+            )
+
+        self.assertEqual(self.target.read_bytes(), candidate_bytes)
+        self.assertFalse(self.candidate.exists())
+        self.assertEqual(
+            (version_manager / "version.txt").read_text(encoding="utf-8"),
+            "1.2.0.0\n",
+        )
+        self.assertEqual(list(self.install_dir.glob(".Digi-rollback-*.exe")), [])
+
+    def test_failed_startup_restores_old_app_and_retains_candidate(self):
+        self._write_valid_pe_candidate()
+        old_bytes = self.target.read_bytes()
+
+        with patch("updater.update_helper.wait_for_process_exit"), \
+             patch("updater.update_helper.wait_for_confirmation", return_value=False), \
+             patch("updater.update_helper.subprocess.Popen"):
+            with self.assertRaisesRegex(RuntimeError, "previous executable will be restored"):
+                install_update(
+                    helper_path=self.helper,
+                    target_path=self.target,
+                    candidate_path=self.candidate,
+                    local_app_data=self.local_app_data,
+                    parent_pid=12345,
+                    expected_sha256=sha256_file(self.candidate),
+                    version="1.2.0.0",
+                    startup_timeout=0.01,
+                )
+
+        self.assertEqual(self.target.read_bytes(), old_bytes)
+        self.assertTrue(self.candidate.is_file())
+        failed_files = list((self.install_dir / "Logs" / "failed-updates").glob("Digi-failed-1.2.0.0-*.exe"))
+        self.assertEqual(len(failed_files), 1)
+        self.assertEqual(list(self.install_dir.glob(".Digi-rollback-*.exe")), [])
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import os
 import sys
 
@@ -14,15 +15,16 @@ from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineWidgets import QWebEngineView
 
 from backend.api import DigiBridge
+from backend.updater_logging import log_updater_event
 from backend.version_manager import repair_after_close
 
 BASE_DIR = Path(__file__).resolve().parent
 
 RESIZE_MARGIN = 8
-ACCENT = "#c5f36b"
-WINDOW_BG = "#10110f"
-TITLEBAR_BG = "#171916"
-TITLEBAR_BORDER = "#30352c"
+ACCENT = "#e8bd62"
+WINDOW_BG = "#ffffff"
+TITLEBAR_BG = "#f7f7f5"
+TITLEBAR_BORDER = "#deded9"
 
 
 class DigiWebView(QWebEngineView):
@@ -109,18 +111,18 @@ class DigiWindow(QMainWindow):
             }}
             QLabel#DigiTitleMark {{
                 background: {ACCENT};
-                color: #1b2410;
+                color: #35270a;
                 border-radius: 7px;
                 font-size: 14px;
                 font-weight: 900;
             }}
             QLabel#DigiTitleText {{
-                color: #f3f5ed;
+                color: #242424;
                 font-size: 13px;
                 font-weight: 750;
             }}
             QLabel#DigiTitleSubtitle {{
-                color: #8f9884;
+                color: #77776f;
                 font-size: 9px;
                 font-weight: 700;
                 letter-spacing: 1px;
@@ -129,7 +131,7 @@ class DigiWindow(QMainWindow):
             QPushButton#DigiMinButton, QPushButton#DigiMaxButton,
             QPushButton#DigiCloseButton {{
                 background: transparent;
-                color: #c5cbbd;
+                color: #5c5c56;
                 border: none;
                 border-radius: 0;
                 font-size: 15px;
@@ -137,8 +139,8 @@ class DigiWindow(QMainWindow):
                 padding: 0;
             }}
             QPushButton#DigiMinButton:hover, QPushButton#DigiMaxButton:hover {{
-                background: #2a2e25;
-                color: #ffffff;
+                background: #e9e9e4;
+                color: #242424;
             }}
             QPushButton#DigiCloseButton:hover {{
                 background: #d83b43;
@@ -173,9 +175,26 @@ class DigiWindow(QMainWindow):
             app.installEventFilter(self)
 
     def _confirm_update_startup(self, loaded):
-        """Confirm successful frontend startup to the separate update helper."""
+        """Confirm frontend and backend readiness to the separate update helper."""
         if not loaded:
+            log_updater_event("STARTUP", "Frontend failed to load; update confirmation withheld.")
             return
+
+        # A loaded HTML page is not sufficient: the previous implementation
+        # could confirm startup even when the database/search services failed.
+        try:
+            state = json.loads(self.bridge.state())
+            if not state.get("version_ok") or not state.get("ready"):
+                log_updater_event(
+                    "STARTUP",
+                    "Update confirmation withheld because backend services are not ready: "
+                    + str(state.get("version_problem", "backend readiness check failed")),
+                )
+                return
+        except Exception as exc:
+            log_updater_event("STARTUP", f"Update confirmation withheld; backend state check failed: {exc}")
+            return
+
         marker_value = os.environ.get("DIGI_UPDATE_CONFIRMATION_FILE", "").strip()
         token = os.environ.get("DIGI_UPDATE_CONFIRMATION_TOKEN", "").strip()
         if not marker_value or len(token) < 20:
@@ -188,7 +207,7 @@ class DigiWindow(QMainWindow):
             if not marker.name.startswith(".Digi-startup-") or marker.suffix != ".confirm":
                 return
             temporary = marker.with_name(marker.name + ".tmp")
-            temporary.write_text(token + "\\n", encoding="utf-8")
+            temporary.write_text(token + "\n", encoding="utf-8")
             os.replace(temporary, marker)
         except OSError:
             # Startup should not fail merely because update confirmation could not be written.
