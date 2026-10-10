@@ -87,7 +87,7 @@ class ReleaseManifestWorker(QThread):
     def _safe_relative_path(value, label):
         if not isinstance(value, str) or not value.strip():
             raise ValueError(label + " is missing.")
-        normalized = value.replace("\\\\", "/").strip()
+        normalized = value.replace("\\", "/").strip()
         parsed = urllib.parse.urlparse(normalized)
         parts = normalized.split("/")
         if parsed.scheme or parsed.netloc or normalized.startswith("/") or any(part in {"", ".", ".."} for part in parts):
