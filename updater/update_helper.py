@@ -8,6 +8,7 @@ It never touches Digi's persistent user-data directory.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import ctypes
 import hashlib
 import os
@@ -27,6 +28,18 @@ WAIT_FOR_APP_SECONDS = 180
 STARTUP_CONFIRM_SECONDS = 30
 POLL_SECONDS = 0.25
 CHUNK_SIZE = 1024 * 1024
+
+
+def log_event(level: str, message: str) -> None:
+    """Write helper diagnostics where the Digi console can display them."""
+    try:
+        root = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))).resolve() / "Digi" / "Logs"
+        root.mkdir(parents=True, exist_ok=True)
+        line = f"{datetime.now(timezone.utc).astimezone().isoformat(timespec='seconds')} [{level}] {str(message).replace(chr(10), ' | ')}\\n"
+        with (root / "updater.log").open("a", encoding="utf-8") as stream:
+            stream.write(line)
+    except OSError:
+        pass
 
 
 def sha256_file(path: Path) -> str:
@@ -167,9 +180,11 @@ def install_update(
     if not version or any(ch not in "0123456789." for ch in version):
         raise ValueError("Update version is invalid.")
 
+    log_event("INFO", f"Helper started for version {version}; helper={helper_path}; target={target_path}; candidate={candidate_path}; parent_pid={parent_pid}")
     install_dir, target, candidate = validate_paths(
         helper_path, target_path, candidate_path, local_app_data
     )
+    log_event("INFO", f"Path validation passed; install_dir={install_dir}")
     if candidate.parent.name != version:
         raise ValueError("The update candidate folder does not match the requested version.")
     expected = expected_sha256.lower()
@@ -197,6 +212,7 @@ def install_update(
         # Never overwrite an existing recovery file.
         if backup.exists():
             raise FileExistsError(f"Recovery file already exists: {backup.name}")
+        log_event("INFO", f"Staged and verified candidate; creating rollback copy {backup}")
         os.replace(target, backup)
         try:
             os.replace(stage, target)
@@ -208,6 +224,7 @@ def install_update(
         environment = os.environ.copy()
         environment[CONFIRM_ENV] = str(marker)
         environment[TOKEN_ENV] = token
+        log_event("INFO", "Replacement completed; launching updated Digi for startup confirmation")
         process = subprocess.Popen([str(target)], cwd=str(install_dir), env=environment)
 
         if not wait_for_confirmation(marker, token, timeout=startup_timeout):
@@ -220,6 +237,7 @@ def install_update(
                 "The updated Digi did not confirm startup. The previous executable will be restored."
             )
         confirmed = True
+        log_event("SUCCESS", f"Version {version} confirmed startup successfully")
 
         # Record the new installed version only after the replacement executable
         # has launched and confirmed startup. This is version metadata, not user data.
@@ -237,13 +255,15 @@ def install_update(
 
         # Keep the rollback copy after success for now. A later cleanup policy may
         # remove it only after the startup confirmation has been observed and recorded.
-    except Exception:
+    except Exception as exc:
+        log_event("ERROR", f"Helper update failed: {type(exc).__name__}: {exc}")
         if replaced and not confirmed and backup.exists():
             try:
                 if target.exists():
                     failed = install_dir / f".Digi-failed-{version}-{os.getpid()}.exe"
                     os.replace(target, failed)
                 os.replace(backup, target)
+                log_event("ROLLBACK", f"Restored previous executable from {backup}")
             except OSError as rollback_error:
                 raise RuntimeError(
                     f"Update failed and automatic rollback could not complete. "
@@ -277,6 +297,7 @@ def main() -> int:
 
     local_app_data_value = os.environ.get("LOCALAPPDATA")
     if not local_app_data_value:
+        log_event("ERROR", "LOCALAPPDATA is unavailable; Digi was not updated.")
         print("FATAL: LOCALAPPDATA is unavailable; Digi was not updated.", file=sys.stderr)
         return 2
 
@@ -294,6 +315,7 @@ def main() -> int:
         print("Update completed and startup was confirmed.")
         return 0
     except Exception as exc:
+        log_event("ERROR", f"Update failed: {type(exc).__name__}: {exc}")
         print(f"Update failed: {exc}", file=sys.stderr)
         return 1
 
