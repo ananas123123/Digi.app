@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import os
 import sys
 
@@ -14,6 +15,7 @@ from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineWidgets import QWebEngineView
 
 from backend.api import DigiBridge
+from backend.updater_logging import log_updater_event
 from backend.version_manager import repair_after_close
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -173,9 +175,26 @@ class DigiWindow(QMainWindow):
             app.installEventFilter(self)
 
     def _confirm_update_startup(self, loaded):
-        """Confirm successful frontend startup to the separate update helper."""
+        """Confirm frontend and backend readiness to the separate update helper."""
         if not loaded:
+            log_updater_event("STARTUP", "Frontend failed to load; update confirmation withheld.")
             return
+
+        # A loaded HTML page is not sufficient: the previous implementation
+        # could confirm startup even when the database/search services failed.
+        try:
+            state = json.loads(self.bridge.state())
+            if not state.get("version_ok") or not state.get("ready"):
+                log_updater_event(
+                    "STARTUP",
+                    "Update confirmation withheld because backend services are not ready: "
+                    + str(state.get("version_problem", "backend readiness check failed")),
+                )
+                return
+        except Exception as exc:
+            log_updater_event("STARTUP", f"Update confirmation withheld; backend state check failed: {exc}")
+            return
+
         marker_value = os.environ.get("DIGI_UPDATE_CONFIRMATION_FILE", "").strip()
         token = os.environ.get("DIGI_UPDATE_CONFIRMATION_TOKEN", "").strip()
         if not marker_value or len(token) < 20:
