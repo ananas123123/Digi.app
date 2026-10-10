@@ -1,27 +1,34 @@
 import json
 import os
+import subprocess
+import sys
+import tempfile
 import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from PySide6.QtCore import QObject, Signal, Slot, QThread
+import re
+from PySide6.QtCore import QObject, Signal, Slot, QThread, QTimer
 from PySide6.QtWidgets import QFileDialog
-from .config import APP_VERSION, LIBRARY_CONFIG, get_library_root, ensure_directories
+from .config import APP_VERSION, DEPENDENCIES_ROOT, LIBRARY_CONFIG, VERSION_MANAGER, get_library_root, ensure_directories
 from .database import Database
 from .search import SearchService
 from .files import FileService
 from .conversion import ConversionWorker
 from .notes import NotesService
 from .version_manager import initialize_version_file, version_integrity, recalibrate_version
-from .updater_download import download_package_to_temp
+from .updater_download import download_package_to_path, verify_package_sha256
+from .updater_logging import log_updater_event, read_updater_log
 
 
 class ReleaseManifestWorker(QThread):
     resultReady = Signal(str)
-    URLS = (
+
+    LATEST_URLS = (
         "https://api.github.com/repos/ananas123123/digiwebversionreleases/contents/latest.json?ref=main",
         "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/latest.json",
     )
+    RELEASES_RAW_ROOT = "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/releases"
 
     @staticmethod
     def _local_test_url():
@@ -44,44 +51,189 @@ class ReleaseManifestWorker(QThread):
         except (TypeError, ValueError):
             return None
 
+    @staticmethod
+    def _read_json(url, github_api=False):
+        separator = "&" if "?" in url else "?"
+        request_url = url + separator + "_digi_check=" + str(int(time.time() * 1000))
+        request = urllib.request.Request(request_url, headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "Digi-Update-Checker",
+            "Cache-Control": "no-cache, no-store, max-age=0",
+            "Pragma": "no-cache",
+        })
+        with urllib.request.urlopen(request, timeout=10) as response:
+            payload = response.read()
+        if github_api:
+            import base64
+            envelope = json.loads(payload.decode("utf-8"))
+            if envelope.get("encoding") != "base64" or not envelope.get("content"):
+                raise ValueError("GitHub API did not return base64 file content.")
+            payload = base64.b64decode(envelope["content"])
+        value = json.loads(payload.decode("utf-8"))
+        if not isinstance(value, dict):
+            raise ValueError("Release metadata must be a JSON object.")
+        return value
+
+    @classmethod
+    def _read_first_json(cls, urls):
+        last_error = None
+        for url, is_api in urls:
+            try:
+                return cls._read_json(url, github_api=is_api)
+            except Exception as exc:
+                last_error = exc
+        raise ValueError("Could not read release metadata: " + (str(last_error) if last_error else "no metadata URLs configured"))
+
+    @staticmethod
+    def _safe_relative_path(value, label):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(label + " is missing.")
+        normalized = value.replace("\\", "/").strip()
+        parsed = urllib.parse.urlparse(normalized)
+        parts = normalized.split("/")
+        if parsed.scheme or parsed.netloc or normalized.startswith("/") or any(part in {"", ".", ".."} for part in parts):
+            raise ValueError(label + " must be a safe relative path.")
+        return "/".join(urllib.parse.quote(part, safe="._- ") for part in parts).replace(" ", "%20")
+
+    @classmethod
+    def _resolve_latest_manifest(cls, latest):
+        if latest.get("schema_version") != 1 or latest.get("product") != "Digi":
+            raise ValueError("latest.json has an unsupported schema or product.")
+        version = latest.get("latest_version")
+        if not isinstance(version, str) or not version.strip() or not re.fullmatch(r"\d+(?:\.\d+)*", version.strip()):
+            raise ValueError("latest.json does not contain a valid latest_version.")
+        version = version.strip()
+        status = latest.get("release_status")
+        if status not in {"published", "unpublished"}:
+            raise ValueError("latest.json has an invalid release_status.")
+        if status == "unpublished":
+            return {
+                "schema_version": 1, "product": "Digi", "channel": latest.get("channel", "stable"),
+                "latest_version": version, "release_status": status, "message": latest.get("message", ""),
+                "release": {"version": version}
+            }
+
+        directory_index = cls._read_json(cls.RELEASES_RAW_ROOT + "/directory.json")
+        if directory_index.get("schema_version") != 1 or directory_index.get("product") != "Digi":
+            raise ValueError("releases/directory.json has an unsupported schema or product.")
+        entries = directory_index.get("releases")
+        entry = entries.get(version) if isinstance(entries, dict) else None
+        if not isinstance(entry, dict):
+            raise ValueError("directory.json does not contain latest version " + version + ".")
+
+        folder = cls._safe_relative_path(entry.get("directory"), "Release directory")
+        metadata_path = cls._safe_relative_path(entry.get("metadata_file"), "Release metadata_file")
+        if "/" in folder or not metadata_path.startswith(folder + "/"):
+            raise ValueError("directory.json points to a metadata file outside the selected release folder.")
+
+        metadata_url = cls.RELEASES_RAW_ROOT + "/" + metadata_path
+        release_metadata = cls._read_json(metadata_url)
+        if (
+            release_metadata.get("schema_version") != 1
+            or release_metadata.get("product") != "Digi"
+            or release_metadata.get("version") != version
+            or release_metadata.get("directory") != folder
+        ):
+            raise ValueError("Version-specific release metadata does not match latest.json and directory.json.")
+
+        package = release_metadata.get("package")
+        if not isinstance(package, dict):
+            raise ValueError("The selected release metadata has no package entry.")
+        filename = package.get("file_name")
+        relative_file = cls._safe_relative_path(package.get("path"), "Package path")
+        if "/" in relative_file or not isinstance(filename, str) or not filename.strip() or filename != package.get("path"):
+            raise ValueError("Package filename and relative path must identify one file inside the release folder.")
+        if Path(filename).name != filename or Path(filename).suffix.lower() not in {".exe", ".txt"}:
+            raise ValueError("The selected release package must be a .exe or .txt file.")
+        size = package.get("size_bytes")
+        checksum = package.get("sha256")
+        if isinstance(size, bool) or not isinstance(size, int) or size <= 0:
+            raise ValueError("Package size_bytes must be a positive integer.")
+        if not isinstance(checksum, str) or not re.fullmatch(r"[a-fA-F0-9]{64}", checksum):
+            raise ValueError("Package SHA-256 checksum is invalid.")
+
+        artifacts = release_metadata.get("files")
+        if not isinstance(artifacts, list):
+            raise ValueError("Version metadata must list its downloadable files.")
+        artifact = next(
+            (item for item in artifacts if isinstance(item, dict) and item.get("path") == package.get("path")),
+            None
+        )
+        if not isinstance(artifact, dict) or any(
+            artifact.get(key) != package.get(key)
+            for key in ("file_name", "path", "kind", "size_bytes", "sha256")
+        ):
+            raise ValueError("Package details do not match the files inventory in version metadata.")
+
+        package_url = package.get("url")
+        if package_url is None:
+            package_url = cls.RELEASES_RAW_ROOT + "/" + folder + "/" + relative_file
+        if not isinstance(package_url, str):
+            raise ValueError("Package URL must be an HTTPS URL.")
+        parsed_package_url = urllib.parse.urlparse(package_url)
+        if (parsed_package_url.scheme != "https" or not parsed_package_url.hostname or parsed_package_url.username or parsed_package_url.password or parsed_package_url.fragment):
+            raise ValueError("Package URL must be a valid HTTPS URL.")
+        return {
+            "schema_version": 1,
+            "product": "Digi",
+            "channel": latest.get("channel", "stable"),
+            "latest_version": version,
+            "release_status": status,
+            "message": latest.get("message", ""),
+            "release": {
+                "version": version,
+                "url": "https://github.com/ananas123123/digiwebversionreleases/tree/main/releases/" + folder,
+                "published_at": release_metadata.get("published_at"),
+                "notes": release_metadata.get("release_notes", ""),
+                "package": {
+                    "url": package_url,
+                    "file_name": filename,
+                    "size_bytes": size,
+                    "sha256": checksum.lower(),
+                    "kind": package.get("kind", "installer")
+                }
+            }
+        }
+
     def run(self):
         test_url = self._local_test_url()
-        urls = (test_url,) if test_url else self.URLS
-        cache_buster = str(int(time.time() * 1000))
-        for base_url in urls:
-            try:
-                separator = "&" if "?" in base_url else "?"
-                url = base_url + separator + "_digi_check=" + cache_buster
-                request = urllib.request.Request(url, headers={
-                    "Accept": "application/vnd.github+json",
-                    "User-Agent": "Digi-Update-Checker",
-                    "Cache-Control": "no-cache, no-store, max-age=0",
-                    "Pragma": "no-cache",
-                })
-                with urllib.request.urlopen(request, timeout=8) as response:
-                    payload = response.read()
-                if "api.github.com" in base_url:
-                    import base64
-                    envelope = json.loads(payload.decode("utf-8"))
-                    if envelope.get("encoding") != "base64" or not envelope.get("content"):
-                        raise ValueError("GitHub API did not return base64 file content")
-                    payload = base64.b64decode(envelope["content"])
-                manifest = json.loads(payload.decode("utf-8"))
+        try:
+            if test_url:
+                manifest = self._read_json(test_url)
+                result = {"ok": True, "manifest": manifest, "test_mode": True}
+            else:
+                # The update check reads latest.json only. Release directories and
+                # package metadata are resolved only after the user chooses Download.
+                latest = self._read_first_json(tuple((url, "api.github.com" in url) for url in self.LATEST_URLS))
+                if latest.get("schema_version") != 1 or latest.get("product") != "Digi":
+                    raise ValueError("latest.json has an unsupported schema or product.")
+                version = latest.get("latest_version")
+                if not isinstance(version, str) or not version.strip() or not re.fullmatch(r"\d+(?:\.\d+)*", version.strip()):
+                    raise ValueError("latest.json does not contain a valid latest_version.")
+                if latest.get("release_status") not in {"published", "unpublished"}:
+                    raise ValueError("latest.json has an invalid release_status.")
+                version = version.strip()
+                manifest = {
+                    "schema_version": 1,
+                    "product": "Digi",
+                    "channel": latest.get("channel", "stable"),
+                    "latest_version": version,
+                    "release_status": latest["release_status"],
+                    "message": latest.get("message", ""),
+                    "release": {"version": version}
+                }
                 result = {"ok": True, "manifest": manifest}
-                if test_url:
-                    result["test_mode"] = True
-                self.resultReady.emit(json.dumps(result))
-                return
-            except Exception:
-                continue
-        result = {"ok": False, "manifest": None}
-        if test_url:
-            result["test_mode"] = True
+        except Exception as exc:
+            log_updater_event("ERROR", f"Release check failed: {type(exc).__name__}: {exc}")
+            result = {"ok": False, "manifest": None, "error": str(exc)}
+            if test_url:
+                result["test_mode"] = True
         self.resultReady.emit(json.dumps(result))
 
 
 class PackageDownloadWorker(QThread):
     resultReady = Signal(str)
+    progress = Signal(int, int)
 
     def __init__(self, manifest_json, parent=None):
         super().__init__(parent)
@@ -89,10 +241,54 @@ class PackageDownloadWorker(QThread):
 
     def run(self):
         try:
-            manifest = json.loads(self.manifest_json)
-            path = download_package_to_temp(manifest)
-            result = {"ok": True, "path": path, "version": manifest.get("latest_version", ""), "verified": True, "message": "Package downloaded and verified. Installation has not started."}
+            requested = json.loads(self.manifest_json)
+            version = str(requested.get("latest_version", "")).strip()
+            if requested.get("product") != "Digi" or requested.get("schema_version") != 1:
+                raise ValueError("The update announcement is invalid.")
+            if requested.get("release_status") != "published":
+                raise ValueError("This release is not published for download.")
+            if not re.fullmatch(r"\d+(?:\.\d+)*", version):
+                raise ValueError("The announced version is invalid.")
+
+            # Re-read latest.json at download time and resolve the exact version
+            # through directory.json and its version-specific metadata.
+            latest = ReleaseManifestWorker._read_first_json(
+                tuple((url, "api.github.com" in url) for url in ReleaseManifestWorker.LATEST_URLS)
+            )
+            if (
+                latest.get("product") != "Digi"
+                or latest.get("schema_version") != 1
+                or latest.get("release_status") != "published"
+                or str(latest.get("latest_version", "")).strip() != version
+            ):
+                raise ValueError("latest.json changed since the update was announced. Check for updates again.")
+            manifest = ReleaseManifestWorker._resolve_latest_manifest(latest)
+            package = manifest.get("release", {}).get("package", {})
+            safe_version = re.sub(r"[^0-9A-Za-z._-]", "_", version)
+            if not safe_version or safe_version in {".", ".."}:
+                raise ValueError("Release version cannot be used as a package folder name.")
+            filename = package.get("file_name", "Digi Search Engine.exe")
+            if not isinstance(filename, str) or not filename.strip() or Path(filename).name != filename or filename in {".", ".."}:
+                raise ValueError("Package filename is invalid.")
+            if Path(filename).suffix.lower() not in {".exe", ".txt"}:
+                raise ValueError("Only .exe and .txt update downloads are supported.")
+            destination = DEPENDENCIES_ROOT / "update dependencies" / "package installer" / safe_version / filename
+            path = download_package_to_path(
+                manifest,
+                destination,
+                progress_callback=lambda downloaded, total: self.progress.emit(downloaded, total)
+            )
+            result = {
+                "ok": True,
+                "path": path,
+                "version": manifest.get("latest_version", ""),
+                "sha256": package.get("sha256", ""),
+                "manifest": manifest,
+                "verified": True,
+                "message": "File downloaded and verified in %LOCALAPPDATA%\\Digi\\update dependencies\\package installer. No installation or replacement was performed."
+            }
         except Exception as exc:
+            log_updater_event("ERROR", f"Download failed: {type(exc).__name__}: {exc}")
             result = {"ok": False, "verified": False, "message": str(exc) or "The update package could not be downloaded and verified."}
         self.resultReady.emit(json.dumps(result))
 
@@ -116,6 +312,8 @@ class DigiBridge(QObject):
     indexUpdated = Signal()
     releaseManifestResult = Signal(str)
     packageDownloadResult = Signal(str)
+    packageDownloadProgress = Signal(int, int)
+    updateInstallResult = Signal(str)
     conversionProgress = Signal(str, int)
     conversionFinished = Signal(bool, str, str)
     error = Signal(str)
@@ -162,14 +360,125 @@ class DigiBridge(QObject):
             self.packageDownloadResult.emit(json.dumps({"ok": False, "verified": False, "message": "An update download is already in progress."}))
             return
         self.package_download_worker = PackageDownloadWorker(manifest_json, self)
+        self.package_download_worker.progress.connect(self.packageDownloadProgress.emit)
         self.package_download_worker.resultReady.connect(self.packageDownloadResult.emit)
         self.package_download_worker.start()
 
     @Slot(result=str)
+    def getUpdaterLog(self):
+        return read_updater_log()
+
+    @Slot(str)
+    def logUpdaterEvent(self, message):
+        log_updater_event("FRONTEND", str(message))
+
+    @Slot(str, str)
+    def installReleaseUpdate(self, manifest_json, downloaded_path):
+        """Replace only the installed executable via the separate rollback-capable helper."""
+        try:
+            manifest = json.loads(manifest_json)
+            release = manifest.get("release")
+            package = release.get("package") if isinstance(release, dict) else None
+            version = manifest.get("latest_version")
+            if (
+                manifest.get("product") != "Digi"
+                or manifest.get("schema_version") != 1
+                or manifest.get("release_status") != "published"
+                or not isinstance(version, str)
+                or not re.fullmatch(r"\d+(?:\.\d+)*", version)
+                or not isinstance(release, dict)
+                or release.get("version") != version
+                or not isinstance(package, dict)
+            ):
+                raise ValueError("Release metadata is invalid.")
+            filename = package.get("file_name")
+            expected_hash = package.get("sha256")
+            expected_size = package.get("size_bytes")
+            if (
+                not isinstance(filename, str)
+                or Path(filename).name != filename
+                or Path(filename).suffix.lower() != ".exe"
+                or not isinstance(expected_hash, str)
+                or not isinstance(expected_size, int)
+                or isinstance(expected_size, bool)
+                or expected_size <= 0
+            ):
+                raise ValueError("Only a verified .exe package can be installed.")
+
+            local_app_data = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))).resolve()
+            install_dir = (local_app_data / "Digi").resolve()
+            target = Path(sys.executable).resolve()
+            helper = install_dir / "DigiUpdater.exe"
+            candidate = Path(downloaded_path).resolve()
+            safe_version = re.sub(r"[^0-9A-Za-z._-]", "_", version)
+            expected_candidate = (local_app_data / "Digi" / "update dependencies" / "package installer" / safe_version / filename).resolve()
+
+            if target != (install_dir / "Digi Search Engine.exe").resolve():
+                raise ValueError(
+                    "Self-update path check failed.\n"
+                    f"Running executable: {target}\nExpected executable: {(install_dir / 'Digi Search Engine.exe').resolve()}\n"
+                    f"LOCALAPPDATA: {local_app_data}\n"
+                    "Launch Digi from the LocalAppData\\Digi installation, not from a repository build folder."
+                )
+            if not helper.is_file():
+                raise FileNotFoundError("DigiUpdater.exe is missing from the installation directory.")
+            if candidate != expected_candidate or candidate.suffix.lower() != ".exe":
+                raise ValueError("The candidate is not in Digi's expected update-package folder.")
+            if not candidate.is_file() or candidate.stat().st_size != expected_size:
+                raise ValueError("The downloaded update size does not match the release metadata.")
+            verify_package_sha256(candidate, expected_hash)
+            with candidate.open("rb") as executable:
+                if executable.read(2) != b"MZ":
+                    raise ValueError("The downloaded package is not a Windows executable.")
+                executable.seek(0x3C)
+                pe_offset_bytes = executable.read(4)
+                if len(pe_offset_bytes) != 4:
+                    raise ValueError("The downloaded executable header is invalid.")
+                pe_offset = int.from_bytes(pe_offset_bytes, "little")
+                if pe_offset < 64 or pe_offset > 16 * 1024 * 1024:
+                    raise ValueError("The downloaded executable header is invalid.")
+                executable.seek(pe_offset)
+                if executable.read(4) != b"PE\x00\x00":
+                    raise ValueError("The downloaded package is not a valid Windows executable.")
+
+            log_updater_event("INSTALL", f"Validated update {version}; target={target}; candidate={candidate}; helper={helper}")
+            subprocess.Popen([
+                str(helper),
+                "--parent-pid", str(os.getpid()),
+                "--target-exe", str(target),
+                "--candidate-exe", str(candidate),
+                "--sha256", expected_hash,
+                "--version", version,
+            ], cwd=str(install_dir), close_fds=True)
+            QTimer.singleShot(700, self.parent().close if self.parent() else lambda: None)
+            self.updateInstallResult.emit(json.dumps({
+                "ok": True,
+                "message": "Digi is closing. The helper will replace only the application executable, verify startup, and restore the previous executable if startup fails. Your Search Repository and persistent user data are kept separate."
+            }))
+        except Exception as exc:
+            log_updater_event("ERROR", f"Update could not be started: {type(exc).__name__}: {exc}")
+            log_updater_event("DIAGNOSTIC", f"sys.executable={Path(sys.executable).resolve()}; LOCALAPPDATA={os.environ.get('LOCALAPPDATA', '<unset>')}; expected_install=%LOCALAPPDATA%\\Digi\\Digi Search Engine.exe")
+            self.updateInstallResult.emit(json.dumps({"ok": False, "message": str(exc) or "Could not start the update helper."}))
+
+    @Slot(result=str)
     def state(self):
+        # The helper records the installed executable's confirmed release version here.
+        # Fall back to the build version if the version file cannot be read.
+        installed_version = APP_VERSION
+        try:
+            recorded_version = (VERSION_MANAGER / "version.txt").read_text(encoding="utf-8").strip()
+            if re.fullmatch(r"\d+(?:\.\d+){1,4}", recorded_version):
+                recorded_parts = tuple(int(part) for part in recorded_version.split("."))
+                build_parts = tuple(int(part) for part in APP_VERSION.split("."))
+                width = max(len(recorded_parts), len(build_parts))
+                recorded_parts += (0,) * (width - len(recorded_parts))
+                build_parts += (0,) * (width - len(build_parts))
+                installed_version = recorded_version if recorded_parts >= build_parts else APP_VERSION
+        except OSError:
+            pass
         return json.dumps({
             "library": str(self.search_service.root) if self.search_service else "",
-            "version": APP_VERSION,
+            "version": installed_version,
             "version_ok": self.version_ok,
             "version_problem": self.version_problem,
             "ready": bool(self.db and self.search_service and self.notes),

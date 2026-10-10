@@ -49,12 +49,37 @@
   <button class="home-card" id="home-wiki" type="button"><span class="home-card-icon" aria-hidden="true">▤</span><span class="home-card-title">Wiki</span><span class="home-card-copy">Knowledge in one place</span><span class="home-card-arrow" aria-hidden="true">↗</span></button>
 </nav>
 <div id="modal" class="modal hidden"></div>
+<button id="updater-log-button" type="button" title="Open updater diagnostics" aria-label="Open updater diagnostics">L</button>
+<div id="updater-log-overlay" class="updater-log-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="updater-log-title">
+  <section class="updater-log-window">
+    <header class="updater-log-header">
+      <div><span class="updater-log-kicker">DIGI / DIAGNOSTICS</span><h2 id="updater-log-title">Updater console</h2></div>
+      <div class="updater-log-actions"><button id="updater-log-refresh" type="button">Refresh</button><button id="updater-log-close" type="button" aria-label="Close updater console">×</button></div>
+    </header>
+    <div class="updater-log-meta"><span class="updater-log-led"></span> LOCAL LOG STREAM <span id="updater-log-path">%LOCALAPPDATA%\Digi\Logs\updater.log</span></div>
+    <pre id="updater-log-output" aria-live="polite">Connecting to Digi diagnostic bridge…</pre>
+    <footer class="updater-log-footer"><span>Errors are recorded locally. This console does not upload logs.</span><span id="updater-log-state">WAITING</span></footer>
+  </section>
+</div>
+
 <div id="digi-update-dialog" class="digi-update-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="digi-update-title">
   <div class="digi-update-card">
     <div id="digi-update-title" class="digi-update-title">Digi update available</div>
-    <p class="digi-update-copy">Version <strong id="digi-update-version"></strong> is available. Choose Download to save the package temporarily and verify its size and SHA-256 checksum. Digi will not install it or replace any files.</p>
+    <p class="digi-update-copy">Version <strong id="digi-update-version"></strong> is available. Download and verify the release package first.</p>
     <p class="digi-update-copy" id="digi-update-progress" role="status" hidden></p>
-    <div class="digi-update-actions"><button class="ui-button" id="digi-update-later">Not now</button><button class="ui-button digi-update-primary" id="digi-update-details">Download update</button></div>
+    <div id="digi-download-progress-wrap" class="digi-download-progress-wrap" hidden>
+      <progress id="digi-download-progress-bar" max="100" value="0" aria-label="Download progress"></progress>
+      <span id="digi-download-progress-label">0%</span>
+    </div>
+    <div class="digi-update-actions"><button class="ui-button" id="digi-update-later">Not now</button><button class="ui-button digi-update-primary" id="digi-update-details">Download</button></div>
+  </div>
+</div>
+<div id="digi-install-dialog" class="digi-update-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="digi-install-title">
+  <div class="digi-update-card">
+    <div id="digi-install-title" class="digi-update-title">Update?</div>
+    <p id="digi-install-copy" class="digi-update-copy">The verified Digi executable is downloaded and ready. Continue to replace the installed application executable?</p>
+    <p id="digi-install-progress" class="digi-update-copy" role="status" hidden></p>
+    <div class="digi-update-actions"><button class="ui-button" id="digi-install-later">Not now</button><button class="ui-button digi-update-primary" id="digi-install-confirm">Update</button></div>
   </div>
 </div>
 

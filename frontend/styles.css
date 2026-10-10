@@ -3269,3 +3269,119 @@ button.results-folder-icon:focus-visible { outline: 2px solid #e8bd62; outline-o
   opacity: .96;
   text-shadow: 0 0 5px rgba(255, 255, 255, .16), 0 0 10px rgba(255, 255, 255, .07);
 }
+
+
+/* Digi white theme — presentation-only overrides; preserve existing behaviour. */
+:root {
+  color-scheme: light !important;
+  --digi-bg: #ffffff;
+  --digi-panel: #f7f7f5;
+  --digi-panel-raised: #ffffff;
+  --digi-border: #deded9;
+  --digi-text: #242424;
+  --digi-muted: #73736d;
+  --digi-accent: #b88627;
+}
+html, body { background: #ffffff !important; color: #242424 !important; }
+body { color-scheme: light !important; }
+.header, .sidebar, .content, .layout, .results-workspace, .preview-panel,
+.home-cards, .home-card, .result, .result:hover, .empty,
+.modal-card, .modal-head, .modal-body, .note-tree, .note-canvas-wrap,
+.filters-dialog, .filters-dialog-head, .digi-update-card, .version-lock-card,
+#digi-context-menu, .repo-browser, .repo-browser-list, .repo-browser-entry,
+.repo-browser-toolbar, .repo-browser-path-wrap, .repo-browser-footer,
+.preview-empty, .preview-content, .preview-toolbar {
+  background-color: #ffffff !important;
+  color: #242424 !important;
+  border-color: #deded9 !important;
+}
+.header, .sidebar, .filters-dialog, .modal-card, .digi-update-card,
+.version-lock-card, #digi-context-menu, .repo-browser, .preview-panel,
+.home-card, .result {
+  box-shadow: 0 8px 26px rgba(0,0,0,.06);
+}
+.brand-mark { background: #f0eee8 !important; color: #35270a !important; }
+.brand:hover .brand-mark { background: #e8e3d6 !important; box-shadow: 0 6px 18px rgba(0,0,0,.09) !important; }
+.digi-home-logo, .content h1, .result-name, .home-card-title, .modal-head,
+.filters-dialog-head h2, .digi-update-title, .version-lock-title,
+.repo-browser-title, .repo-browser-entry-name { color: #242424 !important; }
+.content p, .result-meta, .home-card-copy, .digi-update-copy,
+.version-lock-text, .preview-empty p, .repo-browser-path-help,
+.repo-browser-empty, .brand small { color: #73736d !important; }
+.search-input, input, textarea, select, .repo-browser-path,
+.repo-browser-search, .new-document-form input, .note-tree,
+.note-canvas-wrap {
+  background: #ffffff !important;
+  color: #242424 !important;
+  border-color: #d4d4ce !important;
+}
+.search-input::placeholder, input::placeholder, textarea::placeholder { color: #888880 !important; opacity: 1; }
+.search-input:hover, .search-input:focus, input:hover, input:focus,
+textarea:hover, textarea:focus, select:hover, select:focus {
+  background: #fff !important;
+  border-color: #b8a16d !important;
+  box-shadow: 0 0 0 3px rgba(184,134,39,.10) !important;
+}
+.ui-button, .wide-button, .small-button, .icon-button, .window-control,
+.filters-dialog button, .digi-update-actions button, .version-lock-actions button,
+.repo-browser button, .new-document-form button, .delete-confirm-actions button {
+  background: #f6f6f3 !important;
+  color: #292929 !important;
+  border-color: #d8d8d1 !important;
+}
+.ui-button:hover, .wide-button:hover, .small-button:hover, .icon-button:hover,
+.window-control:hover, .filters-dialog button:hover, .repo-browser button:hover {
+  background: #ecebe5 !important;
+  color: #171717 !important;
+  border-color: #c7b27d !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08) !important;
+}
+.window-close:hover { background: #d83b43 !important; color: #fff !important; }
+.result { background: #fff !important; border-color: #e1e1dc !important; }
+.result:hover, .home-card:hover, .repo-browser-entry:hover { background: #f8f7f2 !important; border-color: #d4c49b !important; }
+.empty { border-color: #d8d8d1 !important; color: #777 !important; }
+.modal, .digi-update-dialog, .version-lock { background: rgba(35,35,30,.36) !important; }
+.digi-context-separator, .modal-head, .filters-dialog-head, .repo-browser-toolbar,
+.repo-browser-footer { border-color: #e3e3de !important; }
+#digi-context-menu button { color: #292929 !important; }
+#digi-context-menu button:hover { background: #f0eee7 !important; }
+#digi-context-menu .digi-context-separator { background: #e0e0da !important; }
+.update-status-dot[data-status="checking"] { background: #ffd43b !important; }
+.update-status-dot[data-status="current"] { background: #24b85a !important; }
+.update-status-dot[data-status="update"] { background: #e53935 !important; }
+.digi-update-primary, .version-primary { background: #f0e4c8 !important; color: #3a2b0d !important; border-color: #d5bd83 !important; }
+.digi-home-logo-dot { background: #d4a13c !important; box-shadow: 0 0 8px rgba(212,161,60,.45) !important; }
+
+
+/* Download progress indicator for the release updater. */
+.digi-download-progress-wrap{display:flex;align-items:center;gap:10px;margin:-8px 0 18px;}
+.digi-download-progress-wrap[hidden]{display:none!important;}
+.digi-download-progress-wrap progress{display:block;flex:1;width:100%;height:10px;accent-color:#b88627;}
+.digi-download-progress-wrap span{font-size:11px;color:#73736d;white-space:nowrap;font-variant-numeric:tabular-nums;}
+
+
+
+/* Persistent local updater diagnostics console. */
+#updater-log-button{
+ position:fixed;right:18px;bottom:16px;z-index:9500;width:34px;height:34px;
+ border:1px solid #b88627;border-radius:10px;background:#1a1a18;color:#f0cc78;
+ font:800 13px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em;
+ box-shadow:0 4px 18px rgba(0,0,0,.22);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;
+}
+#updater-log-button:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(184,134,39,.24)}
+.updater-log-overlay{position:fixed;inset:0;z-index:9600;background:rgba(7,10,12,.62);display:grid;place-items:center;padding:22px}
+.updater-log-overlay[hidden]{display:none!important}
+.updater-log-window{width:min(920px,96vw);height:min(650px,88vh);display:flex;flex-direction:column;overflow:hidden;border:1px solid #303d43;border-radius:14px;background:#0c1114;color:#d7e1e5;box-shadow:0 24px 80px rgba(0,0,0,.45);font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+.updater-log-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid #253138;background:#11191d}
+.updater-log-kicker{font-size:10px;letter-spacing:.18em;color:#d2a64b}
+.updater-log-header h2{margin:5px 0 0;font:700 19px ui-monospace,SFMono-Regular,Consolas,monospace;color:#f0f4f5}
+.updater-log-actions{display:flex;gap:8px}
+.updater-log-actions button{border:1px solid #34444b;border-radius:7px;background:#182328;color:#dce7ea;padding:7px 12px;cursor:pointer}
+.updater-log-actions button:hover{border-color:#b88627;color:#f4d58e}
+.updater-log-meta{display:flex;align-items:center;gap:9px;padding:10px 20px;border-bottom:1px solid #202c31;color:#83a1a9;font-size:10px;letter-spacing:.08em}
+.updater-log-led{width:7px;height:7px;border-radius:50%;background:#55d68b;box-shadow:0 0 8px rgba(85,214,139,.55)}
+#updater-log-path{margin-left:auto;color:#68838b;font-size:10px;letter-spacing:0;text-align:right;overflow-wrap:anywhere}
+#updater-log-output{flex:1;min-height:0;overflow:auto;margin:0;padding:18px 20px;background:repeating-linear-gradient(180deg,#0c1114 0,#0c1114 23px,#0e1417 24px);color:#b7d7c6;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.75 ui-monospace,SFMono-Regular,Consolas,monospace}
+.updater-log-footer{display:flex;justify-content:space-between;gap:12px;padding:10px 20px;border-top:1px solid #253138;background:#11191d;color:#70878e;font-size:10px}
+#updater-log-state{color:#d2a64b;letter-spacing:.1em}
+@media(max-width:620px){.updater-log-overlay{padding:8px}.updater-log-window{width:100%;height:90vh}.updater-log-meta{align-items:flex-start;flex-wrap:wrap}#updater-log-path{width:100%;margin-left:16px;text-align:left}.updater-log-footer{flex-direction:column}}

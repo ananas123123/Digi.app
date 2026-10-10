@@ -1,6 +1,6 @@
 /* Digi update checker.
  * Reads public release metadata and updates only its own status indicator/dialog.
- * It never downloads, installs, removes, or modifies application/user files.
+ * It delegates download verification and installation to the Python backend and helper.
  */
 (() => {
   "use strict";
@@ -15,8 +15,20 @@
   let activeManifest = null;
   let downloadInProgress = false;
   let downloadResultConnected = false;
+  let downloadProgressConnected = false;
+  let installResultConnected = false;
+  let verifiedPackagePath = "";
 
   const compareVersions = window.DigiVersionComparison.compareVersions;
+
+  function logDiagnostic(message) {
+    try {
+      const bridge = window.digiBackend;
+      if (bridge && typeof bridge.logUpdaterEvent === "function") {
+        bridge.logUpdaterEvent(String(message));
+      }
+    } catch (_) { /* Logging must never block the update UI. */ }
+  }
 
   function setStatus(status, title) {
     const dot = document.getElementById("digi-update-status");
@@ -30,7 +42,7 @@
   function showUpdatePrompt(manifest, version, forceOpen = false) {
     if (!manifest || (promptedVersion === version && !forceOpen)) return;
     const validation = window.DigiVersionComparison.validatePackageMetadata(manifest);
-    if (!validation.valid) return;
+    if (promptedVersion !== version) verifiedPackagePath = "";
     activeManifest = manifest;
     promptedVersion = version;
     const dialog = document.getElementById("digi-update-dialog");
@@ -38,19 +50,37 @@
     const progress = document.getElementById("digi-update-progress");
     const download = document.getElementById("digi-update-details");
     const later = document.getElementById("digi-update-later");
+    const copy = dialog && dialog.querySelector(".digi-update-copy");
     if (!dialog || !versionNode || !progress || !download || !later) return;
     versionNode.textContent = version;
     progress.hidden = true;
     progress.textContent = "";
-    download.disabled = false;
     later.disabled = false;
-    download.textContent = "Download update";
+    const packageResolved = Boolean(manifest.release && manifest.release.package);
+    if (manifest.release_status === "published") {
+      if (copy) copy.innerHTML = packageResolved
+        ? 'Version <strong id="digi-update-version"></strong> is available. Download and verify the release package first. A separate confirmation will be shown before replacing the installed executable.'
+        : 'Version <strong id="digi-update-version"></strong> is published. Download will locate its package through releases/directory.json and validate the version metadata.';
+      download.disabled = false;
+      download.textContent = "Download";
+    } else {
+      if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> has been announced but is not published. No download or update can be performed.';
+      download.disabled = true;
+      download.textContent = "Package unavailable";
+    }
+    const updatedVersionNode = document.getElementById("digi-update-version");
+    if (updatedVersionNode) updatedVersionNode.textContent = version;
     dialog.classList.remove("hidden");
+    dialog.style.removeProperty("display");
+    dialog.setAttribute("data-update-version", version);
   }
 
   function closeUpdatePrompt() {
     const dialog = document.getElementById("digi-update-dialog");
-    if (dialog) dialog.classList.add("hidden");
+    if (dialog) {
+      dialog.style.removeProperty("display");
+      dialog.classList.add("hidden");
+    }
   }
 
   function displayDownloadResult(raw) {
@@ -64,18 +94,104 @@
     if (!progress || !download || !later) return;
     downloadInProgress = false;
     progress.hidden = false;
-    progress.textContent = result.ok && result.verified
-      ? "Download complete. Size and SHA-256 verified. Package staged at: " + result.path + ". Digi has not installed it."
-      : "Download rejected: " + (result.message || "verification failed") + " No installation was performed.";
-    download.disabled = !!(result.ok && result.verified);
-    download.textContent = result.ok && result.verified ? "Verified" : "Retry download";
+    const progressWrap = document.getElementById("digi-download-progress-wrap");
+    const progressBar = document.getElementById("digi-download-progress-bar");
+    const progressLabel = document.getElementById("digi-download-progress-label");
+    if (progressWrap) progressWrap.hidden = !result.ok;
+    if (progressBar && result.ok) progressBar.value = 100;
+    if (progressLabel && result.ok) progressLabel.textContent = "100% — verified";
+    if (result.ok && result.verified && typeof result.path === "string" && result.path) {
+      if (result.manifest && result.manifest.release && result.manifest.release.package) {
+        activeManifest = result.manifest;
+        promptedVersion = result.version || promptedVersion;
+      }
+      verifiedPackagePath = result.path;
+      progress.textContent = "Download complete. Size and SHA-256 verified. Saved to: " + result.path + ". Digi has not been installed or replaced.";
+      download.disabled = true;
+      download.textContent = "Downloaded";
+      const pkg = activeManifest && activeManifest.release && activeManifest.release.package;
+      if (pkg && typeof pkg.file_name === "string" && pkg.file_name.toLowerCase().endsWith(".exe")) {
+        const installDialog = document.getElementById("digi-install-dialog");
+        const installProgress = document.getElementById("digi-install-progress");
+        const installButton = document.getElementById("digi-install-confirm");
+        const installLater = document.getElementById("digi-install-later");
+        if (installDialog && installProgress && installButton && installLater) {
+          installProgress.hidden = true;
+          installProgress.textContent = "";
+          installButton.disabled = false;
+          installButton.textContent = "Update";
+          installLater.disabled = false;
+          installDialog.classList.remove("hidden");
+          installDialog.style.removeProperty("display");
+          installDialog.setAttribute("data-update-version", result.version || promptedVersion);
+        }
+      }
+    } else {
+      verifiedPackagePath = "";
+      progress.textContent = "Download rejected: " + (result.message || "verification failed") + " No installation was performed.";
+      logDiagnostic("Download rejected: " + (result.message || "verification failed"));
+      download.disabled = false;
+      download.textContent = "Retry download";
+    }
     later.disabled = false;
   }
 
+  function displayDownloadProgress(downloaded, total) {
+    const wrap = document.getElementById("digi-download-progress-wrap");
+    const bar = document.getElementById("digi-download-progress-bar");
+    const label = document.getElementById("digi-download-progress-label");
+    const status = document.getElementById("digi-update-progress");
+    if (!wrap || !bar || !label) return;
+    const safeTotal = Number(total);
+    const safeDownloaded = Number(downloaded);
+    if (!Number.isFinite(safeTotal) || safeTotal <= 0 || !Number.isFinite(safeDownloaded) || safeDownloaded < 0) return;
+    const percent = Math.max(0, Math.min(100, Math.floor(safeDownloaded / safeTotal * 100)));
+    wrap.hidden = false;
+    bar.value = percent;
+    label.textContent = percent + "% (" + (safeDownloaded / (1024 * 1024)).toFixed(1) + " / " + (safeTotal / (1024 * 1024)).toFixed(1) + " MB)";
+    if (status) status.textContent = "Downloading and verifying Digi " + (promptedVersion || "") + "…";
+  }
+
+  function displayInstallResult(raw) {
+    let result;
+    try { result = JSON.parse(raw); } catch (_) {
+      result = { ok: false, message: "Digi returned an invalid update result." };
+    }
+    const dialog = document.getElementById("digi-install-dialog");
+    const progress = document.getElementById("digi-install-progress");
+    const confirm = document.getElementById("digi-install-confirm");
+    const later = document.getElementById("digi-install-later");
+    if (!dialog || !progress || !confirm || !later) return;
+    downloadInProgress = false;
+    progress.hidden = false;
+    if (result.ok) {
+      confirm.disabled = true;
+      later.disabled = true;
+      confirm.textContent = "Updating…";
+      progress.textContent = result.message || "Digi is closing. The update helper will replace the executable and verify startup.";
+    } else {
+      confirm.disabled = false;
+      later.disabled = false;
+      confirm.textContent = "Retry update";
+      progress.textContent = result.message || "The update helper could not be started. The installed executable was not changed.";
+      logDiagnostic("Install rejected: " + (result.message || "The update helper could not be started."));
+    }
+  }
+
   function connectDownloadResult(backend) {
-    if (downloadResultConnected || !backend || !backend.packageDownloadResult) return;
-    backend.packageDownloadResult.connect(displayDownloadResult);
-    downloadResultConnected = true;
+    if (!backend) return;
+    if (!downloadResultConnected && backend.packageDownloadResult) {
+      backend.packageDownloadResult.connect(displayDownloadResult);
+      downloadResultConnected = true;
+    }
+    if (!downloadProgressConnected && backend.packageDownloadProgress) {
+      backend.packageDownloadProgress.connect(displayDownloadProgress);
+      downloadProgressConnected = true;
+    }
+    if (!installResultConnected && backend.updateInstallResult) {
+      backend.updateInstallResult.connect(displayInstallResult);
+      installResultConnected = true;
+    }
   }
 
   function bindPromptButtons() {
@@ -83,12 +199,66 @@
     const later = document.getElementById("digi-update-later");
     const statusDot = document.getElementById("digi-update-status");
     if (later) later.onclick = closeUpdatePrompt;
+    const installLater = document.getElementById("digi-install-later");
+    const installConfirm = document.getElementById("digi-install-confirm");
+    if (installLater) installLater.onclick = () => {
+      const dialog = document.getElementById("digi-install-dialog");
+      if (dialog) dialog.classList.add("hidden");
+    };
+    // Start the verified, rollback-capable helper only after the user confirms.
+    if (installConfirm) installConfirm.onclick = async event => {
+      event.preventDefault();
+      if (downloadInProgress || !activeManifest || !verifiedPackagePath) return;
+      const pkg = activeManifest.release && activeManifest.release.package;
+      if (!pkg || typeof pkg.file_name !== "string" || !pkg.file_name.toLowerCase().endsWith(".exe")) {
+        const progress = document.getElementById("digi-install-progress");
+        if (progress) {
+          progress.hidden = false;
+          progress.textContent = "Update rejected: the verified package is not a Windows executable.";
+        }
+        return;
+      }
+      try {
+        const backend = await waitForBridge();
+        if (typeof backend.installReleaseUpdate !== "function") {
+          throw new Error("The installed updater helper interface is unavailable. Rebuild Digi with the latest updater changes.");
+        }
+        installConfirm.disabled = true;
+        installLater.disabled = true;
+        installConfirm.textContent = "Preparing update…";
+        const progress = document.getElementById("digi-install-progress");
+        if (progress) {
+          progress.hidden = false;
+          progress.textContent = "Rechecking the downloaded executable and preparing a safe replacement. Your Search Repository and user data will not be moved or deleted.";
+        }
+        backend.installReleaseUpdate(JSON.stringify(activeManifest), verifiedPackagePath);
+      } catch (error) {
+        installConfirm.disabled = false;
+        installLater.disabled = false;
+        installConfirm.textContent = "Retry update";
+        const progress = document.getElementById("digi-install-progress");
+        if (progress) {
+          progress.hidden = false;
+          progress.textContent = error && error.message ? error.message : "Could not start the update helper.";
+          logDiagnostic("Install UI exception: " + (error && error.message ? error.message : String(error)));
+        }
+      }
+    };
     if (statusDot) {
       statusDot.title = "Check for Digi updates / open update prompt";
       statusDot.style.cursor = "pointer";
       statusDot.addEventListener("click", () => {
         if (activeManifest && promptedVersion) {
-          showUpdatePrompt(activeManifest, promptedVersion, true);
+          const pkg = activeManifest.release && activeManifest.release.package;
+          if (verifiedPackagePath && pkg && typeof pkg.file_name === "string" && pkg.file_name.toLowerCase().endsWith(".exe")) {
+            const installDialog = document.getElementById("digi-install-dialog");
+            if (installDialog) {
+              installDialog.classList.remove("hidden");
+              installDialog.style.removeProperty("display");
+            }
+          } else {
+            showUpdatePrompt(activeManifest, promptedVersion, true);
+          }
         } else {
           checkRemoteStatus(true);
         }
@@ -105,21 +275,29 @@
     }
     if (download) download.onclick = async () => {
       if (downloadInProgress || !activeManifest) return;
-      const validation = window.DigiVersionComparison.validatePackageMetadata(activeManifest);
-      if (!validation.valid) {
-        displayDownloadResult(JSON.stringify({ ok: false, verified: false, message: "Package metadata rejected: " + validation.reason }));
+      if (activeManifest.release_status !== "published" ||
+          !activeManifest.release ||
+          activeManifest.release.version !== activeManifest.latest_version) {
+        displayDownloadResult(JSON.stringify({ ok: false, verified: false, message: "The latest.json announcement is not a published, valid release." }));
         return;
       }
       try {
         const backend = await waitForBridge();
         connectDownloadResult(backend);
+        const progress = document.getElementById("digi-update-progress");
         downloadInProgress = true;
         download.disabled = true;
         later.disabled = true;
         download.textContent = "Downloading…";
-        const progress = document.getElementById("digi-update-progress");
         progress.hidden = false;
-        progress.textContent = "Downloading package to a temporary file…";
+        progress.textContent = "Preparing download…";
+        logDiagnostic("User requested download of version " + (promptedVersion || "unknown"));
+        const progressWrap = document.getElementById("digi-download-progress-wrap");
+        const progressBar = document.getElementById("digi-download-progress-bar");
+        const progressLabel = document.getElementById("digi-download-progress-label");
+        if (progressWrap) progressWrap.hidden = false;
+        if (progressBar) progressBar.value = 0;
+        if (progressLabel) progressLabel.textContent = "0%";
         backend.downloadReleasePackage(JSON.stringify(activeManifest));
       } catch (error) {
         downloadInProgress = false;
@@ -224,7 +402,7 @@
       const response = await readManifest(backend);
 
       if (!response || !response.ok || !response.manifest) {
-        throw new Error("Could not reach the release repository.");
+        throw new Error(response && response.error ? response.error : "Could not resolve latest.json through releases/directory.json and version metadata.");
       }
 
       if (response.test_mode === true) showTestModeBanner();
@@ -256,7 +434,9 @@
       setStatus("update", announcementOnly
         ? "RED: version " + decision.latestVersion + " has been announced, but its package is not yet published. Installed Digi version is " + currentVersion + ". No download or installation is available."
         : "RED: latest.json says " + decision.latestVersion + "; installed Digi version is " + currentVersion + ".");
-      if (!announcementOnly) showUpdatePrompt(manifest, decision.latestVersion);
+      // Always show the prompt for a newer version, including announced-but-unpublished
+      // releases. The prompt itself disables Download until the release is published.
+      showUpdatePrompt(manifest, decision.latestVersion);
       try {
         localStorage.setItem(PENDING_KEY, decision.latestVersion);
       } catch (_) {

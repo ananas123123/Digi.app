@@ -1168,3 +1168,45 @@ else showStartupError(state.version_problem||"Digi could not initialise its back
 document.addEventListener('click', event => {
   if (event.target && event.target.id === 'preview-close') $('preview-panel').hidden = true;
 });
+
+
+// Local updater diagnostic console: reads only the local log file through the backend.
+(() => {
+  const button = document.getElementById("updater-log-button");
+  const overlay = document.getElementById("updater-log-overlay");
+  const output = document.getElementById("updater-log-output");
+  const state = document.getElementById("updater-log-state");
+  if (!button || !overlay || !output || !state) return;
+
+  const refreshLog = () => {
+    state.textContent = "READING…";
+    output.textContent = "Reading local updater diagnostics…";
+    if (!backend || typeof backend.getUpdaterLog !== "function") {
+      output.textContent = "[ERROR] Diagnostic bridge is not connected.\n[HINT] Wait for Digi to finish starting, then press Refresh.";
+      state.textContent = "BRIDGE OFFLINE";
+      return;
+    }
+    backend.getUpdaterLog(raw => {
+      output.textContent = typeof raw === "string" && raw.trim()
+        ? raw
+        : "[INFO] No updater log content was returned.";
+      output.scrollTop = output.scrollHeight;
+      state.textContent = "LOCAL / READ ONLY";
+    });
+  };
+
+  button.addEventListener("click", () => {
+    overlay.hidden = false;
+    refreshLog();
+  });
+  document.getElementById("updater-log-close")?.addEventListener("click", () => {
+    overlay.hidden = true;
+  });
+  document.getElementById("updater-log-refresh")?.addEventListener("click", refreshLog);
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) overlay.hidden = true;
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !overlay.hidden) overlay.hidden = true;
+  });
+})();

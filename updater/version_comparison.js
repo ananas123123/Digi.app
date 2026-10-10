@@ -1,4 +1,4 @@
-/* Pure version comparison and release-package validation shared by Digi and tests. */
+/* Version comparison and validation for the resolved latest.json -> directory.json -> version metadata protocol. */
 (function (root, factory) {
   "use strict";
   const api = factory();
@@ -36,6 +36,16 @@
         : { status: "invalid", reason: "missing-latest-version" };
     }
     const latestVersion = manifest.latest_version.trim();
+    const release = manifest.release;
+    if (!release || typeof release !== "object" ||
+        typeof release.version !== "string" ||
+        compareVersions(release.version, latestVersion) !== 0) {
+      return { status: "invalid", reason: "release-version-mismatch" };
+    }
+    if (manifest.release_status !== "published" && manifest.release_status !== "unpublished") {
+      return { status: "invalid", reason: "invalid-release-status" };
+    }
+
     const relation = compareVersions(latestVersion, currentVersion);
     if (relation === null) return { status: "invalid", reason: "invalid-version" };
 
@@ -73,6 +83,14 @@
     if (!pkg || typeof pkg !== "object") {
       return { valid: false, reason: "missing-package" };
     }
+    if (typeof pkg.file_name !== "string" || !pkg.file_name.trim() ||
+        pkg.file_name !== pkg.file_name.split(/[\\\\/]/).pop()) {
+      return { valid: false, reason: "invalid-package-filename" };
+    }
+    const extension = pkg.file_name.toLowerCase().split(".").pop();
+    if (extension !== "exe" && !(extension === "txt" && pkg.kind === "test-fixture")) {
+      return { valid: false, reason: "unsupported-package-file-type" };
+    }
     if (typeof pkg.url !== "string") {
       return { valid: false, reason: "invalid-package-url" };
     }
@@ -95,6 +113,7 @@
     return {
       valid: true,
       url: parsed.href,
+      fileName: pkg.file_name,
       sizeBytes: pkg.size_bytes,
       sha256: pkg.sha256.toLowerCase(),
       version: latest.trim()
