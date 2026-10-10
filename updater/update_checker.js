@@ -49,7 +49,7 @@
     if (validation.valid) {
       if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> is available. Download and verify the package first. You can then install it safely; Digi will close and restart.';
       download.disabled = false;
-      download.textContent = "Download update";
+      download.textContent = "Update now";
     } else {
       if (copy) copy.innerHTML = 'Version <strong id="digi-update-version"></strong> has been announced, but its installable package is not available yet. No download or installation can be performed.';
       download.disabled = true;
@@ -83,9 +83,9 @@
     progress.hidden = false;
     if (result.ok && result.verified && typeof result.path === "string" && result.path) {
       verifiedPackagePath = result.path;
-      progress.textContent = "Download complete. Size and SHA-256 verified. Select Install update to replace the application safely.";
-      download.disabled = false;
-      download.textContent = "Install update";
+      progress.textContent = "Download complete. Size and SHA-256 verified. Saved to: " + result.path + ". Digi has not been installed or changed.";
+      download.disabled = true;
+      download.textContent = "Downloaded";
     } else {
       verifiedPackagePath = "";
       progress.textContent = "Download rejected: " + (result.message || "verification failed") + " No installation was performed.";
@@ -167,16 +167,6 @@
         const backend = await waitForBridge();
         connectDownloadResult(backend);
         const progress = document.getElementById("digi-update-progress");
-        if (verifiedPackagePath) {
-          downloadInProgress = true;
-          download.disabled = true;
-          later.disabled = true;
-          download.textContent = "Installing…";
-          progress.hidden = false;
-          progress.textContent = "Starting the separate updater. Digi will close and reopen after installation.";
-          backend.installReleaseUpdate(JSON.stringify(activeManifest), verifiedPackagePath);
-          return;
-        }
         downloadInProgress = true;
         download.disabled = true;
         later.disabled = true;
