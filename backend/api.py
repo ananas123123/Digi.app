@@ -232,7 +232,7 @@ class PackageDownloadWorker(QThread):
                 "version": manifest.get("latest_version", ""),
                 "sha256": package.get("sha256", ""),
                 "verified": True,
-                "message": "File downloaded and verified. Saved to the package installer folder; no installation or replacement was performed."
+                "message": "File downloaded and verified in Digi Dependencies\\update dependencies\\package installer. No installation or replacement was performed."
             }
         except Exception as exc:
             result = {"ok": False, "verified": False, "message": str(exc) or "The update package could not be downloaded and verified."}
@@ -310,7 +310,7 @@ class DigiBridge(QObject):
 
     @Slot(str, str)
     def installReleaseUpdate(self, manifest_json, downloaded_path):
-        """Hand a verified update to the separate helper, only from the stable install."""
+        """Replace only the installed executable via the separate rollback-capable helper."""
         try:
             manifest = json.loads(manifest_json)
             release = manifest.get("release")
@@ -321,32 +321,40 @@ class DigiBridge(QObject):
                 or manifest.get("schema_version") != 1
                 or manifest.get("release_status") != "published"
                 or not isinstance(version, str)
+                or not re.fullmatch(r"\d+(?:\.\d+)*", version)
                 or not isinstance(release, dict)
                 or release.get("version") != version
                 or not isinstance(package, dict)
             ):
                 raise ValueError("Release metadata is invalid.")
+            filename = package.get("file_name")
             expected_hash = package.get("sha256")
             expected_size = package.get("size_bytes")
-            if not isinstance(expected_hash, str) or not isinstance(expected_size, int) or isinstance(expected_size, bool):
-                raise ValueError("Release package verification metadata is invalid.")
+            if (
+                not isinstance(filename, str)
+                or Path(filename).name != filename
+                or Path(filename).suffix.lower() != ".exe"
+                or not isinstance(expected_hash, str)
+                or not isinstance(expected_size, int)
+                or isinstance(expected_size, bool)
+                or expected_size <= 0
+            ):
+                raise ValueError("Only a verified .exe package can be installed.")
 
             local_app_data = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))).resolve()
             install_dir = (local_app_data / "Programs" / "Digi").resolve()
             target = Path(sys.executable).resolve()
             helper = install_dir / "DigiUpdater.exe"
             candidate = Path(downloaded_path).resolve()
-            temp_root = Path(tempfile.gettempdir()).resolve()
+            safe_version = re.sub(r"[^0-9A-Za-z._-]", "_", version)
+            expected_candidate = (local_app_data / "Digi" / "update dependencies" / "package installer" / safe_version / filename).resolve()
 
             if target != (install_dir / "Digi Search Engine.exe").resolve():
-                raise ValueError(
-                    "Self-update is available only from Digi's stable installation at "
-                    "%LOCALAPPDATA%\\Programs\\Digi. This copy was not changed."
-                )
+                raise ValueError("Self-update is available only from Digi's stable installation at %LOCALAPPDATA%\\Programs\\Digi. This copy was not changed.")
             if not helper.is_file():
                 raise FileNotFoundError("DigiUpdater.exe is missing from the installation directory.")
-            if candidate.parent != temp_root or not candidate.name.startswith("digi-update-") or candidate.suffix != ".download":
-                raise ValueError("The downloaded update file is not in Digi's expected temporary location.")
+            if candidate != expected_candidate or candidate.suffix.lower() != ".exe":
+                raise ValueError("The candidate is not in Digi's expected update-package folder.")
             if not candidate.is_file() or candidate.stat().st_size != expected_size:
                 raise ValueError("The downloaded update size does not match the release metadata.")
             verify_package_sha256(candidate, expected_hash)
@@ -373,7 +381,10 @@ class DigiBridge(QObject):
                 "--version", version,
             ], cwd=str(install_dir), close_fds=True)
             QTimer.singleShot(700, self.parent().close if self.parent() else lambda: None)
-            self.updateInstallResult.emit(json.dumps({"ok": True, "message": "Digi is closing to install the verified update."}))
+            self.updateInstallResult.emit(json.dumps({
+                "ok": True,
+                "message": "Digi is closing. The helper will replace only the application executable, verify startup, and restore the previous executable if startup fails. Your Search Repository and persistent user data are kept separate."
+            }))
         except Exception as exc:
             self.updateInstallResult.emit(json.dumps({"ok": False, "message": str(exc) or "Could not start the update helper."}))
 
