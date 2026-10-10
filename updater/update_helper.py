@@ -170,6 +170,8 @@ def install_update(
     install_dir, target, candidate = validate_paths(
         helper_path, target_path, candidate_path, local_app_data
     )
+    if candidate.parent.name != version:
+        raise ValueError("The update candidate folder does not match the requested version.")
     expected = expected_sha256.lower()
     if sha256_file(candidate) != expected:
         raise ValueError("The update candidate failed SHA-256 verification.")
