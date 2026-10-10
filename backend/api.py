@@ -443,9 +443,18 @@ class DigiBridge(QObject):
 
     @Slot(result=str)
     def state(self):
+        # The helper records the installed executable's confirmed release version here.
+        # Fall back to the build version if the version file cannot be read.
+        installed_version = APP_VERSION
+        try:
+            recorded_version = (VERSION_MANAGER / "version.txt").read_text(encoding="utf-8").strip()
+            if re.fullmatch(r"\d+(?:\.\d+){1,4}", recorded_version):
+                installed_version = recorded_version
+        except OSError:
+            pass
         return json.dumps({
             "library": str(self.search_service.root) if self.search_service else "",
-            "version": APP_VERSION,
+            "version": installed_version,
             "version_ok": self.version_ok,
             "version_problem": self.version_problem,
             "ready": bool(self.db and self.search_service and self.notes),
