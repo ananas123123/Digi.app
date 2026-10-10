@@ -7,16 +7,17 @@ import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
+import re
 from PySide6.QtCore import QObject, Signal, Slot, QThread, QTimer
 from PySide6.QtWidgets import QFileDialog
-from .config import APP_VERSION, LIBRARY_CONFIG, get_library_root, ensure_directories
+from .config import APP_VERSION, DEPENDENCIES_ROOT, LIBRARY_CONFIG, get_library_root, ensure_directories
 from .database import Database
 from .search import SearchService
 from .files import FileService
 from .conversion import ConversionWorker
 from .notes import NotesService
 from .version_manager import initialize_version_file, version_integrity, recalibrate_version
-from .updater_download import download_package_to_temp, verify_package_sha256
+from .updater_download import download_package_to_path, verify_package_sha256
 
 
 class ReleaseManifestWorker(QThread):
@@ -93,7 +94,12 @@ class PackageDownloadWorker(QThread):
     def run(self):
         try:
             manifest = json.loads(self.manifest_json)
-            path = download_package_to_temp(manifest)
+            version = str(manifest.get("latest_version", "")).strip()
+            safe_version = re.sub(r"[^0-9A-Za-z._-]", "_", version)
+            if not safe_version or safe_version in {".", ".."}:
+                raise ValueError("Release version cannot be used as a package folder name.")
+            destination = DEPENDENCIES_ROOT / "update dependencies" / "package installer" / safe_version / "Digi Search Engine.exe"
+            path = download_package_to_path(manifest, destination)
             package = manifest.get("release", {}).get("package", {})
             result = {
                 "ok": True,
@@ -101,7 +107,7 @@ class PackageDownloadWorker(QThread):
                 "version": manifest.get("latest_version", ""),
                 "sha256": package.get("sha256", ""),
                 "verified": True,
-                "message": "Package downloaded and verified. Ready to install."
+                "message": "Package downloaded and verified. Saved to the package installer folder; no installation was performed."
             }
         except Exception as exc:
             result = {"ok": False, "verified": False, "message": str(exc) or "The update package could not be downloaded and verified."}
