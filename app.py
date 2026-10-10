@@ -170,6 +170,19 @@ class DigiWindow(QMainWindow):
         if app:
             app.installEventFilter(self)
 
+    def closeEvent(self, event):
+        # Keep the process alive while the approved update is being downloaded
+        # or staged. The helper must only replace files after Digi has exited.
+        worker = getattr(getattr(self, "bridge", None), "update_worker", None)
+        if worker is not None and worker.isRunning():
+            self.view.page().runJavaScript(
+                "const n=document.getElementById('digi-update-copy');"
+                "if(n)n.textContent='Please wait for the approved update operation to finish.';"
+            )
+            event.ignore()
+            return
+        super().closeEvent(event)
+
     def _handle_native_items_dropped(self, paths, x, y):
         import json
         payload = json.dumps(list(paths))
