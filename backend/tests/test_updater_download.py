@@ -1,4 +1,5 @@
 """Tests for safe temporary update downloads."""
+import hashlib
 import os
 import tempfile
 import unittest
@@ -44,7 +45,7 @@ def manifest(payload, **package_overrides):
     package = {
         "url": "https://downloads.example.com/Digi.exe",
         "size_bytes": len(payload),
-        "sha256": "a" * 64,
+        "sha256": hashlib.sha256(payload).hexdigest(),
     }
     package.update(package_overrides)
     return {
@@ -117,6 +118,22 @@ class UpdaterDownloadTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unsafe URL"):
                 download_package_to_temp(manifest(b"x"), directory, opener)
             self.assertEqual(os.listdir(directory), [])
+
+    def test_rejects_checksum_mismatch_and_removes_download(self):
+        payload = b"sample-package-bytes"
+        opener = FakeOpener(FakeResponse(payload))
+        wrong_hash = "0" * 64
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(ValueError, "SHA-256 does not match"):
+                download_package_to_temp(manifest(payload, sha256=wrong_hash), directory, opener)
+            self.assertEqual(os.listdir(directory), [])
+
+    def test_rejects_malformed_checksum_before_network_request(self):
+        opener = FakeOpener(FakeResponse(b"x"))
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(ValueError, "checksum is invalid"):
+                download_package_to_temp(manifest(b"x", sha256="not-a-checksum"), directory, opener)
+        self.assertFalse(opener.called)
 
 
 if __name__ == "__main__":
