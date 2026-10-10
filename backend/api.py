@@ -1,5 +1,7 @@
 import json
+import os
 import time
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from PySide6.QtCore import QObject, Signal, Slot, QThread
@@ -20,9 +22,32 @@ class ReleaseManifestWorker(QThread):
         "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/latest.json",
     )
 
+    @staticmethod
+    def _local_test_url():
+        """Return an explicitly opted-in loopback-only test URL, otherwise None."""
+        if os.environ.get("DIGI_UPDATER_TEST_MODE") != "1":
+            return None
+        candidate = os.environ.get("DIGI_UPDATER_TEST_MANIFEST_URL", "").strip()
+        try:
+            parsed = urllib.parse.urlparse(candidate)
+            host = (parsed.hostname or "").lower()
+            if (
+                parsed.scheme != "http"
+                or host not in {"127.0.0.1", "localhost", "::1"}
+                or not parsed.port
+                or parsed.username is not None
+                or parsed.password is not None
+            ):
+                return None
+            return candidate
+        except (TypeError, ValueError):
+            return None
+
     def run(self):
+        test_url = self._local_test_url()
+        urls = (test_url,) if test_url else self.URLS
         cache_buster = str(int(time.time() * 1000))
-        for base_url in self.URLS:
+        for base_url in urls:
             try:
                 separator = "&" if "?" in base_url else "?"
                 url = base_url + separator + "_digi_check=" + cache_buster
@@ -41,11 +66,19 @@ class ReleaseManifestWorker(QThread):
                         raise ValueError("GitHub API did not return base64 file content")
                     payload = base64.b64decode(envelope["content"])
                 manifest = json.loads(payload.decode("utf-8"))
-                self.resultReady.emit(json.dumps({"ok": True, "manifest": manifest}))
+                self.resultReady.emit(json.dumps({
+                    "ok": True,
+                    "manifest": manifest,
+                    "test_mode": bool(test_url),
+                }))
                 return
             except Exception:
                 continue
-        self.resultReady.emit(json.dumps({"ok": False, "manifest": None}))
+        self.resultReady.emit(json.dumps({
+            "ok": False,
+            "manifest": None,
+            "test_mode": bool(test_url),
+        }))
 
 
 class DigiBridge(QObject):
