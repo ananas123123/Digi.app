@@ -194,8 +194,26 @@ class ReleaseManifestWorker(QThread):
                 manifest = self._read_json(test_url)
                 result = {"ok": True, "manifest": manifest, "test_mode": True}
             else:
+                # The update check reads latest.json only. Release directories and
+                # package metadata are resolved only after the user chooses Download.
                 latest = self._read_first_json(tuple((url, "api.github.com" in url) for url in self.LATEST_URLS))
-                manifest = self._resolve_latest_manifest(latest)
+                if latest.get("schema_version") != 1 or latest.get("product") != "Digi":
+                    raise ValueError("latest.json has an unsupported schema or product.")
+                version = latest.get("latest_version")
+                if not isinstance(version, str) or not version.strip() or not re.fullmatch(r"\\d+(?:\\.\\d+)*", version.strip()):
+                    raise ValueError("latest.json does not contain a valid latest_version.")
+                if latest.get("release_status") not in {"published", "unpublished"}:
+                    raise ValueError("latest.json has an invalid release_status.")
+                version = version.strip()
+                manifest = {
+                    "schema_version": 1,
+                    "product": "Digi",
+                    "channel": latest.get("channel", "stable"),
+                    "latest_version": version,
+                    "release_status": latest["release_status"],
+                    "message": latest.get("message", ""),
+                    "release": {"version": version}
+                }
                 result = {"ok": True, "manifest": manifest}
         except Exception as exc:
             result = {"ok": False, "manifest": None, "error": str(exc)}
@@ -213,12 +231,32 @@ class PackageDownloadWorker(QThread):
 
     def run(self):
         try:
-            manifest = json.loads(self.manifest_json)
-            version = str(manifest.get("latest_version", "")).strip()
+            requested = json.loads(self.manifest_json)
+            version = str(requested.get("latest_version", "")).strip()
+            if requested.get("product") != "Digi" or requested.get("schema_version") != 1:
+                raise ValueError("The update announcement is invalid.")
+            if requested.get("release_status") != "published":
+                raise ValueError("This release is not published for download.")
+            if not re.fullmatch(r"\\d+(?:\\.\\d+)*", version):
+                raise ValueError("The announced version is invalid.")
+
+            # Re-read latest.json at download time and resolve the exact version
+            # through directory.json and its version-specific metadata.
+            latest = ReleaseManifestWorker._read_first_json(
+                tuple((url, "api.github.com" in url) for url in ReleaseManifestWorker.LATEST_URLS)
+            )
+            if (
+                latest.get("product") != "Digi"
+                or latest.get("schema_version") != 1
+                or latest.get("release_status") != "published"
+                or str(latest.get("latest_version", "")).strip() != version
+            ):
+                raise ValueError("latest.json changed since the update was announced. Check for updates again.")
+            manifest = ReleaseManifestWorker._resolve_latest_manifest(latest)
+            package = manifest.get("release", {}).get("package", {})
             safe_version = re.sub(r"[^0-9A-Za-z._-]", "_", version)
             if not safe_version or safe_version in {".", ".."}:
                 raise ValueError("Release version cannot be used as a package folder name.")
-            package = manifest.get("release", {}).get("package", {})
             filename = package.get("file_name", "Digi Search Engine.exe")
             if not isinstance(filename, str) or not filename.strip() or Path(filename).name != filename or filename in {".", ".."}:
                 raise ValueError("Package filename is invalid.")
@@ -231,6 +269,7 @@ class PackageDownloadWorker(QThread):
                 "path": path,
                 "version": manifest.get("latest_version", ""),
                 "sha256": package.get("sha256", ""),
+                "manifest": manifest,
                 "verified": True,
                 "message": "File downloaded and verified in Digi Dependencies\\update dependencies\\package installer. No installation or replacement was performed."
             }
