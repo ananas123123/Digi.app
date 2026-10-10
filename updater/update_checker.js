@@ -15,6 +15,7 @@
   let activeManifest = null;
   let downloadInProgress = false;
   let downloadResultConnected = false;
+  let downloadProgressConnected = false;
   let installResultConnected = false;
   let verifiedPackagePath = "";
 
@@ -84,6 +85,12 @@
     if (!progress || !download || !later) return;
     downloadInProgress = false;
     progress.hidden = false;
+    const progressWrap = document.getElementById("digi-download-progress-wrap");
+    const progressBar = document.getElementById("digi-download-progress-bar");
+    const progressLabel = document.getElementById("digi-download-progress-label");
+    if (progressWrap) progressWrap.hidden = !result.ok;
+    if (progressBar && result.ok) progressBar.value = 100;
+    if (progressLabel && result.ok) progressLabel.textContent = "100% — verified";
     if (result.ok && result.verified && typeof result.path === "string" && result.path) {
       if (result.manifest && result.manifest.release && result.manifest.release.package) {
         activeManifest = result.manifest;
@@ -119,6 +126,22 @@
     later.disabled = false;
   }
 
+  function displayDownloadProgress(downloaded, total) {
+    const wrap = document.getElementById("digi-download-progress-wrap");
+    const bar = document.getElementById("digi-download-progress-bar");
+    const label = document.getElementById("digi-download-progress-label");
+    const status = document.getElementById("digi-update-progress");
+    if (!wrap || !bar || !label) return;
+    const safeTotal = Number(total);
+    const safeDownloaded = Number(downloaded);
+    if (!Number.isFinite(safeTotal) || safeTotal <= 0 || !Number.isFinite(safeDownloaded) || safeDownloaded < 0) return;
+    const percent = Math.max(0, Math.min(100, Math.floor(safeDownloaded / safeTotal * 100)));
+    wrap.hidden = false;
+    bar.value = percent;
+    label.textContent = percent + "% (" + (safeDownloaded / (1024 * 1024)).toFixed(1) + " / " + (safeTotal / (1024 * 1024)).toFixed(1) + " MB)";
+    if (status) status.textContent = "Downloading and verifying Digi " + (promptedVersion || "") + "…";
+  }
+
   function displayInstallResult(raw) {
     let result;
     try { result = JSON.parse(raw); } catch (_) {
@@ -150,6 +173,10 @@
       backend.packageDownloadResult.connect(displayDownloadResult);
       downloadResultConnected = true;
     }
+    if (!downloadProgressConnected && backend.packageDownloadProgress) {
+      backend.packageDownloadProgress.connect(displayDownloadProgress);
+      downloadProgressConnected = true;
+    }
     if (!installResultConnected && backend.updateInstallResult) {
       backend.updateInstallResult.connect(displayInstallResult);
       installResultConnected = true;
@@ -167,25 +194,8 @@
       const dialog = document.getElementById("digi-install-dialog");
       if (dialog) dialog.classList.add("hidden");
     };
-    if (installConfirm) installConfirm.onclick = async () => {
-      if (!activeManifest || !verifiedPackagePath || downloadInProgress) return;
-      try {
-        const backend = await waitForBridge();
-        connectDownloadResult(backend);
-        downloadInProgress = true;
-        installConfirm.disabled = true;
-        if (installLater) installLater.disabled = true;
-        const progress = document.getElementById("digi-install-progress");
-        if (progress) {
-          progress.hidden = false;
-          progress.textContent = "Checking the downloaded executable and preparing the safe replacement…";
-        }
-        backend.installReleaseUpdate(JSON.stringify(activeManifest), verifiedPackagePath);
-      } catch (error) {
-        downloadInProgress = false;
-        displayInstallResult(JSON.stringify({ ok: false, message: error.message || "Digi backend unavailable." }));
-      }
-    };
+    // Deliberately inert in this development build; installation is not enabled yet.
+    if (installConfirm) installConfirm.onclick = event => event.preventDefault();
     if (statusDot) {
       statusDot.title = "Check for Digi updates / open update prompt";
       statusDot.style.cursor = "pointer";
@@ -232,7 +242,13 @@
         later.disabled = true;
         download.textContent = "Downloading…";
         progress.hidden = false;
-        progress.textContent = "Downloading the file to a temporary location for verification…";
+        progress.textContent = "Preparing download…";
+        const progressWrap = document.getElementById("digi-download-progress-wrap");
+        const progressBar = document.getElementById("digi-download-progress-bar");
+        const progressLabel = document.getElementById("digi-download-progress-label");
+        if (progressWrap) progressWrap.hidden = false;
+        if (progressBar) progressBar.value = 0;
+        if (progressLabel) progressLabel.textContent = "0%";
         backend.downloadReleasePackage(JSON.stringify(activeManifest));
       } catch (error) {
         downloadInProgress = false;
