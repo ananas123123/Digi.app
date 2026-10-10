@@ -1,20 +1,28 @@
 # Installation and self-update contract
 
-Status: implementation contract for the `test-update` branch. This document does not mean installation or self-update is implemented.
+Status: implementation contract for `updater-install-layout-logging`. The Windows build and end-to-end update still require runtime validation.
 
 ## 1. Runtime installation layout
 
 The installed application uses a stable directory:
 
 ```text
-%LOCALAPPDATA%\Programs\Digi\
+%LOCALAPPDATA%\Digi\
 ├── Digi Search Engine.exe
-└── DigiUpdater.exe
+├── DigiUpdater.exe
+├── Logs\
+├── Search Repository\
+├── Cache\
+├── Version manager\
+└── update dependencies\
+    └── package installer\
+        └── <version>\
+            └── Digi Search Engine.exe
 ```
 
-The desktop shortcut targets `Digi Search Engine.exe` in this directory. Updates replace that executable in place; they do not create a new version-specific installation directory.
+The executable and helper currently live directly in `%LOCALAPPDATA%\Digi`. The desktop shortcut and repaired Digi shortcuts target the stable `Digi Search Engine.exe` path. Updates replace that executable in place; they do not create a version-specific installed application directory. The versioned package folder is only a download/staging source.
 
-Version-specific folders created by `build.bat` are build artifacts only. They are not the permanent installation path.
+The builder may create the root and `Logs` before the app's first launch. First-run initialization must therefore create missing data-layout directories even when the root already exists, without overwriting existing user data.
 
 ## 2. Persistent user data
 
@@ -27,7 +35,7 @@ All existing user data remains outside the installation directory under:
 └── Version manager\
 ```
 
-The updater must never move, delete, rename, replace, or clean this data directory. The existing version marker intentionally records the initial data-layout version and is not rewritten just because the application executable is updated.
+The updater must never move, delete, rename, replace, or clean these persistent data folders. Cleanup is limited to verified update packages, staging files, and recovery copies after confirmed startup. The existing version marker intentionally records the initial data-layout version and is not rewritten just because the application executable is updated.
 
 ## 3. Release asset contract
 
@@ -44,7 +52,7 @@ The installed `DigiUpdater.exe` is a separate, stable helper. It is not replaced
 5. The helper validates arguments and path boundaries, waits for Digi to exit, copies the candidate into a staging file inside the installation directory, and verifies the staged copy again.
 6. The helper preserves a rollback copy of the existing executable, replaces the target, and launches the new executable.
 7. The helper keeps the rollback copy until the new process passes a defined startup confirmation. If replacement or startup confirmation fails, it restores the previous executable and reports failure. The helper never modifies persistent user data.
-8. Temporary download and staging files are cleaned up when safe. The rollback copy is removed only after successful startup confirmation.
+8. After successful startup confirmation, the helper repairs existing Digi shortcuts in standard Desktop/Start-menu/Quick Launch/pinned-shortcut locations, then removes the downloaded package and rollback copy. Failed candidates are retained under `Logs/failed-updates`; failed updates keep the downloaded package available for retry.
 
 ## 5. Safety requirements
 
