@@ -83,6 +83,16 @@ def validate_paths(
         raise FileNotFoundError("The verified update candidate was not found.")
     if candidate == target or candidate == helper:
         raise ValueError("The update candidate cannot be an installed application file.")
+    data_root = (local_app_data / "Digi").resolve()
+    expected_parent = data_root / "update dependencies" / "package installer"
+    if candidate.suffix.lower() != ".exe" or candidate.parent.parent != expected_parent:
+        raise ValueError("The update candidate must be an .exe inside Digi's versioned package-installer folder.")
+    if not candidate.parent.name or any(ch not in "0123456789." for ch in candidate.parent.name):
+        raise ValueError("The update candidate version folder is invalid.")
+    try:
+        candidate.relative_to(expected_parent)
+    except ValueError as exc:
+        raise ValueError("The update candidate is outside Digi's package-installer folder.") from exc
     return install_dir, target, candidate
 
 
