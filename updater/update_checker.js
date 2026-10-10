@@ -15,6 +15,7 @@
   let activeManifest = null;
   let downloadInProgress = false;
   let downloadResultConnected = false;
+  let installResultConnected = false;
   let verifiedPackagePath = "";
 
   const compareVersions = window.DigiVersionComparison.compareVersions;
@@ -80,10 +81,40 @@
     later.disabled = false;
   }
 
+  function displayInstallResult(raw) {
+    let result;
+    try { result = JSON.parse(raw); } catch (_) {
+      result = { ok: false, message: "Digi returned an invalid installation result." };
+    }
+    const progress = document.getElementById("digi-update-progress");
+    const download = document.getElementById("digi-update-details");
+    const later = document.getElementById("digi-update-later");
+    if (!progress || !download || !later) return;
+    downloadInProgress = false;
+    progress.hidden = false;
+    if (result.ok) {
+      download.disabled = true;
+      later.disabled = true;
+      download.textContent = "Installing…";
+      progress.textContent = result.message || "Digi is closing to install the verified update.";
+    } else {
+      download.disabled = false;
+      later.disabled = false;
+      download.textContent = "Install update";
+      progress.textContent = result.message || "The update helper could not be started. No installation was performed.";
+    }
+  }
+
   function connectDownloadResult(backend) {
-    if (downloadResultConnected || !backend || !backend.packageDownloadResult) return;
-    backend.packageDownloadResult.connect(displayDownloadResult);
-    downloadResultConnected = true;
+    if (!backend) return;
+    if (!downloadResultConnected && backend.packageDownloadResult) {
+      backend.packageDownloadResult.connect(displayDownloadResult);
+      downloadResultConnected = true;
+    }
+    if (!installResultConnected && backend.updateInstallResult) {
+      backend.updateInstallResult.connect(displayInstallResult);
+      installResultConnected = true;
+    }
   }
 
   function bindPromptButtons() {
@@ -129,19 +160,7 @@
           download.textContent = "Installing…";
           progress.hidden = false;
           progress.textContent = "Starting the separate updater. Digi will close and reopen after installation.";
-          let installResult;
-          try {
-            installResult = JSON.parse(await backend.installReleaseUpdate(JSON.stringify(activeManifest), verifiedPackagePath));
-          } catch (_) {
-            installResult = { ok: false, message: "The update helper could not be started." };
-          }
-          if (!installResult.ok) {
-            downloadInProgress = false;
-            download.disabled = false;
-            later.disabled = false;
-            download.textContent = "Install update";
-            progress.textContent = installResult.message || "The update could not be started. No installation was performed.";
-          }
+          backend.installReleaseUpdate(JSON.stringify(activeManifest), verifiedPackagePath);
           return;
         }
         downloadInProgress = true;
