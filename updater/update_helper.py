@@ -35,7 +35,7 @@ def log_event(level: str, message: str) -> None:
     try:
         root = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))).resolve() / "Digi" / "Logs"
         root.mkdir(parents=True, exist_ok=True)
-        line = f"{datetime.now(timezone.utc).astimezone().isoformat(timespec='seconds')} [{level}] {str(message).replace(chr(10), ' | ')}\\n"
+        line = f"{datetime.now(timezone.utc).astimezone().isoformat(timespec='seconds')} [{level}] {str(message).replace(chr(10), ' | ')}\n"
         with (root / "updater.log").open("a", encoding="utf-8") as stream:
             stream.write(line)
     except OSError:
