@@ -36,6 +36,16 @@
         : { status: "invalid", reason: "missing-latest-version" };
     }
     const latestVersion = manifest.latest_version.trim();
+    const release = manifest.release;
+    if (!release || typeof release !== "object" ||
+        typeof release.version !== "string" ||
+        compareVersions(release.version, latestVersion) !== 0) {
+      return { status: "invalid", reason: "release-version-mismatch" };
+    }
+    if (manifest.release_status !== "published" && manifest.release_status !== "unpublished") {
+      return { status: "invalid", reason: "invalid-release-status" };
+    }
+
     const relation = compareVersions(latestVersion, currentVersion);
     if (relation === null) return { status: "invalid", reason: "invalid-version" };
 
