@@ -32,7 +32,6 @@
   function showUpdatePrompt(manifest, version, forceOpen = false) {
     if (!manifest || (promptedVersion === version && !forceOpen)) return;
     const validation = window.DigiVersionComparison.validatePackageMetadata(manifest);
-    if (!validation.valid) return;
     if (promptedVersion !== version) verifiedPackagePath = "";
     activeManifest = manifest;
     promptedVersion = version;
@@ -41,13 +40,21 @@
     const progress = document.getElementById("digi-update-progress");
     const download = document.getElementById("digi-update-details");
     const later = document.getElementById("digi-update-later");
+    const copy = dialog && dialog.querySelector(".digi-update-copy");
     if (!dialog || !versionNode || !progress || !download || !later) return;
     versionNode.textContent = version;
     progress.hidden = true;
     progress.textContent = "";
-    download.disabled = false;
     later.disabled = false;
-    download.textContent = "Download update";
+    if (validation.valid) {
+      if (copy) copy.textContent = "Version " + version + " is available. Download and verify the package first. You can then install it safely; Digi will close and restart.";
+      download.disabled = false;
+      download.textContent = "Download update";
+    } else {
+      if (copy) copy.textContent = "Version " + version + " has been announced, but its installable package is not available yet. No download or installation can be performed.";
+      download.disabled = true;
+      download.textContent = "Package unavailable";
+    }
     dialog.classList.remove("hidden");
   }
 
