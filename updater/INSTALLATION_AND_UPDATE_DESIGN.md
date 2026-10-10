@@ -22,7 +22,7 @@ The installed application uses a stable directory:
 
 The executable and helper currently live directly in `%LOCALAPPDATA%\Digi`. The desktop shortcut and repaired Digi shortcuts target the stable `Digi Search Engine.exe` path. Updates replace that executable in place; they do not create a version-specific installed application directory. The versioned package folder is only a download/staging source.
 
-The builder may create the root and `Logs` before the app's first launch. First-run initialization must therefore create missing data-layout directories even when the root already exists, without overwriting existing user data.
+The builder creates the root, `Logs`, `Search Repository`, `Search Repository/Digi Notes`, and `Cache` before the app's first launch. It deliberately does not create `Version manager`, so the first-run bootstrap can initialise version metadata safely. The bootstrap also handles an already-existing root without overwriting existing user data.
 
 ## 2. Persistent user data
 
@@ -62,13 +62,11 @@ The installed `DigiUpdater.exe` is a separate, stable helper. It is not replaced
 - Never delete the old executable before a verified candidate and recovery path exist.
 - Treat a process merely existing as insufficient proof that the application started successfully; define an explicit startup-confirmation mechanism before enabling automatic rollback-copy deletion.
 - Do not use the local test feed or fixture as a real release.
-- Do not modify `main`, `development`, `getdigi.fun`, or the live release metadata during implementation on `test-update`.
+- Keep this work on `updater-install-layout-logging`; do not merge into `main` or modify `getdigi.fun` or the live release metadata.
 
 ## 6. Implementation order
 
-1. Add and test the separate helper's path validation, staging, replacement, rollback, and process-wait behavior.
-2. Build `DigiUpdater.exe` as a separate PyInstaller executable.
-3. Add the app-to-helper handoff only after helper tests pass.
-4. Define and implement startup confirmation.
-5. Adapt the build/package output and first-install workflow to create the stable installation directory and shortcut.
-6. Exercise success, invalid hash, interrupted download, replacement failure, failed startup, rollback, and user-data preservation before publishing anything.
+1. Keep helper path validation, staging, replacement, rollback, process-wait, and startup-confirmation tests aligned with the current implementation.
+2. Build `DigiUpdater.exe` as a separate PyInstaller executable on Windows.
+3. Validate the app-to-helper handoff and startup readiness on the installed build.
+4. Exercise success, invalid hash, interrupted download, replacement failure, failed startup, rollback, shortcut repair, and user-data preservation before publishing anything.
