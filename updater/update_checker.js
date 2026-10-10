@@ -33,9 +33,9 @@
     if (!manifest || (promptedVersion === version && !forceOpen)) return;
     const validation = window.DigiVersionComparison.validatePackageMetadata(manifest);
     if (!validation.valid) return;
+    if (promptedVersion !== version) verifiedPackagePath = "";
     activeManifest = manifest;
     promptedVersion = version;
-    verifiedPackagePath = "";
     const dialog = document.getElementById("digi-update-dialog");
     const versionNode = document.getElementById("digi-update-version");
     const progress = document.getElementById("digi-update-progress");
