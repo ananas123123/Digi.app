@@ -4561,3 +4561,21 @@ body.search-window-open #search-window .search-window-content > #filters-toggle.
   height:22px;
   flex:none;
 }
+
+/* Match Filters icon dimensions to Refresh and align it with the search toolbar. */
+body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button {
+  position:fixed !important;
+  top:100px !important;
+  right:calc(24px + 56px + 12px) !important;
+  left:auto !important;
+  bottom:auto !important;
+  width:56px !important;
+  min-width:56px !important;
+  height:56px !important;
+  padding:0 !important;
+  margin:0 !important;
+  transform:none !important;
+  font-size:0 !important;
+  line-height:1 !important;
+  z-index:10001 !important;
+}
