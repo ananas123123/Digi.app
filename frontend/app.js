@@ -26,7 +26,6 @@ if(data.kind==="pdf"){
  if(full)full.onclick=()=>{modal("PDF Viewer",'<div class="pdf-fullscreen-viewer"><div class="pdf-viewer-toolbar"><strong>'+esc(data.name||name)+'</strong><span>'+esc(String(data.total||0))+' pages</span><button type="button" class="small-button" id="pdf-viewer-open">Open in app</button></div><div class="pdf-viewer-pages" id="pdf-viewer-pages"></div></div>');const pages=$("pdf-viewer-pages");pages.innerHTML=renderPages(data.pages||[])+(data.truncated?'<p class="preview-note">The preview service supplied only a subset of pages. Use Open in app to view the complete PDF.</p>':"");const open=$("pdf-viewer-open");if(open)open.onclick=()=>openSelectedFile(path);};
  return;
 }
-}
 panel.innerHTML='<div class="preview-empty"><strong>Preview unavailable</strong><p>This document format is not supported.</p></div>';
 });
 }
