@@ -5542,3 +5542,25 @@ html.dark-theme .result.result-type-word:hover {
   min-width: 92px !important;
   height: 48px !important;
 }
+
+
+/* PDF preview header: adjacent, matching fullscreen and deselect controls. */
+body.search-window-open #search-window .preview-head-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+body.search-window-open #search-window .preview-deselect {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  width: 38px !important;
+  min-width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  font-size: 23px !important;
+  line-height: 1 !important;
+  border-radius: 10px !important;
+}
