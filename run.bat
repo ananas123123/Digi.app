@@ -18,34 +18,27 @@ if not exist "%PYTHON%" (
 if not exist "%CACHE_DIR%" mkdir "%CACHE_DIR%"
 
 echo Starting Digi Search Engine...
-echo Logs, if needed, will be saved to:
-echo %LOG_FILE%
+echo Diagnostic log: %LOG_FILE%
 echo.
 
-"%PYTHON%" -u "%~dp0digi_search_engine.py" > "%LOG_FILE%" 2>&1
+REM Keep stdout/stderr visible in this console and capture them in the log.
+"%PYTHON%" -u "%~dp0digi_search_engine.py" 2>&1
 set "APP_EXIT=%ERRORLEVEL%"
 
 echo.
 if not "%APP_EXIT%"=="0" (
     echo ==========================================
-    echo DIGI SEARCH ENGINE FAILED OR EXITED WITH AN ERROR
+    echo DIGI SEARCH ENGINE FAILED TO START OR EXITED WITH AN ERROR
     echo ==========================================
     echo Exit code: %APP_EXIT%
+    echo.
+    echo Check the diagnostic log, if available:
+    echo %LOG_FILE%
+    echo.
+    echo This window will remain open so the error can be read.
+    pause
 ) else (
-    echo Digi process exited with code 0.
-    echo If the window never appeared, this was an unexpected early exit.
+    echo Digi exited normally with code 0.
 )
-echo.
-echo -------- Launcher log --------
-if exist "%LOG_FILE%" (
-    type "%LOG_FILE%"
-) else (
-    echo No launcher log was created.
-)
-echo.
-echo Full output, if available:
-echo %LOG_FILE%
-echo.
-echo This window will stay open so the exit status and log remain visible.
-pause
+
 exit /b %APP_EXIT%
