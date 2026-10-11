@@ -822,18 +822,22 @@ function openSearchWindow(){
   const searchGroup=document.querySelector(".header > .search-refresh-group");
   const layout=document.querySelector("body > .layout");
   const filtersToggle=$("filters-toggle");
-  const tools=document.querySelector(".header-left-tools");
-  if(!overlay||!content||!searchGroup||!layout||!filtersToggle||!tools)return;
+  const repositoryButton=$("open-search-repository");
+  const toolbar=$("search-toolbar");
+  if(!overlay||!content||!searchGroup||!layout||!filtersToggle||!repositoryButton||!toolbar)return;
   if(!searchWindowPlaceholders){
     const searchMarker=document.createComment("Digi search controls location");
     const layoutMarker=document.createComment("Digi search results location");
     const filtersMarker=document.createComment("Digi filters control location");
+    const repositoryMarker=document.createComment("Digi Explorer control location");
     searchGroup.parentNode.insertBefore(searchMarker,searchGroup);
     layout.parentNode.insertBefore(layoutMarker,layout);
-    tools.insertBefore(filtersMarker,filtersToggle);
-    searchWindowPlaceholders={searchMarker,layoutMarker,filtersMarker,searchGroup,layout,filtersToggle};
+    filtersToggle.parentNode.insertBefore(filtersMarker,filtersToggle);
+    repositoryButton.parentNode.insertBefore(repositoryMarker,repositoryButton);
+    searchWindowPlaceholders={searchMarker,layoutMarker,filtersMarker,repositoryMarker,searchGroup,layout,filtersToggle,repositoryButton};
   }
-  content.append(searchWindowPlaceholders.searchGroup,searchWindowPlaceholders.filtersToggle,searchWindowPlaceholders.layout);
+  toolbar.append(searchGroup,repositoryButton,filtersToggle);
+  content.append(toolbar,searchWindowPlaceholders.layout);
   overlay.hidden=false;
   document.body.classList.add("search-window-open","search-view");
   refresh();
@@ -843,11 +847,12 @@ function closeSearchWindow(){
   const overlay=$("search-window");
   if(overlay)overlay.hidden=true;
   if(searchWindowPlaceholders){
-    const {searchMarker,layoutMarker,filtersMarker,searchGroup,layout,filtersToggle}=searchWindowPlaceholders;
+    const {searchMarker,layoutMarker,filtersMarker,repositoryMarker,searchGroup,layout,filtersToggle,repositoryButton}=searchWindowPlaceholders;
     if(searchMarker.parentNode)searchMarker.parentNode.insertBefore(searchGroup,searchMarker);
     if(layoutMarker.parentNode)layoutMarker.parentNode.insertBefore(layout,layoutMarker);
-    if(filtersMarker.parentNode)filtersMarker.parentNode.insertBefore(filtersToggle,filtersMarker.nextSibling);
-    searchMarker.remove();layoutMarker.remove();filtersMarker.remove();
+    if(filtersMarker.parentNode)filtersMarker.parentNode.insertBefore(filtersToggle,filtersMarker);
+    if(repositoryMarker.parentNode)repositoryMarker.parentNode.insertBefore(repositoryButton,repositoryMarker);
+    searchMarker.remove();layoutMarker.remove();filtersMarker.remove();repositoryMarker.remove();
     searchWindowPlaceholders=null;
   }
   const search=$("search");
