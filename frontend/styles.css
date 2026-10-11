@@ -5778,3 +5778,18 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
   body.search-window-open #search-window #search-toolbar > #filters-toggle { flex-basis: 36px !important; width: 36px !important; min-width: 36px !important; max-width: 36px !important; }
   body.search-window-open #search-window #search-toolbar > .search-refresh-group { max-width: calc(100% - 88px) !important; }
 }
+
+
+/* Notes ink surface: prioritize low-latency pointer input over browser gestures and selection. */
+.note-canvas {
+  display: block;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: crosshair;
+  contain: layout paint;
+}
+.note-canvas-wrap {
+  min-width: 0;
+  min-height: 0;
+}
