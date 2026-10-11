@@ -5152,3 +5152,17 @@ body.search-window-open .home-cards{display:none!important}
 body.search-window-open .digi-home-logo{display:block!important}
 body.search-window-open #search-window .search-window-content>.layout .content-head-title{display:flex!important}
 body.search-window-open #search-window .search-window-content>.layout .content-head-title .digi-home-logo{display:block!important}
+
+
+/* PDF arrow is always visible outside the toolbar; drawing tools stay docked on the right. */
+#pdf-fullscreen-shell .pdf-shell-toggle{display:flex!important;position:absolute!important;right:18px!important;top:14px!important;z-index:1020!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+#pdf-fullscreen-shell .pdf-toolbar-toggle{display:flex!important}
+#pdf-fullscreen-shell .pdf-tools-drawer,
+#pdf-fullscreen-shell .pdf-tools-drawer[hidden],
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-tools-drawer{display:block!important;visibility:visible!important;opacity:1!important;position:absolute!important;top:76px!important;right:0!important;z-index:1015!important;transform:none!important}
+#pdf-fullscreen-shell .pdf-tools-drawer-inner{display:flex!important;flex-direction:column!important}
+#pdf-fullscreen-shell .pdf-tools-drawer button{display:inline-flex!important}
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar{display:flex!important}
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar-main,
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-actions{display:none!important}
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar{height:0!important;min-height:0!important;padding:0!important;border:0!important;background:transparent!important;overflow:visible!important;opacity:1!important;pointer-events:none!important}
