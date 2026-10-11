@@ -6043,3 +6043,24 @@ body:has(#pdf-fullscreen-shell.pdf-chrome-hidden) > #search-window #pdf-fullscre
 #pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer:not(.pdf-toolbar-collapsed) #pdf-viewer-toolbar-main { flex:1 1 auto!important; width:auto!important; }
 #pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer:not(.pdf-toolbar-collapsed) #pdf-viewer-toolbar-details { flex:1 1 auto!important; }
 #pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer:not(.pdf-toolbar-collapsed) .pdf-viewer-actions { flex:0 0 auto!important; margin-left:auto!important; }
+
+
+/* Normal PDF viewer sits below the native app title bar so its controls remain visible. */
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) {
+  position:fixed!important;
+  top:56px!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  width:100vw!important;
+  height:calc(100vh - 56px)!important;
+  z-index:2147482000!important;
+}
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer {
+  top:0!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  width:100%!important;
+  height:100%!important;
+}
