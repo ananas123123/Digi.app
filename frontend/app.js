@@ -821,15 +821,19 @@ function openSearchWindow(){
   const content=overlay&&overlay.querySelector(".search-window-content");
   const searchGroup=document.querySelector(".header > .search-refresh-group");
   const layout=document.querySelector("body > .layout");
-  if(!overlay||!content||!searchGroup||!layout)return;
+  const filtersToggle=$("filters-toggle");
+  const tools=document.querySelector(".header-left-tools");
+  if(!overlay||!content||!searchGroup||!layout||!filtersToggle||!tools)return;
   if(!searchWindowPlaceholders){
     const searchMarker=document.createComment("Digi search controls location");
     const layoutMarker=document.createComment("Digi search results location");
+    const filtersMarker=document.createComment("Digi filters control location");
     searchGroup.parentNode.insertBefore(searchMarker,searchGroup);
     layout.parentNode.insertBefore(layoutMarker,layout);
-    searchWindowPlaceholders={searchMarker,layoutMarker,searchGroup,layout};
+    tools.insertBefore(filtersMarker,filtersToggle);
+    searchWindowPlaceholders={searchMarker,layoutMarker,filtersMarker,searchGroup,layout,filtersToggle};
   }
-  content.append(searchWindowPlaceholders.searchGroup,searchWindowPlaceholders.layout);
+  content.append(searchWindowPlaceholders.searchGroup,searchWindowPlaceholders.filtersToggle,searchWindowPlaceholders.layout);
   overlay.hidden=false;
   document.body.classList.add("search-window-open","search-view");
   refresh();
@@ -839,10 +843,11 @@ function closeSearchWindow(){
   const overlay=$("search-window");
   if(overlay)overlay.hidden=true;
   if(searchWindowPlaceholders){
-    const {searchMarker,layoutMarker,searchGroup,layout}=searchWindowPlaceholders;
+    const {searchMarker,layoutMarker,filtersMarker,searchGroup,layout,filtersToggle}=searchWindowPlaceholders;
     if(searchMarker.parentNode)searchMarker.parentNode.insertBefore(searchGroup,searchMarker);
     if(layoutMarker.parentNode)layoutMarker.parentNode.insertBefore(layout,layoutMarker);
-    searchMarker.remove();layoutMarker.remove();
+    if(filtersMarker.parentNode)filtersMarker.parentNode.insertBefore(filtersToggle,filtersMarker.nextSibling);
+    searchMarker.remove();layoutMarker.remove();filtersMarker.remove();
     searchWindowPlaceholders=null;
   }
   document.body.classList.remove("search-window-open","search-view");
