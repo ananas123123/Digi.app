@@ -5846,3 +5846,10 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
 .pdf-paste-menu button:hover{border-color:#7aa7f7;background:#273d60;color:#d8e7ff}
 
 .pdf-select-settings{position:absolute;z-index:9;top:42px;left:0;min-width:150px;padding:10px;border:1px solid var(--border-color,rgba(130,140,155,.45));border-radius:10px;background:var(--panel-bg,#20232a);box-shadow:0 8px 24px rgba(0,0,0,.28);line-height:normal}.pdf-select-settings[hidden]{display:none!important}.pdf-select-modes{display:flex;gap:6px}.pdf-select-modes button{flex:1;border:1px solid #454b56;border-radius:6px;background:#242832;color:#f3f4f6;padding:7px 10px;font-size:12px;font-weight:600;cursor:pointer}.pdf-select-modes button.is-selected{border-color:#7aa7f7;background:#273d60;color:#d8e7ff}
+
+/* Compact undo/redo controls below the PDF viewer toolbar at the upper-right. */
+.pdf-history-controls{position:absolute;top:68px;right:18px;z-index:20;display:flex;gap:5px;padding:5px;border:1px solid rgba(130,140,155,.4);border-radius:9px;background:rgba(45,48,54,.94);box-shadow:0 4px 14px rgba(0,0,0,.22)}
+.pdf-history-controls button{display:grid;place-items:center;width:30px;height:30px;padding:5px;border:1px solid transparent;border-radius:6px;background:transparent;color:#e5e7eb;cursor:pointer}
+.pdf-history-controls button:hover:not(:disabled){background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.18)}
+.pdf-history-controls button:disabled{opacity:.35;cursor:default}
+.pdf-history-controls svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
