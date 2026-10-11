@@ -5299,3 +5299,10 @@ body.search-window-open #search-window .search-window-content>.layout .content-h
   transform:none!important;
   pointer-events:auto!important;
 }
+
+
+/* Final alignment: drop the hide arrow 4px and push Save/Close to the toolbar's right edge. */
+#pdf-fullscreen-shell .pdf-shell-toggle{top:62px!important;}
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-shell-toggle{top:4px!important;}
+#pdf-fullscreen-shell .pdf-viewer-actions{margin-left:auto!important;margin-right:0!important;}
+#pdf-fullscreen-shell .pdf-viewer-toolbar{padding-right:24px!important;}
