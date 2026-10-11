@@ -5393,3 +5393,30 @@ html:not(.dark-theme) .result.result-type-word {
   width: 92px;
   min-width: 92px;
 }
+
+
+/* Keep file-type colour visible at rest; hover adds only a restrained shadow. */
+html.dark-theme .result.result-type-pdf,
+.result.result-type-pdf {
+  background: linear-gradient(105deg, rgba(155, 35, 35, .20), rgba(43, 22, 22, .96) 72%) !important;
+  border-color: rgba(218, 82, 82, .62) !important;
+  border-left: 3px solid #d85b5b !important;
+}
+html.dark-theme .result.result-type-pdf:hover,
+.result.result-type-pdf:hover {
+  background: linear-gradient(105deg, rgba(155, 35, 35, .20), rgba(43, 22, 22, .96) 72%) !important;
+  border-color: rgba(235, 91, 91, .78) !important;
+  box-shadow: 0 5px 15px rgba(190, 45, 45, .12) !important;
+}
+html.dark-theme .result.result-type-word,
+.result.result-type-word {
+  background: linear-gradient(105deg, rgba(35, 86, 155, .22), rgba(22, 30, 43, .96) 72%) !important;
+  border-color: rgba(82, 139, 218, .62) !important;
+  border-left: 3px solid #5a91df !important;
+}
+html.dark-theme .result.result-type-word:hover,
+.result.result-type-word:hover {
+  background: linear-gradient(105deg, rgba(35, 86, 155, .22), rgba(22, 30, 43, .96) 72%) !important;
+  border-color: rgba(91, 157, 247, .78) !important;
+  box-shadow: 0 5px 15px rgba(45, 105, 190, .13) !important;
+}
