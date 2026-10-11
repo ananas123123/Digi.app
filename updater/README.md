@@ -6,7 +6,7 @@ This folder contains the isolated update-status checker. It is deliberately sepa
 
 - Read the public `latest.json` release manifest.
 - Compare numeric version components against the installed application version.
-- Set the header status dot to green when no newer published version is available, red when a newer published version is found, and grey when the check cannot be trusted.
+- Set the header status dot to green when no newer version is announced, red when a newer version is found (including an unpublished announcement), and grey when the check cannot be trusted.
 - Remember a detected version so a prompt can be shown on the next launch.
 - Link to the release repository for details.
 
@@ -14,14 +14,17 @@ This folder contains the isolated update-status checker. It is deliberately sepa
 
 The checker does **not** download packages, install updates, modify application code, delete files, move or replace existing functions, or touch Digi user documents/settings. It does not perform an automatic downgrade.
 
-The prompt is informational only. Actual update installation is intentionally not implemented here.
+The prompt is informational until a release is published and its package metadata is verified. Actual download and installation require a published release with valid version-specific metadata and a real package asset.
 
 ## Release source
 
-`https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/latest.json`
+The active release feed is the `web-releases` branch:
 
-The release repository currently marks its stable channel as unpublished. Until a real release is published, a valid manifest means there is no published update to offer.
+- `https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/web-releases/latest.json`
+- `https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/web-releases/releases/directory.json`
+
+A newer `unpublished` version should still turn the status indicator red and explain that the package is not available yet; it must not enable download or installation.
 
 ## Polling
 
-The checker currently polls once per second as requested. This creates a continuous request to the public release metadata endpoint while Digi is open; if this proves noisy or rate-limited, increase `CHECK_INTERVAL_MS` in `update_checker.js`.
+The checker polls at the interval configured by `CHECK_INTERVAL_MS` in `update_checker.js`.
