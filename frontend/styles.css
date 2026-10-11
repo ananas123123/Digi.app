@@ -5906,3 +5906,11 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
 #modal.pdf-word-confirm-modal > .pdf-word-confirm-card { display:flex!important; flex:0 0 auto!important; position:relative!important; inset:auto!important; width:420px!important; max-width:calc(100vw - 32px)!important; height:auto!important; min-height:0!important; max-height:calc(100vh - 32px)!important; margin:0!important; transform:none!important; pointer-events:auto!important; }
 #modal.pdf-word-confirm-modal .modal-body { flex:0 0 auto!important; height:auto!important; pointer-events:auto!important; }
 #modal.pdf-word-confirm-modal .pdf-word-confirm-actions, #modal.pdf-word-confirm-modal .pdf-word-confirm-actions button { position:relative!important; z-index:2!important; pointer-events:auto!important; }
+
+
+/* Hide-toolbar mode should be edge-to-edge like native fullscreen, with no rounded corners or background bleed. */
+#pdf-fullscreen-shell.pdf-chrome-hidden,
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-fullscreen-viewer,
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-pages { border-radius:0!important; clip-path:none!important; -webkit-clip-path:none!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden { position:fixed!important; inset:0!important; width:100vw!important; height:100vh!important; background:#080908!important; overflow:hidden!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-fullscreen-viewer { position:absolute!important; inset:0!important; width:100%!important; height:100%!important; border:0!important; box-shadow:none!important; }
