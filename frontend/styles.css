@@ -3815,3 +3815,20 @@ html.dark-theme .header .window-controls .window-control:hover,
 html.dark-theme .header .window-controls .window-control:active { color: #f3f5ed !important; }
 html.dark-theme .header .window-controls .window-control.window-close:hover,
 html.dark-theme .header .window-controls .window-control.window-close:active { color: #ff666d !important; }
+
+
+/* Pin window controls to the absolute top-right; remove the divider entirely. */
+.header .window-controls {
+  position: absolute !important;
+  top: 0 !important;
+  right: 8px !important;
+  height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  gap: 12px !important;
+  z-index: 100 !important;
+}
+.header .window-controls .window-control {
+  height: 40px !important;
+}
