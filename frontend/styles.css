@@ -4654,3 +4654,12 @@ body.search-window-open #search-window .search-window-content > .search-refresh-
 body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button {
   top:86px !important;
 }
+
+/* Fine alignment: Refresh and Filters down 2px; Explorer up 10px. */
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh,
+body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button {
+  top:88px !important;
+}
+body.search-window-open #search-window .search-window-content > .layout #open-search-repository {
+  top:90px !important;
+}
