@@ -3887,10 +3887,14 @@ body.search-view #filters-toggle { display:inline-flex !important; }
 body.search-window-open { overflow:hidden; }
 body.search-window-open > .header { display:none !important; }
 body.search-window-open > .layout {
-  display:block !important; position:fixed; inset:54px 0 0; min-height:0; overflow:auto;
-  z-index:9501; background:var(--digi-bg,#10120f);
+  display:block !important; position:relative; inset:auto; min-height:0; overflow:auto;
+  z-index:auto; background:var(--digi-bg,#10120f);
 }
 body.search-window-open > .layout .content { height:100%; min-height:0; overflow:auto; }
 body.search-window-open .content-head { position:static !important; transform:none !important; margin:0 0 20px !important; }
 body.search-window-open .results-workspace { height:calc(100vh - 130px) !important; }
 body.search-window-open .search-window { display:flex; }
+
+/* Keep the Search dialog above the app content so its controls remain clickable. */
+body.search-window-open > .search-window { z-index:20000 !important; }
+body.search-window-open > .layout { z-index:auto !important; }
