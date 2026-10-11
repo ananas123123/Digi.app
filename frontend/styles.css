@@ -4219,3 +4219,40 @@ body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-windo
   visibility:visible !important;
   opacity:1 !important;
 }
+
+/* Final fix: center the empty-state search group within the Search window itself. */
+body.search-window-open #search-window {
+  display:flex !important;
+  flex-direction:column !important;
+}
+body.search-window-open #search-window .search-window-content {
+  position:relative !important;
+  flex:1 1 auto !important;
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  inset:auto !important;
+  overflow:hidden !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group {
+  display:flex !important;
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  right:auto !important;
+  bottom:auto !important;
+  width:min(620px,calc(100% - 48px)) !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  transform:translate(-50%,-50%) !important;
+  z-index:21000 !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group .search-wrap {
+  display:flex !important;
+  position:relative !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:56px !important;
+  margin:0 !important;
+}
