@@ -5638,3 +5638,18 @@ body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .sea
   height: calc(100dvh - 205px) !important;
   max-height: calc(100dvh - 205px) !important;
 }
+
+
+/* Center the Search bar and give it a more compact width in the empty Search state. */
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar {
+  grid-template-columns: minmax(0, 500px) !important;
+  justify-content: center !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group {
+  width: 100% !important;
+  max-width: 500px !important;
+  justify-self: center !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group .search-wrap {
+  width: 100% !important;
+}
