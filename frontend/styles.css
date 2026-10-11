@@ -6064,3 +6064,16 @@ body:has(#pdf-fullscreen-shell.pdf-chrome-hidden) > #search-window #pdf-fullscre
   width:100%!important;
   height:100%!important;
 }
+
+
+/* Align the PDF Hide/restore chevron with the PDF controls bar, not the native window title bar. */
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) #pdf-toolbar-toggle {
+  display:flex!important;
+  position:absolute!important;
+  top:7px!important;
+  right:18px!important;
+  left:auto!important;
+  z-index:2147482500!important;
+  align-self:center!important;
+  margin:0!important;
+}
