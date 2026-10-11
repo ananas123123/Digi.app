@@ -305,6 +305,20 @@ class DigiBridge(QObject):
             window.showNormal() if window.isMaximized() else window.showMaximized()
 
     @Slot()
+    def toggleFullscreenWindow(self):
+        window = self.parent()
+        if not window:
+            return
+        if window.isFullScreen():
+            if getattr(window, "_digi_fullscreen_was_maximized", False):
+                window.showMaximized()
+            else:
+                window.showNormal()
+            return
+        window._digi_fullscreen_was_maximized = window.isMaximized()
+        window.showFullScreen()
+
+    @Slot()
     def closeWindow(self):
         if self.parent():
             self.parent().close()
