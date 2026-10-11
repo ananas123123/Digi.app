@@ -6557,3 +6557,84 @@ html:not(.dark-theme) #pdf-fullscreen-shell #pdf-toolbar-toggle:hover {
     padding: 11px !important;
   }
 }
+
+
+/* Home menu final visual rules: narrow cards and correct contrast in both themes. */
+.home-cards {
+  width: min(760px, calc(100vw - 40px)) !important;
+  gap: 12px !important;
+}
+.home-cards .home-card {
+  width: auto !important;
+  flex: 1 1 0 !important;
+  height: 96px !important;
+  min-height: 96px !important;
+  max-height: 96px !important;
+  padding: 10px 12px !important;
+  gap: 3px !important;
+  border-radius: 11px !important;
+  box-shadow: none !important;
+}
+.home-cards .home-card-icon { font-size: 18px !important; }
+.home-cards .home-card-title { font-size: 13px !important; }
+.home-cards .home-card-copy { font-size: 11px !important; }
+.home-cards .home-card-arrow { top: 10px !important; right: 10px !important; }
+
+html:not(.dark-theme) .home-cards .home-card,
+html:not(.dark-theme) .home-cards .home-card:hover {
+  background: #11120f !important;
+  background-color: #11120f !important;
+  color: #ffffff !important;
+  border-color: #30332b !important;
+  box-shadow: 0 5px 16px rgba(0,0,0,.12) !important;
+}
+html:not(.dark-theme) .home-cards .home-card *,
+html:not(.dark-theme) .home-cards .home-card .home-card-title,
+html:not(.dark-theme) .home-cards .home-card .home-card-copy,
+html:not(.dark-theme) .home-cards .home-card .home-card-arrow {
+  color: #ffffff !important;
+}
+html:not(.dark-theme) .home-cards .home-card .home-card-icon {
+  color: #e8bd62 !important;
+}
+html:not(.dark-theme) .home-cards .home-card:hover {
+  border-color: #c99a35 !important;
+  background: #191a15 !important;
+}
+
+html.dark-theme .home-cards .home-card,
+html.dark-theme .home-cards .home-card:hover {
+  background: #171916 !important;
+  background-color: #171916 !important;
+  color: #f3f5ed !important;
+  border-color: #34382e !important;
+  box-shadow: 0 8px 22px rgba(0,0,0,.28), 0 1px 0 rgba(255,255,255,.025) inset !important;
+}
+html.dark-theme .home-cards .home-card .home-card-title {
+  color: #f3f5ed !important;
+}
+html.dark-theme .home-cards .home-card .home-card-copy {
+  color: #a0a698 !important;
+}
+html.dark-theme .home-cards .home-card .home-card-icon {
+  color: #e8bd62 !important;
+}
+html.dark-theme .home-cards .home-card .home-card-arrow {
+  color: #a8894e !important;
+}
+html.dark-theme .home-cards .home-card:hover {
+  border-color: rgba(232,189,98,.6) !important;
+  box-shadow: 0 9px 24px rgba(0,0,0,.34), 0 0 14px rgba(232,189,98,.04) !important;
+}
+@media (max-width: 600px) {
+  .home-cards {
+    width: calc(100vw - 32px) !important;
+    gap: 8px !important;
+  }
+  .home-cards .home-card {
+    height: 94px !important;
+    min-height: 94px !important;
+    max-height: 94px !important;
+    padding: 10px !important;
+  }
+}
