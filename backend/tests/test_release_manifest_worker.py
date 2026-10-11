@@ -16,8 +16,8 @@ MANIFEST = {
     "schema_version": 1,
     "product": "Digi",
     "channel": "stable",
-    "latest_version": "1.2.0.0",
-    "release_status": "published",
+    "latest_version": "1.2.1.0",
+    "release_status": "unpublished",
 }
 
 
@@ -49,6 +49,20 @@ class ReleaseManifestWorkerTests(unittest.TestCase):
             worker.run()
         self.assertEqual(len(emitted), 1, "worker should emit exactly one result")
         return json.loads(emitted[0])
+
+    def test_unpublished_121_announcement_does_not_require_package_metadata(self):
+        result = ReleaseManifestWorker._resolve_latest_manifest({
+            "schema_version": 1,
+            "product": "Digi",
+            "channel": "stable",
+            "latest_version": "1.2.1.0",
+            "release_status": "unpublished",
+            "message": "Digi 1.2.1.0 is staged but not published.",
+        })
+
+        self.assertEqual(result["latest_version"], "1.2.1.0")
+        self.assertEqual(result["release_status"], "unpublished")
+        self.assertEqual(result["release"]["version"], "1.2.1.0")
 
     def test_api_success_decodes_base64_manifest(self):
         result = self.run_worker([FakeResponse(api_envelope(MANIFEST))])
