@@ -6082,7 +6082,7 @@ body:has(#pdf-fullscreen-shell.pdf-chrome-hidden) > #search-window #pdf-fullscre
 /* Place the Hide chevron at the left edge, just beneath the PDF's gray title bar. */
 #pdf-fullscreen-shell:not(.pdf-chrome-hidden) #pdf-toolbar-toggle {
   position:fixed!important;
-  top:156px!important;
+  top:131px!important;
   left:12px!important;
   right:auto!important;
   z-index:2147482500!important;
