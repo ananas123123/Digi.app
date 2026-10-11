@@ -91,7 +91,6 @@ echo Building Digi application executable...
   --hidden-import "os" ^
   --hidden-import "pathlib" ^
   --hidden-import "pythoncom" ^
-  --hidden-import "rapidfuzz" ^
   --hidden-import "re" ^
   --hidden-import "shutil" ^
   --hidden-import "sqlite3" ^
