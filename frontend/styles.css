@@ -3650,3 +3650,53 @@ html.dark-theme #digi-update-status.home-status-slot {
   gap: 8px;
   min-width: 0;
 }
+
+
+/* Filters now lives beside Profile; disable the legacy vertical edge-tab styling. */
+.header-left-tools > #filters-toggle {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  display: none;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 78px !important;
+  max-width: max-content !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  border: 1px solid #d8d8d1 !important;
+  border-radius: 10px !important;
+  background: #f6f6f3 !important;
+  color: #292929 !important;
+  box-shadow: none !important;
+  writing-mode: horizontal-tb !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+body:has(#search:not(:placeholder-shown)) .header-left-tools > #filters-toggle {
+  display: inline-flex !important;
+}
+.header-left-tools > #filters-toggle:hover,
+.header-left-tools > #filters-toggle[aria-expanded="true"] {
+  background: #ecebe5 !important;
+  border-color: #c7b27d !important;
+  color: #171717 !important;
+  transform: none !important;
+}
+html.dark-theme .header-left-tools > #filters-toggle {
+  background: #20231e !important;
+  color: #e7eadf !important;
+  border-color: #3a4033 !important;
+}
+html.dark-theme .header-left-tools > #filters-toggle:hover,
+html.dark-theme .header-left-tools > #filters-toggle[aria-expanded="true"] {
+  background: #2a2e25 !important;
+  border-color: #596b3e !important;
+  color: #fff !important;
+}
