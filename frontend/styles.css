@@ -3601,3 +3601,42 @@ html.dark-theme .header > .search-refresh-group .search-refresh:hover {
 html.dark-theme #digi-update-status.home-status-slot {
   box-shadow: 0 0 6px 2px currentColor !important;
 }
+
+
+/* Minimal profile glyph in the top-left corner. */
+#profile-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 32px;
+  margin: 0 2px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--digi-muted, #888);
+  box-shadow: none;
+  cursor: pointer;
+  transition: color .15s ease;
+}
+#profile-button svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#profile-button:hover,
+#profile-button:focus-visible {
+  color: var(--digi-text, #eee);
+  background: transparent;
+  outline: none;
+}
+#profile-button:focus-visible svg {
+  filter: drop-shadow(0 0 2px currentColor);
+}
