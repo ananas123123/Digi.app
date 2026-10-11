@@ -4036,3 +4036,123 @@ body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-windo
   height:auto !important;
   padding:8px 24px 24px !important;
 }
+
+/* Correct the split background and anchor every toolbar control independently. */
+body.search-window-open #search-window {
+  background:#10110f !important;
+}
+body.search-window-open #search-window .search-window-content {
+  display:block !important;
+  position:relative !important;
+  background:#10110f !important;
+  isolation:isolate;
+}
+body.search-window-open #search-window .search-window-content > .search-refresh-group {
+  display:block !important;
+  position:absolute !important;
+  top:24px !important;
+  left:50% !important;
+  transform:translateX(-50%) !important;
+  width:min(740px,calc(100% - 360px)) !important;
+  min-width:260px !important;
+  margin:0 !important;
+  padding:0 !important;
+  z-index:2;
+}
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-wrap {
+  width:100% !important;
+  height:56px !important;
+  min-height:56px !important;
+  box-sizing:border-box !important;
+  border-radius:14px !important;
+}
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-input {
+  height:56px !important;
+  box-sizing:border-box !important;
+}
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh {
+  position:fixed !important;
+  top:24px !important;
+  right:160px !important;
+  margin:0 !important;
+  align-self:auto !important;
+  transform:none !important;
+}
+body.search-window-open #search-window .search-window-content > #filters-toggle {
+  position:fixed !important;
+  top:24px !important;
+  right:24px !important;
+  margin:0 !important;
+  align-self:auto !important;
+  transform:none !important;
+  z-index:3;
+}
+body.search-window-open #search-window .search-window-content > .layout {
+  display:block !important;
+  position:absolute !important;
+  inset:100px 0 0 !important;
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:18px 24px 24px !important;
+  box-sizing:border-box !important;
+  overflow:auto !important;
+  background:#10110f !important;
+  border:0 !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .content {
+  display:block !important;
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:visible !important;
+  background:transparent !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .content-head {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  min-height:40px !important;
+  margin:0 0 14px !important;
+  padding:0 !important;
+  background:transparent !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .content-head-title {
+  display:none !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .results-workspace {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  overflow:visible !important;
+  background:transparent !important;
+}
+body.search-window-open #search-window .search-window-content > .layout #results {
+  min-width:0 !important;
+  min-height:0 !important;
+  overflow:visible !important;
+  background:transparent !important;
+}
+body.search-window-open #search-window .search-window-content > .layout #preview-panel {
+  min-width:0 !important;
+  min-height:0 !important;
+  overflow:auto !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group {
+  top:calc(50% - 28px) !important;
+  width:min(620px,calc(100% - 48px)) !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group .search-refresh {
+  display:none !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .layout {
+  display:none !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #filters-toggle {
+  display:none !important;
+}
