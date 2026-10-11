@@ -20,8 +20,12 @@ panel.innerHTML='<div class="preview-head"><div><span class="preview-type">WORD 
 const b=$("preview-open");if(b)b.onclick=()=>openSelectedFile(path);const close=$("preview-close");if(close)close.onclick=()=>{$("preview-panel").hidden=true;};return;
 }
 if(data.kind==="pdf"){
-panel.innerHTML='<div class="preview-head"><div><span class="preview-type">PDF DOCUMENT</span><strong>'+esc(data.name||name)+'</strong><small>'+esc(String(data.total||0))+' pages</small></div><button class="small-button" id="preview-open">Open</button></div><div class="pdf-preview">'+(data.pages||[]).map(p=>'<figure class="pdf-page"><img alt="Page '+esc(p.number)+'" src="'+p.image+'"><figcaption>Page '+esc(p.number)+'</figcaption></figure>').join("")+(data.truncated?'<p class="preview-note">Showing the first 20 pages. Open the document to view the rest.</p>':"")+'</div>';
-const b=$("preview-open");if(b)b.onclick=()=>openSelectedFile(path);return;
+ const renderPages=pages=>(pages||[]).map(p=>'<figure class="pdf-page"><img alt="Page '+esc(p.number)+'" src="'+p.image+'"><figcaption>Page '+esc(p.number)+'</figcaption></figure>').join("");
+ panel.innerHTML='<div class="preview-head"><div><span class="preview-type">PDF DOCUMENT</span><strong>'+esc(data.name||name)+'</strong><small>'+esc(String(data.total||0))+' pages</small></div><button type="button" class="small-button preview-fullscreen" id="preview-fullscreen" aria-label="Open fullscreen PDF viewer" title="Open fullscreen PDF viewer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M16 3h5v5M21 3l-7 7M3 16v5h5M3 21l7-7M21 16v5h-5M21 21l-7-7"/></svg></button></div><div class="pdf-preview pdf-preview-limited">'+renderPages((data.pages||[]).slice(0,5))+'</div>';
+ const full=$("preview-fullscreen");
+ if(full)full.onclick=()=>{modal("PDF Viewer",'<div class="pdf-fullscreen-viewer"><div class="pdf-viewer-toolbar"><strong>'+esc(data.name||name)+'</strong><span>'+esc(String(data.total||0))+' pages</span><button type="button" class="small-button" id="pdf-viewer-open">Open in app</button></div><div class="pdf-viewer-pages" id="pdf-viewer-pages"></div></div>');const pages=$("pdf-viewer-pages");pages.innerHTML=renderPages(data.pages||[])+(data.truncated?'<p class="preview-note">The preview service supplied only a subset of pages. Use Open in app to view the complete PDF.</p>':"");const open=$("pdf-viewer-open");if(open)open.onclick=()=>openSelectedFile(path);};
+ return;
+}
 }
 panel.innerHTML='<div class="preview-empty"><strong>Preview unavailable</strong><p>This document format is not supported.</p></div>';
 });
