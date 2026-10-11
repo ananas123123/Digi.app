@@ -4889,3 +4889,39 @@ body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .sea
 body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout #results {
   overflow:visible !important;
 }
+
+/* Independent panes in Search: only the result list scrolls with result navigation;
+   the preview remains stationary, with its own page-scrolling area for long documents. */
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout {
+  overflow:hidden !important;
+}
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) {
+  height:calc(100vh - 190px) !important;
+  max-height:calc(100vh - 190px) !important;
+  min-height:300px !important;
+  overflow:hidden !important;
+  align-items:stretch !important;
+}
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) > #results {
+  height:100% !important;
+  max-height:100% !important;
+  min-height:0 !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  overscroll-behavior:contain;
+}
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) > #preview-panel {
+  height:100% !important;
+  max-height:100% !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+  align-self:stretch !important;
+}
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) > #preview-panel > .pdf-preview,
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) > #preview-panel > .word-preview {
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  overscroll-behavior:contain;
+}
