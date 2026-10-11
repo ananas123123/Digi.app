@@ -5597,3 +5597,37 @@ body.search-window-open #search-window .preview-head-actions {
 body.search-window-open #search-window .preview-head-actions > button {
   flex: 0 0 38px !important;
 }
+
+
+/* Search window: remove the refresh control and fit the preview to the viewport. */
+body.search-window-open #search-window #scan,
+body.search-window-open #search-window .search-refresh {
+  display: none !important;
+}
+body.search-window-open #search-window .search-toolbar {
+  grid-template-columns: 40px minmax(0, 1fr) 40px !important;
+}
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) {
+  height: calc(100dvh - 260px) !important;
+  max-height: calc(100dvh - 260px) !important;
+  min-height: 0 !important;
+}
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) > #preview-panel {
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) > #preview-panel > .pdf-preview,
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) > #preview-panel > .word-preview {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+@media (max-width: 900px) {
+  body.search-window-open #search-window .search-toolbar {
+    grid-template-columns: 40px minmax(0, 1fr) 40px !important;
+  }
+}
