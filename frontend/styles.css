@@ -5867,3 +5867,9 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
 
 /* When the viewer toolbar is hidden, dock undo/redo at the absolute top-right. */
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-history-controls{position:fixed!important;top:8px!important;right:8px!important;z-index:2147482500!important;}
+
+/* Allow both axes of the floating palette to be controlled by drag coordinates. */
+#pdf-fullscreen-shell .pdf-tools-drawer,
+#pdf-fullscreen-shell .pdf-tools-drawer[hidden],
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-tools-drawer{top:40%;right:18px;}
+#pdf-fullscreen-shell .pdf-tools-drag-handle{touch-action:none!important;pointer-events:auto!important;}
