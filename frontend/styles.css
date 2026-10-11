@@ -5900,3 +5900,9 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
 /* Keep the PDF-to-Word confirmation independent of the app-wide large modal sizing. */
 #modal:has(.pdf-word-confirm) { display:grid!important; place-items:center!important; padding:16px!important; }
 #modal .pdf-word-confirm-card .modal-body { flex:0 0 auto!important; min-height:0!important; }
+
+/* Hard override of global large-modal rules for the PDF conversion confirmation only. */
+#modal.pdf-word-confirm-modal { position:fixed!important; inset:0!important; display:grid!important; place-items:center!important; padding:16px!important; z-index:2147483000!important; pointer-events:auto!important; }
+#modal.pdf-word-confirm-modal > .pdf-word-confirm-card { display:flex!important; flex:0 0 auto!important; position:relative!important; inset:auto!important; width:420px!important; max-width:calc(100vw - 32px)!important; height:auto!important; min-height:0!important; max-height:calc(100vh - 32px)!important; margin:0!important; transform:none!important; pointer-events:auto!important; }
+#modal.pdf-word-confirm-modal .modal-body { flex:0 0 auto!important; height:auto!important; pointer-events:auto!important; }
+#modal.pdf-word-confirm-modal .pdf-word-confirm-actions, #modal.pdf-word-confirm-modal .pdf-word-confirm-actions button { position:relative!important; z-index:2!important; pointer-events:auto!important; }
