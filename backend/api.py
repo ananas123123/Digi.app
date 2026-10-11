@@ -605,6 +605,84 @@ class DigiBridge(QObject):
         except Exception as exc:
             return json.dumps({"kind": "error", "message": "Preview could not be loaded: " + str(exc)})
 
+    @Slot(str, str, result=str)
+    def savePdfAnnotations(self, path, annotations_json):
+        """Embed transparent annotation layers into the source PDF atomically."""
+        import base64
+        import binascii
+        import tempfile
+
+        source = Path(path)
+        temporary_path = None
+        try:
+            if not source.is_file() or source.suffix.lower() != ".pdf":
+                raise ValueError("The selected PDF is no longer available.")
+            if not self.search_service:
+                raise RuntimeError("The search repository is not ready.")
+
+            root = Path(self.search_service.root).resolve()
+            target = source.resolve()
+            target.relative_to(root)
+            if target == root:
+                raise ValueError("Invalid PDF path.")
+
+            overlays = json.loads(annotations_json)
+            if not isinstance(overlays, list) or not overlays:
+                return json.dumps({"ok": False, "message": "There are no annotations to save."})
+
+            import fitz
+            decoded = {}
+            for item in overlays:
+                if not isinstance(item, dict):
+                    raise ValueError("Invalid annotation data.")
+                page_index = item.get("page")
+                data_url = item.get("image")
+                if not isinstance(page_index, int) or page_index < 0:
+                    raise ValueError("Invalid annotation page.")
+                if not isinstance(data_url, str) or not data_url.startswith("data:image/png;base64,"):
+                    raise ValueError("Invalid annotation image.")
+                try:
+                    image_bytes = base64.b64decode(data_url.split(",", 1)[1], validate=True)
+                except (binascii.Error, ValueError) as exc:
+                    raise ValueError("Annotation image data is invalid.") from exc
+                if len(image_bytes) > 20 * 1024 * 1024:
+                    raise ValueError("An annotation layer is too large to save.")
+                decoded[page_index] = image_bytes
+
+            if not decoded:
+                return json.dumps({"ok": False, "message": "There are no annotations to save."})
+
+            with fitz.open(str(target)) as document:
+                if document.is_encrypted:
+                    raise ValueError("This PDF is password-protected and cannot be saved by Digi yet.")
+                if any(index >= len(document) for index in decoded):
+                    raise ValueError("The PDF page layout changed. Close and reopen the preview, then try again.")
+                for index, image_bytes in decoded.items():
+                    page = document[index]
+                    page.insert_image(page.rect, stream=image_bytes, overlay=True)
+                handle = tempfile.NamedTemporaryFile(
+                    prefix=".digi-annotated-", suffix=".pdf",
+                    dir=str(target.parent), delete=False
+                )
+                temporary_path = handle.name
+                handle.close()
+                document.save(temporary_path, garbage=4, deflate=True)
+
+            os.replace(temporary_path, str(target))
+            temporary_path = None
+            return json.dumps({"ok": True, "message": "Annotations saved to the PDF."})
+        except Exception as exc:
+            return json.dumps({
+                "ok": False,
+                "message": str(exc) or "Digi could not save the annotations."
+            })
+        finally:
+            if temporary_path:
+                try:
+                    Path(temporary_path).unlink(missing_ok=True)
+                except OSError:
+                    pass
+
     @Slot(str, result=bool)
     def openFile(self, path):
         try:
