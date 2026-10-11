@@ -6362,3 +6362,17 @@ html.dark-theme #modal:has(.move-browser) .move-browser-entry.move-browser-curre
 html.dark-theme #modal:has(.move-browser) .move-here-button:disabled {
   color:#f4f4f5!important;
 }
+
+
+/* Restore readable New DOCX / New PDF labels in the dark right-click menu. */
+html.dark-theme #digi-context-menu button,
+html.dark-theme #digi-context-menu button .context-menu-label,
+html.dark-theme #digi-context-menu button span,
+html.dark-theme #digi-context-menu button svg {
+  color:#f4f4f5!important;
+  fill:currentColor;
+}
+html.dark-theme #digi-context-menu button:hover,
+html.dark-theme #digi-context-menu button:focus-visible {
+  color:#fff!important;
+}
