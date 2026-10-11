@@ -4437,15 +4437,16 @@ body.search-window-open #search-window .search-window-content > .layout .content
 /* Search-owned dialogs must sit above Search, not behind it. */
 body.search-window-open #filters-overlay,
 body.search-window-open .modal,
-body.search-window-open #digi-context-menu,
-body.search-window-open .repo-browser {
+body.search-window-open #digi-context-menu {
   position:fixed !important;
   z-index:40000 !important;
 }
 body.search-window-open #filters-overlay { inset:0 !important; }
 body.search-window-open .modal { inset:0 !important; }
 body.search-window-open #digi-context-menu { z-index:41000 !important; }
-body.search-window-open .repo-browser { z-index:42000 !important; }
+/* Keep the repository browser inside its modal card; making it fixed detaches
+   it from the card and causes the path/list to render at the viewport corner. */
+body.search-window-open .modal:has(.repo-browser) { z-index:42000 !important; }
 
 /* Empty Search: centre the search field independently of the result workspace. */
 body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group {
