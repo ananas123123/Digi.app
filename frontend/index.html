@@ -55,6 +55,13 @@
   <button class="home-card" id="home-timer" type="button"><span class="home-card-icon" aria-hidden="true">◷</span><span class="home-card-title">Timer</span><span class="home-card-copy">Focus on the task at hand</span><span class="home-card-arrow" aria-hidden="true">↗</span></button>
 </nav>
 <div id="modal" class="modal hidden"></div>
+<div id="search-window" class="search-window" hidden role="dialog" aria-modal="true" aria-label="Search files">
+  <header class="search-window-header">
+    <span class="search-window-title">Search</span>
+    <button type="button" id="search-window-close" aria-label="Close search">×</button>
+  </header>
+  <div class="search-window-content"></div>
+</div>
 <span id="digi-update-status" class="update-status-dot home-status-slot" data-status="checking" role="status" aria-label="Checking for Digi updates" title="Checking for Digi updates…"></span>
 <button id="updater-log-button" type="button" title="Open updater diagnostics" aria-label="Open updater diagnostics">L</button>
 <div id="updater-log-overlay" class="updater-log-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="updater-log-title">
