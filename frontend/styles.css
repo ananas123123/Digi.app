@@ -5338,3 +5338,58 @@ body.search-window-open #search-window .search-window-content>.layout .content-h
 #pdf-fullscreen-shell .pdf-unsaved-confirm-actions button:hover{background:rgba(255,255,255,.08);border-color:#777365}
 #pdf-fullscreen-shell .pdf-unsaved-confirm-actions .pdf-unsaved-save{border-color:rgba(232,189,98,.58);background:rgba(232,189,98,.13);color:#f3d58a}
 #pdf-fullscreen-shell .pdf-unsaved-confirm-actions .pdf-unsaved-save:hover{background:rgba(232,189,98,.22);border-color:rgba(232,189,98,.82)}
+
+
+/* File-type accents in search results: restrained red for PDFs and blue for Word documents. */
+.result.result-type-pdf {
+  border-color: rgba(220, 76, 76, .42) !important;
+  border-left: 3px solid #d85b5b !important;
+  background: linear-gradient(100deg, rgba(190, 48, 48, .075), transparent 42%), var(--result-surface, #121212) !important;
+}
+.result.result-type-pdf:hover {
+  border-color: rgba(235, 91, 91, .72) !important;
+  box-shadow: 0 7px 20px rgba(175, 45, 45, .11) !important;
+}
+.result.result-type-word {
+  border-color: rgba(76, 139, 230, .42) !important;
+  border-left: 3px solid #5a91df !important;
+  background: linear-gradient(100deg, rgba(48, 112, 205, .085), transparent 42%), var(--result-surface, #121212) !important;
+}
+.result.result-type-word:hover {
+  border-color: rgba(91, 157, 247, .74) !important;
+  box-shadow: 0 7px 20px rgba(45, 105, 190, .12) !important;
+}
+html:not(.dark-theme) .result.result-type-pdf {
+  --result-surface: #fffdfd;
+  background: linear-gradient(100deg, rgba(190, 48, 48, .055), transparent 48%), #fffdfd !important;
+}
+html:not(.dark-theme) .result.result-type-word {
+  --result-surface: #fcfdff;
+  background: linear-gradient(100deg, rgba(48, 112, 205, .06), transparent 48%), #fcfdff !important;
+}
+.result-actions button[data-convert] {
+  width: 32px;
+  min-width: 32px;
+  height: 30px;
+  padding: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.result-actions button[data-convert] > svg {
+  display: block;
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.result-actions button[data-convert]:hover {
+  color: #e8bd62;
+}
+.result-actions button[data-convert].conversion-active {
+  width: 92px;
+  min-width: 92px;
+}
