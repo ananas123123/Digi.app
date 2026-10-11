@@ -6640,7 +6640,8 @@ html.dark-theme .home-cards .home-card:hover {
 }
 
 
-/* Move the Digi landing title down by 30px without shifting the other elements. */
+/* Move the Digi landing title down 30px without adding a stray band below the title container. */
 body:not(:has(#search:not(:placeholder-shown))) .content-head {
-  margin-top: 30px !important;
+  transform: translateY(30px) !important;
+  margin-top: 0 !important;
 }
