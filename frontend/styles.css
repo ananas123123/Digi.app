@@ -4656,12 +4656,24 @@ body.search-window-open #search-window .search-window-content > #filters-toggle.
   top:86px !important;
 }
 
-/* Preserve the established toolbar positions; keep controls fixed while scrolling. */
-body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh {
-  position:fixed !important;
-  top:88px !important;
-  left:calc(50vw + min(370px, (100vw - 360px)/2) + 12px) !important;
+/* Keep the search field and its toolbar controls in the same scrolling layer. */
+body.search-window-open #search-window .search-window-content > .search-refresh-group {
+  position:absolute !important;
+  top:24px !important;
+  left:50% !important;
   right:auto !important;
+  width:min(740px,calc(100% - 360px)) !important;
+  min-width:260px !important;
+  margin:0 !important;
+  padding:0 !important;
+  transform:translateX(-50%) !important;
+  z-index:2 !important;
+}
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh {
+  position:absolute !important;
+  top:76px !important;
+  left:auto !important;
+  right:-56px !important;
   bottom:auto !important;
   width:44px !important;
   min-width:44px !important;
@@ -4674,9 +4686,14 @@ body.search-window-open #search-window .search-window-content > .search-refresh-
   z-index:10002 !important;
 }
 body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button {
-  position:fixed !important;
-  top:88px !important;
+  position:absolute !important;
+  top:76px !important;
   right:24px !important;
+  left:auto !important;
+  bottom:auto !important;
+  margin:0 !important;
+  transform:none !important;
+  z-index:10001 !important;
 }
 body.search-window-open #search-window .search-window-content > .layout #open-search-repository {
   top:90px !important;
