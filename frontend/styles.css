@@ -4648,3 +4648,9 @@ body.search-window-open #search-window .search-window-content > .search-refresh-
 body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button {
   top:84px !important;
 }
+
+/* Fine alignment adjustment requested: move both controls down 2px. */
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh,
+body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button {
+  top:86px !important;
+}
