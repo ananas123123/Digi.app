@@ -3713,3 +3713,52 @@ body:has(#search:not(:placeholder-shown)) #digi-update-status,
 body:has(#search:not(:placeholder-shown)) #updater-log-button {
   display: none !important;
 }
+
+
+/* Minimal theme-state icon: moon in light mode, star in dark mode. */
+.header-left-tools > #theme-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 34px !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  max-width: 34px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--digi-muted, #73736d) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: pointer;
+}
+.header-left-tools > #theme-toggle::after { display: none !important; }
+.header-left-tools > #theme-toggle:hover {
+  background: rgba(128,128,128,.1) !important;
+  color: var(--digi-text, #242424) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+#theme-toggle .theme-icon {
+  display: block;
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#theme-toggle .theme-icon-star { fill: currentColor; stroke-width: 1.1; }
+html.dark-theme .header-left-tools > #theme-toggle {
+  color: #c5f36b !important;
+}
+html.dark-theme .header-left-tools > #theme-toggle:hover {
+  color: #dcff9d !important;
+  background: rgba(197,243,107,.08) !important;
+}
