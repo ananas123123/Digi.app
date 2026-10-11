@@ -6004,3 +6004,11 @@ body:has(#pdf-fullscreen-shell.pdf-chrome-hidden) > #search-window { display:blo
 
 /* Focus mode must not inherit the Search overlay offset or clipping. */
 body:has(#pdf-fullscreen-shell.pdf-chrome-hidden) > #search-window #pdf-fullscreen-shell.pdf-chrome-hidden { display:block!important; visibility:visible!important; opacity:1!important; }
+
+
+/* Keep PDF history actions visible in focus mode; hide only the other toolbar controls. */
+#pdf-fullscreen-shell.pdf-chrome-hidden #pdf-history-controls { display:flex!important; visibility:visible!important; opacity:1!important; position:fixed!important; top:10px!important; right:12px!important; z-index:2147483647!important; pointer-events:auto!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden #pdf-history-controls button { pointer-events:auto!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar { display:block!important; position:static!important; width:0!important; height:0!important; min-height:0!important; max-height:0!important; overflow:visible!important; border:0!important; padding:0!important; margin:0!important; background:transparent!important; box-shadow:none!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar-main { display:none!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden #pdf-history-controls { display:flex!important; }
