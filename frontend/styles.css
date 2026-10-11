@@ -5816,3 +5816,10 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
 .pdf-pen-colour:hover{transform:scale(1.1)}
 .pdf-pen-colour.is-selected{outline-color:#e8e8df;box-shadow:0 0 0 2px #171715}
 .pdf-pen-size{width:100%;accent-color:#c7c7b9;cursor:pointer}
+
+
+.pdf-eraser-settings[hidden]{display:none!important}
+.pdf-eraser-modes{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.pdf-eraser-modes button{border:1px solid #35352f;border-radius:8px;padding:9px 10px;background:#20201d;color:#c8c8c0;font:inherit;font-size:12px;cursor:pointer;transition:background .14s,border-color .14s,color .14s}
+.pdf-eraser-modes button:hover{background:#292925;color:#fff}
+.pdf-eraser-modes button.is-selected{background:#34342d;border-color:#aaa99b;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
