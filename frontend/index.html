@@ -4,7 +4,7 @@
 <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 <link rel="stylesheet" href="./styles.css"></head>
 <body>
-<header class="header"><div class="brand"><div class="brand-home"><span id="digi-update-status" class="update-status-dot home-status-slot" data-status="checking" role="status" aria-label="Checking for Digi updates" title="Checking for Digi updates…"></span></div></div>
+<header class="header"><div class="brand"></div>
 <div class="search-refresh-group">
 <div class="ui-input-container search-wrap">
   <input id="search" required class="ui-input search-input" placeholder="Search files..." autocomplete="off" type="text">
@@ -49,6 +49,7 @@
   <button class="home-card" id="home-wiki" type="button"><span class="home-card-icon" aria-hidden="true">▤</span><span class="home-card-title">Wiki</span><span class="home-card-copy">Knowledge in one place</span><span class="home-card-arrow" aria-hidden="true">↗</span></button>
 </nav>
 <div id="modal" class="modal hidden"></div>
+<span id="digi-update-status" class="update-status-dot home-status-slot" data-status="checking" role="status" aria-label="Checking for Digi updates" title="Checking for Digi updates…"></span>
 <button id="updater-log-button" type="button" title="Open updater diagnostics" aria-label="Open updater diagnostics">L</button>
 <div id="updater-log-overlay" class="updater-log-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="updater-log-title">
   <section class="updater-log-window">
