@@ -4322,3 +4322,144 @@ body.search-window-open:not(:has(#search:not(:placeholder-shown)) ) #search-wind
   width:100% !important;
   height:56px !important;
 }
+
+/* Search workspace: single-column results until a result is explicitly selected. */
+body.search-window-open #search-window .search-window-content > .layout .results-workspace {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:18px !important;
+  height:auto !important;
+  min-height:0 !important;
+  overflow:visible !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .results-workspace > .results {
+  width:100% !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .results-workspace > .preview-panel {
+  display:none !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) {
+  grid-template-columns:minmax(280px,.88fr) minmax(360px,1.12fr) !important;
+  height:calc(100vh - 190px) !important;
+  min-height:300px !important;
+  overflow:hidden !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) > .results {
+  height:100% !important;
+  overflow:auto !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) > .preview-panel {
+  display:flex !important;
+  height:100% !important;
+  min-height:0 !important;
+}
+
+/* Stable Search toolbar: controls occupy their own row below the title bar. */
+body.search-window-open #search-window .search-window-content {
+  position:relative !important;
+  display:block !important;
+  inset:auto !important;
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  overflow:auto !important;
+  background:#10110f !important;
+}
+body.search-window-open #search-window .search-window-content > .search-refresh-group {
+  position:absolute !important;
+  top:24px !important;
+  left:50% !important;
+  right:auto !important;
+  bottom:auto !important;
+  display:flex !important;
+  width:min(740px,calc(100% - 360px)) !important;
+  min-width:260px !important;
+  margin:0 !important;
+  padding:0 !important;
+  transform:translateX(-50%) !important;
+  z-index:2 !important;
+}
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-wrap {
+  flex:1 1 auto !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+}
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh {
+  position:fixed !important;
+  top:95px !important;
+  right:160px !important;
+  margin:0 !important;
+  transform:none !important;
+}
+body.search-window-open #search-window .search-window-content > #filters-toggle {
+  position:fixed !important;
+  top:95px !important;
+  right:24px !important;
+  margin:0 !important;
+  transform:none !important;
+  z-index:3 !important;
+}
+body.search-window-open #search-window .search-window-content > .layout {
+  position:relative !important;
+  inset:auto !important;
+  margin-top:108px !important;
+  padding:18px 24px 24px !important;
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  overflow:visible !important;
+  background:transparent !important;
+  border:0 !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .content {
+  display:block !important;
+  height:auto !important;
+  min-height:0 !important;
+  padding:0 !important;
+  overflow:visible !important;
+  background:transparent !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .content-head {
+  display:flex !important;
+  justify-content:flex-end !important;
+  margin:0 0 14px !important;
+  min-height:40px !important;
+  background:transparent !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .content-head-title {
+  display:none !important;
+}
+
+/* Search-owned dialogs must sit above Search, not behind it. */
+body.search-window-open #filters-overlay,
+body.search-window-open .modal,
+body.search-window-open #digi-context-menu,
+body.search-window-open .repo-browser {
+  position:fixed !important;
+  z-index:40000 !important;
+}
+body.search-window-open #filters-overlay { inset:0 !important; }
+body.search-window-open .modal { inset:0 !important; }
+body.search-window-open #digi-context-menu { z-index:41000 !important; }
+body.search-window-open .repo-browser { z-index:42000 !important; }
+
+/* Empty Search: centre the search field independently of the result workspace. */
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group {
+  position:fixed !important;
+  top:calc(50vh + 27px) !important;
+  left:50vw !important;
+  right:auto !important;
+  bottom:auto !important;
+  width:min(620px,calc(100vw - 48px)) !important;
+  min-width:0 !important;
+  transform:translate(-50%,-50%) !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group .search-refresh,
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #filters-toggle,
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .layout {
+  display:none !important;
+}
