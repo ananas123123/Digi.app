@@ -6247,3 +6247,39 @@ html:not(.dark-theme) body.search-window-open #search-window .preview-head-actio
   max-height:calc(100vh - 160px)!important;
   overflow:auto!important;
 }
+
+
+/* Move File window uses a light surface: make all ordinary text readable in black. */
+#modal:has(.move-browser),
+#modal:has(.move-browser) .modal-card,
+#modal:has(.move-browser) .modal-head,
+#modal:has(.move-browser) .modal-body,
+#modal:has(.move-browser) .move-browser,
+#modal:has(.move-browser) .move-source-label,
+#modal:has(.move-browser) .move-source-label strong,
+#modal:has(.move-browser) .move-browser-list,
+#modal:has(.move-browser) .move-browser-entry,
+#modal:has(.move-browser) .move-browser-entry *,
+#modal:has(.move-browser) .move-browser-nav,
+#modal:has(.move-browser) .move-browser-breadcrumb,
+#modal:has(.move-browser) .move-browser-breadcrumb-segment,
+#modal:has(.move-browser) .move-browser-location,
+#modal:has(.move-browser) #move-browser-message,
+#modal:has(.move-browser) .modal-head b,
+#modal:has(.move-browser) .move-browser-actions {
+  color:#000!important;
+}
+#modal:has(.move-browser) .move-browser-entry:disabled,
+#modal:has(.move-browser) .move-browser-entry.move-browser-current-file,
+#modal:has(.move-browser) .move-browser-entry.move-browser-current-file * {
+  color:#000!important;
+}
+#modal:has(.move-browser) .move-browser-list .empty,
+#modal:has(.move-browser) .move-browser-list p,
+#modal:has(.move-browser) .move-browser-list span,
+#modal:has(.move-browser) .move-browser-list small {
+  color:#000!important;
+}
+#modal:has(.move-browser) .move-here-button:disabled {
+  color:#000!important;
+}
