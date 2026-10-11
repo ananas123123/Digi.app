@@ -3706,3 +3706,10 @@ html.dark-theme .header-left-tools > #filters-toggle[aria-expanded="true"] {
 body:has(#search:not(:placeholder-shown)) #profile-button {
   display: none !important;
 }
+
+
+/* Hide update status and diagnostics logger while a search query is active. */
+body:has(#search:not(:placeholder-shown)) #digi-update-status,
+body:has(#search:not(:placeholder-shown)) #updater-log-button {
+  display: none !important;
+}
