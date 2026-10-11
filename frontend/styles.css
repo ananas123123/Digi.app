@@ -3385,3 +3385,167 @@ textarea:hover, textarea:focus, select:hover, select:focus {
 .updater-log-footer{display:flex;justify-content:space-between;gap:12px;padding:10px 20px;border-top:1px solid #253138;background:#11191d;color:#70878e;font-size:10px}
 #updater-log-state{color:#d2a64b;letter-spacing:.1em}
 @media(max-width:620px){.updater-log-overlay{padding:8px}.updater-log-window{width:100%;height:90vh}.updater-log-meta{align-items:flex-start;flex-wrap:wrap}#updater-log-path{width:100%;margin-left:16px;text-align:left}.updater-log-footer{flex-direction:column}}
+
+
+/* User-selectable dark theme. These overrides intentionally follow the legacy
+   light-theme layer above so the toggle can switch the complete main interface. */
+html.dark-theme {
+  color-scheme: dark !important;
+  --digi-bg: #10110f;
+  --digi-panel: #171916;
+  --digi-panel-raised: #1d201b;
+  --digi-border: #30352c;
+  --digi-text: #f3f5ed;
+  --digi-muted: #a0a698;
+  --digi-accent: #c5f36b;
+}
+body.dark-theme,
+html.dark-theme body {
+  color-scheme: dark !important;
+  background: #10110f !important;
+  color: #f3f5ed !important;
+}
+html.dark-theme .header,
+html.dark-theme .sidebar,
+html.dark-theme .content,
+html.dark-theme .layout,
+html.dark-theme .results-workspace,
+html.dark-theme .preview-panel,
+html.dark-theme .home-cards,
+html.dark-theme .home-card,
+html.dark-theme .result,
+html.dark-theme .empty,
+html.dark-theme .modal-card,
+html.dark-theme .modal-head,
+html.dark-theme .modal-body,
+html.dark-theme .note-tree,
+html.dark-theme .note-canvas-wrap,
+html.dark-theme .filters-dialog,
+html.dark-theme .filters-dialog-head,
+html.dark-theme .digi-update-card,
+html.dark-theme .version-lock-card,
+html.dark-theme #digi-context-menu,
+html.dark-theme .repo-browser,
+html.dark-theme .repo-browser-list,
+html.dark-theme .repo-browser-entry,
+html.dark-theme .repo-browser-toolbar,
+html.dark-theme .repo-browser-path-wrap,
+html.dark-theme .repo-browser-footer,
+html.dark-theme .preview-empty,
+html.dark-theme .preview-content,
+html.dark-theme .preview-toolbar {
+  background-color: #171916 !important;
+  color: #f3f5ed !important;
+  border-color: #30352c !important;
+}
+html.dark-theme .header {
+  background: rgba(16,17,15,.96) !important;
+  border-bottom-color: rgba(197,243,107,.14) !important;
+}
+html.dark-theme .digi-home-logo,
+html.dark-theme .content h1,
+html.dark-theme .result-name,
+html.dark-theme .home-card-title,
+html.dark-theme .modal-head,
+html.dark-theme .filters-dialog-head h2,
+html.dark-theme .digi-update-title,
+html.dark-theme .version-lock-title,
+html.dark-theme .repo-browser-title,
+html.dark-theme .repo-browser-entry-name {
+  color: #f3f5ed !important;
+}
+html.dark-theme .content p,
+html.dark-theme .result-meta,
+html.dark-theme .home-card-copy,
+html.dark-theme .digi-update-copy,
+html.dark-theme .version-lock-text,
+html.dark-theme .preview-empty p,
+html.dark-theme .repo-browser-path-help,
+html.dark-theme .repo-browser-empty,
+html.dark-theme .brand small {
+  color: #a0a698 !important;
+}
+html.dark-theme .search-input,
+html.dark-theme input,
+html.dark-theme textarea,
+html.dark-theme select,
+html.dark-theme .repo-browser-path,
+html.dark-theme .repo-browser-search,
+html.dark-theme .new-document-form input {
+  background: #10110f !important;
+  color: #f3f5ed !important;
+  border-color: #30352c !important;
+}
+html.dark-theme .search-input::placeholder,
+html.dark-theme input::placeholder,
+html.dark-theme textarea::placeholder {
+  color: #a0a698 !important;
+}
+html.dark-theme .ui-button,
+html.dark-theme .wide-button,
+html.dark-theme .small-button,
+html.dark-theme .icon-button,
+html.dark-theme .window-control,
+html.dark-theme .filters-dialog button,
+html.dark-theme .digi-update-actions button,
+html.dark-theme .version-lock-actions button,
+html.dark-theme .repo-browser button,
+html.dark-theme .new-document-form button,
+html.dark-theme .delete-confirm-actions button {
+  background: #20231e !important;
+  color: #e7eadf !important;
+  border-color: #3a4033 !important;
+}
+html.dark-theme .ui-button:hover,
+html.dark-theme .wide-button:hover,
+html.dark-theme .small-button:hover,
+html.dark-theme .icon-button:hover,
+html.dark-theme .window-control:hover,
+html.dark-theme .filters-dialog button:hover,
+html.dark-theme .repo-browser button:hover {
+  background: #2a2e25 !important;
+  color: #ffffff !important;
+  border-color: #596b3e !important;
+}
+html.dark-theme .result {
+  background: #171916 !important;
+  border-color: #30352c !important;
+}
+html.dark-theme .result:hover,
+html.dark-theme .home-card:hover,
+html.dark-theme .repo-browser-entry:hover {
+  background: #1d201b !important;
+  border-color: #465238 !important;
+}
+html.dark-theme .empty {
+  color: #a0a698 !important;
+  border-color: #30352c !important;
+}
+html.dark-theme .modal,
+html.dark-theme .digi-update-dialog,
+html.dark-theme .version-lock {
+  background: rgba(0,0,0,.76) !important;
+}
+html.dark-theme .modal-head,
+html.dark-theme .filters-dialog-head,
+html.dark-theme .repo-browser-toolbar,
+html.dark-theme .repo-browser-footer {
+  border-color: #30352c !important;
+}
+html.dark-theme #digi-context-menu button { color: #e7eadf !important; }
+html.dark-theme #digi-context-menu button:hover { background: #292d24 !important; }
+html.dark-theme #digi-context-menu .digi-context-separator { background: #30352c !important; }
+html.dark-theme .digi-update-primary,
+html.dark-theme .version-primary {
+  background: #c5f36b !important;
+  color: #1b2410 !important;
+  border-color: #c5f36b !important;
+}
+html.dark-theme .brand-mark {
+  background: #c5f36b !important;
+  color: #1b2410 !important;
+}
+html.dark-theme .digi-home-logo-dot {
+  background: #c5f36b !important;
+  box-shadow: 0 0 8px rgba(197,243,107,.45) !important;
+}
