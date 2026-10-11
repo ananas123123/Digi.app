@@ -8,10 +8,6 @@ try:
     import fitz
 except ImportError:
     fitz = None
-try:
-    from rapidfuzz import fuzz
-except ImportError:
-    fuzz = None
 
 class IndexWorker(QThread):
     finished_scan = Signal(object, object)
@@ -103,7 +99,7 @@ class SearchService:
             self.scan(*pending)
     def query(self, text, typ, status, source, method, sort):
         if not text.strip(): return []
-        candidates = self.db.search(text) if method == "Normal" else self.cache
+        candidates = self.db.search(text)
         q = text.casefold(); rows = []
         for row in candidates:
             path = Path(row[0])
@@ -131,10 +127,7 @@ class SearchService:
         return rows[:300]
     def _score(self, path, q, method):
         target = str(path).casefold()
-        if method == "Normal": return 1000 - target.find(q) if q in target else 0
-        if not fuzz: return 0
-        return max(fuzz.WRatio(q,path.stem.casefold()), fuzz.token_set_ratio(q,target),
-                   max((fuzz.WRatio(q,p.casefold()) for p in path.parts), default=0))
+        return 1000 - target.find(q) if q in target else 0
     @staticmethod
     def _status(row):
         status,due=row[5],row[6]
