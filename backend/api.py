@@ -699,9 +699,11 @@ class DigiBridge(QObject):
                         raise ValueError("Invalid annotation stroke.")
                     normalized = []
                     for point in points:
-                        if not isinstance(point, list) or len(point) != 2:
+                        # The frontend records [x, y, pressure], while older saved
+                        # annotations may contain [x, y]. PDF ink coordinates use x/y only.
+                        if not isinstance(point, list) or len(point) not in (2, 3):
                             raise ValueError("Invalid annotation point.")
-                        x, y = point
+                        x, y = point[0], point[1]
                         if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
                             raise ValueError("Invalid annotation coordinates.")
                         if not (0 <= x <= 1 and 0 <= y <= 1):
