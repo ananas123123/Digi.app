@@ -4656,10 +4656,18 @@ body.search-window-open #search-window .search-window-content > #filters-toggle.
   top:86px !important;
 }
 
-/* Fine alignment: Refresh and Filters down 2px; Explorer up 10px. */
-body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh,
-body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button {
+/* Keep Refresh and Filters anchored to the Search window while results scroll.
+   The fixed-position versions were captured by transformed ancestors on some layouts. */
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh {
+  position:absolute !important;
   top:88px !important;
+  left:auto !important;
+  right:calc(50% - min(370px, (100vw - 360px)/2) - 56px) !important;
+}
+body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button {
+  position:absolute !important;
+  top:88px !important;
+  right:24px !important;
 }
 body.search-window-open #search-window .search-window-content > .layout #open-search-repository {
   top:90px !important;
