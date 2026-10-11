@@ -567,15 +567,14 @@ class DigiBridge(QObject):
                         for annotation in page.annots() or []:
                             if annotation.type[0] != fitz.PDF_ANNOT_INK:
                                 continue
-                            for stroke in annotation.vertices or []:
-                                normalized = []
-                                for point in stroke:
-                                    normalized.append([
-                                        max(0.0, min(1.0, (point.x - page.rect.x0) / page.rect.width)),
-                                        max(0.0, min(1.0, (point.y - page.rect.y0) / page.rect.height))
-                                    ])
-                                if normalized:
-                                    annotations.append({"tool": "pen", "points": normalized})
+                            normalized = []
+                            for point in annotation.vertices or []:
+                                normalized.append([
+                                    max(0.0, min(1.0, (point.x - page.rect.x0) / page.rect.width)),
+                                    max(0.0, min(1.0, (point.y - page.rect.y0) / page.rect.height))
+                                ])
+                            if normalized:
+                                annotations.append({"tool": "pen", "points": normalized})
                         pages.append({"number": index + 1, "image": "data:image/png;base64," + encoded, "annotations": annotations})
                 return json.dumps({"kind": "pdf", "name": source.name, "pages": pages, "total": total, "truncated": total > len(pages)})
             if suffix in (".docx", ".docm"):
