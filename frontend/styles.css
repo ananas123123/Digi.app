@@ -6012,3 +6012,12 @@ body:has(#pdf-fullscreen-shell.pdf-chrome-hidden) > #search-window #pdf-fullscre
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar { display:block!important; position:static!important; width:0!important; height:0!important; min-height:0!important; max-height:0!important; overflow:visible!important; border:0!important; padding:0!important; margin:0!important; background:transparent!important; box-shadow:none!important; }
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar-main { display:none!important; }
 #pdf-fullscreen-shell.pdf-chrome-hidden #pdf-history-controls { display:flex!important; }
+
+
+/* Focus mode: preserve history buttons; hide only the document details, annotation toolbar, and action buttons. */
+#pdf-fullscreen-shell.pdf-chrome-hidden #pdf-viewer-toolbar-main { display:block!important; width:0!important; height:0!important; min-height:0!important; max-height:0!important; padding:0!important; margin:0!important; overflow:visible!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden #pdf-viewer-toolbar-details,
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-actions { display:none!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden #pdf-history-controls { display:flex!important; position:fixed!important; top:10px!important; right:12px!important; width:auto!important; height:auto!important; z-index:2147483647!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar { display:block!important; width:0!important; height:0!important; min-height:0!important; max-height:0!important; overflow:visible!important; padding:0!important; margin:0!important; border:0!important; background:transparent!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-shell-toggle { position:fixed!important; top:8px!important; left:12px!important; z-index:2147483647!important; }
