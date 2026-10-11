@@ -6297,3 +6297,32 @@ html:not(.dark-theme) #modal.new-document-modal .new-document-create:hover {
   background:#f5f5f5!important;
   color:#000!important;
 }
+
+
+/* Scope Move File's black text to Light mode only; Dark mode keeps its white text palette. */
+html:not(.dark-theme) #modal:has(.move-browser),
+html:not(.dark-theme) #modal:has(.move-browser) .modal-card,
+html:not(.dark-theme) #modal:has(.move-browser) .modal-head,
+html:not(.dark-theme) #modal:has(.move-browser) .modal-body,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser,
+html:not(.dark-theme) #modal:has(.move-browser) .move-source-label,
+html:not(.dark-theme) #modal:has(.move-browser) .move-source-label strong,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-list,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-entry,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-entry *,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-nav,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-breadcrumb,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-breadcrumb-segment,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-location,
+html:not(.dark-theme) #modal:has(.move-browser) #move-browser-message,
+html:not(.dark-theme) #modal:has(.move-browser) .modal-head b,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-actions,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-list .empty,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-list p,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-list span,
+html:not(.dark-theme) #modal:has(.move-browser) .move-browser-list small {
+  color:#000!important;
+}
+html:not(.dark-theme) #modal:has(.move-browser) .move-here-button:disabled {
+  color:#000!important;
+}
