@@ -6514,3 +6514,46 @@ html:not(.dark-theme) #pdf-fullscreen-shell #pdf-toolbar-toggle:hover {
   border-color:var(--digi-accent,#e8bd62);
   color:#fff!important;
 }
+
+
+/* Final compact sizing override for the three home navigation cards. */
+.home-cards {
+  width: min(900px, calc(100vw - 48px)) !important;
+  gap: 14px !important;
+  align-items: flex-start !important;
+}
+.home-cards .home-card {
+  height: 104px !important;
+  min-height: 104px !important;
+  max-height: 104px !important;
+  padding: 12px 14px !important;
+  gap: 4px !important;
+  border-radius: 11px !important;
+}
+.home-cards .home-card-icon {
+  font-size: 19px !important;
+  margin-bottom: 0 !important;
+}
+.home-cards .home-card-title {
+  font-size: 13px !important;
+}
+.home-cards .home-card-copy {
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+.home-cards .home-card-arrow {
+  top: 10px !important;
+  right: 11px !important;
+}
+@media (max-width: 600px) {
+  .home-cards {
+    width: calc(100vw - 32px) !important;
+    gap: 8px !important;
+  }
+  .home-cards .home-card {
+    height: 100px !important;
+    min-height: 100px !important;
+    max-height: 100px !important;
+    padding: 11px !important;
+  }
+}
