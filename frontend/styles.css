@@ -5795,3 +5795,24 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
 }
 /* PDF annotation pen: use a simple black-dot cursor instead of the browser selection cursor. */
 .pdf-annotation-canvas[data-tool="pen"]{cursor:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22%3E%3Ccircle cx=%226%22 cy=%226%22 r=%223%22 fill=%22%23000%22/%3E%3C/svg%3E") 6 6, crosshair!important;}
+
+
+/* PDF pen settings popover */
+.pdf-pen-settings{position:absolute;z-index:30;right:18px;top:82px;width:248px;padding:16px;background:#171715;border:1px solid #383831;border-radius:14px;box-shadow:0 18px 48px rgba(0,0,0,.42);color:#eee;display:flex;flex-direction:column;gap:13px}
+.pdf-pen-settings[hidden]{display:none!important}
+.pdf-pen-settings-head{display:flex;align-items:center;justify-content:space-between;font-size:14px}
+.pdf-pen-settings-head button{width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:#aaa;font-size:21px;cursor:pointer}
+.pdf-pen-settings-head button:hover{background:#292925;color:#fff}
+.pdf-pen-settings-label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#bcbcb5}
+.pdf-pen-settings-label output{color:#eee;font-variant-numeric:tabular-nums}
+.pdf-pen-colours{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pdf-pen-colour{width:25px;height:25px;flex:0 0 25px;border-radius:50%;border:2px solid #171715;outline:1px solid transparent;cursor:pointer;transition:transform .12s ease,outline-color .12s ease}
+.pdf-pen-colour[data-pen-colour="#111111"]{background:#111}
+.pdf-pen-colour[data-pen-colour="#d93025"]{background:#d93025}
+.pdf-pen-colour[data-pen-colour="#1a73e8"]{background:#1a73e8}
+.pdf-pen-colour[data-pen-colour="#188038"]{background:#188038}
+.pdf-pen-colour[data-pen-colour="#8e24aa"]{background:#8e24aa}
+.pdf-pen-colour[data-pen-colour="#f9ab00"]{background:#f9ab00}
+.pdf-pen-colour:hover{transform:scale(1.1)}
+.pdf-pen-colour.is-selected{outline-color:#e8e8df;box-shadow:0 0 0 2px #171715}
+.pdf-pen-size{width:100%;accent-color:#c7c7b9;cursor:pointer}
