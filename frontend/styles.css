@@ -5653,3 +5653,25 @@ body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-windo
 body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group .search-wrap {
   width: 100% !important;
 }
+
+
+/* Override legacy empty-state rules that were stretching the search group. */
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group {
+  width: min(500px, calc(100vw - 48px)) !important;
+  max-width: 500px !important;
+  min-width: 0 !important;
+  flex: 0 1 500px !important;
+  justify-self: center !important;
+  margin-inline: auto !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group .search-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  flex: 0 1 auto !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group .search-input {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
