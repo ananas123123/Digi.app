@@ -5675,3 +5675,37 @@ body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-windo
   min-width: 0 !important;
   box-sizing: border-box !important;
 }
+
+
+/* Definitively size the visible search control itself, not only its wrapper. */
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar {
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group {
+  display: flex !important;
+  flex: 0 1 420px !important;
+  width: 420px !important;
+  max-width: calc(100vw - 180px) !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  inset: auto !important;
+  margin: 0 auto !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group .search-wrap {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group .search-input {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
