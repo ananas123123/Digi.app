@@ -787,7 +787,66 @@ function openTimer(){
   observer.observe($("modal"),{attributes:true,attributeFilter:["class"]});
 }
 
-function setupCanvas(){let c=$("note-canvas");if(!c)return;notes.canvas=c;notes.ctx=c.getContext("2d");notes.ctx.fillStyle="#fff";notes.ctx.fillRect(0,0,c.width,c.height);let down=false,last=null,pos=e=>{let r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}};c.onpointerdown=e=>{if(e.pointerType==="touch")return;down=true;last=pos(e);c.setPointerCapture(e.pointerId)};c.onpointermove=e=>{if(!down)return;let p=pos(e),x=notes.ctx; x.beginPath();x.moveTo(last.x,last.y);x.lineTo(p.x,p.y);x.strokeStyle=notes.tool==="eraser"?"#fff":notes.color;x.lineWidth=notes.tool==="eraser"?notes.size*4:notes.size;x.lineCap="round";x.stroke();last=p;notes.dirty=true};c.onpointerup=()=>{down=false;last=null};c.onpointercancel=()=>{down=false};}
+function setupCanvas(){
+  const c=$("note-canvas");
+  if(!c)return;
+  notes.canvas=c;
+  notes.ctx=c.getContext("2d",{alpha:false,desynchronized:true})||c.getContext("2d");
+  const ctx=notes.ctx;
+  ctx.fillStyle="#fff";
+  ctx.fillRect(0,0,c.width,c.height);
+  ctx.lineCap="round";
+  ctx.lineJoin="round";
+  c.style.touchAction="none";
+  let activePointer=null,last=null;
+  const pos=e=>{
+    const r=c.getBoundingClientRect();
+    return{x:(e.clientX-r.left)*c.width/Math.max(1,r.width),y:(e.clientY-r.top)*c.height/Math.max(1,r.height),pressure:Number.isFinite(e.pressure)&&e.pressure>0?e.pressure:0.5};
+  };
+  const drawPoint=(point,previous)=>{
+    const erasing=notes.tool==="eraser";
+    ctx.save();
+    ctx.globalCompositeOperation=erasing?"destination-out":"source-over";
+    ctx.strokeStyle=notes.color||"#111111";
+    const scale=(c.width/Math.max(1,c.getBoundingClientRect().width)+c.height/Math.max(1,c.getBoundingClientRect().height))/2;
+    const base=Math.max(1,Number(notes.size)||3)*scale;
+    const pressure=point.pressure||0.5;
+    ctx.lineWidth=erasing?base*4:base*(0.45+pressure*1.1);
+    ctx.beginPath();
+    if(previous){ctx.moveTo(previous.x,previous.y);ctx.lineTo(point.x,point.y);}
+    else{ctx.moveTo(point.x,point.y);ctx.lineTo(point.x+0.01,point.y+0.01);}
+    ctx.stroke();
+    ctx.restore();
+  };
+  c.onpointerdown=e=>{
+    if(e.button!==undefined&&e.button!==0)return;
+    e.preventDefault();
+    activePointer=e.pointerId;
+    last=pos(e);
+    drawPoint(last,null);
+    try{c.setPointerCapture(e.pointerId);}catch(_){}
+    notes.dirty=true;
+  };
+  c.onpointermove=e=>{
+    if(activePointer!==e.pointerId||!last)return;
+    e.preventDefault();
+    const events=typeof e.getCoalescedEvents==="function"?e.getCoalescedEvents():[e];
+    for(const sample of events){
+      const point=pos(sample);
+      drawPoint(point,last);
+      last=point;
+    }
+    notes.dirty=true;
+  };
+  const finish=e=>{
+    if(activePointer!==null&&e.pointerId!==undefined&&e.pointerId!==activePointer)return;
+    activePointer=null;
+    last=null;
+  };
+  c.onpointerup=finish;
+  c.onpointercancel=finish;
+  c.onlostpointercapture=finish;
+}
 function loadNotes(){call("notesTree",[],raw=>{let tree=parseJson(raw,null,"notes tree"),el=$("note-tree");if(!el)return;if(!Array.isArray(tree)){el.textContent="Notes could not be loaded.";return}el.innerHTML="";let walk=(items,d)=>items.forEach(x=>{let b=document.createElement("button");b.className="small-button";b.style.display="block";b.style.margin="0 0 5px "+(d*10)+"px";b.textContent=(x.type==="folder"?"▣ ":"▤ ")+x.name;b.onclick=()=>{notes.current=x.path;if(x.type==="page")call("loadNote",[x.path],loadData)};el.appendChild(b);if(x.children)walk(x.children,d+1)});walk(tree,0)});}
 function loadData(data){let img=new Image();img.onload=()=>{let c=notes.canvas;c.width=Math.max(1100,img.width);c.height=Math.max(650,img.height);notes.ctx.drawImage(img,0,0);notes.dirty=false};img.src=data;}
 function saveNote(){if(notes.current&&notes.canvas)call("saveNote",[notes.current,notes.canvas.toDataURL("image/png")],()=>notes.dirty=false);}
