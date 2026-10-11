@@ -5420,3 +5420,59 @@ html.dark-theme .result.result-type-word:hover,
   border-color: rgba(91, 157, 247, .78) !important;
   box-shadow: 0 5px 15px rgba(45, 105, 190, .13) !important;
 }
+
+
+/* Softer file-type tint: a neutral card with only a faint red/blue cast. */
+.result.result-type-pdf,
+html.dark-theme .result.result-type-pdf {
+  background: linear-gradient(105deg, rgba(145, 48, 48, .075), rgba(27, 25, 25, .98) 76%) !important;
+  border-color: rgba(192, 91, 91, .34) !important;
+  border-left: 3px solid rgba(202, 103, 103, .66) !important;
+}
+.result.result-type-pdf:hover,
+html.dark-theme .result.result-type-pdf:hover {
+  background: linear-gradient(105deg, rgba(145, 48, 48, .075), rgba(27, 25, 25, .98) 76%) !important;
+  border-color: rgba(205, 105, 105, .52) !important;
+  box-shadow: 0 5px 15px rgba(170, 55, 55, .07) !important;
+}
+.result.result-type-word,
+html.dark-theme .result.result-type-word {
+  background: linear-gradient(105deg, rgba(48, 88, 145, .085), rgba(25, 27, 30, .98) 76%) !important;
+  border-color: rgba(91, 130, 184, .34) !important;
+  border-left: 3px solid rgba(105, 145, 198, .68) !important;
+}
+.result.result-type-word:hover,
+html.dark-theme .result.result-type-word:hover {
+  background: linear-gradient(105deg, rgba(48, 88, 145, .085), rgba(25, 27, 30, .98) 76%) !important;
+  border-color: rgba(105, 145, 198, .54) !important;
+  box-shadow: 0 5px 15px rgba(45, 95, 165, .08) !important;
+}
+.result-filetype-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 25px;
+  margin-right: 9px;
+  vertical-align: -6px;
+  pointer-events: none;
+}
+.result-filetype-icon svg {
+  display: block;
+  width: 22px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.result-filetype-icon svg text {
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  stroke: none;
+  fill: currentColor;
+}
+.result-filetype-pdf { color: #c47a7a; }
+.result-filetype-word { color: #7f9fc9; }
