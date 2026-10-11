@@ -815,16 +815,36 @@ const scheduleRefreshButton=()=>{
 $("search").oninput=()=>{if(!$("search").value.trim())document.body.classList.remove("filters-open");scheduleRefreshButton();refresh();};
 $("clear").onclick=()=>{$("search").value="";scheduleRefreshButton();refresh()};
 
+let searchWindowPlaceholders=null;
 function openSearchWindow(){
   const overlay=$("search-window");
-  if(!overlay)return;
+  const content=overlay&&overlay.querySelector(".search-window-content");
+  const searchGroup=document.querySelector(".header > .search-refresh-group");
+  const layout=document.querySelector("body > .layout");
+  if(!overlay||!content||!searchGroup||!layout)return;
+  if(!searchWindowPlaceholders){
+    const searchMarker=document.createComment("Digi search controls location");
+    const layoutMarker=document.createComment("Digi search results location");
+    searchGroup.parentNode.insertBefore(searchMarker,searchGroup);
+    layout.parentNode.insertBefore(layoutMarker,layout);
+    searchWindowPlaceholders={searchMarker,layoutMarker,searchGroup,layout};
+  }
+  content.append(searchWindowPlaceholders.searchGroup,searchWindowPlaceholders.layout);
   overlay.hidden=false;
   document.body.classList.add("search-window-open","search-view");
+  refresh();
   $("search").focus();
 }
 function closeSearchWindow(){
   const overlay=$("search-window");
   if(overlay)overlay.hidden=true;
+  if(searchWindowPlaceholders){
+    const {searchMarker,layoutMarker,searchGroup,layout}=searchWindowPlaceholders;
+    if(searchMarker.parentNode)searchMarker.parentNode.insertBefore(searchGroup,searchMarker);
+    if(layoutMarker.parentNode)layoutMarker.parentNode.insertBefore(layout,layoutMarker);
+    searchMarker.remove();layoutMarker.remove();
+    searchWindowPlaceholders=null;
+  }
   document.body.classList.remove("search-window-open","search-view");
 }
 ["type","status","source","method","sort"].forEach(id=>$(id).onchange=refresh);$("scan").onclick=()=>call("scan");$("home-search").onclick=openSearchWindow;$("home-notes").onclick=openNotes;$("home-timer").onclick=openTimer;
