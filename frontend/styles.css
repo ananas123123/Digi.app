@@ -5500,3 +5500,45 @@ html.dark-theme .result.result-type-word:hover {
 .results .result.result-type-word.is-selected {
   border-color: rgba(232, 189, 98, .66) !important;
 }
+
+
+/* Selected-card glow: keep it inside the rounded card so the sides never look clipped. */
+#results .result.is-selected,
+.results .result.is-selected,
+.result.is-selected {
+  border-color: rgba(232, 189, 98, .66) !important;
+  box-shadow: inset 0 0 0 1px rgba(232, 189, 98, .10), 0 3px 12px rgba(232, 189, 98, .055) !important;
+  outline: none !important;
+  transform: none !important;
+}
+#results .result.is-selected:hover,
+.results .result.is-selected:hover,
+.result.is-selected:hover {
+  border-color: rgba(232, 189, 98, .76) !important;
+  box-shadow: inset 0 0 0 1px rgba(232, 189, 98, .12), 0 4px 14px rgba(232, 189, 98, .075) !important;
+}
+#results .result.result-type-pdf.is-selected,
+#results .result.result-type-word.is-selected,
+.results .result.result-type-pdf.is-selected,
+.results .result.result-type-word.is-selected {
+  border-color: rgba(232, 189, 98, .66) !important;
+}
+
+/* Match the conversion control to the neighbouring action buttons. */
+.result-actions button[data-convert] {
+  box-sizing: border-box !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  height: 48px !important;
+  padding: 12px !important;
+  border-radius: 14px !important;
+}
+.result-actions button[data-convert] > svg {
+  width: 22px !important;
+  height: 22px !important;
+}
+.result-actions button[data-convert].conversion-active {
+  width: 92px !important;
+  min-width: 92px !important;
+  height: 48px !important;
+}
