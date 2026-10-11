@@ -798,56 +798,135 @@ function setupCanvas(){
   ctx.lineCap="round";
   ctx.lineJoin="round";
   c.style.touchAction="none";
-  let activePointer=null,last=null;
+  c.style.willChange="contents";
+  let activePointer=null,rawLast=null,filteredLast=null,strokePoints=[],filterState=null;
+  let canvasRect=null,baseWidth=3;
   const pos=e=>{
-    const r=c.getBoundingClientRect();
-    return{x:(e.clientX-r.left)*c.width/Math.max(1,r.width),y:(e.clientY-r.top)*c.height/Math.max(1,r.height),pressure:Number.isFinite(e.pressure)&&e.pressure>0?e.pressure:0.5};
+    if(!canvasRect)canvasRect=c.getBoundingClientRect();
+    return{x:(e.clientX-canvasRect.left)*c.width/Math.max(1,canvasRect.width),y:(e.clientY-canvasRect.top)*c.height/Math.max(1,canvasRect.height),pressure:Number.isFinite(e.pressure)&&e.pressure>0?e.pressure:0.5};
   };
-  const drawPoint=(point,previous)=>{
+  // Constant-velocity Kalman filter: smooths sensor jitter without waiting for a future pointer sample.
+  const kalman=(measurement,axis)=>{
+    const f=filterState[axis];
+    const dt=Math.max(1,Math.min(32,performance.now()-f.time));
+    f.time=performance.now();
+    f.x+=f.v*dt;
+    f.p+=dt*dt*f.vp+2*dt*f.cov+1.5;
+    f.cov+=dt*f.vp;
+    const noise=2.2;
+    const gain=f.p/(f.p+noise);
+    const residual=measurement-f.x;
+    f.x+=gain*residual;
+    f.v+=Math.max(.04,Math.min(.22,gain*.12))*residual/dt;
+    f.vp=Math.max(.001,(1-gain)*f.vp+.015);
+    f.cov=(1-gain)*f.cov;
+    f.p=Math.max(.01,(1-gain)*f.p);
+    return f.x;
+  };
+  const filterPoint=point=>{
+    if(!filterState){
+      const now=performance.now();
+      filterState={
+        x:{x:point.x,v:0,p:8,vp:1,cov:0,time:now},
+        y:{x:point.y,v:0,p:8,vp:1,cov:0,time:now}
+      };
+      return {...point};
+    }
+    return {...point,x:kalman(point.x,"x"),y:kalman(point.y,"y")};
+  };
+  const midpoint=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2,pressure:(a.pressure+b.pressure)/2});
+  const widthFor=point=>{
+    const scale=(c.width/Math.max(1,canvasRect.width)+c.height/Math.max(1,canvasRect.height))/2;
+    return Math.max(.6,(Number(notes.size)||3)*scale*(.45+(point.pressure||.5)*1.1));
+  };
+  const setStrokeStyle=point=>{
     const erasing=notes.tool==="eraser";
-    ctx.save();
     ctx.globalCompositeOperation=erasing?"destination-out":"source-over";
     ctx.strokeStyle=notes.color||"#111111";
-    const scale=(c.width/Math.max(1,c.getBoundingClientRect().width)+c.height/Math.max(1,c.getBoundingClientRect().height))/2;
-    const base=Math.max(1,Number(notes.size)||3)*scale;
-    const pressure=point.pressure||0.5;
-    ctx.lineWidth=erasing?base*4:base*(0.45+pressure*1.1);
+    ctx.lineWidth=erasing?Math.max(8,widthFor(point)*4):widthFor(point);
+  };
+  const dot=point=>{
+    setStrokeStyle(point);
     ctx.beginPath();
-    if(previous){ctx.moveTo(previous.x,previous.y);ctx.lineTo(point.x,point.y);}
-    else{ctx.moveTo(point.x,point.y);ctx.lineTo(point.x+0.01,point.y+0.01);}
+    ctx.arc(point.x,point.y,ctx.lineWidth/2,0,Math.PI*2);
+    ctx.fillStyle=notes.color||"#111111";
+    ctx.fill();
+  };
+  const drawSplineSegment=(p0,p1,p2,p3)=>{
+    // Uniform cubic B-spline expressed as a cubic Bezier between adjacent spline points.
+    const start={x:(p0.x+4*p1.x+p2.x)/6,y:(p0.y+4*p1.y+p2.y)/6};
+    const end={x:(p1.x+4*p2.x+p3.x)/6,y:(p1.y+4*p2.y+p3.y)/6};
+    const c1={x:(2*p1.x+p2.x)/3,y:(2*p1.y+p2.y)/3};
+    const c2={x:(p1.x+2*p2.x)/3,y:(p1.y+2*p2.y)/3};
+    const pressure=(p1.pressure+4*p2.pressure+p3.pressure)/6;
+    setStrokeStyle({pressure});
+    ctx.beginPath();
+    ctx.moveTo(start.x,start.y);
+    ctx.bezierCurveTo(c1.x,c1.y,c2.x,c2.y,end.x,end.y);
     ctx.stroke();
-    ctx.restore();
+    return end;
+  };
+  const drawNewPoint=point=>{
+    if(!strokePoints.length){strokePoints.push(point);dot(point);return;}
+    strokePoints.push(point);
+    const n=strokePoints.length;
+    if(n===2){
+      setStrokeStyle(point);
+      ctx.beginPath();ctx.moveTo(strokePoints[0].x,strokePoints[0].y);
+      ctx.lineTo(point.x,point.y);ctx.stroke();
+    }else if(n===3){
+      const a=strokePoints[0],b=strokePoints[1],d=strokePoints[2],start=midpoint(a,b),end=midpoint(b,d);
+      setStrokeStyle(b);ctx.beginPath();ctx.moveTo(start.x,start.y);
+      ctx.quadraticCurveTo(b.x,b.y,end.x,end.y);ctx.stroke();
+    }else{
+      drawSplineSegment(strokePoints[n-4],strokePoints[n-3],strokePoints[n-2],strokePoints[n-1]);
+    }
   };
   c.onpointerdown=e=>{
     if(e.button!==undefined&&e.button!==0)return;
     e.preventDefault();
+    canvasRect=c.getBoundingClientRect();
     activePointer=e.pointerId;
-    last=pos(e);
-    drawPoint(last,null);
+    rawLast=pos(e);
+    filteredLast=filterPoint(rawLast);
+    strokePoints=[];
+    baseWidth=Number(notes.size)||3;
+    ctx.save();
+    ctx.lineCap="round";ctx.lineJoin="round";
+    drawNewPoint(filteredLast);
     try{c.setPointerCapture(e.pointerId);}catch(_){}
     notes.dirty=true;
   };
   c.onpointermove=e=>{
-    if(activePointer!==e.pointerId||!last)return;
+    if(activePointer!==e.pointerId||!rawLast)return;
     e.preventDefault();
     const events=typeof e.getCoalescedEvents==="function"?e.getCoalescedEvents():[e];
     for(const sample of events){
-      const point=pos(sample);
-      drawPoint(point,last);
-      last=point;
+      const raw=pos(sample);
+      if(Math.hypot(raw.x-rawLast.x,raw.y-rawLast.y)<.12)continue;
+      rawLast=raw;
+      filteredLast=filterPoint(raw);
+      drawNewPoint(filteredLast);
     }
     notes.dirty=true;
   };
   const finish=e=>{
     if(activePointer!==null&&e.pointerId!==undefined&&e.pointerId!==activePointer)return;
-    activePointer=null;
-    last=null;
+    if(strokePoints.length>1){
+      const lastPoint=strokePoints[strokePoints.length-1];
+      const prior=strokePoints.length>2?strokePoints[strokePoints.length-2]:strokePoints[0];
+      setStrokeStyle(lastPoint);
+      ctx.beginPath();ctx.moveTo(lastPoint.x,lastPoint.y);
+      ctx.lineTo(lastPoint.x+(lastPoint.x-prior.x)*.12,lastPoint.y+(lastPoint.y-prior.y)*.12);
+      ctx.stroke();
+    }
+    if(activePointer!==null)ctx.restore();
+    activePointer=null;rawLast=null;filteredLast=null;strokePoints=[];filterState=null;canvasRect=null;
   };
   c.onpointerup=finish;
   c.onpointercancel=finish;
   c.onlostpointercapture=finish;
-}
-function loadNotes(){call("notesTree",[],raw=>{let tree=parseJson(raw,null,"notes tree"),el=$("note-tree");if(!el)return;if(!Array.isArray(tree)){el.textContent="Notes could not be loaded.";return}el.innerHTML="";let walk=(items,d)=>items.forEach(x=>{let b=document.createElement("button");b.className="small-button";b.style.display="block";b.style.margin="0 0 5px "+(d*10)+"px";b.textContent=(x.type==="folder"?"▣ ":"▤ ")+x.name;b.onclick=()=>{notes.current=x.path;if(x.type==="page")call("loadNote",[x.path],loadData)};el.appendChild(b);if(x.children)walk(x.children,d+1)});walk(tree,0)});}
+}function loadNotes(){call("notesTree",[],raw=>{let tree=parseJson(raw,null,"notes tree"),el=$("note-tree");if(!el)return;if(!Array.isArray(tree)){el.textContent="Notes could not be loaded.";return}el.innerHTML="";let walk=(items,d)=>items.forEach(x=>{let b=document.createElement("button");b.className="small-button";b.style.display="block";b.style.margin="0 0 5px "+(d*10)+"px";b.textContent=(x.type==="folder"?"▣ ":"▤ ")+x.name;b.onclick=()=>{notes.current=x.path;if(x.type==="page")call("loadNote",[x.path],loadData)};el.appendChild(b);if(x.children)walk(x.children,d+1)});walk(tree,0)});}
 function loadData(data){let img=new Image();img.onload=()=>{let c=notes.canvas;c.width=Math.max(1100,img.width);c.height=Math.max(650,img.height);notes.ctx.drawImage(img,0,0);notes.dirty=false};img.src=data;}
 function saveNote(){if(notes.current&&notes.canvas)call("saveNote",[notes.current,notes.canvas.toDataURL("image/png")],()=>notes.dirty=false);}
 $("window-minimize").onclick=()=>call("minimizeWindow");$("window-maximize").onclick=()=>{document.documentElement.classList.toggle("window-maximized");call("toggleMaximizeWindow");};$("window-close").onclick=()=>call("closeWindow");
