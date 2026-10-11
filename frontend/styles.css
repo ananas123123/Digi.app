@@ -3700,3 +3700,9 @@ html.dark-theme .header-left-tools > #filters-toggle[aria-expanded="true"] {
   border-color: #596b3e !important;
   color: #fff !important;
 }
+
+
+/* Hide Profile once the search field contains a query. */
+body:has(#search:not(:placeholder-shown)) #profile-button {
+  display: none !important;
+}
