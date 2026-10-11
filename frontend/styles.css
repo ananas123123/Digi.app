@@ -4813,3 +4813,62 @@ body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-windo
     min-height:40px !important;
   }
 }
+
+/* Empty Search state: position only the unified toolbar container.
+   Reset legacy fixed positioning on the nested search group so it cannot drift. */
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content {
+  position:relative !important;
+  display:block !important;
+  height:100% !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar {
+  position:absolute !important;
+  top:50% !important;
+  left:0 !important;
+  right:0 !important;
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,620px) !important;
+  justify-content:center !important;
+  align-items:center !important;
+  padding:0 24px !important;
+  margin:0 !important;
+  transform:translateY(-50%) !important;
+  box-sizing:border-box !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group {
+  position:relative !important;
+  inset:auto !important;
+  top:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  left:auto !important;
+  display:block !important;
+  width:100% !important;
+  max-width:620px !important;
+  min-width:0 !important;
+  height:56px !important;
+  margin:0 !important;
+  padding:0 !important;
+  transform:none !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group .search-wrap {
+  position:relative !important;
+  inset:auto !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  height:56px !important;
+  margin:0 !important;
+  transform:none !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > .search-refresh-group .search-refresh {
+  display:none !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > #open-search-repository,
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > #scan,
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > #filters-toggle {
+  display:none !important;
+}
