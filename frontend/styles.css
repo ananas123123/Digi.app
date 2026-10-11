@@ -5864,3 +5864,6 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
 #pdf-fullscreen-shell .pdf-tools-drag-handle span{display:block;width:4px;height:4px;border-radius:50%;background:currentColor}
 #pdf-fullscreen-shell .pdf-tools-drag-handle:focus-visible{outline:1px solid #aaa;outline-offset:1px}
 #pdf-fullscreen-shell .pdf-tools-drawer-inner{display:flex!important;flex-direction:column!important;align-items:center!important;gap:8px!important}
+
+/* When the viewer toolbar is hidden, dock undo/redo at the absolute top-right. */
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-history-controls{position:fixed!important;top:8px!important;right:8px!important;z-index:2147482500!important;}
