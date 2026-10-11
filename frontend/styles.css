@@ -4872,3 +4872,20 @@ body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-windo
 body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #search-toolbar > #filters-toggle {
   display:none !important;
 }
+
+/* Search results scrolling: keep the results area independently scrollable.
+   Scoped only to the populated Search window; toolbar and empty-state positioning unchanged. */
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content {
+  overflow-y:hidden !important;
+}
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout {
+  height:calc(100% - 104px) !important;
+  max-height:calc(100% - 104px) !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  overscroll-behavior:contain;
+}
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout .results-workspace,
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout #results {
+  overflow:visible !important;
+}
