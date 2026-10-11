@@ -1222,7 +1222,10 @@ document.addEventListener('click', event => {
     document.body.classList.toggle("dark-theme", dark);
     document.documentElement.classList.toggle("dark-theme", dark);
     document.documentElement.style.colorScheme = dark ? "dark" : "light";
-    button.textContent = dark ? "Light theme" : "Dark theme";
+    button.innerHTML = dark
+      ? '<svg class="theme-icon theme-icon-star" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 2.8 2.75 5.58 6.16.9-4.46 4.35 1.05 6.14L12 16.87l-5.5 2.9 1.05-6.14L3.1 9.28l6.16-.9L12 2.8Z"></path></svg>'
+      : '<svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.2 15.1A8.6 8.6 0 0 1 8.9 3.8 8.7 8.7 0 1 0 20.2 15.1Z"></path></svg>';
+    button.setAttribute("aria-label", dark ? "Light theme" : "Dark theme");
     button.title = dark ? "Switch to light theme" : "Switch to dark theme";
     button.setAttribute("aria-pressed", String(dark));
   };
