@@ -561,7 +561,7 @@ class DigiBridge(QObject):
                     for index, page in enumerate(document):
                         if index >= 20:
                             break
-                        pixmap = page.get_pixmap(matrix=fitz.Matrix(1.15, 1.15), alpha=False)
+                        pixmap = page.get_pixmap(matrix=fitz.Matrix(1.15, 1.15), alpha=False, annots=False)
                         encoded = base64.b64encode(pixmap.tobytes("png")).decode("ascii")
                         annotations = []
                         for annotation in page.annots() or []:
