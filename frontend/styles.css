@@ -5709,3 +5709,34 @@ body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-windo
   max-width: 100% !important;
   min-width: 0 !important;
 }
+
+
+/* Search toolbar: keep the folder/filter controls at the edges, but center a compact search field in between. */
+body.search-window-open #search-window #search-toolbar > .search-refresh-group {
+  display: flex !important;
+  flex: 0 0 420px !important;
+  width: 420px !important;
+  max-width: calc(100% - 32px) !important;
+  min-width: 0 !important;
+  justify-self: center !important;
+  align-self: center !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  inset: auto !important;
+  box-sizing: border-box !important;
+}
+body.search-window-open #search-window #search-toolbar > .search-refresh-group > .search-wrap {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+body.search-window-open #search-window #search-toolbar > .search-refresh-group .search-input {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
