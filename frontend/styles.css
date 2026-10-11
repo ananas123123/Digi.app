@@ -3640,3 +3640,13 @@ html.dark-theme #digi-update-status.home-status-slot {
 #profile-button:focus-visible svg {
   filter: drop-shadow(0 0 2px currentColor);
 }
+
+
+/* Keep profile, theme, and filter controls together at the left of the header. */
+.header-left-tools {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 8px;
+  min-width: 0;
+}
