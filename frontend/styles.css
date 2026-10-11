@@ -4619,3 +4619,26 @@ body.search-window-open #search-window .search-window-content > .layout #open-se
   box-sizing:border-box !important;
   z-index:10001 !important;
 }
+
+/* Align Explorer with the search field and place Refresh directly beside the field. */
+body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button,
+body.search-window-open #search-window .search-window-content > .layout #open-search-repository {
+  top:100px !important;
+}
+/* Refresh sits just outside the search field's right edge and does not participate in layout. */
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh {
+  position:fixed !important;
+  top:100px !important;
+  left:calc(50vw + min(370px, (100vw - 360px)/2) + 12px) !important;
+  right:auto !important;
+  bottom:auto !important;
+  width:44px !important;
+  min-width:44px !important;
+  height:44px !important;
+  min-height:44px !important;
+  margin:0 !important;
+  padding:0 !important;
+  transform:none !important;
+  box-sizing:border-box !important;
+  z-index:10002 !important;
+}
