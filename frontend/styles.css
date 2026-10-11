@@ -3907,3 +3907,19 @@ body.search-window-open .search-window-content>.layout{display:block!important;f
 body.search-window-open .search-window-content>.layout .content{display:flex;flex-direction:column;height:100%!important;min-height:0!important;overflow:visible!important}
 body.search-window-open .search-window-content>.layout .results-workspace{flex:1 1 auto;min-height:240px;height:auto!important;overflow:hidden}
 body.search-window-open #digi-context-menu{z-index:30000!important}
+
+/* Keep Filters beside the search field after it enters the Search window. */
+body.search-window-open #search-window .search-window-content > #filters-toggle {
+  display:inline-flex !important;
+  position:static !important;
+  inset:auto !important;
+  transform:none !important;
+  flex:0 0 auto !important;
+  width:auto !important;
+  min-width:78px !important;
+  height:42px !important;
+  margin:0 !important;
+}
+body.search-window-open .search-window-content > .layout .digi-home-logo {
+  display:none !important;
+}
