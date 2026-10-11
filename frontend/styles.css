@@ -6032,3 +6032,14 @@ body:has(#pdf-fullscreen-shell.pdf-chrome-hidden) > #search-window #pdf-fullscre
 #pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-viewer-actions { flex:0 0 auto!important; }
 #pdf-fullscreen-shell:not(.pdf-chrome-hidden) #pdf-viewer-save,
 #pdf-fullscreen-shell:not(.pdf-chrome-hidden) #pdf-viewer-close { display:flex!important; visibility:visible!important; opacity:1!important; pointer-events:auto!important; }
+
+
+/* Definitive normal-mode reset: undo every collapsed-toolbar rule when Hide mode is off. */
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer:not(.pdf-toolbar-collapsed) #pdf-viewer-toolbar,
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer:not(.pdf-toolbar-collapsed) #pdf-viewer-toolbar-main,
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer:not(.pdf-toolbar-collapsed) #pdf-viewer-toolbar-details,
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer:not(.pdf-toolbar-collapsed) .pdf-viewer-actions { display:flex!important; visibility:visible!important; opacity:1!important; transform:none!important; position:relative!important; max-height:none!important; min-height:0!important; height:auto!important; overflow:visible!important; pointer-events:auto!important; }
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer:not(.pdf-toolbar-collapsed) #pdf-viewer-toolbar { width:100%!important; justify-content:flex-start!important; align-items:center!important; gap:12px!important; }
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer:not(.pdf-toolbar-collapsed) #pdf-viewer-toolbar-main { flex:1 1 auto!important; width:auto!important; }
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer:not(.pdf-toolbar-collapsed) #pdf-viewer-toolbar-details { flex:1 1 auto!important; }
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-fullscreen-viewer:not(.pdf-toolbar-collapsed) .pdf-viewer-actions { flex:0 0 auto!important; margin-left:auto!important; }
