@@ -1230,7 +1230,7 @@ document.addEventListener('click', event => {
     button.setAttribute("aria-pressed", String(dark));
   };
 
-  let savedTheme = "light";
+  let savedTheme = "dark";
   try {
     const stored = localStorage.getItem("digi-theme");
     if (stored === "dark" || stored === "light") savedTheme = stored;
