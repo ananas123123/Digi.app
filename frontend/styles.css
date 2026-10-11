@@ -4663,3 +4663,11 @@ body.search-window-open #search-window .search-window-content > #filters-toggle.
 body.search-window-open #search-window .search-window-content > .layout #open-search-repository {
   top:90px !important;
 }
+
+/* Explorer fine adjustment and hide the result-count label. */
+body.search-window-open #search-window .search-window-content > .layout #open-search-repository {
+  top:92px !important;
+}
+body.search-window-open #search-window .search-window-content > .layout #count {
+  display:none !important;
+}
