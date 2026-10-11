@@ -6466,10 +6466,10 @@ html:not(.dark-theme) #pdf-fullscreen-shell #pdf-toolbar-toggle:hover {
   width:42px;
   height:42px;
   padding:0;
-  border:1px solid var(--digi-border,#34382e);
+  border:1px solid #34382e;
   border-radius:12px;
-  background:var(--digi-surface,#1b1e19);
-  color:var(--digi-text,#f2f5eb);
+  background:#1b1e19!important;
+  color:#fff!important;
   cursor:pointer;
 }
 #search-window .search-empty-back svg {
@@ -6483,5 +6483,5 @@ html:not(.dark-theme) #pdf-fullscreen-shell #pdf-toolbar-toggle:hover {
 }
 #search-window .search-empty-back:hover {
   border-color:var(--digi-accent,#e8bd62);
-  color:var(--digi-accent,#e8bd62);
+  color:#fff!important;
 }
