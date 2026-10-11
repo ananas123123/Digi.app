@@ -4443,7 +4443,7 @@ body.search-window-open #digi-context-menu {
 }
 body.search-window-open #filters-overlay { inset:0 !important; }
 body.search-window-open .modal { inset:0 !important; }
-body.search-window-open #digi-context-menu { z-index:41000 !important; }
+body.search-window-open #digi-context-menu { z-index:43000 !important; }
 /* Keep the repository browser inside its modal card; making it fixed detaches
    it from the card and causes the path/list to render at the viewport corner. */
 body.search-window-open .modal:has(.repo-browser) { z-index:42000 !important; }
