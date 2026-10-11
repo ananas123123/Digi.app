@@ -6160,3 +6160,36 @@ html:not(.dark-theme) body.search-window-open #search-window .result.is-selected
 html:not(.dark-theme) body.search-window-open #search-window .result.is-selected .result-name {
   color:#fff!important;
 }
+
+
+/* Search overlay: keep the black X and restore controls compact, matching the icon height. */
+html:not(.dark-theme) body.search-window-open #search-window #search-toolbar > #scan,
+html:not(.dark-theme) body.search-window-open #search-window #search-toolbar > #filters-toggle,
+html:not(.dark-theme) body.search-window-open #search-window #search-toolbar > #open-search-repository,
+html:not(.dark-theme) body.search-window-open #search-window #search-toolbar > .search-refresh-group .search-refresh,
+html:not(.dark-theme) body.search-window-open #search-window .result-icon-button,
+html:not(.dark-theme) body.search-window-open #search-window .preview-head-actions button {
+  box-sizing:border-box!important;
+  height:36px!important;
+  min-height:36px!important;
+  max-height:36px!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  align-self:center!important;
+}
+html:not(.dark-theme) body.search-window-open #search-window #search-toolbar > #scan,
+html:not(.dark-theme) body.search-window-open #search-window #search-toolbar > #filters-toggle,
+html:not(.dark-theme) body.search-window-open #search-window #search-toolbar > #open-search-repository,
+html:not(.dark-theme) body.search-window-open #search-window #search-toolbar > .search-refresh-group .search-refresh {
+  min-width:36px!important;
+  width:36px!important;
+  max-width:36px!important;
+  border-radius:9px!important;
+}
+html:not(.dark-theme) body.search-window-open #search-window .result-icon-button,
+html:not(.dark-theme) body.search-window-open #search-window .preview-head-actions button {
+  min-width:36px!important;
+  width:36px!important;
+  max-width:36px!important;
+  border-radius:9px!important;
+}
