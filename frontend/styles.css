@@ -5976,3 +5976,13 @@ body.search-window-open > .header::after { display:none!important; }
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-actions { display:none!important; visibility:hidden!important; height:0!important; min-height:0!important; max-height:0!important; padding:0!important; margin:0!important; border:0!important; overflow:hidden!important; opacity:0!important; pointer-events:none!important; }
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-pages { height:100%!important; padding-top:0!important; }
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-shell-toggle { position:fixed!important; top:8px!important; left:12px!important; right:auto!important; z-index:2147483000!important; }
+
+
+/* Final layout correction: reserve the titlebar space instead of letting Search/results render beneath it. */
+body.search-window-open #search-window { top:56px!important; height:calc(100vh - 56px)!important; bottom:0!important; }
+body.search-window-open #search-window > .search-window-header { display:none!important; }
+body.search-window-open #search-window > .search-window-content { min-height:0!important; height:100%!important; overflow:auto!important; }
+body.search-window-open #search-window #search-toolbar { margin-top:0!important; }
+/* The PDF Hide chevron is a toolbar visibility control, not a native-window fullscreen toggle. */
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar { display:none!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-pages { height:100%!important; padding:0!important; }
