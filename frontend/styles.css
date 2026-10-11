@@ -5835,3 +5835,12 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
 .pdf-selection-actions button:hover,.pdf-selection-actions button[aria-pressed="true"]{border-color:#7aa7f7;background:#273d60;color:#d8e7ff}
 .pdf-selection-actions button[data-selection-action="delete"]:hover{border-color:#e57373;background:#512c30;color:#ffe1e1}
 .pdf-annotation-canvas:focus-visible{outline:2px solid rgba(66,133,244,.7);outline-offset:-2px}
+
+
+/* PDF selection actions follow the selected strokes, not the page corner. */
+.pdf-selection-actions{top:0;right:auto;max-width:calc(100% - 8px);flex-wrap:wrap}
+.pdf-selection-actions button:disabled{opacity:.38;filter:grayscale(1);cursor:default;background:#20232a!important;border-color:#383d46!important;color:#8b9099!important;box-shadow:none!important}
+.pdf-paste-menu{position:absolute;z-index:8;display:flex;padding:5px;border:1px solid rgba(100,150,230,.6);border-radius:8px;background:rgba(24,27,33,.98);box-shadow:0 5px 18px rgba(0,0,0,.35);line-height:1}
+.pdf-paste-menu[hidden]{display:none!important}
+.pdf-paste-menu button{border:1px solid #454b56;border-radius:6px;background:#242832;color:#f3f4f6;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer}
+.pdf-paste-menu button:hover{border-color:#7aa7f7;background:#273d60;color:#d8e7ff}
