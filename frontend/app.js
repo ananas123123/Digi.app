@@ -973,10 +973,29 @@ const scheduleRefreshButton=()=>{
   button.hidden=true;
   if($("search").value.trim())refreshButtonTimer=setTimeout(()=>{if($("search").value.trim())button.hidden=false;},2000);
 };
-$("search").oninput=()=>{if(!$("search").value.trim())document.body.classList.remove("filters-open");scheduleRefreshButton();refresh();};
-$("clear").onclick=()=>{$("search").value="";scheduleRefreshButton();refresh()};
+$("search").oninput=()=>{if(!$("search").value.trim())document.body.classList.remove("filters-open");syncEmptySearchBackButton();scheduleRefreshButton();refresh();};
+$("clear").onclick=()=>{$("search").value="";syncEmptySearchBackButton();scheduleRefreshButton();refresh()};
 
 let searchWindowPlaceholders=null;
+function syncEmptySearchBackButton(){
+  const overlay=$("search-window"),search=$("search"),button=$("search-empty-back");
+  if(!overlay||!search||!button)return;
+  button.hidden=!document.body.classList.contains("search-window-open")||Boolean(search.value.trim());
+}
+function ensureEmptySearchBackButton(){
+  const overlay=$("search-window");
+  if(!overlay||$("search-empty-back"))return;
+  const button=document.createElement("button");
+  button.id="search-empty-back";
+  button.type="button";
+  button.className="search-empty-back";
+  button.setAttribute("aria-label","Back");
+  button.title="Back";
+  button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>';
+  button.hidden=true;
+  button.addEventListener("click",closeSearchWindow);
+  overlay.appendChild(button);
+}
 function openSearchWindow(){
   const overlay=$("search-window");
   const content=overlay&&overlay.querySelector(".search-window-content");
@@ -1004,14 +1023,17 @@ function openSearchWindow(){
   }
   toolbar.append(repositoryButton,searchGroup,refreshButton,filtersToggle);
   content.append(toolbar,searchWindowPlaceholders.layout);
+  ensureEmptySearchBackButton();
   overlay.hidden=false;
   document.body.classList.add("search-window-open","search-view");
+  syncEmptySearchBackButton();
   refresh();
   $("search").focus();
 }
 function closeSearchWindow(){
   const overlay=$("search-window");
   if(overlay)overlay.hidden=true;
+  const backButton=$("search-empty-back");if(backButton)backButton.hidden=true;
   if(searchWindowPlaceholders){
     const {searchMarker,layoutMarker,filtersMarker,repositoryMarker,searchGroup,layout,filtersToggle,repositoryButton}=searchWindowPlaceholders;
     const refreshButton=$("scan");
