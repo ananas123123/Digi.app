@@ -5166,3 +5166,11 @@ body.search-window-open #search-window .search-window-content>.layout .content-h
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar-main,
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-actions{display:none!important}
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar{height:0!important;min-height:0!important;padding:0!important;border:0!important;background:transparent!important;overflow:visible!important;opacity:1!important;pointer-events:none!important}
+
+
+/* PDF fullscreen is a true app-wide workspace; keep annotation tools only in the side drawer. */
+#pdf-fullscreen-shell{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;z-index:2147483000!important;background:#080908!important}
+#pdf-fullscreen-shell .pdf-fullscreen-viewer{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;border-radius:0!important;border:0!important}
+#pdf-fullscreen-shell .pdf-annotation-tools{display:none!important}
+#pdf-fullscreen-shell .pdf-viewer-pages{height:calc(100% - 58px);max-height:none}
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-pages{height:100%!important}
