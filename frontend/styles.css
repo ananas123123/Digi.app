@@ -3832,3 +3832,31 @@ html.dark-theme .header .window-controls .window-control.window-close:active { c
 .header .window-controls .window-control {
   height: 40px !important;
 }
+
+/* Three-option home menu. */
+body:not(:has(#search:not(:placeholder-shown))) .home-cards {
+  width: min(980px, calc(100vw - 48px)) !important;
+  gap: 18px !important;
+}
+body:not(:has(#search:not(:placeholder-shown))) .home-card {
+  min-height: 170px;
+}
+@media (max-width: 600px) {
+  body:not(:has(#search:not(:placeholder-shown))) .home-cards {
+    flex-wrap: wrap;
+  }
+  body:not(:has(#search:not(:placeholder-shown))) .home-card {
+    flex: 1 1 42%;
+    min-height: 145px;
+  }
+}
+/* Dedicated timer modal, matching Digi's dark interface. */
+.digi-timer { display:flex; flex-direction:column; align-items:center; gap:22px; padding:30px 12px 18px; }
+.digi-timer-display { font-size:clamp(54px,10vw,88px); line-height:1; font-weight:650; letter-spacing:-.055em; font-variant-numeric:tabular-nums; color:#f4f7ed; text-shadow:0 0 26px rgba(190,255,87,.08); }
+.digi-timer-presets { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+.digi-timer-custom { display:flex; align-items:center; gap:12px; color:#a4aa9b; font-size:13px; }
+.digi-timer-custom input { width:90px; padding:9px 10px; border:1px solid #343a2f; border-radius:9px; background:#171916; color:#f4f7ed; font:inherit; }
+.digi-timer-actions { display:flex; justify-content:center; gap:10px; }
+.digi-timer-actions button { min-width:100px; }
+.digi-timer-start { background:#d2ff65 !important; border-color:#d2ff65 !important; color:#171b11 !important; font-weight:700; }
+.digi-timer-status { min-height:18px; margin:0 !important; color:#8f9785 !important; text-align:center; }
