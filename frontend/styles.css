@@ -3860,3 +3860,9 @@ body:not(:has(#search:not(:placeholder-shown))) .home-card {
 .digi-timer-actions button { min-width:100px; }
 .digi-timer-start { background:#d2ff65 !important; border-color:#d2ff65 !important; color:#171b11 !important; font-weight:700; }
 .digi-timer-status { min-height:18px; margin:0 !important; color:#8f9785 !important; text-align:center; }
+
+/* Search is entered through its home-menu option, not shown on the landing screen. */
+body:not(.search-view) > .header > .search-refresh-group { display:none !important; }
+body:not(.search-view) #filters-toggle { display:none !important; }
+body.search-view > .header > .search-refresh-group { display:flex !important; }
+body.search-view #filters-toggle { display:inline-flex !important; }
