@@ -4656,7 +4656,16 @@ body.search-window-open #search-window .search-window-content > #filters-toggle.
   top:86px !important;
 }
 
-/* Keep the search field and its toolbar controls in the same scrolling layer. */
+/* Make the entire Search workspace scroll as one surface so the toolbar travels
+   with the results while keeping Refresh and Filters aligned on the same row. */
+body.search-window-open #search-window .search-window-content {
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  position:absolute !important;
+  inset:54px 0 0 0 !important;
+  height:auto !important;
+  min-height:0 !important;
+}
 body.search-window-open #search-window .search-window-content > .search-refresh-group {
   position:absolute !important;
   top:24px !important;
@@ -4671,7 +4680,7 @@ body.search-window-open #search-window .search-window-content > .search-refresh-
 }
 body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh {
   position:absolute !important;
-  top:76px !important;
+  top:0 !important;
   left:auto !important;
   right:-56px !important;
   bottom:auto !important;
@@ -4687,13 +4696,24 @@ body.search-window-open #search-window .search-window-content > .search-refresh-
 }
 body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button {
   position:absolute !important;
-  top:76px !important;
+  top:24px !important;
   right:24px !important;
   left:auto !important;
   bottom:auto !important;
   margin:0 !important;
   transform:none !important;
   z-index:10001 !important;
+}
+body.search-window-open #search-window .search-window-content > .layout {
+  position:relative !important;
+  inset:auto !important;
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:100px 24px 24px !important;
+  box-sizing:border-box !important;
+  overflow:visible !important;
 }
 body.search-window-open #search-window .search-window-content > .layout #open-search-repository {
   top:90px !important;
