@@ -5959,3 +5959,20 @@ body.search-window-open > .header .header-actions { display:flex!important; visi
 body.search-window-open > .header .window-controls { position:relative!important; z-index:2147482601!important; }
 body.search-window-open > .header .window-control { position:relative!important; z-index:2147482602!important; }
 body.search-window-open > .search-window { top:56px!important; height:calc(100vh - 56px)!important; }
+
+
+/* Search/results chrome: keep only window controls in the top-right, without duplicate header separators. */
+body.search-window-open > .header .header-left-tools { display:none!important; }
+body.search-window-open > .header .header-actions { margin-left:auto!important; width:auto!important; justify-content:flex-end!important; }
+body.search-window-open > .header { height:56px!important; min-height:56px!important; box-sizing:border-box!important; border-bottom:0!important; box-shadow:none!important; }
+body.search-window-open > .search-window { top:56px!important; height:calc(100vh - 56px)!important; border-top:0!important; }
+body.search-window-open > .search-window > .search-window-header { display:none!important; }
+body.search-window-open > .search-window > .search-window-content { height:100%!important; }
+body.search-window-open > .header::after { display:none!important; }
+
+/* Hide means hide the entire PDF toolbar section. Keep only the separate floating chevron available to restore it. */
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar,
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar-main,
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-actions { display:none!important; visibility:hidden!important; height:0!important; min-height:0!important; max-height:0!important; padding:0!important; margin:0!important; border:0!important; overflow:hidden!important; opacity:0!important; pointer-events:none!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-pages { height:100%!important; padding-top:0!important; }
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-shell-toggle { position:fixed!important; top:8px!important; left:12px!important; right:auto!important; z-index:2147483000!important; }
