@@ -5937,3 +5937,25 @@ html:has(#pdf-fullscreen-shell.pdf-chrome-hidden),
 html:has(#pdf-fullscreen-shell.pdf-chrome-hidden) body,
 body:has(#pdf-fullscreen-shell.pdf-chrome-hidden) #search-window,
 #pdf-fullscreen-shell.pdf-chrome-hidden { overflow:hidden!important; }
+
+
+/* Keep the native-window drag strip and window controls available on every app page. */
+body.search-window-open > .header {
+  display:flex!important;
+  position:fixed!important;
+  top:0!important;
+  left:0!important;
+  right:0!important;
+  z-index:2147482600!important;
+  height:56px!important;
+  min-height:56px!important;
+  padding:8px 14px!important;
+  background:rgba(16,17,15,.96)!important;
+  border-bottom:1px solid rgba(197,243,107,.14)!important;
+}
+body.search-window-open > .header .window-controls,
+body.search-window-open > .header .window-controls .window-control,
+body.search-window-open > .header .header-actions { display:flex!important; visibility:visible!important; opacity:1!important; pointer-events:auto!important; }
+body.search-window-open > .header .window-controls { position:relative!important; z-index:2147482601!important; }
+body.search-window-open > .header .window-control { position:relative!important; z-index:2147482602!important; }
+body.search-window-open > .search-window { top:56px!important; height:calc(100vh - 56px)!important; }
