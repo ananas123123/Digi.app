@@ -823,8 +823,9 @@ function openSearchWindow(){
   const layout=document.querySelector("body > .layout");
   const filtersToggle=$("filters-toggle");
   const repositoryButton=$("open-search-repository");
+  const refreshButton=$("scan");
   const toolbar=$("search-toolbar");
-  if(!overlay||!content||!searchGroup||!layout||!filtersToggle||!repositoryButton||!toolbar)return;
+  if(!overlay||!content||!searchGroup||!layout||!filtersToggle||!repositoryButton||!refreshButton||!toolbar)return;
   if(!searchWindowPlaceholders){
     const searchMarker=document.createComment("Digi search controls location");
     const layoutMarker=document.createComment("Digi search results location");
@@ -836,7 +837,7 @@ function openSearchWindow(){
     repositoryButton.parentNode.insertBefore(repositoryMarker,repositoryButton);
     searchWindowPlaceholders={searchMarker,layoutMarker,filtersMarker,repositoryMarker,searchGroup,layout,filtersToggle,repositoryButton};
   }
-  toolbar.append(searchGroup,repositoryButton,filtersToggle);
+  toolbar.append(repositoryButton,searchGroup,refreshButton,filtersToggle);
   content.append(toolbar,searchWindowPlaceholders.layout);
   overlay.hidden=false;
   document.body.classList.add("search-window-open","search-view");
@@ -848,6 +849,8 @@ function closeSearchWindow(){
   if(overlay)overlay.hidden=true;
   if(searchWindowPlaceholders){
     const {searchMarker,layoutMarker,filtersMarker,repositoryMarker,searchGroup,layout,filtersToggle,repositoryButton}=searchWindowPlaceholders;
+    const refreshButton=$("scan");
+    if(refreshButton&&searchGroup&&!searchGroup.contains(refreshButton))searchGroup.append(refreshButton);
     if(searchMarker.parentNode)searchMarker.parentNode.insertBefore(searchGroup,searchMarker);
     if(layoutMarker.parentNode)layoutMarker.parentNode.insertBefore(layout,layoutMarker);
     if(filtersMarker.parentNode)filtersMarker.parentNode.insertBefore(filtersToggle,filtersMarker);
