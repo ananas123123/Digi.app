@@ -6193,3 +6193,27 @@ html:not(.dark-theme) body.search-window-open #search-window .preview-head-actio
   max-width:36px!important;
   border-radius:9px!important;
 }
+
+
+/* Keep the native black title bar clear of repository explorer and Move File dialogs. */
+#modal:has(.move-file),
+#modal:has(.move-file-dialog),
+#modal:has(.move-file-modal),
+#modal:has(.repository-explorer),
+#modal:has(.explorer-modal),
+#modal:has(.search-repository),
+#search-window:has(.repository-explorer),
+#search-window:has(.move-file) {
+  top:56px!important;
+  height:calc(100vh - 56px)!important;
+  max-height:calc(100vh - 56px)!important;
+  box-sizing:border-box!important;
+}
+#modal:has(.move-file) > .modal-card,
+#modal:has(.move-file-dialog) > .modal-card,
+#modal:has(.move-file-modal) > .modal-card,
+#modal:has(.repository-explorer) > .modal-card,
+#modal:has(.explorer-modal) > .modal-card,
+#modal:has(.search-repository) > .modal-card {
+  max-height:calc(100vh - 88px)!important;
+}
