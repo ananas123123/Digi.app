@@ -5476,3 +5476,27 @@ html.dark-theme .result.result-type-word:hover {
 }
 .result-filetype-pdf { color: #c47a7a; }
 .result-filetype-word { color: #7f9fc9; }
+
+
+/* Selected search result: restrained Digi-gold outline and soft glow. */
+#results .result.is-selected,
+.results .result.is-selected,
+.result.is-selected {
+  border-color: rgba(232, 189, 98, .66) !important;
+  box-shadow: 0 0 0 1px rgba(232, 189, 98, .12), 0 5px 18px rgba(232, 189, 98, .09) !important;
+  outline: none !important;
+  transform: translateY(-1px);
+}
+#results .result.is-selected:hover,
+.results .result.is-selected:hover,
+.result.is-selected:hover {
+  border-color: rgba(232, 189, 98, .78) !important;
+  box-shadow: 0 0 0 1px rgba(232, 189, 98, .16), 0 6px 20px rgba(232, 189, 98, .12) !important;
+}
+/* Keep the selected card's PDF/Word tint subtle while the gold selection state takes priority. */
+#results .result.result-type-pdf.is-selected,
+#results .result.result-type-word.is-selected,
+.results .result.result-type-pdf.is-selected,
+.results .result.result-type-word.is-selected {
+  border-color: rgba(232, 189, 98, .66) !important;
+}
