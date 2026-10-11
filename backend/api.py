@@ -669,8 +669,7 @@ class DigiBridge(QObject):
                             raise ValueError("Annotation coordinates are outside the page.")
                         normalized.append((float(x), float(y)))
                     valid_strokes.append(normalized)
-                if valid_strokes:
-                    decoded[page_index] = valid_strokes
+                decoded[page_index] = valid_strokes
 
             if not decoded:
                 return json.dumps({"ok": False, "message": "There are no annotations to save."})
@@ -682,6 +681,9 @@ class DigiBridge(QObject):
                     raise ValueError("The PDF page layout changed. Close and reopen the preview, then try again.")
                 for index, strokes in decoded.items():
                     page = document[index]
+                    for existing in list(page.annots() or []):
+                        if existing.type[0] == fitz.PDF_ANNOT_INK:
+                            page.delete_annot(existing)
                     rect = page.rect
                     for normalized_points in strokes:
                         points = [fitz.Point(rect.x0 + x * rect.width, rect.y0 + y * rect.height) for x, y in normalized_points]
