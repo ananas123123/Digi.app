@@ -25,10 +25,10 @@ class ReleaseManifestWorker(QThread):
     resultReady = Signal(str)
 
     LATEST_URLS = (
-        "https://api.github.com/repos/ananas123123/digiwebversionreleases/contents/latest.json?ref=main",
-        "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/latest.json",
+        "https://api.github.com/repos/ananas123123/digiwebversionreleases/contents/latest.json?ref=web-releases",
+        "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/web-releases/latest.json",
     )
-    RELEASES_RAW_ROOT = "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/main/releases"
+    RELEASES_RAW_ROOT = "https://raw.githubusercontent.com/ananas123123/digiwebversionreleases/web-releases/releases"
 
     @staticmethod
     def _local_test_url():
