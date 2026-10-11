@@ -5315,3 +5315,26 @@ body.search-window-open #search-window .search-window-content>.layout .content-h
   transform:translateY(-50%)!important;
   animation:none!important;
 }
+
+
+/* Digi-themed unsaved PDF confirmation with a blurred workspace backdrop. */
+#pdf-fullscreen-shell .pdf-unsaved-confirm-overlay{
+  position:absolute;inset:0;z-index:2147483002;display:grid;place-items:center;padding:24px;
+  background:rgba(5,6,5,.48);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+}
+#pdf-fullscreen-shell .pdf-unsaved-confirm-card{
+  width:min(420px,100%);box-sizing:border-box;display:flex;flex-direction:column;gap:24px;
+  padding:26px;border:1px solid rgba(232,189,98,.34);border-radius:18px;
+  background:linear-gradient(145deg,rgba(29,30,26,.97),rgba(17,18,16,.98));color:#f0eee6;
+  box-shadow:0 24px 80px rgba(0,0,0,.52),0 0 24px rgba(232,189,98,.06);
+}
+#pdf-fullscreen-shell .pdf-unsaved-confirm-card>strong{font-size:17px;font-weight:650;letter-spacing:.1px;line-height:1.4}
+#pdf-fullscreen-shell .pdf-unsaved-confirm-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+#pdf-fullscreen-shell .pdf-unsaved-confirm-actions button{
+  min-height:38px;padding:9px 15px;border:1px solid #45463c;border-radius:10px;
+  background:rgba(255,255,255,.035);color:#e3e0d6;font:inherit;cursor:pointer;
+  transition:background .15s ease,border-color .15s ease,transform .15s ease;
+}
+#pdf-fullscreen-shell .pdf-unsaved-confirm-actions button:hover{background:rgba(255,255,255,.08);border-color:#777365}
+#pdf-fullscreen-shell .pdf-unsaved-confirm-actions .pdf-unsaved-save{border-color:rgba(232,189,98,.58);background:rgba(232,189,98,.13);color:#f3d58a}
+#pdf-fullscreen-shell .pdf-unsaved-confirm-actions .pdf-unsaved-save:hover{background:rgba(232,189,98,.22);border-color:rgba(232,189,98,.82)}
