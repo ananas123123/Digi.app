@@ -5740,3 +5740,41 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group .
   min-width: 0 !important;
   box-sizing: border-box !important;
 }
+
+
+/* Keep explorer and filters adjacent to the compact centered search field. */
+body.search-window-open #search-window #search-toolbar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding-inline: 24px !important;
+}
+body.search-window-open #search-window #search-toolbar > #open-search-repository,
+body.search-window-open #search-window #search-toolbar > #filters-toggle {
+  position: static !important;
+  inset: auto !important;
+  flex: 0 0 40px !important;
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  margin: 0 !important;
+}
+body.search-window-open #search-window #search-toolbar > .search-refresh-group {
+  position: static !important;
+  inset: auto !important;
+  flex: 0 1 420px !important;
+  width: 420px !important;
+  max-width: calc(100% - 104px) !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+@media (max-width: 560px) {
+  body.search-window-open #search-window #search-toolbar { gap: 8px !important; padding-inline: 12px !important; }
+  body.search-window-open #search-window #search-toolbar > #open-search-repository,
+  body.search-window-open #search-window #search-toolbar > #filters-toggle { flex-basis: 36px !important; width: 36px !important; min-width: 36px !important; max-width: 36px !important; }
+  body.search-window-open #search-window #search-toolbar > .search-refresh-group { max-width: calc(100% - 88px) !important; }
+}
