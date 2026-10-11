@@ -3833,13 +3833,29 @@ html.dark-theme .header .window-controls .window-control.window-close:active { c
   height: 40px !important;
 }
 
-/* Three-option home menu. */
+/* Three-option home menu: compact cards with restrained styling. */
 body:not(:has(#search:not(:placeholder-shown))) .home-cards {
   width: min(980px, calc(100vw - 48px)) !important;
   gap: 18px !important;
 }
 body:not(:has(#search:not(:placeholder-shown))) .home-card {
-  min-height: 170px;
+  min-height: 156px;
+  padding: 16px;
+  gap: 6px;
+  border-radius: 13px;
+  background: #12130f;
+  box-shadow: none;
+}
+body:not(:has(#search:not(:placeholder-shown))) .home-card:hover {
+  background: #191a14;
+  box-shadow: 0 0 0 1px rgba(232,189,98,.06);
+}
+body:not(:has(#search:not(:placeholder-shown))) .home-card-icon {
+  margin-bottom: 2px;
+}
+body:not(:has(#search:not(:placeholder-shown))) .home-card-arrow {
+  top: 14px;
+  right: 14px;
 }
 @media (max-width: 600px) {
   body:not(:has(#search:not(:placeholder-shown))) .home-cards {
@@ -3847,7 +3863,8 @@ body:not(:has(#search:not(:placeholder-shown))) .home-card {
   }
   body:not(:has(#search:not(:placeholder-shown))) .home-card {
     flex: 1 1 42%;
-    min-height: 145px;
+    min-height: 140px;
+    padding: 14px;
   }
 }
 /* Dedicated timer modal, matching Digi's dark interface. */
