@@ -4642,3 +4642,9 @@ body.search-window-open #search-window .search-window-content > .search-refresh-
   box-sizing:border-box !important;
   z-index:10002 !important;
 }
+
+/* Raise Refresh and Filters together to align with the search field. */
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh,
+body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button {
+  top:84px !important;
+}
