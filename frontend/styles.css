@@ -5306,3 +5306,12 @@ body.search-window-open #search-window .search-window-content>.layout .content-h
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-shell-toggle{top:4px!important;}
 #pdf-fullscreen-shell .pdf-viewer-actions{margin-left:auto!important;margin-right:0!important;}
 #pdf-fullscreen-shell .pdf-viewer-toolbar{padding-right:24px!important;}
+
+
+/* Vertically center the PDF pen/eraser drawer in the viewer. */
+#pdf-fullscreen-shell .pdf-tools-drawer,
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-tools-drawer{
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  animation:none!important;
+}
