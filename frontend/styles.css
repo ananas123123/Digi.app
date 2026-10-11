@@ -3584,3 +3584,20 @@ html.dark-theme .header > .search-refresh-group .search-refresh:hover {
   color: #dcff9d !important;
   text-shadow: 0 0 5px rgba(197,243,107,.28) !important;
 }
+
+
+/* Version checker indicator sits immediately left of the bottom-right L button. */
+#digi-update-status.home-status-slot {
+  position: fixed !important;
+  right: 62px !important;
+  bottom: 28px !important;
+  z-index: 9500 !important;
+  display: block !important;
+  width: 10px !important;
+  height: 10px !important;
+  margin: 0 !important;
+  flex: none !important;
+}
+html.dark-theme #digi-update-status.home-status-slot {
+  box-shadow: 0 0 6px 2px currentColor !important;
+}
