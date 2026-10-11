@@ -6088,3 +6088,9 @@ body:has(#pdf-fullscreen-shell.pdf-chrome-hidden) > #search-window #pdf-fullscre
   z-index:2147482500!important;
   margin:0!important;
 }
+
+
+/* Match the native window title bar's lower edge to the PDF toolbar's subtle gold divider. */
+body.search-window-open > .header {
+  border-bottom:1px solid rgba(232,189,98,.2)!important;
+}
