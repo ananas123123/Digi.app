@@ -6451,3 +6451,37 @@ html:not(.dark-theme) #pdf-fullscreen-shell #pdf-toolbar-toggle:hover {
   border-color:transparent!important;
   box-shadow:none!important;
 }
+
+
+/* Back control shown on the empty Search screen, anchored to the top-left corner. */
+#search-window .search-empty-back[hidden] { display:none!important; }
+#search-window .search-empty-back {
+  position:fixed!important;
+  top:92px!important;
+  left:24px!important;
+  z-index:2147483000!important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:42px;
+  height:42px;
+  padding:0;
+  border:1px solid var(--digi-border,#34382e);
+  border-radius:12px;
+  background:var(--digi-surface,#1b1e19);
+  color:var(--digi-text,#f2f5eb);
+  cursor:pointer;
+}
+#search-window .search-empty-back svg {
+  width:21px;
+  height:21px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+#search-window .search-empty-back:hover {
+  border-color:var(--digi-accent,#e8bd62);
+  color:var(--digi-accent,#e8bd62);
+}
