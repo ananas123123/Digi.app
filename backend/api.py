@@ -636,18 +636,29 @@ class DigiBridge(QObject):
                 if not isinstance(item, dict):
                     raise ValueError("Invalid annotation data.")
                 page_index = item.get("page")
-                data_url = item.get("image")
-                if not isinstance(page_index, int) or page_index < 0:
-                    raise ValueError("Invalid annotation page.")
-                if not isinstance(data_url, str) or not data_url.startswith("data:image/png;base64,"):
-                    raise ValueError("Invalid annotation image.")
-                try:
-                    image_bytes = base64.b64decode(data_url.split(",", 1)[1], validate=True)
-                except (binascii.Error, ValueError) as exc:
-                    raise ValueError("Annotation image data is invalid.") from exc
-                if len(image_bytes) > 20 * 1024 * 1024:
-                    raise ValueError("An annotation layer is too large to save.")
-                decoded[page_index] = image_bytes
+                strokes = item.get("strokes")
+                if not isinstance(page_index, int) or page_index < 0 or not isinstance(strokes, list):
+                    raise ValueError("Invalid annotation data.")
+                valid_strokes = []
+                for stroke in strokes:
+                    if not isinstance(stroke, dict) or stroke.get("tool") != "pen":
+                        continue
+                    points = stroke.get("points")
+                    if not isinstance(points, list) or not points or len(points) > 20000:
+                        raise ValueError("Invalid annotation stroke.")
+                    normalized = []
+                    for point in points:
+                        if not isinstance(point, list) or len(point) != 2:
+                            raise ValueError("Invalid annotation point.")
+                        x, y = point
+                        if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
+                            raise ValueError("Invalid annotation coordinates.")
+                        if not (0 <= x <= 1 and 0 <= y <= 1):
+                            raise ValueError("Annotation coordinates are outside the page.")
+                        normalized.append((float(x), float(y)))
+                    valid_strokes.append(normalized)
+                if valid_strokes:
+                    decoded[page_index] = valid_strokes
 
             if not decoded:
                 return json.dumps({"ok": False, "message": "There are no annotations to save."})
@@ -657,9 +668,17 @@ class DigiBridge(QObject):
                     raise ValueError("This PDF is password-protected and cannot be saved by Digi yet.")
                 if any(index >= len(document) for index in decoded):
                     raise ValueError("The PDF page layout changed. Close and reopen the preview, then try again.")
-                for index, image_bytes in decoded.items():
+                for index, strokes in decoded.items():
                     page = document[index]
-                    page.insert_image(page.rect, stream=image_bytes, overlay=True)
+                    rect = page.rect
+                    for normalized_points in strokes:
+                        points = [fitz.Point(rect.x0 + x * rect.width, rect.y0 + y * rect.height) for x, y in normalized_points]
+                        if len(points) == 1:
+                            points.append(fitz.Point(points[0].x + 0.1, points[0].y + 0.1))
+                        annotation = page.add_ink_annot([points])
+                        annotation.set_colors(stroke=(0.07, 0.07, 0.07))
+                        annotation.set_border(width=1.6)
+                        annotation.update()
                 handle = tempfile.NamedTemporaryFile(
                     prefix=".digi-annotated-", suffix=".pdf",
                     dir=str(target.parent), delete=False
