@@ -5174,3 +5174,20 @@ body.search-window-open #search-window .search-window-content>.layout .content-h
 #pdf-fullscreen-shell .pdf-annotation-tools{display:none!important}
 #pdf-fullscreen-shell .pdf-viewer-pages{height:calc(100% - 58px);max-height:none}
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-pages{height:100%!important}
+
+
+/* Compact PDF window controls with distinct save/close colors. */
+#pdf-fullscreen-shell .pdf-viewer-actions{gap:6px!important;align-items:center}
+#pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-save,
+#pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-close{width:32px!important;min-width:32px!important;height:32px!important;padding:5px!important;border-radius:9px!important}
+#pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-save svg,
+#pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-close svg{width:17px!important;height:17px!important}
+#pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-save{color:#83baff!important;border-color:rgba(91,158,255,.4)!important;background:rgba(55,120,210,.13)!important}
+#pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-save:hover{background:rgba(55,120,210,.23)!important;border-color:rgba(91,158,255,.65)!important}
+#pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-close{color:#ff8585!important;border-color:rgba(255,91,91,.38)!important;background:rgba(210,55,55,.12)!important}
+#pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-close:hover{background:rgba(210,55,55,.23)!important;border-color:rgba(255,91,91,.65)!important}
+#pdf-fullscreen-shell .pdf-shell-toggle{width:32px!important;min-width:32px!important;height:32px!important;padding:4px!important;border-radius:9px!important}
+#pdf-fullscreen-shell .pdf-shell-toggle svg{width:16px!important;height:16px!important}
+#pdf-fullscreen-shell .pdf-tool-active,
+#pdf-fullscreen-shell .pdf-tools-drawer .pdf-tool-active{color:#f2d17b!important;border-color:rgba(232,189,98,.72)!important;background:rgba(232,189,98,.12)!important;box-shadow:0 0 0 1px rgba(232,189,98,.12),0 0 10px rgba(232,189,98,.14)!important}
+#pdf-fullscreen-shell .pdf-tools-drawer button{transition:color .15s ease,border-color .15s ease,background .15s ease,box-shadow .15s ease}
