@@ -5631,3 +5631,10 @@ body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .sea
     grid-template-columns: 40px minmax(0, 1fr) 40px !important;
   }
 }
+
+
+/* Let the selected document preview fill the remaining Search window height. */
+body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) {
+  height: calc(100dvh - 205px) !important;
+  max-height: calc(100dvh - 205px) !important;
+}
