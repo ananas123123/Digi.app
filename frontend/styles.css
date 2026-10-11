@@ -4542,3 +4542,22 @@ body.search-window-open #search-window .search-window-content > .layout .content
   visibility:visible !important;
   opacity:1 !important;
 }
+
+/* Icon-only Filters control. */
+body.search-window-open #search-window .search-window-content > #filters-toggle.filters-icon-button {
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:56px !important;
+  min-width:56px !important;
+  height:56px !important;
+  padding:0 !important;
+  font-size:0 !important;
+  line-height:1 !important;
+}
+#filters-toggle.filters-icon-button svg {
+  display:block;
+  width:22px;
+  height:22px;
+  flex:none;
+}
