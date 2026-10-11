@@ -662,6 +662,8 @@ class DigiBridge(QObject):
         import base64
         import binascii
         import tempfile
+        import re
+        import math
 
         source = Path(path)
         temporary_path = None
@@ -709,7 +711,14 @@ class DigiBridge(QObject):
                         if not (0 <= x <= 1 and 0 <= y <= 1):
                             raise ValueError("Annotation coordinates are outside the page.")
                         normalized.append((float(x), float(y)))
-                    valid_strokes.append(normalized)
+                    color = stroke.get("color", "#111111")
+                    if not isinstance(color, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", color):
+                        color = "#111111"
+                    size = stroke.get("size", 3)
+                    if not isinstance(size, (int, float)) or not math.isfinite(size):
+                        size = 3
+                    size = max(1.0, min(10.0, float(size)))
+                    valid_strokes.append({"points": normalized, "color": color, "size": size})
                 decoded[page_index] = valid_strokes
 
             if not decoded:
@@ -726,13 +735,16 @@ class DigiBridge(QObject):
                         if existing.type[0] == fitz.PDF_ANNOT_INK:
                             page.delete_annot(existing)
                     rect = page.rect
-                    for normalized_points in strokes:
+                    for stroke in strokes:
+                        normalized_points = stroke["points"]
                         points = [fitz.Point(rect.x0 + x * rect.width, rect.y0 + y * rect.height) for x, y in normalized_points]
                         if len(points) == 1:
                             points.append(fitz.Point(points[0].x + 0.1, points[0].y + 0.1))
                         annotation = page.add_ink_annot([[(point.x, point.y) for point in points]])
-                        annotation.set_colors(stroke=(0.07, 0.07, 0.07))
-                        annotation.set_border(width=1.6)
+                        color_hex = stroke["color"].lstrip("#")
+                        color = tuple(int(color_hex[i:i + 2], 16) / 255 for i in (0, 2, 4))
+                        annotation.set_colors(stroke=color)
+                        annotation.set_border(width=stroke["size"])
                         annotation.update()
                 handle = tempfile.NamedTemporaryFile(
                     prefix=".digi-annotated-", suffix=".pdf",
