@@ -689,7 +689,7 @@ class DigiBridge(QObject):
                         points = [fitz.Point(rect.x0 + x * rect.width, rect.y0 + y * rect.height) for x, y in normalized_points]
                         if len(points) == 1:
                             points.append(fitz.Point(points[0].x + 0.1, points[0].y + 0.1))
-                        annotation = page.add_ink_annot([points])
+                        annotation = page.add_ink_annot([[(point.x, point.y) for point in points]])
                         annotation.set_colors(stroke=(0.07, 0.07, 0.07))
                         annotation.set_border(width=1.6)
                         annotation.update()
