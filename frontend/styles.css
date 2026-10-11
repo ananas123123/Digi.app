@@ -4256,3 +4256,35 @@ body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-windo
   height:56px !important;
   margin:0 !important;
 }
+
+/* Empty Search screen: use normal flex centring instead of conflicting absolute offsets. */
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  position:relative !important;
+  inset:auto !important;
+  height:auto !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group {
+  display:flex !important;
+  position:relative !important;
+  top:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  left:auto !important;
+  transform:none !important;
+  flex:0 0 auto !important;
+  width:min(620px,calc(100% - 48px)) !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:center !important;
+  z-index:21000 !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group .search-wrap {
+  width:100% !important;
+}
