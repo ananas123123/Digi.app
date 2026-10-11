@@ -561,8 +561,11 @@ class DigiBridge(QObject):
                     for index, page in enumerate(document):
                         if index >= 20:
                             break
-                        pixmap = page.get_pixmap(matrix=fitz.Matrix(1.15, 1.15), alpha=False, annots=False)
-                        encoded = base64.b64encode(pixmap.tobytes("png")).decode("ascii")
+                        matrix = fitz.Matrix(1.15, 1.15)
+                        preview_pixmap = page.get_pixmap(matrix=matrix, alpha=False, annots=True)
+                        encoded = base64.b64encode(preview_pixmap.tobytes("png")).decode("ascii")
+                        clean_pixmap = page.get_pixmap(matrix=matrix, alpha=False, annots=False)
+                        clean_encoded = base64.b64encode(clean_pixmap.tobytes("png")).decode("ascii")
                         annotations = []
                         for annotation in page.annots() or []:
                             if annotation.type[0] != fitz.PDF_ANNOT_INK:
@@ -583,7 +586,7 @@ class DigiBridge(QObject):
                                         continue
                                 if normalized:
                                     annotations.append({"tool": "pen", "points": normalized})
-                        pages.append({"number": index + 1, "image": "data:image/png;base64," + encoded, "annotations": annotations})
+                        pages.append({"number": index + 1, "image": "data:image/png;base64," + encoded, "cleanImage": "data:image/png;base64," + clean_encoded, "annotations": annotations})
                 return json.dumps({"kind": "pdf", "name": source.name, "pages": pages, "total": total, "truncated": total > len(pages)})
             if suffix in (".docx", ".docm"):
                 # Read Office Open XML directly; this avoids python-docx package lookup
