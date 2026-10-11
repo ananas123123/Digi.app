@@ -3762,3 +3762,56 @@ html.dark-theme .header-left-tools > #theme-toggle:hover {
   color: #dcff9d !important;
   background: rgba(197,243,107,.08) !important;
 }
+
+
+/* Ultra-minimal window controls: only the glyph is visible, not a button tile. */
+.header .window-controls {
+  align-items: center !important;
+  gap: 12px !important;
+  margin-left: 10px !important;
+  padding-left: 14px !important;
+  border-left: 1px solid rgba(128,128,128,.2) !important;
+}
+.header .window-controls .window-control {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 16px !important;
+  width: 16px !important;
+  min-width: 16px !important;
+  max-width: 16px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #777 !important;
+  box-shadow: none !important;
+  font-family: "Segoe UI", Arial, sans-serif !important;
+  font-size: 17px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  transform: none !important;
+  cursor: pointer;
+  transition: color .14s ease !important;
+}
+.header .window-controls .window-control:hover,
+.header .window-controls .window-control:active {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #242424 !important;
+  transform: none !important;
+}
+.header .window-controls .window-control.window-close:hover,
+.header .window-controls .window-control.window-close:active {
+  background: transparent !important;
+  border: 0 !important;
+  color: #d83b43 !important;
+}
+html.dark-theme .header .window-controls .window-control { color: #8e9387 !important; }
+html.dark-theme .header .window-controls .window-control:hover,
+html.dark-theme .header .window-controls .window-control:active { color: #f3f5ed !important; }
+html.dark-theme .header .window-controls .window-control.window-close:hover,
+html.dark-theme .header .window-controls .window-control.window-close:active { color: #ff666d !important; }
