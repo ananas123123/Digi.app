@@ -5049,3 +5049,22 @@ body.search-window-open #search-window .preview-fullscreen svg {
   height: auto;
   margin: 0 auto;
 }
+
+
+/* Keep fullscreen PDF actions together at the right edge, save then close. */
+.pdf-viewer-toolbar {
+  justify-content: flex-start !important;
+}
+.pdf-viewer-toolbar .pdf-viewer-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+  flex: 0 0 auto !important;
+}
+.pdf-viewer-toolbar .pdf-viewer-close {
+  position: static !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+}
