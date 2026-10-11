@@ -9,7 +9,7 @@
     <circle cx="12" cy="8" r="3.25"></circle>
     <path d="M5.5 20c.4-3.5 2.7-5.5 6.5-5.5s6.1 2 6.5 5.5"></path>
   </svg>
-</button><button class="theme-toggle" id="theme-toggle" type="button" aria-label="Dark theme" aria-pressed="false" title="Switch to dark theme"><svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.2 15.1A8.6 8.6 0 0 1 8.9 3.8 8.7 8.7 0 1 0 20.2 15.1Z"></path></svg></button><button class="ui-button filters-icon-button" id="filters-toggle" type="button" aria-controls="filters-panel" aria-expanded="false" aria-label="Filters" title="Filters"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg></button></div>
+</button><button class="theme-toggle" id="theme-toggle" type="button" aria-label="Dark theme" aria-pressed="false" title="Switch to dark theme"><svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.2 15.1A8.6 8.6 0 0 1 8.9 3.8 8.7 8.7 0 1 0 20.2 15.1Z"></path></svg></button></div>
 <div class="search-refresh-group">
 <div class="ui-input-container search-wrap">
   <input id="search" required class="ui-input search-input" placeholder="Search files..." autocomplete="off" type="text">
@@ -27,7 +27,7 @@
 <div class="header-actions"><span class="window-controls"><button class="window-control" id="window-minimize" aria-label="Minimise" title="Minimise">−</button><button class="window-control" id="window-maximize" aria-label="Maximise or restore" title="Maximise or restore">□</button><button class="window-control window-close" id="window-close" aria-label="Close" title="Close">×</button></span></div>
 </header>
 <main class="layout">
-<section class="content"><div class="content-head"><div class="content-head-title"><button type="button" class="results-folder-icon" id="open-search-repository" aria-label="Open search repository folder" title="Open search repository folder"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6.5A2.5 2.5 0 0 1 6 4h4l2 2h6a2.5 2.5 0 0 1 2.5 2.5v8A2.5 2.5 0 0 1 18 19H6a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M3.8 9h16.4"/></svg></button><div><h1 class="digi-home-logo" aria-label="Digi">Digi<span class="digi-home-logo-dot" aria-hidden="true"></span></h1><p id="hint" hidden></p></div></div><span id="count">0 results</span></div><div class="results-workspace"><div id="results" class="results"></div><aside id="preview-panel" class="preview-panel" aria-label="Document preview"><div class="preview-empty"><span class="preview-empty-icon">▤</span><strong>Document preview</strong><p>Select a search result to view it here.</p></div></aside></div></section></main>
+<section class="content"><div class="content-head"><div class="content-head-title"><div><h1 class="digi-home-logo" aria-label="Digi">Digi<span class="digi-home-logo-dot" aria-hidden="true"></span></h1><p id="hint" hidden></p></div></div><span id="count">0 results</span></div><div class="results-workspace"><div id="results" class="results"></div><aside id="preview-panel" class="preview-panel" aria-label="Document preview"><div class="preview-empty"><span class="preview-empty-icon">▤</span><strong>Document preview</strong><p>Select a search result to view it here.</p></div></aside></div></section></main>
 <div id="delete-confirm-overlay" class="filters-overlay delete-confirm-overlay" hidden>
   <section class="filters-dialog delete-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
     <div class="filters-dialog-head"><h2 id="delete-confirm-title">DELETE FILE</h2></div>
@@ -60,7 +60,7 @@
     <span class="search-window-title">Search</span>
     <button type="button" id="search-window-close" aria-label="Close search">×</button>
   </header>
-  <div class="search-window-content"></div>
+  <div class="search-window-content"><div id="search-toolbar" class="search-toolbar"></div></div>
 </div>
 <span id="digi-update-status" class="update-status-dot home-status-slot" data-status="checking" role="status" aria-label="Checking for Digi updates" title="Checking for Digi updates…"></span>
 <button id="updater-log-button" type="button" title="Open updater diagnostics" aria-label="Open updater diagnostics">L</button>
