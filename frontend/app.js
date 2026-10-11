@@ -1210,3 +1210,39 @@ document.addEventListener('click', event => {
     if (event.key === "Escape" && !overlay.hidden) overlay.hidden = true;
   });
 })();
+
+
+// Persistent light/dark appearance switch.
+(() => {
+  const button = document.getElementById("theme-toggle");
+  if (!button) return;
+
+  const applyTheme = theme => {
+    const dark = theme === "dark";
+    document.body.classList.toggle("dark-theme", dark);
+    document.documentElement.classList.toggle("dark-theme", dark);
+    document.documentElement.style.colorScheme = dark ? "dark" : "light";
+    button.textContent = dark ? "Light theme" : "Dark theme";
+    button.title = dark ? "Switch to light theme" : "Switch to dark theme";
+    button.setAttribute("aria-pressed", String(dark));
+  };
+
+  let savedTheme = "light";
+  try {
+    const stored = localStorage.getItem("digi-theme");
+    if (stored === "dark" || stored === "light") savedTheme = stored;
+  } catch (error) {
+    console.warn("Digi could not read the saved theme preference.", error);
+  }
+
+  applyTheme(savedTheme);
+  button.addEventListener("click", () => {
+    const nextTheme = document.body.classList.contains("dark-theme") ? "light" : "dark";
+    applyTheme(nextTheme);
+    try {
+      localStorage.setItem("digi-theme", nextTheme);
+    } catch (error) {
+      console.warn("Digi could not save the theme preference.", error);
+    }
+  });
+})();
