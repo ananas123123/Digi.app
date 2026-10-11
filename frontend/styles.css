@@ -4925,3 +4925,11 @@ body.search-window-open:has(#search:not(:placeholder-shown)) #search-window .sea
   overflow-x:hidden !important;
   overscroll-behavior:contain;
 }
+
+/* Result cards: display only the extension-free filename and icon-only file actions. */
+body.search-window-open #search-window .result-meta { display:none !important; }
+body.search-window-open #search-window .result { grid-template-columns:minmax(0,1fr) auto !important; align-items:center !important; }
+body.search-window-open #search-window .result-name { min-width:0 !important; overflow-wrap:anywhere !important; }
+body.search-window-open #search-window .result-actions { grid-row:1 !important; grid-column:2 !important; display:flex !important; align-items:center !important; gap:8px !important; }
+body.search-window-open #search-window .result-icon-button { display:inline-flex !important; align-items:center !important; justify-content:center !important; width:38px !important; min-width:38px !important; height:38px !important; padding:0 !important; }
+body.search-window-open #search-window .result-icon-button svg { width:18px !important; height:18px !important; fill:none !important; stroke:currentColor !important; stroke-width:1.7 !important; stroke-linecap:round !important; stroke-linejoin:round !important; }
