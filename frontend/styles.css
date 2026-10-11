@@ -4933,3 +4933,59 @@ body.search-window-open #search-window .result-name { min-width:0 !important; ov
 body.search-window-open #search-window .result-actions { grid-row:1 !important; grid-column:2 !important; display:flex !important; align-items:center !important; gap:8px !important; }
 body.search-window-open #search-window .result-icon-button { display:inline-flex !important; align-items:center !important; justify-content:center !important; width:38px !important; min-width:38px !important; height:38px !important; padding:0 !important; }
 body.search-window-open #search-window .result-icon-button svg { width:18px !important; height:18px !important; fill:none !important; stroke:currentColor !important; stroke-width:1.7 !important; stroke-linecap:round !important; stroke-linejoin:round !important; }
+
+/* PDF preview: fullscreen affordance and dedicated modal viewer. */
+body.search-window-open #search-window .preview-fullscreen {
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:38px !important;
+  min-width:38px !important;
+  height:38px !important;
+  padding:0 !important;
+}
+body.search-window-open #search-window .preview-fullscreen svg {
+  width:19px !important;
+  height:19px !important;
+  fill:none !important;
+  stroke:currentColor !important;
+  stroke-width:1.7 !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+}
+#modal:has(.pdf-fullscreen-viewer) .modal-card {
+  width: min(1400px, 96vw) !important;
+  height: 94vh !important;
+  max-height: 94vh !important;
+}
+#modal:has(.pdf-fullscreen-viewer) .modal-body {
+  display:flex !important;
+  flex-direction:column !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+  padding:0 !important;
+}
+.pdf-fullscreen-viewer {
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+}
+.pdf-viewer-toolbar {
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:12px 18px;
+  border-bottom:1px solid rgba(232,189,98,.2);
+}
+.pdf-viewer-toolbar strong { flex:1; min-width:0; overflow-wrap:anywhere; }
+.pdf-viewer-toolbar span { color:#a99d83; font-size:12px; }
+.pdf-viewer-pages {
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
+  padding:24px;
+  background:#0b0b0a;
+}
+.pdf-preview-limited { max-height:100%; }
