@@ -4656,79 +4656,78 @@ body.search-window-open #search-window .search-window-content > #filters-toggle.
   top:86px !important;
 }
 
-/* Single movable toolbar: Explorer, Search, Refresh, and Filters stay grouped. */
+/* Unified Search toolbar: all four controls are siblings in #search-toolbar.
+   Change this container's position/padding to move the whole group together. */
 body.search-window-open #search-window .search-window-content {
-  position:absolute !important;
-  inset:54px 0 0 !important;
+  position:relative !important;
   display:block !important;
-  height:auto !important;
+  inset:auto !important;
+  height:100% !important;
   min-height:0 !important;
   overflow-y:auto !important;
   overflow-x:hidden !important;
+  padding:0 !important;
+  box-sizing:border-box !important;
 }
 body.search-window-open #search-window .search-toolbar {
   position:relative !important;
   display:grid !important;
-  grid-template-columns:44px minmax(260px,740px) 44px 44px !important;
+  grid-template-columns:44px minmax(0,740px) 44px 44px !important;
   align-items:center !important;
-  column-gap:12px !important;
+  justify-content:center !important;
+  gap:12px !important;
   width:100% !important;
+  padding:24px 24px 0 !important;
+  margin:0 auto !important;
   box-sizing:border-box !important;
-  padding:24px 24px 0 32px !important;
-  margin:0 !important;
 }
-body.search-window-open #search-window .search-toolbar #open-search-repository,
+body.search-window-open #search-window .search-toolbar > #open-search-repository,
 body.search-window-open #search-window .search-toolbar > .search-refresh-group,
+body.search-window-open #search-window .search-toolbar > #scan,
 body.search-window-open #search-window .search-toolbar > #filters-toggle {
   position:static !important;
   inset:auto !important;
   transform:none !important;
   margin:0 !important;
+  justify-self:stretch !important;
 }
-body.search-window-open #search-window .search-toolbar #open-search-repository {
-  width:44px !important;
-  min-width:44px !important;
-  height:44px !important;
-  min-height:44px !important;
-}
-body.search-window-open #search-window .search-toolbar > .search-refresh-group {
-  display:flex !important;
-  width:100% !important;
-  min-width:0 !important;
-  padding:0 !important;
-  gap:0 !important;
-}
-body.search-window-open #search-window .search-toolbar .search-wrap {
-  width:100% !important;
-  min-width:0 !important;
-  height:56px !important;
-}
-body.search-window-open #search-window .search-toolbar .search-input {
-  height:56px !important;
-}
-body.search-window-open #search-window .search-toolbar .search-refresh {
-  position:absolute !important;
-  top:24px !important;
-  right:calc(24px + 44px + 12px) !important;
-  left:auto !important;
-  width:44px !important;
-  min-width:44px !important;
-  height:44px !important;
-  min-height:44px !important;
-  margin:0 !important;
-  padding:0 !important;
-  transform:none !important;
-}
-body.search-window-open #search-window .search-toolbar > #filters-toggle.filters-icon-button {
-  display:inline-flex !important;
+body.search-window-open #search-window .search-toolbar > #open-search-repository,
+body.search-window-open #search-window .search-toolbar > #scan,
+body.search-window-open #search-window .search-toolbar > #filters-toggle {
   width:44px !important;
   min-width:44px !important;
   max-width:44px !important;
   height:44px !important;
   min-height:44px !important;
+  max-height:44px !important;
+  padding:0 !important;
+  box-sizing:border-box !important;
+}
+body.search-window-open #search-window .search-toolbar > .search-refresh-group {
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
   padding:0 !important;
 }
+body.search-window-open #search-window .search-toolbar .search-wrap {
+  position:relative !important;
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  height:56px !important;
+  margin:0 !important;
+}
+body.search-window-open #search-window .search-toolbar .search-input {
+  width:100% !important;
+  height:56px !important;
+  box-sizing:border-box !important;
+}
+body.search-window-open #search-window .search-toolbar > #filters-toggle.filters-icon-button {
+  display:inline-flex !important;
+}
 body.search-window-open #search-window .search-window-content > .layout {
+  display:block !important;
   position:relative !important;
   inset:auto !important;
   width:100% !important;
@@ -4739,32 +4738,78 @@ body.search-window-open #search-window .search-window-content > .layout {
   box-sizing:border-box !important;
   overflow:visible !important;
 }
-body.search-window-open #search-window .search-window-content > .layout .results-workspace {
+body.search-window-open #search-window .search-window-content > .layout .content {
+  display:flex !important;
+  flex-direction:column !important;
   height:auto !important;
-  min-height:240px !important;
+  min-height:0 !important;
+  overflow:visible !important;
+  padding:0 !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .content-head {
+  display:none !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .results-workspace {
+  display:block !important;
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
   overflow:visible !important;
 }
-body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-toolbar {
-  grid-template-columns:44px minmax(0,620px) 44px 44px !important;
+body.search-window-open #search-window .search-window-content > .layout #results {
+  display:flex !important;
+  flex-direction:column !important;
+  width:100% !important;
+  min-width:0 !important;
+  overflow:visible !important;
 }
-body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-toolbar #open-search-repository,
-body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-toolbar > #filters-toggle,
-body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-toolbar .search-refresh {
+body.search-window-open #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) !important;
+  gap:20px !important;
+  align-items:stretch !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) #results {
+  min-width:0 !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .results-workspace:has(.result.is-selected) #preview-panel {
+  display:flex !important;
+  min-width:0 !important;
+  position:relative !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-toolbar {
+  position:absolute !important;
+  top:calc(50% - 28px) !important;
+  left:0 !important;
+  right:0 !important;
+  grid-template-columns:minmax(0,620px) !important;
+  justify-content:center !important;
+  padding:0 24px !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-toolbar > #open-search-repository,
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-toolbar > #scan,
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-toolbar > #filters-toggle {
   display:none !important;
 }
 body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-toolbar > .search-refresh-group {
-  grid-column:2 / 4 !important;
-  justify-self:center !important;
-  width:min(620px,calc(100vw - 48px)) !important;
+  width:100% !important;
 }
-body.search-window-open #search-window .search-window-content > .layout #open-search-repository {
-  top:90px !important;
-}
-
-/* Explorer fine adjustment and hide the result-count label. */
-body.search-window-open #search-window .search-window-content > .layout #open-search-repository {
-  top:92px !important;
-}
-body.search-window-open #search-window .search-window-content > .layout #count {
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .layout {
   display:none !important;
+}
+@media(max-width:900px) {
+  body.search-window-open #search-window .search-toolbar {
+    grid-template-columns:40px minmax(0,1fr) 40px 40px !important;
+    gap:8px !important;
+    padding:20px 16px 0 !important;
+  }
+  body.search-window-open #search-window .search-toolbar > #open-search-repository,
+  body.search-window-open #search-window .search-toolbar > #scan,
+  body.search-window-open #search-window .search-toolbar > #filters-toggle {
+    width:40px !important;
+    min-width:40px !important;
+    max-width:40px !important;
+    height:40px !important;
+    min-height:40px !important;
+  }
 }
