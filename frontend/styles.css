@@ -4172,3 +4172,25 @@ body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-windo
 body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group .search-wrap {
   width:100% !important;
 }
+
+/* Definitive empty-state positioning: anchor to the actual viewport, not a content box. */
+body.search-window-open #search-window .search-window-content {
+  position:absolute !important;
+  inset:54px 0 0 0 !important;
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group {
+  position:fixed !important;
+  top:calc(50vh + 27px) !important;
+  left:50vw !important;
+  right:auto !important;
+  bottom:auto !important;
+  transform:translate(-50%,-50%) !important;
+  width:min(620px,calc(100vw - 48px)) !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+}
