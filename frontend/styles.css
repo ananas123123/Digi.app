@@ -5882,4 +5882,17 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
 .pdf-size-options button:hover{background:rgba(255,255,255,.06);color:#fff}
 .pdf-size-options button.is-selected{border-color:rgba(232,189,98,.7);background:rgba(232,189,98,.12);color:#f2d17b}
 .pdf-size-options button:focus-visible{outline:1px solid #f2d17b;outline-offset:1px}
-\n\n/* Digi-styled confirmation before converting an annotated PDF to Word. */\n#modal .modal-card.pdf-word-confirm-card{width:min(420px,calc(100vw - 32px));height:auto;max-height:calc(100vh - 32px);background:#171715;border:1px solid #3a392f;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.58)}\n#modal .pdf-word-confirm-head{justify-content:center;padding:22px 24px 0;border:0}\n#modal .pdf-word-confirm-head>b{font-size:21px;font-weight:700;color:#f3f0e6;text-align:center}\n#modal .pdf-word-confirm-head>#close-modal{display:none}\n#modal .pdf-word-confirm-card .modal-body{padding:14px 24px 24px;overflow:visible}\n#modal .pdf-word-confirm{display:flex;flex-direction:column;gap:24px;text-align:center}\n#modal .pdf-word-confirm p{margin:0;color:#d4d1c7;font-size:15px;line-height:1.6}\n#modal .pdf-word-confirm-actions{display:flex;justify-content:center;gap:12px}\n#modal .pdf-word-confirm-actions button{min-width:112px;border:1px solid transparent;border-radius:10px;padding:11px 22px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:transform .15s ease,filter .15s ease,box-shadow .15s ease}\n#modal .pdf-word-confirm-actions button:hover{transform:translateY(-1px);filter:brightness(1.08);box-shadow:0 6px 18px rgba(0,0,0,.24)}\n#modal .pdf-word-confirm-yes{background:#a92b2b;color:#fff;border-color:#d34a4a!important}\n#modal .pdf-word-confirm-no{background:#237447;color:#fff;border-color:#32965d!important}\n@media(max-width:480px){#modal .modal-card.pdf-word-confirm-card{width:calc(100vw - 28px)}#modal .pdf-word-confirm-actions button{flex:1;min-width:0}}\n
+\n\n/* Digi-styled confirmation before converting an annotated PDF to Word. */
+#modal .modal-card.pdf-word-confirm-card{box-sizing:border-box;width:min(420px,calc(100vw - 32px))!important;height:auto!important;min-height:0!important;max-height:calc(100vh - 32px);background:#171715;border:1px solid #3a392f;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.58)}
+#modal .pdf-word-confirm-head{justify-content:center;padding:22px 24px 0;border:0}
+#modal .pdf-word-confirm-head>b{font-size:21px;font-weight:700;color:#f3f0e6;text-align:center}
+#modal .pdf-word-confirm-head>#close-modal{display:none}
+#modal .pdf-word-confirm-card .modal-body{padding:14px 24px 24px;overflow:visible}
+#modal .pdf-word-confirm{display:flex;flex-direction:column;gap:24px;text-align:center}
+#modal .pdf-word-confirm p{margin:0;color:#d4d1c7;font-size:15px;line-height:1.6}
+#modal .pdf-word-confirm-actions{display:flex;justify-content:center;gap:12px}
+#modal .pdf-word-confirm-actions button{min-width:112px;border:1px solid transparent;border-radius:10px;padding:11px 22px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:transform .15s ease,filter .15s ease,box-shadow .15s ease}
+#modal .pdf-word-confirm-actions button:hover{transform:translateY(-1px);filter:brightness(1.08);box-shadow:0 6px 18px rgba(0,0,0,.24)}
+#modal .pdf-word-confirm-yes{background:#a92b2b;color:#fff;border-color:#d34a4a!important}
+#modal .pdf-word-confirm-no{background:#237447;color:#fff;border-color:#32965d!important}
+@media(max-width:480px){#modal .modal-card.pdf-word-confirm-card{width:calc(100vw - 28px)}#modal .pdf-word-confirm-actions button{flex:1;min-width:0}}
