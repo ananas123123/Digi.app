@@ -822,13 +822,17 @@ let searchWindowPlaceholders=null;
 function openSearchWindow(){
   const overlay=$("search-window");
   const content=overlay&&overlay.querySelector(".search-window-content");
-  const searchGroup=document.querySelector(".header > .search-refresh-group");
+  const searchGroup=document.querySelector(".header .search-refresh-group");
   const layout=document.querySelector("body > .layout");
   const filtersToggle=$("filters-toggle");
   const repositoryButton=$("open-search-repository");
   const refreshButton=$("scan");
   const toolbar=$("search-toolbar");
-  if(!overlay||!content||!searchGroup||!layout||!filtersToggle||!repositoryButton||!refreshButton||!toolbar)return;
+  if(!overlay||!content||!layout||!filtersToggle||!repositoryButton||!refreshButton||!toolbar){
+    console.error("Digi Search could not initialise: required Search elements are missing.",{overlay:!!overlay,content:!!content,layout:!!layout,filtersToggle:!!filtersToggle,repositoryButton:!!repositoryButton,refreshButton:!!refreshButton,toolbar:!!toolbar});
+    return;
+  }
+  if(!searchGroup){console.error("Digi Search could not find the search input group.");return;}
   if(!searchWindowPlaceholders){
     const searchMarker=document.createComment("Digi search controls location");
     const layoutMarker=document.createComment("Digi search results location");
