@@ -3833,16 +3833,19 @@ html.dark-theme .header .window-controls .window-control.window-close:active { c
   height: 40px !important;
 }
 
-/* Three-option home menu: compact cards with restrained styling. */
+/* Three-option home menu: genuinely compact navigation cards. */
 body:not(:has(#search:not(:placeholder-shown))) .home-cards {
-  width: min(980px, calc(100vw - 48px)) !important;
-  gap: 18px !important;
+  width: min(900px, calc(100vw - 48px)) !important;
+  gap: 16px !important;
+  align-items: stretch;
 }
 body:not(:has(#search:not(:placeholder-shown))) .home-card {
-  min-height: 156px;
-  padding: 16px;
-  gap: 6px;
-  border-radius: 13px;
+  height: 120px !important;
+  min-height: 0 !important;
+  max-height: 120px;
+  padding: 13px 15px;
+  gap: 4px;
+  border-radius: 12px;
   background: #12130f;
   box-shadow: none;
 }
@@ -3851,11 +3854,18 @@ body:not(:has(#search:not(:placeholder-shown))) .home-card:hover {
   box-shadow: 0 0 0 1px rgba(232,189,98,.06);
 }
 body:not(:has(#search:not(:placeholder-shown))) .home-card-icon {
-  margin-bottom: 2px;
+  margin-bottom: 0;
+  font-size: 20px;
+}
+body:not(:has(#search:not(:placeholder-shown))) .home-card-title {
+  font-size: 14px;
+}
+body:not(:has(#search:not(:placeholder-shown))) .home-card-copy {
+  line-height: 1.35;
 }
 body:not(:has(#search:not(:placeholder-shown))) .home-card-arrow {
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
 }
 @media (max-width: 600px) {
   body:not(:has(#search:not(:placeholder-shown))) .home-cards {
@@ -3863,8 +3873,10 @@ body:not(:has(#search:not(:placeholder-shown))) .home-card-arrow {
   }
   body:not(:has(#search:not(:placeholder-shown))) .home-card {
     flex: 1 1 42%;
-    min-height: 140px;
-    padding: 14px;
+    height: 112px !important;
+    min-height: 0 !important;
+    max-height: 112px;
+    padding: 12px;
   }
 }
 /* Dedicated timer modal, matching Digi's dark interface. */
