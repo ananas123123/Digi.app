@@ -5564,3 +5564,23 @@ body.search-window-open #search-window .preview-deselect {
   line-height: 1 !important;
   border-radius: 10px !important;
 }
+
+
+/* Conversion icon uses the same compact footprint as the other result action buttons. */
+.result-actions button[data-convert]:not(.conversion-active) {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 30px !important;
+  padding: 5px !important;
+  border-radius: 8px !important;
+}
+.result-actions button[data-convert]:not(.conversion-active) > svg {
+  width: 17px !important;
+  height: 17px !important;
+}
+.result-actions button[data-convert].conversion-active {
+  width: 92px !important;
+  min-width: 92px !important;
+  height: 30px !important;
+  padding: 5px 8px !important;
+}
