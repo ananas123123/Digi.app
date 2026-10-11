@@ -6217,3 +6217,33 @@ html:not(.dark-theme) body.search-window-open #search-window .preview-head-actio
 #modal:has(.search-repository) > .modal-card {
   max-height:calc(100vh - 88px)!important;
 }
+
+
+/* Correctly target the actual repository explorer and Move File modal contents. */
+#modal:has(.repo-browser),
+#modal:has(.move-browser) {
+  top:56px!important;
+  right:0!important;
+  bottom:0!important;
+  left:0!important;
+  height:calc(100vh - 56px)!important;
+  min-height:0!important;
+  max-height:calc(100vh - 56px)!important;
+  box-sizing:border-box!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:12px 16px!important;
+}
+#modal:has(.repo-browser) .modal-card,
+#modal:has(.move-browser) .modal-card {
+  margin:0 auto!important;
+  max-height:calc(100vh - 80px)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#modal:has(.repo-browser) .modal-body,
+#modal:has(.move-browser) .modal-body {
+  min-height:0!important;
+  max-height:calc(100vh - 160px)!important;
+  overflow:auto!important;
+}
