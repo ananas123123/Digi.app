@@ -6657,58 +6657,45 @@ body:not(:has(#search:not(:placeholder-shown))) .content-head .digi-home-logo {
 }
 
 
-/* Home menu motion: visible by default, with a subtle optional entrance and restrained hover feedback. */
+/* Home menu entrance: fade in while moving upward slightly; keep cards visible throughout. */
 @keyframes digiHomeTitleReveal {
-  from { opacity: .82; filter: blur(2px); }
-  to   { opacity: 1; filter: blur(0); }
+  from { opacity: .65; filter: blur(3px); transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; filter: blur(0); transform: translateX(-50%) translateY(0); }
 }
 @keyframes digiHomeCardReveal {
-  from { opacity: .82; translate: 0 8px; }
-  to   { opacity: 1; translate: 0 0; }
+  from { opacity: .65; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 body:not(:has(#search:not(:placeholder-shown))) .content-head .digi-home-logo {
-  animation: digiHomeTitleReveal .45s ease-out both;
+  animation: digiHomeTitleReveal .55s cubic-bezier(.2,.7,.2,1) both;
 }
 body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card {
   opacity: 1 !important;
-  animation: digiHomeCardReveal .42s ease-out both;
+  animation: digiHomeCardReveal .5s cubic-bezier(.2,.7,.2,1) both;
   transition:
-    translate .2s cubic-bezier(.2,.7,.2,1),
+    transform .2s cubic-bezier(.2,.7,.2,1),
     border-color .2s ease,
     background-color .2s ease,
     box-shadow .2s ease;
 }
-body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:nth-child(1) {
-  animation-delay: .06s;
-}
-body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:nth-child(2) {
-  animation-delay: .13s;
-}
-body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:nth-child(3) {
-  animation-delay: .20s;
-}
-body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:hover {
-  translate: 0 -3px;
-}
+body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:nth-child(1) { animation-delay: .08s; }
+body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:nth-child(2) { animation-delay: .17s; }
+body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:nth-child(3) { animation-delay: .26s; }
+body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:hover { transform: translateY(-3px); }
 body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card .home-card-icon {
   transition: transform .22s cubic-bezier(.2,.7,.2,1), color .2s ease;
 }
-body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:hover .home-card-icon {
-  transform: translateY(-1px) scale(1.08);
-}
+body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:hover .home-card-icon { transform: translateY(-1px) scale(1.08); }
 body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card .home-card-arrow {
   transition: transform .22s cubic-bezier(.2,.7,.2,1), color .2s ease;
 }
-body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:hover .home-card-arrow {
-  transform: translate(2px,-2px);
-}
+body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:hover .home-card-arrow { transform: translate(2px,-2px); }
 @media (prefers-reduced-motion: reduce) {
   body:not(:has(#search:not(:placeholder-shown))) .content-head .digi-home-logo,
   body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card {
     animation: none !important;
     opacity: 1 !important;
     filter: none !important;
-    translate: none !important;
     transition: none !important;
   }
 }
