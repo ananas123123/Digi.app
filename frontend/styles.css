@@ -4507,3 +4507,38 @@ body.search-window-open #search-window .search-window-content > #filters-toggle 
   transform:none !important;
   z-index:5 !important;
 }
+
+/* Fix transformed-parent positioning: keep Search centred without trapping Refresh. */
+body.search-window-open #search-window .search-window-content > .search-refresh-group {
+  left:0 !important;
+  right:0 !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  transform:none !important;
+}
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-refresh {
+  position:fixed !important;
+  top:128px !important;
+  right:calc(24px + 104px + 12px) !important;
+  left:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  margin:0 !important;
+  z-index:10000 !important;
+}
+/* Keep the Explorer folder action visible; hide only the duplicate Digi wordmark. */
+body.search-window-open #search-window .search-window-content > .layout .content-head-title {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  visibility:visible !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .content-head-title .digi-home-logo,
+body.search-window-open #search-window .search-window-content > .layout .content-head-title > div {
+  display:none !important;
+}
+body.search-window-open #search-window .search-window-content > .layout .content-head-title #open-search-repository {
+  display:inline-flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
