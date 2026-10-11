@@ -6401,3 +6401,53 @@ html.dark-theme #digi-context-menu .digi-context-submenu-items button * {
   color:#fff!important;
   opacity:1!important;
 }
+
+
+/* Light theme PDF viewer contrast and control colours. */
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-viewer-toolbar,
+html:not(.dark-theme) #pdf-fullscreen-shell #pdf-viewer-toolbar,
+html:not(.dark-theme) #pdf-fullscreen-shell #pdf-viewer-toolbar strong,
+html:not(.dark-theme) #pdf-fullscreen-shell #pdf-viewer-toolbar .pdf-filename,
+html:not(.dark-theme) #pdf-fullscreen-shell #pdf-viewer-toolbar #pdf-viewer-filename {
+  color:#fff!important;
+}
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-save,
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-viewer-actions #pdf-viewer-save {
+  color:#fff!important;
+  background:#1769d2!important;
+  border:1px solid #3988ef!important;
+}
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-save:hover,
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-viewer-actions #pdf-viewer-save:hover {
+  background:#0f5bbd!important;
+}
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-close,
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-viewer-actions #pdf-viewer-close {
+  color:#fff!important;
+  background:#c62828!important;
+  border:1px solid #ef5350!important;
+}
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-viewer-actions .pdf-viewer-close:hover,
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-viewer-actions #pdf-viewer-close:hover {
+  background:#a91f1f!important;
+}
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-tools-drawer .pdf-tool-active,
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-tool-active {
+  color:#111!important;
+  background:#e8bd62!important;
+  border-color:#c99a35!important;
+  box-shadow:0 0 0 1px rgba(201,154,53,.2)!important;
+}
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-shell-toggle,
+html:not(.dark-theme) #pdf-fullscreen-shell #pdf-toolbar-toggle {
+  background:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+  color:#fff!important;
+}
+html:not(.dark-theme) #pdf-fullscreen-shell .pdf-shell-toggle:hover,
+html:not(.dark-theme) #pdf-fullscreen-shell #pdf-toolbar-toggle:hover {
+  background:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
