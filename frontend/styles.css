@@ -6021,3 +6021,14 @@ body:has(#pdf-fullscreen-shell.pdf-chrome-hidden) > #search-window #pdf-fullscre
 #pdf-fullscreen-shell.pdf-chrome-hidden #pdf-history-controls { display:flex!important; position:fixed!important; top:10px!important; right:12px!important; width:auto!important; height:auto!important; z-index:2147483647!important; }
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-viewer-toolbar { display:block!important; width:0!important; height:0!important; min-height:0!important; max-height:0!important; overflow:visible!important; padding:0!important; margin:0!important; border:0!important; background:transparent!important; }
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-shell-toggle { position:fixed!important; top:8px!important; left:12px!important; z-index:2147483647!important; }
+
+
+/* Normal PDF-viewer mode must always show document identity and Save/Close actions. */
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-viewer-toolbar,
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-viewer-toolbar-main,
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-viewer-toolbar-details,
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-viewer-actions { display:flex!important; visibility:visible!important; opacity:1!important; max-height:none!important; height:auto!important; min-height:0!important; overflow:visible!important; pointer-events:auto!important; transform:none!important; }
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-viewer-toolbar-details { flex:1 1 auto!important; width:auto!important; }
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) .pdf-viewer-actions { flex:0 0 auto!important; }
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) #pdf-viewer-save,
+#pdf-fullscreen-shell:not(.pdf-chrome-hidden) #pdf-viewer-close { display:flex!important; visibility:visible!important; opacity:1!important; pointer-events:auto!important; }
