@@ -3549,3 +3549,38 @@ html.dark-theme .digi-home-logo-dot {
   background: #c5f36b !important;
   box-shadow: 0 0 8px rgba(197,243,107,.45) !important;
 }
+
+
+/* Minimal refresh icon: the glyph itself is clickable, with no button tile. */
+.header > .search-refresh-group .search-refresh,
+.header > .search-refresh-group .search-refresh:hover,
+.header > .search-refresh-group .search-refresh:focus,
+.header > .search-refresh-group .search-refresh:active {
+  width: 28px !important;
+  height: 34px !important;
+  flex-basis: 28px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline-offset: 3px;
+  color: #e8bd62 !important;
+  text-shadow: none !important;
+  transform: none !important;
+}
+.header > .search-refresh-group .search-refresh:hover {
+  color: #ffdc80 !important;
+  text-shadow: 0 0 5px rgba(255,220,128,.28) !important;
+}
+html.dark-theme .header > .search-refresh-group .search-refresh,
+html.dark-theme .header > .search-refresh-group .search-refresh:hover {
+  background: transparent !important;
+  border: 0 !important;
+  color: #c5f36b !important;
+  text-shadow: none !important;
+}
+html.dark-theme .header > .search-refresh-group .search-refresh:hover {
+  color: #dcff9d !important;
+  text-shadow: 0 0 5px rgba(197,243,107,.28) !important;
+}
