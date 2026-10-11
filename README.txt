@@ -1,4 +1,4 @@
-DIGI SEARCH ENGINE 1.0.0.0
+DIGI SEARCH ENGINE 1.2.1.0
 
 ARCHITECTURE
 The application is now split into three layers.
@@ -16,7 +16,7 @@ APPLICATION SHELL
 FUNCTIONAL BACKEND
 - backend/config.py: paths and application configuration.
 - backend/database.py: SQLite persistence.
-- backend/search.py: indexing, normal search, fuzzy search and filtering.
+- backend/search.py: indexing, normal search and filtering.
 - backend/files.py: operating-system file operations.
 - backend/conversion.py: PDF/Word conversion.
 - backend/incoming.py: Incoming routing and replacement.
