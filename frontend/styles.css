@@ -5230,3 +5230,37 @@ body.search-window-open #search-window .search-window-content>.layout .content-h
   height:18px!important;
   pointer-events:none!important;
 }
+
+
+/* Align PDF actions beside the filename; attach the arrow to the toolbar edge. */
+#pdf-fullscreen-shell .pdf-viewer-toolbar{
+  justify-content:flex-start!important;
+}
+#pdf-fullscreen-shell .pdf-viewer-actions{
+  margin-left:18px!important;
+  margin-right:auto!important;
+  flex:0 0 auto!important;
+}
+#pdf-fullscreen-shell .pdf-viewer-toolbar-main{
+  flex:0 1 auto!important;
+}
+#pdf-fullscreen-shell .pdf-shell-toggle{
+  position:absolute!important;
+  left:28px!important;
+  right:auto!important;
+  top:100%!important;
+  transform:translateY(-1px)!important;
+  z-index:1021!important;
+  border:0!important;
+  border-radius:0 0 8px 8px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transition:top .2s ease,transform .2s ease,color .15s ease!important;
+}
+#pdf-fullscreen-shell .pdf-viewer-toolbar{
+  position:relative!important;
+}
+#pdf-fullscreen-shell.pdf-chrome-hidden .pdf-shell-toggle{
+  top:0!important;
+  transform:translateY(0)!important;
+}
