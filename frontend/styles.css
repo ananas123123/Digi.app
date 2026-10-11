@@ -5112,3 +5112,16 @@ body.search-window-open #search-window .preview-fullscreen svg {
 .pdf-tools-drawer button{display:inline-flex;align-items:center;justify-content:center;width:40px!important;min-width:40px!important;height:40px!important;padding:0!important}
 .pdf-tools-drawer svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 @keyframes pdf-tools-drop{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+
+
+/* The arrow stays in its own toolbar slot while all other controls collapse away. */
+.pdf-viewer-toolbar{display:flex!important;align-items:flex-start!important;gap:12px!important;position:relative}
+.pdf-viewer-toolbar-main{display:flex;align-items:center;gap:14px;min-width:0;flex:1 1 auto;overflow:hidden;max-height:64px;transition:max-height .2s ease,opacity .2s ease,transform .2s ease}
+.pdf-viewer-toolbar-details{display:flex;align-items:center;gap:14px;min-width:0}
+.pdf-viewer-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto;transition:opacity .15s ease,transform .2s ease}
+.pdf-toolbar-toggle{flex:0 0 40px!important;align-self:flex-start;margin:0!important;border-radius:50%!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important;transition:transform .2s ease,color .2s ease}
+.pdf-toolbar-toggle:hover{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.12)!important}
+.pdf-toolbar-collapsed .pdf-viewer-toolbar-main{max-height:0;opacity:0;transform:translateY(-18px);pointer-events:none;overflow:hidden}
+.pdf-toolbar-collapsed .pdf-viewer-actions{max-height:0;opacity:0;transform:translateY(-18px);pointer-events:none;overflow:hidden}
+.pdf-toolbar-collapsed .pdf-viewer-toolbar{min-height:42px!important;height:42px;padding-top:0!important;padding-bottom:0!important;gap:0}
+.pdf-toolbar-collapsed .pdf-toolbar-toggle{margin-left:auto!important;transform:none}
