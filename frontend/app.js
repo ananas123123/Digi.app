@@ -850,7 +850,12 @@ function closeSearchWindow(){
     searchMarker.remove();layoutMarker.remove();filtersMarker.remove();
     searchWindowPlaceholders=null;
   }
-  document.body.classList.remove("search-window-open","search-view");
+  const search=$("search");
+  if(search)search.value="";
+  document.body.classList.remove("search-window-open","search-view","filters-open","filters-dialog-open");
+  const filtersOverlay=$("filters-overlay");
+  if(filtersOverlay)filtersOverlay.hidden=true;
+  if(typeof refresh==="function")refresh();
 }
 ["type","status","source","method","sort"].forEach(id=>$(id).onchange=refresh);$("scan").onclick=()=>call("scan");$("home-search").onclick=openSearchWindow;$("home-notes").onclick=openNotes;$("home-timer").onclick=openTimer;
 new QWebChannel(qt.webChannelTransport,ch=>{backend=ch.objects.backend;window.digiBackend=backend;backend.releaseManifestResult.connect(raw=>window.dispatchEvent(new CustomEvent("digi-release-manifest",{detail:raw})));backend.indexUpdated.connect(refresh);backend.conversionProgress.connect((path,value)=>{let b=conversionButton(path);if(!b)return;let label=b.querySelector(".conversion-label"),fill=b.querySelector(".conversion-fill");if(label)label.textContent=value+"%";if(fill)fill.style.width=value+"%";});backend.conversionFinished.connect((ok,msg,path)=>{finishConversion(conversionButton(path),ok,msg);});backend.error.connect(console.error);backend.state(raw=>{
