@@ -6657,21 +6657,21 @@ body:not(:has(#search:not(:placeholder-shown))) .content-head .digi-home-logo {
 }
 
 
-/* Home menu motion: soft entrance, staggered cards, restrained hover feedback. */
+/* Home menu motion: visible by default, with a subtle optional entrance and restrained hover feedback. */
 @keyframes digiHomeTitleReveal {
-  from { opacity: 0; filter: blur(5px); }
+  from { opacity: .82; filter: blur(2px); }
   to   { opacity: 1; filter: blur(0); }
 }
 @keyframes digiHomeCardReveal {
-  from { opacity: 0; translate: 0 12px; }
+  from { opacity: .82; translate: 0 8px; }
   to   { opacity: 1; translate: 0 0; }
 }
 body:not(:has(#search:not(:placeholder-shown))) .content-head .digi-home-logo {
-  animation: digiHomeTitleReveal .55s cubic-bezier(.2,.7,.2,1) both;
+  animation: digiHomeTitleReveal .45s ease-out both;
 }
 body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card {
-  opacity: 0;
-  animation: digiHomeCardReveal .48s cubic-bezier(.2,.7,.2,1) both;
+  opacity: 1 !important;
+  animation: digiHomeCardReveal .42s ease-out both;
   transition:
     translate .2s cubic-bezier(.2,.7,.2,1),
     border-color .2s ease,
@@ -6679,13 +6679,13 @@ body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card {
     box-shadow .2s ease;
 }
 body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:nth-child(1) {
-  animation-delay: .10s;
+  animation-delay: .06s;
 }
 body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:nth-child(2) {
-  animation-delay: .19s;
+  animation-delay: .13s;
 }
 body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:nth-child(3) {
-  animation-delay: .28s;
+  animation-delay: .20s;
 }
 body:not(:has(#search:not(:placeholder-shown))) .home-cards .home-card:hover {
   translate: 0 -3px;
