@@ -3923,3 +3923,43 @@ body.search-window-open #search-window .search-window-content > #filters-toggle 
 body.search-window-open .search-window-content > .layout .digi-home-logo {
   display:none !important;
 }
+
+/* Search toolbar: reserve separate, non-overlapping slots for input, refresh and Filters. */
+body.search-window-open #search-window .search-window-content {
+  align-items:stretch;
+}
+body.search-window-open #search-window .search-window-content > .search-refresh-group {
+  box-sizing:border-box !important;
+  display:flex !important;
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  width:auto !important;
+  padding:18px 12px 12px 24px !important;
+  gap:10px !important;
+}
+body.search-window-open #search-window .search-window-content > .search-refresh-group .search-wrap {
+  box-sizing:border-box !important;
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  width:auto !important;
+}
+body.search-window-open #search-window .search-window-content > #filters-toggle {
+  box-sizing:border-box !important;
+  display:inline-flex !important;
+  position:static !important;
+  flex:0 0 auto !important;
+  align-self:flex-start !important;
+  width:auto !important;
+  min-width:78px !important;
+  max-width:none !important;
+  height:42px !important;
+  min-height:42px !important;
+  margin:18px 24px 12px 0 !important;
+  padding:0 16px !important;
+  transform:none !important;
+  white-space:nowrap !important;
+}
+body.search-window-open #search-window .search-window-content > .layout {
+  clear:both;
+  width:100% !important;
+}
