@@ -5141,3 +5141,14 @@ body.search-window-open #search-window .preview-fullscreen svg {
 #pdf-fullscreen-shell .pdf-tools-drawer{top:76px;right:0;border-radius:14px 0 0 14px}
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-tools-drawer{top:76px}
 #pdf-fullscreen-shell .pdf-toolbar-toggle{display:none!important}
+
+
+/* Prevent the home dashboard from bleeding through the Search overlay. */
+#search-window[hidden]{display:none!important}
+body.search-window-open #search-window{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;z-index:20000!important;background:#10110f!important;opacity:1!important;visibility:visible!important}
+body.search-window-open #search-window .search-window-header{position:relative;z-index:2;flex:0 0 72px;background:#10110f!important}
+body.search-window-open #search-window .search-window-content{position:relative;z-index:1;flex:1 1 auto;min-height:0;background:#10110f!important}
+body.search-window-open .home-cards{display:none!important}
+body.search-window-open .digi-home-logo{display:block!important}
+body.search-window-open #search-window .search-window-content>.layout .content-head-title{display:flex!important}
+body.search-window-open #search-window .search-window-content>.layout .content-head-title .digi-home-logo{display:block!important}
