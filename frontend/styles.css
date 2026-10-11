@@ -6094,3 +6094,69 @@ body:has(#pdf-fullscreen-shell.pdf-chrome-hidden) > #search-window #pdf-fullscre
 body.search-window-open > .header {
   border-bottom:1px solid rgba(232,189,98,.2)!important;
 }
+
+
+/* Repair Light theme in Search and Results: white surfaces, black controls, explicit contrast. */
+html:not(.dark-theme) body.search-window-open #search-window,
+html:not(.dark-theme) body.search-window-open #search-window .search-window-content,
+html:not(.dark-theme) body.search-window-open #search-window .content,
+html:not(.dark-theme) body.search-window-open #search-window .results-workspace,
+html:not(.dark-theme) body.search-window-open #search-window #results {
+  background:#fff!important;
+  color:#000!important;
+}
+html:not(.dark-theme) body.search-window-open #search-window .content-head,
+html:not(.dark-theme) body.search-window-open #search-window .content-head-title,
+html:not(.dark-theme) body.search-window-open #search-window .result,
+html:not(.dark-theme) body.search-window-open #search-window .preview-head,
+html:not(.dark-theme) body.search-window-open #search-window .word-preview,
+html:not(.dark-theme) body.search-window-open #search-window .pdf-preview {
+  background:#fff!important;
+  color:#000!important;
+  border-color:#d6d6d6!important;
+}
+html:not(.dark-theme) body.search-window-open #search-window .result *,
+html:not(.dark-theme) body.search-window-open #search-window .preview-head *,
+html:not(.dark-theme) body.search-window-open #search-window .content-head *,
+html:not(.dark-theme) body.search-window-open #search-window .content-head-title * {
+  color:#000!important;
+}
+html:not(.dark-theme) body.search-window-open #search-window #search-toolbar button,
+html:not(.dark-theme) body.search-window-open #search-window #search-toolbar .search-refresh,
+html:not(.dark-theme) body.search-window-open #search-window .result-icon-button,
+html:not(.dark-theme) body.search-window-open #search-window .preview-head-actions button,
+html:not(.dark-theme) body.search-window-open #search-window .small-button {
+  background:#000!important;
+  color:#fff!important;
+  border-color:#000!important;
+}
+html:not(.dark-theme) body.search-window-open #search-window #search-toolbar button *,
+html:not(.dark-theme) body.search-window-open #search-window .result-icon-button *,
+html:not(.dark-theme) body.search-window-open #search-window .preview-head-actions button *,
+html:not(.dark-theme) body.search-window-open #search-window .small-button * {
+  color:#fff!important;
+  stroke:currentColor!important;
+}
+html:not(.dark-theme) body.search-window-open #search-window #search,
+html:not(.dark-theme) body.search-window-open #search-window .search-input,
+html:not(.dark-theme) body.search-window-open #search-window input,
+html:not(.dark-theme) body.search-window-open #search-window select {
+  background:#fff!important;
+  color:#000!important;
+  border-color:#bdbdbd!important;
+}
+html:not(.dark-theme) body.search-window-open #search-window #search::placeholder,
+html:not(.dark-theme) body.search-window-open #search-window .search-input::placeholder,
+html:not(.dark-theme) body.search-window-open #search-window input::placeholder {
+  color:#555!important;
+}
+html:not(.dark-theme) body.search-window-open #search-window .result.is-selected,
+html:not(.dark-theme) body.search-window-open #search-window .result.is-selected:hover {
+  background:#000!important;
+  color:#fff!important;
+  border-color:#000!important;
+}
+html:not(.dark-theme) body.search-window-open #search-window .result.is-selected *,
+html:not(.dark-theme) body.search-window-open #search-window .result.is-selected .result-name {
+  color:#fff!important;
+}
