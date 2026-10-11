@@ -182,7 +182,7 @@ class ReleaseManifestWorker(QThread):
             "message": latest.get("message", ""),
             "release": {
                 "version": version,
-                "url": "https://github.com/ananas123123/digiwebversionreleases/tree/main/releases/" + folder,
+                "url": "https://github.com/ananas123123/digiwebversionreleases/tree/web-releases/releases/" + folder,
                 "published_at": release_metadata.get("published_at"),
                 "notes": release_metadata.get("release_notes", ""),
                 "package": {
