@@ -5584,3 +5584,16 @@ body.search-window-open #search-window .preview-deselect {
   height: 30px !important;
   padding: 5px 8px !important;
 }
+
+
+/* Keep PDF deselect and fullscreen controls side by side, in that order. */
+body.search-window-open #search-window .preview-head-actions {
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  min-width: max-content !important;
+  gap: 6px !important;
+}
+body.search-window-open #search-window .preview-head-actions > button {
+  flex: 0 0 38px !important;
+}
