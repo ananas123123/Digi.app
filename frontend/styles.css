@@ -6326,3 +6326,39 @@ html:not(.dark-theme) #modal:has(.move-browser) .move-browser-list small {
 html:not(.dark-theme) #modal:has(.move-browser) .move-here-button:disabled {
   color:#000!important;
 }
+
+
+/* Explicit Dark theme restoration for every Move File text element.
+   This overrides earlier unscoped black-text rules without changing Light mode. */
+html.dark-theme #modal:has(.move-browser),
+html.dark-theme #modal:has(.move-browser) .modal-card,
+html.dark-theme #modal:has(.move-browser) .modal-head,
+html.dark-theme #modal:has(.move-browser) .modal-head b,
+html.dark-theme #modal:has(.move-browser) .modal-body,
+html.dark-theme #modal:has(.move-browser) .move-browser,
+html.dark-theme #modal:has(.move-browser) .move-source-label,
+html.dark-theme #modal:has(.move-browser) .move-source-label strong,
+html.dark-theme #modal:has(.move-browser) .move-browser-list,
+html.dark-theme #modal:has(.move-browser) .move-browser-entry,
+html.dark-theme #modal:has(.move-browser) .move-browser-entry *,
+html.dark-theme #modal:has(.move-browser) .move-browser-nav,
+html.dark-theme #modal:has(.move-browser) .move-browser-breadcrumb,
+html.dark-theme #modal:has(.move-browser) .move-browser-breadcrumb-segment,
+html.dark-theme #modal:has(.move-browser) .move-browser-location,
+html.dark-theme #modal:has(.move-browser) #move-browser-message,
+html.dark-theme #modal:has(.move-browser) .move-browser-actions,
+html.dark-theme #modal:has(.move-browser) .move-browser-list .empty,
+html.dark-theme #modal:has(.move-browser) .move-browser-list p,
+html.dark-theme #modal:has(.move-browser) .move-browser-list span,
+html.dark-theme #modal:has(.move-browser) .move-browser-list small {
+  color:#f4f4f5!important;
+}
+html.dark-theme #modal:has(.move-browser) .move-browser-entry.move-browser-up,
+html.dark-theme #modal:has(.move-browser) .move-browser-entry:disabled,
+html.dark-theme #modal:has(.move-browser) .move-browser-entry.move-browser-current-file,
+html.dark-theme #modal:has(.move-browser) .move-browser-entry.move-browser-current-file * {
+  color:#fff!important;
+}
+html.dark-theme #modal:has(.move-browser) .move-here-button:disabled {
+  color:#f4f4f5!important;
+}
