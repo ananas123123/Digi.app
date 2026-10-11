@@ -5873,3 +5873,12 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
 #pdf-fullscreen-shell .pdf-tools-drawer[hidden],
 #pdf-fullscreen-shell.pdf-chrome-hidden .pdf-tools-drawer{top:40%;right:18px;}
 #pdf-fullscreen-shell .pdf-tools-drag-handle{touch-action:none!important;pointer-events:auto!important;}
+
+/* Six discrete dot choices for pen and eraser thickness, matching the provided reference. */
+.pdf-size-options{display:flex;align-items:center;justify-content:space-between;gap:5px;width:100%;padding:2px 0}
+.pdf-size-options button{display:grid;place-items:center;flex:1;min-width:0;height:32px;padding:0;border:1px solid transparent;border-radius:7px;background:transparent;color:#d6d7d2;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+.pdf-size-options button svg{display:block;width:30px;height:30px;overflow:visible}
+.pdf-size-options button circle{fill:currentColor;stroke:none}
+.pdf-size-options button:hover{background:rgba(255,255,255,.06);color:#fff}
+.pdf-size-options button.is-selected{border-color:rgba(232,189,98,.7);background:rgba(232,189,98,.12);color:#f2d17b}
+.pdf-size-options button:focus-visible{outline:1px solid #f2d17b;outline-offset:1px}
