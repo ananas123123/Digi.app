@@ -1489,3 +1489,17 @@ document.addEventListener('click', event => {
     }
   });
 })();
+
+
+/* Escape is intentionally not an application shortcut anywhere in Digi. Capture it
+   before component handlers so it cannot close dialogs, navigate back, or change views. */
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape" && event.key !== "Esc" && event.keyCode !== 27) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+}, true);
+window.addEventListener("keydown", event => {
+  if (event.key !== "Escape" && event.key !== "Esc" && event.keyCode !== 27) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+}, true);
