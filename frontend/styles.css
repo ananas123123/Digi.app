@@ -4156,3 +4156,19 @@ body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-windo
 body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > #filters-toggle {
   display:none !important;
 }
+
+/* Keep the empty Search state centred in the visible window, not at the bottom. */
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group {
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  right:auto !important;
+  bottom:auto !important;
+  transform:translate(-50%,-50%) !important;
+  width:min(620px,calc(100% - 48px)) !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+body.search-window-open:not(:has(#search:not(:placeholder-shown))) #search-window .search-window-content > .search-refresh-group .search-wrap {
+  width:100% !important;
+}
