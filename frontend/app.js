@@ -816,16 +816,14 @@ $("search").oninput=()=>{if(!$("search").value.trim())document.body.classList.re
 $("clear").onclick=()=>{$("search").value="";scheduleRefreshButton();refresh()};
 
 function openSearchWindow(){
-  const overlay=$("search-window"), content=overlay&&overlay.querySelector(".search-window-content"), group=document.querySelector(".search-refresh-group"), layout=$(".layout");
-  if(!overlay||!content||!group||!layout)return;
-  if(!content.contains(group)){content.appendChild(group);content.appendChild(layout);}
+  const overlay=$("search-window");
+  if(!overlay)return;
   overlay.hidden=false;
   document.body.classList.add("search-window-open","search-view");
   $("search").focus();
 }
 function closeSearchWindow(){
-  const overlay=$("search-window"), group=document.querySelector(".search-refresh-group"), header=document.querySelector(".header"), layout=$(".layout");
-  if(group&&header&&layout){header.insertBefore(group,header.querySelector(".header-actions"));header.after(layout);}
+  const overlay=$("search-window");
   if(overlay)overlay.hidden=true;
   document.body.classList.remove("search-window-open","search-view");
 }
