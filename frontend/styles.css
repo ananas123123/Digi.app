@@ -5823,3 +5823,8 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
 .pdf-eraser-modes button{border:1px solid #35352f;border-radius:8px;padding:9px 10px;background:#20201d;color:#c8c8c0;font:inherit;font-size:12px;cursor:pointer;transition:background .14s,border-color .14s,color .14s}
 .pdf-eraser-modes button:hover{background:#292925;color:#fff}
 .pdf-eraser-modes button.is-selected{background:#34342d;border-color:#aaa99b;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+
+.pdf-annotation-tools #pdf-select-tool,.pdf-tools-drawer #pdf-select-drawer{cursor:pointer}
+.pdf-annotation-tools #pdf-select-tool.pdf-tool-active,.pdf-tools-drawer #pdf-select-drawer.pdf-tool-active{color:#8ab4f8;border-color:rgba(66,133,244,.8);background:rgba(66,133,244,.14)}
+.pdf-annotation-tools #pdf-select-tool svg,.pdf-tools-drawer #pdf-select-drawer svg{stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.pdf-annotation-canvas[data-tool="select"]{cursor:crosshair}
