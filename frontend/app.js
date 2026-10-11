@@ -789,6 +789,10 @@ function loadData(data){let img=new Image();img.onload=()=>{let c=notes.canvas;c
 function saveNote(){if(notes.current&&notes.canvas)call("saveNote",[notes.current,notes.canvas.toDataURL("image/png")],()=>notes.dirty=false);}
 $("window-minimize").onclick=()=>call("minimizeWindow");$("window-maximize").onclick=()=>{document.documentElement.classList.toggle("window-maximized");call("toggleMaximizeWindow");};$("window-close").onclick=()=>call("closeWindow");
 const filtersToggle=$("filters-toggle"), filtersOverlay=$("filters-overlay"), filtersClose=$("filters-close");
+$("search-window-close").onclick=closeSearchWindow;
+$("search-window").addEventListener("click",event=>{if(event.target===$("search-window"))closeSearchWindow();});
+document.addEventListener("keydown",event=>{if(event.key==="Escape"&&document.body.classList.contains("search-window-open"))closeSearchWindow();});
+
 const setFiltersOpen=open=>{
   if(!filtersOverlay||!filtersToggle)return;
   filtersOverlay.hidden=!open;
@@ -809,7 +813,23 @@ const scheduleRefreshButton=()=>{
   if($("search").value.trim())refreshButtonTimer=setTimeout(()=>{if($("search").value.trim())button.hidden=false;},2000);
 };
 $("search").oninput=()=>{if(!$("search").value.trim())document.body.classList.remove("filters-open");scheduleRefreshButton();refresh();};
-$("clear").onclick=()=>{$("search").value="";scheduleRefreshButton();refresh()};["type","status","source","method","sort"].forEach(id=>$(id).onchange=refresh);$("scan").onclick=()=>call("scan");$("home-search").onclick=()=>{document.body.classList.add("search-view");$("search").focus();};$("home-notes").onclick=openNotes;$("home-timer").onclick=openTimer;
+$("clear").onclick=()=>{$("search").value="";scheduleRefreshButton();refresh()};
+
+function openSearchWindow(){
+  const overlay=$("search-window"), content=overlay&&overlay.querySelector(".search-window-content"), group=document.querySelector(".search-refresh-group"), layout=$(".layout");
+  if(!overlay||!content||!group||!layout)return;
+  if(!content.contains(group)){content.appendChild(group);content.appendChild(layout);}
+  overlay.hidden=false;
+  document.body.classList.add("search-window-open","search-view");
+  $("search").focus();
+}
+function closeSearchWindow(){
+  const overlay=$("search-window"), group=document.querySelector(".search-refresh-group"), header=document.querySelector(".header"), layout=$(".layout");
+  if(group&&header&&layout){header.insertBefore(group,header.querySelector(".header-actions"));header.after(layout);}
+  if(overlay)overlay.hidden=true;
+  document.body.classList.remove("search-window-open","search-view");
+}
+["type","status","source","method","sort"].forEach(id=>$(id).onchange=refresh);$("scan").onclick=()=>call("scan");$("home-search").onclick=openSearchWindow;$("home-notes").onclick=openNotes;$("home-timer").onclick=openTimer;
 new QWebChannel(qt.webChannelTransport,ch=>{backend=ch.objects.backend;window.digiBackend=backend;backend.releaseManifestResult.connect(raw=>window.dispatchEvent(new CustomEvent("digi-release-manifest",{detail:raw})));backend.indexUpdated.connect(refresh);backend.conversionProgress.connect((path,value)=>{let b=conversionButton(path);if(!b)return;let label=b.querySelector(".conversion-label"),fill=b.querySelector(".conversion-fill");if(label)label.textContent=value+"%";if(fill)fill.style.width=value+"%";});backend.conversionFinished.connect((ok,msg,path)=>{finishConversion(conversionButton(path),ok,msg);});backend.error.connect(console.error);backend.state(raw=>{
 let state=parseJson(raw,null,"startup state");if(!state){showStartupError("Digi could not read its startup state.");return}
 if(state.ready){refresh();return}
