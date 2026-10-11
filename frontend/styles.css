@@ -6638,3 +6638,9 @@ html.dark-theme .home-cards .home-card:hover {
     padding: 10px !important;
   }
 }
+
+
+/* Move the Digi landing title down by 30px without shifting the other elements. */
+body:not(:has(#search:not(:placeholder-shown))) .content-head {
+  margin-top: 30px !important;
+}
