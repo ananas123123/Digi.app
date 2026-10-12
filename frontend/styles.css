@@ -5822,8 +5822,8 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
   min-width: 0;
   min-height: 0;
 }
-/* Tiny Word-style stylus hover dot: keep the hotspot centred and the visible dot only 2px wide. */
-.pdf-annotation-canvas[data-tool="pen"]{cursor:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%224%22 height=%224%22 viewBox=%220 0 4 4%22%3E%3Ccircle cx=%222%22 cy=%222%22 r=%221%22 fill=%22%23000%22/%3E%3C/svg%3E") 2 2, crosshair!important;}
+/* Small, slightly translucent Word-style stylus hover dot with a centred hotspot. */
+.pdf-annotation-canvas[data-tool="pen"]{cursor:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%226%22 height=%226%22 viewBox=%220 0 6 6%22%3E%3Ccircle cx=%223%22 cy=%223%22 r=%221.4%22 fill=%22%23000%22 fill-opacity=%220.62%22/%3E%3C/svg%3E") 3 3, crosshair!important;}
 
 
 /* PDF pen settings popover */
