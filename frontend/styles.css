@@ -1317,10 +1317,10 @@ body:has(#search:not(:placeholder-shown)) .content {
   width: min(100%, 680px);
   margin: 0;
   padding: 8px;
-  border: 1px solid rgba(232,189,98,.3);
+  border: 1px solid rgba(232,189,98,.78);
   border-radius: 8px;
   background: #f7f5ef;
-  box-shadow: 0 8px 25px rgba(0,0,0,.3);
+  box-shadow: 0 0 5px rgba(232,189,98,.22), 0 0 12px rgba(232,189,98,.12), 0 8px 25px rgba(0,0,0,.3);
 }
 .pdf-page img { display: block; width: 100%; height: auto; }
 .pdf-page figcaption {
@@ -5822,8 +5822,9 @@ body.search-window-open #search-window #search-toolbar > .search-refresh-group {
   min-width: 0;
   min-height: 0;
 }
-/* Small, slightly translucent Word-style stylus hover dot with a centred hotspot. */
-.pdf-annotation-canvas[data-tool="pen"]{cursor:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%226%22 height=%226%22 viewBox=%220 0 6 6%22%3E%3Ccircle cx=%223%22 cy=%223%22 r=%221.4%22 fill=%22%23000%22 fill-opacity=%220.62%22/%3E%3C/svg%3E") 3 3, crosshair!important;}
+/* Pen hover feedback: black over the white PDF, white over the dark viewer outside the page. */
+.pdf-annotation-canvas[data-tool="pen"]{cursor:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%226%22 height=%226%22 viewBox=%220 0 6 6%22%3E%3Ccircle cx=%223%22 cy=%223%22 r=%221.4%22 fill=%22%23000%22 fill-opacity=%220.72%22/%3E%3C/svg%3E") 3 3, crosshair!important;}
+body.pdf-pen-active{cursor:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%226%22 height=%226%22 viewBox=%220 0 6 6%22%3E%3Ccircle cx=%223%22 cy=%223%22 r=%221.4%22 fill=%22%23fff%22 fill-opacity=%220.78%22/%3E%3C/svg%3E") 3 3, crosshair;}
 
 
 /* PDF pen settings popover */
