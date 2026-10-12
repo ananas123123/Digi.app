@@ -68,7 +68,7 @@ document.addEventListener("pointerdown",e=>{
  if(e.pointerType!=="pen"||annotationTool!=="pen")return;
  const inside=isPdfPoint(e.clientX,e.clientY);
  bridgeInk={pointerId:e.pointerId,previous:outsideInkPoint(e),startedInside:inside,bridging:!inside};
- if(!inside)return;
+ if(!inside){if(outsideInkDrawing&&outsideCurrentStroke){bridgeInk.startedInside=false;bridgeInk.bridging=true;}return;}
 },true);
 document.addEventListener("pointermove",e=>{
  if(!bridgeInk||e.pointerId!==bridgeInk.pointerId)return;
@@ -84,9 +84,22 @@ document.addEventListener("pointermove",e=>{
     const last=outsideCurrentStroke.points[outsideCurrentStroke.points.length-1];outsideCurrentStroke.points.push(point);drawBridgeOutsideSegment(last,point);
    }
   }else if(bridgeInk.bridging&&outsideCurrentStroke){
-   const cross={x:prev.x+(point.x-prev.x)*.98,y:prev.y+(point.y-prev.y)*.98,pressure:.5,inkColor:"#fff"};
-   const last=outsideCurrentStroke.points[outsideCurrentStroke.points.length-1];outsideCurrentStroke.points.push(cross);drawBridgeOutsideSegment(last,cross);
-   outsideInkDrawing=false;outsideInkPointer=null;outsideCurrentStroke=null;bridgeInk.bridging=false;
+   const t=.98,cross={x:prev.x+(point.x-prev.x)*t,y:prev.y+(point.y-prev.y)*t,pressure:.5,inkColor:"#fff"};
+   const last=outsideCurrentStroke.points[outsideCurrentStroke.points.length-1];
+   if(bridgeInk.startedInside){
+    outsideCurrentStroke.points.push(cross);drawBridgeOutsideSegment(last,cross);
+    outsideInkDrawing=false;outsideInkPointer=null;outsideCurrentStroke=null;bridgeInk.bridging=false;
+   }else{
+    const blackPoint={...point,inkColor:"#111"};
+    outsideCurrentStroke.points.push(cross,blackPoint);
+    const dpr=outsideInkCanvas.width/Math.max(1,window.innerWidth),p1=outsideInkToScreen(cross),p2=outsideInkToScreen(blackPoint);
+    outsideInkCtx.setTransform(dpr,0,0,dpr,0,0);outsideInkCtx.strokeStyle="#111";outsideInkCtx.lineWidth=2.2;outsideInkCtx.lineCap="round";outsideInkCtx.lineJoin="round";outsideInkCtx.beginPath();outsideInkCtx.moveTo(p1.x,p1.y);outsideInkCtx.lineTo(p2.x,p2.y);outsideInkCtx.stroke();
+   }
+  }else if(bridgeInk.bridging&&outsideCurrentStroke){
+   const last=outsideCurrentStroke.points[outsideCurrentStroke.points.length-1],next={...point,inkColor:inside?"#111":"#fff"};
+   outsideCurrentStroke.points.push(next);
+   const dpr=outsideInkCanvas.width/Math.max(1,window.innerWidth),p1=outsideInkToScreen(last),p2=outsideInkToScreen(next);
+   outsideInkCtx.setTransform(dpr,0,0,dpr,0,0);outsideInkCtx.strokeStyle=next.inkColor;outsideInkCtx.lineWidth=2.2;outsideInkCtx.lineCap="round";outsideInkCtx.lineJoin="round";outsideInkCtx.beginPath();outsideInkCtx.moveTo(p1.x,p1.y);outsideInkCtx.lineTo(p2.x,p2.y);outsideInkCtx.stroke();
   }
   bridgeInk.previous=point;
  }
