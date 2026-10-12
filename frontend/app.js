@@ -56,7 +56,7 @@ if(annotationTool==="pen"){outsideSelectedStroke=null;outsideCurrentStroke={poin
 else if(annotationTool==="eraser"){outsideStrokes=outsideStrokes.filter(stroke=>outsideStrokeDistance(stroke,point)>12);if(outsideSelectedStroke&&!outsideStrokes.includes(outsideSelectedStroke))outsideSelectedStroke=null;}
 else{outsideSelectedStroke=[...outsideStrokes].reverse().find(stroke=>outsideStrokeDistance(stroke,point)<14)||null;outsideMoveStart=point;}
 redrawOutsideInk();try{pages.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();e.stopPropagation();},true);
-/* Bridge PDF ink to workspace ink without painting over the native PDF stroke. */
+/* Cross-surface ink bridge: own the pointer for the full gesture, render only the workspace portion here, and always release on termination. */
 let bridgeInk=null;
 const isPdfPoint=(x,y)=>{const target=document.elementFromPoint(x,y);return !!(target instanceof Element&&target.closest(".pdf-page-annotatable,.pdf-page"));};
 const drawBridgeOutsideSegment=(from,to)=>{
@@ -64,7 +64,12 @@ const drawBridgeOutsideSegment=(from,to)=>{
  outsideInkCtx.setTransform(dpr,0,0,dpr,0,0);outsideInkCtx.strokeStyle="#fff";outsideInkCtx.lineWidth=2.2;outsideInkCtx.lineCap="round";outsideInkCtx.lineJoin="round";
  outsideInkCtx.beginPath();outsideInkCtx.moveTo(a.x,a.y);outsideInkCtx.lineTo(b.x,b.y);outsideInkCtx.stroke();
 };
-document.addEventListener("pointerdown",e=>{if(e.pointerType!=="pen"||!isPdfPoint(e.clientX,e.clientY)||annotationTool!=="pen")return;bridgeInk={pointerId:e.pointerId,previous:{...outsideInkPoint(e)},bridging:false};},true);
+document.addEventListener("pointerdown",e=>{
+ if(e.pointerType!=="pen"||annotationTool!=="pen")return;
+ const inside=isPdfPoint(e.clientX,e.clientY);
+ bridgeInk={pointerId:e.pointerId,previous:outsideInkPoint(e),startedInside:inside,bridging:!inside};
+ if(!inside)return;
+},true);
 document.addEventListener("pointermove",e=>{
  if(!bridgeInk||e.pointerId!==bridgeInk.pointerId)return;
  const samples=typeof e.getCoalescedEvents==="function"?e.getCoalescedEvents():[e];
@@ -72,26 +77,31 @@ document.addEventListener("pointermove",e=>{
   const point=outsideInkPoint(sample),inside=isPdfPoint(sample.clientX,sample.clientY),prev=bridgeInk.previous;
   if(!inside){
    if(!bridgeInk.bridging){
-    /* Find the exact page/workspace crossing so no black overlay segment is painted over the PDF. */
-    const t=.98,cross={x:prev.x+(point.x-prev.x)*t,y:prev.y+(point.y-prev.y)*t,pressure:.5,inkColor:"#fff"};
     bridgeInk.bridging=true;outsideInkDrawing=true;outsideInkPointer=e.pointerId;outsideSelectedStroke=null;
+    const cross={x:prev.x+(point.x-prev.x)*.02,y:prev.y+(point.y-prev.y)*.02,pressure:.5,inkColor:"#fff"};
     outsideCurrentStroke={points:[cross,point]};outsideStrokes.push(outsideCurrentStroke);drawBridgeOutsideSegment(cross,point);
    }else if(outsideCurrentStroke){
     const last=outsideCurrentStroke.points[outsideCurrentStroke.points.length-1];outsideCurrentStroke.points.push(point);drawBridgeOutsideSegment(last,point);
    }
   }else if(bridgeInk.bridging&&outsideCurrentStroke){
-   /* Re-entering the PDF ends the white overlay at the boundary; the PDF canvas owns the black segment. */
-   const t=.02,cross={x:prev.x+(point.x-prev.x)*t,y:prev.y+(point.y-prev.y)*t,pressure:.5,inkColor:"#fff"};
+   const cross={x:prev.x+(point.x-prev.x)*.98,y:prev.y+(point.y-prev.y)*.98,pressure:.5,inkColor:"#fff"};
    const last=outsideCurrentStroke.points[outsideCurrentStroke.points.length-1];outsideCurrentStroke.points.push(cross);drawBridgeOutsideSegment(last,cross);
    outsideInkDrawing=false;outsideInkPointer=null;outsideCurrentStroke=null;bridgeInk.bridging=false;
   }
   bridgeInk.previous=point;
  }
- if(bridgeInk.bridging||samples.some(sample=>!isPdfPoint(sample.clientX,sample.clientY))){e.preventDefault();e.stopImmediatePropagation();}
+ /* While a pen gesture is tracked, prevent the PDF canvas from continuing its native stroke outside its page. */
+ if(bridgeInk.startedInside||bridgeInk.bridging||samples.some(sample=>!isPdfPoint(sample.clientX,sample.clientY))){e.preventDefault();e.stopImmediatePropagation();}
 },true);
-const finishBridgeInk=e=>{if(!bridgeInk||e.pointerId!==bridgeInk.pointerId)return;if(bridgeInk.bridging){outsideInkDrawing=false;outsideInkPointer=null;outsideInkLast=null;outsideCurrentStroke=null;outsideMoveStart=null;}bridgeInk=null;};
-document.addEventListener("pointerup",finishBridgeInk,true);document.addEventListener("pointercancel",finishBridgeInk,true);
-document.addEventListener("pointermove",e=>{if(bridgeInk?.bridging)return;if(!outsideInkDrawing||e.pointerId!==outsideInkPointer)return;const samples=typeof e.getCoalescedEvents==="function"?e.getCoalescedEvents():[e];if(annotationTool==="pen"&&outsideCurrentStroke){const dpr=outsideInkCanvas.width/Math.max(1,window.innerWidth);outsideInkCtx.setTransform(dpr,0,0,dpr,0,0);outsideInkCtx.lineWidth=2.2;outsideInkCtx.lineCap="round";outsideInkCtx.lineJoin="round";for(const sample of samples){const point=outsideInkPoint(sample);point.inkColor=isPdfPoint(sample.clientX,sample.clientY)?"#111":"#fff";const prev=outsideCurrentStroke.points[outsideCurrentStroke.points.length-1],a=outsideInkToScreen(prev),b=outsideInkToScreen(point);outsideInkCtx.strokeStyle=point.inkColor;outsideInkCtx.beginPath();outsideInkCtx.moveTo(a.x,a.y);outsideInkCtx.lineTo(b.x,b.y);outsideInkCtx.stroke();outsideCurrentStroke.points.push(point);outsideInkLast=point;}}else{for(const sample of samples){const point=outsideInkPoint(sample);if(annotationTool==="eraser"){outsideStrokes=outsideStrokes.filter(stroke=>outsideStrokeDistance(stroke,point)>12);if(outsideSelectedStroke&&!outsideStrokes.includes(outsideSelectedStroke))outsideSelectedStroke=null;}else if(annotationTool==="select"&&outsideSelectedStroke&&outsideMoveStart){const dx=point.x-outsideMoveStart.x,dy=point.y-outsideMoveStart.y;for(const p of outsideSelectedStroke.points){p.x+=dx;p.y+=dy;}outsideMoveStart=point;}outsideInkLast=point;}redrawOutsideInk();}e.preventDefault();if(samples.some(sample=>isPdfPoint(sample.clientX,sample.clientY)))e.stopImmediatePropagation();else e.stopPropagation();},true);
+const finishBridgeInk=e=>{
+ if(!bridgeInk||e.pointerId!==bridgeInk.pointerId)return;
+ outsideInkDrawing=false;outsideInkPointer=null;outsideInkLast=null;outsideCurrentStroke=null;outsideMoveStart=null;bridgeInk=null;
+};
+document.addEventListener("pointerup",finishBridgeInk,true);
+document.addEventListener("pointercancel",finishBridgeInk,true);
+document.addEventListener("lostpointercapture",finishBridgeInk,true);
+document.addEventListener("pointerout",e=>{if(bridgeInk&&e.pointerId===bridgeInk.pointerId&&e.relatedTarget===null)finishBridgeInk(e);},true);
+document.addEventListener("pointermove",e=>{if(bridgeInk||!outsideInkDrawing||e.pointerId!==outsideInkPointer)return;const samples=typeof e.getCoalescedEvents==="function"?e.getCoalescedEvents():[e];if(annotationTool==="pen"&&outsideCurrentStroke){const dpr=outsideInkCanvas.width/Math.max(1,window.innerWidth);outsideInkCtx.setTransform(dpr,0,0,dpr,0,0);outsideInkCtx.lineWidth=2.2;outsideInkCtx.lineCap="round";outsideInkCtx.lineJoin="round";for(const sample of samples){const point=outsideInkPoint(sample);point.inkColor=isPdfPoint(sample.clientX,sample.clientY)?"#111":"#fff";const prev=outsideCurrentStroke.points[outsideCurrentStroke.points.length-1],p1=outsideInkToScreen(prev),p2=outsideInkToScreen(point);outsideInkCtx.strokeStyle=point.inkColor;outsideInkCtx.beginPath();outsideInkCtx.moveTo(p1.x,p1.y);outsideInkCtx.lineTo(p2.x,p2.y);outsideInkCtx.stroke();outsideCurrentStroke.points.push(point);outsideInkLast=point;}}else{for(const sample of samples){const point=outsideInkPoint(sample);if(annotationTool==="eraser"){outsideStrokes=outsideStrokes.filter(stroke=>outsideStrokeDistance(stroke,point)>12);if(outsideSelectedStroke&&!outsideStrokes.includes(outsideSelectedStroke))outsideSelectedStroke=null;}else if(annotationTool==="select"&&outsideSelectedStroke&&outsideMoveStart){const dx=point.x-outsideMoveStart.x,dy=point.y-outsideMoveStart.y;for(const p of outsideSelectedStroke.points){p.x+=dx;p.y+=dy;}outsideMoveStart=point;}outsideInkLast=point;}redrawOutsideInk();}e.preventDefault();e.stopPropagation();},true);
 const stopOutsideInk=e=>{if(!outsideInkDrawing||e.pointerId!==outsideInkPointer)return;outsideInkDrawing=false;outsideInkPointer=null;outsideInkLast=null;outsideCurrentStroke=null;outsideMoveStart=null;};
 document.addEventListener("pointerup",stopOutsideInk,true);document.addEventListener("pointercancel",stopOutsideInk,true);document.addEventListener("lostpointercapture",stopOutsideInk,true);
 shell.addEventListener("keydown",e=>{if((e.key==="Delete"||e.key==="Backspace")&&outsideSelectedStroke&&shell.isConnected){e.preventDefault();outsideStrokes=outsideStrokes.filter(stroke=>stroke!==outsideSelectedStroke);outsideSelectedStroke=null;redrawOutsideInk();}});
