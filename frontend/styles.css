@@ -6666,15 +6666,25 @@ html.dark-theme #digi-update-status.home-status-slot {
 }
 
 
-/* Keep PDF pages in one scaled layout stack so zoom cannot independently reflow each page. */
+/* Separate the normal-flow spacer from the visually scaled PDF stack.
+   The spacer reserves the zoomed height so following pages cannot overlap. */
 #pdf-viewer-pages > .pdf-viewer-pages-content {
+  position: relative;
+  width: 100%;
+  min-height: 1px;
+  box-sizing: border-box;
+}
+#pdf-viewer-pages .pdf-viewer-pages-scaled {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 24px;
   width: 100%;
-  min-height: 100%;
   padding: 28px 24px;
   box-sizing: border-box;
   transform-origin: top center;
+  will-change: transform;
 }
