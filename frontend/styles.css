@@ -6688,3 +6688,13 @@ html.dark-theme #digi-update-status.home-status-slot {
   transform-origin: top center;
   will-change: transform;
 }
+
+
+/* Prevent browser scroll anchoring from shifting the PDF viewport when zoom changes stack height. */
+#pdf-viewer-pages,
+#pdf-viewer-pages > .pdf-viewer-pages-content {
+  overflow-anchor: none !important;
+}
+#pdf-viewer-pages .pdf-viewer-pages-scaled {
+  transform-origin: top center !important;
+}
