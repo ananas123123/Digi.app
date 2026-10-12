@@ -6696,5 +6696,5 @@ html.dark-theme #digi-update-status.home-status-slot {
   overflow-anchor: none !important;
 }
 #pdf-viewer-pages .pdf-viewer-pages-scaled {
-  transform-origin: top center !important;
+  transform-origin: 0 0 !important;
 }
