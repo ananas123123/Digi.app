@@ -104,7 +104,7 @@ document.addEventListener("pointermove",e=>{
   bridgeInk.previous=point;
  }
  /* While a pen gesture is tracked, prevent the PDF canvas from continuing its native stroke outside its page. */
- if(bridgeInk.bridging||samples.some(sample=>!isPdfPoint(sample.clientX,sample.clientY))){e.preventDefault();e.stopImmediatePropagation();}
+ if(bridgeInk.bridging||!isPdfPoint(e.clientX,e.clientY)){e.preventDefault();e.stopImmediatePropagation();}
 },true);
 const finishBridgeInk=e=>{
  if(!bridgeInk||e.pointerId!==bridgeInk.pointerId)return;
