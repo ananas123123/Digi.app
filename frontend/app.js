@@ -32,7 +32,7 @@ const applyPdfView=()=>{if(!pageContent||!pageStack)return;pageStack.style.trans
 const touchPoint=e=>({x:e.clientX,y:e.clientY});
 const touchDistance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 /* Recover the stack's untransformed client-space origin. This avoids feeding the scaled bounding box back into the next zoom calculation. */
-const untransformedStackOrigin=()=>{const r=pageStack.getBoundingClientRect();return{x:r.left-viewX,y:r.top-viewY};};
+const untransformedStackOrigin=()=>{const r=pageContent.getBoundingClientRect();return{x:r.left,y:r.top};};
 const captureZoomAnchor=point=>{const origin=untransformedStackOrigin();return{x:(point.x-origin.x-viewX)/viewScale,y:(point.y-origin.y-viewY)/viewScale};};
 const applyZoomAt=(scale,point)=>{const origin=untransformedStackOrigin();viewScale=scale;viewX=point.x-origin.x-gesture.anchor.x*scale;viewY=point.y-origin.y-gesture.anchor.y*scale;};
 gestureSurface.addEventListener("pointerdown",e=>{if(e.pointerType!=="touch")return;e.preventDefault();if(!gesture)gesture={startX:e.clientX,startY:e.clientY,baseX:viewX,baseY:viewY,points:new Map()};gesture.points.set(e.pointerId,touchPoint(e));if(gesture.points.size===2){const pts=Array.from(gesture.points.values()),mid={x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2};gesture.startDistance=touchDistance(pts[0],pts[1]);gesture.startScale=viewScale;gesture.anchor=captureZoomAnchor(mid);}try{gestureSurface.setPointerCapture(e.pointerId);}catch(_){}});
