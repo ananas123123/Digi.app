@@ -5163,8 +5163,8 @@ body.search-window-open #search-window .preview-fullscreen svg {
 #pdf-fullscreen-shell .pdf-viewer-toolbar{background:#171916;border-bottom:1px solid rgba(232,189,98,.2);padding:12px 76px 12px 24px!important;min-height:58px!important}
 #pdf-fullscreen-shell .pdf-viewer-pages{height:calc(100% - 58px);padding:24px;overflow:auto}
 /* Transparent scratch layer aligned to the viewer viewport; pointer events stay on the page container. */
-/* The scratch canvas is appended to body, not inside #pdf-fullscreen-shell. Keep this rule global so it actually positions and sizes the canvas. */
-.pdf-outside-ink-canvas{position:fixed;inset:0;z-index:20001;pointer-events:none;display:block;overflow:hidden;touch-action:none;}
+/* Keep the transparent scratch canvas inside the fullscreen shell stacking context, above the workspace and PDF while remaining input-transparent. */
+#pdf-fullscreen-shell .pdf-outside-ink-canvas{position:fixed;inset:0;z-index:2147483646;pointer-events:none;display:block;overflow:hidden;touch-action:none;}
 
 #pdf-fullscreen-shell .pdf-shell-toggle{position:absolute!important;right:18px!important;top:14px!important;z-index:1010!important;width:44px!important;height:44px!important;min-width:44px!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(32,35,29,.95)!important;border:1px solid #393d30!important;color:#e9e9df!important;box-shadow:0 2px 12px rgba(0,0,0,.25)!important;margin:0!important}
 #pdf-fullscreen-shell .pdf-shell-toggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
