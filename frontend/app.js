@@ -43,8 +43,9 @@ gestureSurface.addEventListener("pointerup",endTouch);gestureSurface.addEventLis
 const outsideInkCanvas=document.createElement("canvas");outsideInkCanvas.className="pdf-outside-ink-canvas";outsideInkCanvas.setAttribute("aria-label","Scratch ink outside PDF pages");shell.appendChild(outsideInkCanvas);
 const outsideInkCtx=outsideInkCanvas.getContext("2d");let outsideStrokes=[],outsideInkDrawing=false,outsideInkPointer=null,outsideInkLast=null,outsideSelectedStroke=null,outsideCurrentStroke=null,outsideMoveStart=null;
 const outsideInkResize=()=>{const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1)),w=Math.max(1,Math.round(window.innerWidth*dpr)),h=Math.max(1,Math.round(window.innerHeight*dpr));if(outsideInkCanvas.width!==w||outsideInkCanvas.height!==h){outsideInkCanvas.width=w;outsideInkCanvas.height=h;}outsideInkCanvas.style.left="0px";outsideInkCanvas.style.top="0px";outsideInkCanvas.style.width="100vw";outsideInkCanvas.style.height="100vh";outsideInkCtx.setTransform(dpr,0,0,dpr,0,0);redrawOutsideInk();};
-const outsideInkPoint=e=>({x:(e.clientX-viewX)/viewScale,y:(e.clientY-viewY)/viewScale,pressure:Number.isFinite(e.pressure)&&e.pressure>0?Math.max(.08,Math.min(1,e.pressure)):.5});
-const outsideInkToScreen=p=>({x:p.x*viewScale+viewX,y:p.y*viewScale+viewY,pressure:p.pressure});
+const outsideInkOrigin=()=>{const r=pageContent?.getBoundingClientRect();return{x:r?.left||0,y:r?.top||0};};
+const outsideInkPoint=e=>{const o=outsideInkOrigin();return{x:(e.clientX-o.x-viewX)/viewScale,y:(e.clientY-o.y-viewY)/viewScale,pressure:Number.isFinite(e.pressure)&&e.pressure>0?Math.max(.08,Math.min(1,e.pressure)):.5};};
+const outsideInkToScreen=p=>{const o=outsideInkOrigin();return{x:o.x+p.x*viewScale+viewX,y:o.y+p.y*viewScale+viewY,pressure:p.pressure};};
 const outsideInkWidth=p=>Math.max(.8,2.6*(.12+Math.pow(p.pressure,1.65)*.88));
 const outsideInkSegment=(ctx,a,b,color="#fff",sizeFn=outsideInkWidth)=>{const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len,ra=sizeFn(a)/2,rb=sizeFn(b)/2;ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(a.x+nx*ra,a.y+ny*ra);ctx.lineTo(b.x+nx*rb,b.y+ny*rb);ctx.lineTo(b.x-nx*rb,b.y-ny*rb);ctx.lineTo(a.x-nx*ra,a.y-ny*ra);ctx.closePath();ctx.fill();ctx.beginPath();ctx.arc(a.x,a.y,ra,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(b.x,b.y,rb,0,Math.PI*2);ctx.fill();};
 const redrawOutsideInk=()=>{if(!outsideInkCtx)return;const dpr=outsideInkCanvas.width/Math.max(1,window.innerWidth);outsideInkCtx.setTransform(dpr,0,0,dpr,0,0);outsideInkCtx.clearRect(0,0,window.innerWidth,window.innerHeight);for(const stroke of outsideStrokes){const selected=stroke===outsideSelectedStroke,color=selected?"#8ab4ff":"#fff",sizeFn=p=>outsideInkWidth(p)+(selected?3:0),points=stroke.points.map(outsideInkToScreen);if(points.length===1){const p=points[0];outsideInkCtx.fillStyle=color;outsideInkCtx.beginPath();outsideInkCtx.arc(p.x,p.y,sizeFn(p)/2,0,Math.PI*2);outsideInkCtx.fill();}for(let i=1;i<points.length;i++)outsideInkSegment(outsideInkCtx,points[i-1],points[i],points[i].inkColor||color,sizeFn);}};
@@ -73,7 +74,7 @@ document.addEventListener("pointermove",e=>{
    if(!bridgeInk.bridging){
     /* Find the exact page/workspace crossing so no black overlay segment is painted over the PDF. */
     let lo=0,hi=1;
-    for(let n=0;n<9;n++){const t=(lo+hi)/2,x=prev.x*viewScale+viewX+(point.x-prev.x)*viewScale*t,y=prev.y*viewScale+viewY+(point.y-prev.y)*viewScale*t;if(isPdfPoint(x,y))lo=t;else hi=t;}
+    for(let n=0;n<9;n++){const t=(lo+hi)/2,x=(outsideInkOrigin().x+prev.x*viewScale+viewX)+(point.x-prev.x)*viewScale*t,y=(outsideInkOrigin().y+prev.y*viewScale+viewY)+(point.y-prev.y)*viewScale*t;if(isPdfPoint(x,y))lo=t;else hi=t;}
     const t=hi,cross={x:prev.x+(point.x-prev.x)*t,y:prev.y+(point.y-prev.y)*t,pressure:.5,inkColor:"#fff"};
     bridgeInk.bridging=true;outsideInkDrawing=true;outsideInkPointer=e.pointerId;outsideSelectedStroke=null;
     outsideCurrentStroke={points:[cross,point]};outsideStrokes.push(outsideCurrentStroke);drawBridgeOutsideSegment(cross,point);
