@@ -38,6 +38,20 @@ ApplicationWindow {
         onClicked: sideBar.bannerOpen = false
     }
 
+    Rectangle {
+        id: windowEdge
+        anchors.fill: parent
+        radius: 16
+        color: "transparent"
+        border.color: theme.border
+        border.width: 1
+        antialiasing: true
+        z: 100
+        // Keep the border visible without intercepting window interaction.
+        enabled: false
+    }
+
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 1
