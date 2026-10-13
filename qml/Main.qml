@@ -135,6 +135,8 @@ ApplicationWindow {
 
             property bool focused: searchInput.activeFocus
             property bool hasQuery: searchInput.text.trim().length > 0
+            property bool hasSearched: false
+            property var results: []
 
             ColumnLayout {
                 id: searchColumn
@@ -220,7 +222,11 @@ ApplicationWindow {
                             selectByMouse: true
                             background: Item {}
                             verticalAlignment: TextInput.AlignVCenter
-                            onAccepted: searchInput.focus = false
+                            onAccepted: {
+                                searchRoot.results = searchService.search(text)
+                                searchRoot.hasSearched = true
+                                searchInput.focus = false
+                            }
                         }
 
                         Rectangle {
@@ -245,6 +251,8 @@ ApplicationWindow {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     searchInput.clear()
+                                    searchRoot.results = []
+                                    searchRoot.hasSearched = false
                                     searchInput.forceActiveFocus()
                                 }
                             }
@@ -262,11 +270,121 @@ ApplicationWindow {
 
                 Text {
                     Layout.leftMargin: 3
-                    text: searchRoot.hasQuery ? "Press Enter to search" : "Start typing to search"
+                    text: searchRoot.hasSearched
+                          ? searchRoot.results.length + (searchRoot.results.length === 1 ? " result" : " results")
+                          : (searchRoot.hasQuery ? "Press Enter to search" : "Start typing to search")
                     color: searchTheme.mutedText
                     font.pixelSize: 12
                     opacity: 0.75
                     Behavior on opacity { NumberAnimation { duration: 160 } }
+                }
+
+                Rectangle {
+                    id: resultsPanel
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 260
+                    visible: searchRoot.hasSearched
+                    radius: 12
+                    color: searchTheme.surface
+                    border.color: searchTheme.border
+                    border.width: 1
+                    clip: true
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: searchRoot.hasSearched && searchRoot.results.length === 0
+                        text: "No results found"
+                        color: searchTheme.mutedText
+                        font.pixelSize: 14
+                    }
+
+                    ListView {
+                        id: resultsList
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 6
+                        clip: true
+                        model: searchRoot.results
+
+                        delegate: Rectangle {
+                            required property string name
+                            required property string relativePath
+                            required property string matchType
+                            required property string excerpt
+
+                            width: resultsList.width
+                            height: excerpt.length > 0 ? 98 : 68
+                            radius: 8
+                            color: resultMouse.containsMouse ? searchTheme.surfaceRaised : "transparent"
+
+                            Column {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                anchors.topMargin: 8
+                                anchors.bottomMargin: 8
+                                spacing: 3
+
+                                Row {
+                                    width: parent.width
+                                    spacing: 8
+
+                                    Text {
+                                        width: parent.width - matchBadge.width - 8
+                                        text: name
+                                        color: searchTheme.text
+                                        font.pixelSize: 14
+                                        font.weight: Font.DemiBold
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Rectangle {
+                                        id: matchBadge
+                                        width: matchLabel.implicitWidth + 14
+                                        height: 20
+                                        radius: 6
+                                        color: matchType === "filename" ? searchTheme.accent : searchTheme.surfaceRaised
+
+                                        Text {
+                                            id: matchLabel
+                                            anchors.centerIn: parent
+                                            text: matchType === "filename" ? "NAME" : "CONTENT"
+                                            color: matchType === "filename" ? searchTheme.accentText : searchTheme.text
+                                            font.pixelSize: 9
+                                            font.weight: Font.DemiBold
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    text: relativePath
+                                    color: searchTheme.mutedText
+                                    font.pixelSize: 11
+                                    elide: Text.ElideMiddle
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    visible: excerpt.length > 0
+                                    text: excerpt
+                                    color: searchTheme.text
+                                    opacity: 0.82
+                                    font.pixelSize: 11
+                                    wrapMode: Text.WordWrap
+                                    maximumLineCount: 2
+                                    elide: Text.ElideRight
+                                }
+                            }
+
+                            MouseArea {
+                                id: resultMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                z: -1
+                            }
+                        }
+                    }
                 }
             }
 
