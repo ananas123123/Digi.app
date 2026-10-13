@@ -42,11 +42,8 @@ Item {
         const mapped = drawingCanvas.mapFromItem(null, scenePoint.x, scenePoint.y)
         const documentPoint = Qt.point(mapped.x, mapped.y)
 
-        const next = root.activeStroke.slice()
-        next.push({ x: documentPoint.x, y: documentPoint.y })
-        root.activeStroke = next
-
-        drawingCanvas.requestPaint()
+        root.activeStroke.push({ x: documentPoint.x, y: documentPoint.y })
+        liveStrokeCanvas.requestPaint()
     }
 
     function finishStroke() {
@@ -56,6 +53,7 @@ Item {
             root.strokes = nextStrokes
             root.activeStroke = []
             drawingCanvas.requestPaint()
+            liveStrokeCanvas.requestPaint()
         }
     }
 
@@ -148,14 +146,31 @@ Item {
                         ctx.stroke()
                     }
 
-                    if (root.activeStroke.length > 0) {
-                        ctx.beginPath()
-                        ctx.moveTo(root.activeStroke[0].x, root.activeStroke[0].y)
-                        for (let p = 1; p < root.activeStroke.length; ++p)
-                            ctx.lineTo(root.activeStroke[p].x, root.activeStroke[p].y)
-                        if (root.activeStroke.length === 1)
-                            ctx.lineTo(root.activeStroke[0].x + 0.1, root.activeStroke[0].y + 0.1)
-                        ctx.stroke()
+                }
+                Canvas {
+                    id: liveStrokeCanvas
+                    anchors.fill: parent
+                    renderTarget: Canvas.FramebufferObject
+                    antialiasing: true
+
+                    onPaint: {
+                        const ctx = getContext("2d")
+                        ctx.reset()
+                        ctx.clearRect(0, 0, width, height)
+                        ctx.lineCap = "round"
+                        ctx.lineJoin = "round"
+                        ctx.strokeStyle = "#FFFFFF"
+                        ctx.lineWidth = 2.6
+
+                        if (root.activeStroke.length > 0) {
+                            ctx.beginPath()
+                            ctx.moveTo(root.activeStroke[0].x, root.activeStroke[0].y)
+                            for (let p = 1; p < root.activeStroke.length; ++p)
+                                ctx.lineTo(root.activeStroke[p].x, root.activeStroke[p].y)
+                            if (root.activeStroke.length === 1)
+                                ctx.lineTo(root.activeStroke[0].x + 0.1, root.activeStroke[0].y + 0.1)
+                            ctx.stroke()
+                        }
                     }
                 }
                 }
