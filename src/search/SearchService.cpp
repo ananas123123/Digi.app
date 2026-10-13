@@ -7,6 +7,8 @@
 #include <QFile>
 #include <QTextStream>
 #include <QDir>
+#include <QDesktopServices>
+#include <QUrl>
 
 namespace {
 constexpr int maxResults = 200;
@@ -101,4 +103,25 @@ QString SearchService::previewFile(const QString &path) const
     if (contents.size() > maxPreviewCharacters)
         contents = contents.left(maxPreviewCharacters) + QStringLiteral("\\n\\n… Preview truncated.");
     return contents.isEmpty() ? QStringLiteral("This file is empty.") : contents;
+}
+
+bool SearchService::openFile(const QString &path) const
+{
+    const QString rootPath = QDir(m_searchRoot).canonicalPath();
+    const QString filePath = QFileInfo(path).canonicalFilePath();
+    if (rootPath.isEmpty() || filePath.isEmpty())
+        return false;
+
+    const QString relativePath = QDir(rootPath).relativeFilePath(filePath);
+    if (relativePath == QStringLiteral("..")
+        || relativePath.startsWith(QStringLiteral("../"))
+        || QFileInfo(relativePath).isAbsolute()) {
+        return false;
+    }
+
+    const QFileInfo info(filePath);
+    if (!info.isFile() || !info.isReadable())
+        return false;
+
+    return QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
 }
