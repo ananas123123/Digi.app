@@ -207,16 +207,23 @@ Item {
                             RowLayout {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
+                                spacing: 10
                                 Text {
                                     id: quickIcon
                                     text: quickCard.modelData.symbol
                                     color: theme.accent
                                     font.pixelSize: 20
                                     transformOrigin: Item.Center
-                                    scale: quickMouse.containsMouse ? 1.3 : 1
+                                    scale: quickMouse.containsMouse ? 1.22 : 1
                                     rotation: quickMouse.containsMouse ? -8 : 0
                                     Behavior on scale { NumberAnimation { duration: 280; easing.type: Easing.OutBack } }
                                     Behavior on rotation { NumberAnimation { duration: 240; easing.type: Easing.OutBack } }
+                                }
+                                Text {
+                                    text: quickCard.modelData.title
+                                    color: theme.text
+                                    font.pixelSize: 13
+                                    font.weight: Font.DemiBold
                                 }
                                 Item { Layout.fillWidth: true }
                                 Text {
@@ -228,7 +235,6 @@ Item {
                                     Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
                                 }
                             }
-                            Text { text: quickCard.modelData.title; color: theme.text; font.pixelSize: 13; font.weight: Font.DemiBold }
                         }
 
                         MouseArea {
