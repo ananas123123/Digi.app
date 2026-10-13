@@ -9,11 +9,33 @@ Item {
     property var strokes: []
     property var activeStroke: []
     property real zoom: 1.0
+    property real pendingContentX: 0
+    property real pendingContentY: 0
+    property bool zoomOffsetUpdatePending: false
     readonly property real minZoom: 0.25
     readonly property real maxZoom: 4.0
 
     function clampZoom(value) {
         return Math.max(minZoom, Math.min(maxZoom, value))
+    }
+
+    function applyPendingZoomOffsets() {
+        zoomOffsetUpdatePending = false
+        canvasViewport.contentX = Math.max(0, Math.min(
+            Math.max(0, canvasViewport.contentWidth - canvasViewport.width),
+            pendingContentX))
+        canvasViewport.contentY = Math.max(0, Math.min(
+            Math.max(0, canvasViewport.contentHeight - canvasViewport.height),
+            pendingContentY))
+    }
+
+    function scheduleZoomOffsetUpdate(x, y) {
+        pendingContentX = x
+        pendingContentY = y
+        if (zoomOffsetUpdatePending)
+            return
+        zoomOffsetUpdatePending = true
+        Qt.callLater(applyPendingZoomOffsets)
     }
 
     function addDrawingPoint(position) {
@@ -66,8 +88,6 @@ Item {
 
             Canvas {
                 id: drawingCanvas
-                // Keep document dimensions independent of zoom. Changing the zoom
-                // must not resize/re-render the drawing surface.
                 width: 2400
                 height: 1800
                 renderTarget: Canvas.FramebufferObject
@@ -158,19 +178,15 @@ Item {
 
                 const nextZoom = root.clampZoom(startingZoom * scale)
                 const center = centroid.position
-
-                // Preserve the document point initially beneath the fingers.
-                // Content offsets are in scaled viewport coordinates.
                 const documentX = (startContentX + startCentroid.x) / startingZoom
                 const documentY = (startContentY + startCentroid.y) / startingZoom
 
+                // Update the scale first, then apply the offset after Flickable's
+                // content dimensions have recalculated for the new zoom.
                 root.zoom = nextZoom
-                canvasViewport.contentX = Math.max(0, Math.min(
-                    canvasViewport.contentWidth - canvasViewport.width,
-                    documentX * nextZoom - center.x))
-                canvasViewport.contentY = Math.max(0, Math.min(
-                    canvasViewport.contentHeight - canvasViewport.height,
-                    documentY * nextZoom - center.y))
+                scheduleZoomOffsetUpdate(
+                    documentX * nextZoom - center.x,
+                    documentY * nextZoom - center.y)
             }
         }
 
@@ -195,10 +211,10 @@ Item {
                 const dy = translation.y - lastTranslation.y
                 lastTranslation = translation
                 canvasViewport.contentX = Math.max(0, Math.min(
-                    canvasViewport.contentWidth - canvasViewport.width,
+                    Math.max(0, canvasViewport.contentWidth - canvasViewport.width),
                     canvasViewport.contentX - dx))
                 canvasViewport.contentY = Math.max(0, Math.min(
-                    canvasViewport.contentHeight - canvasViewport.height,
+                    Math.max(0, canvasViewport.contentHeight - canvasViewport.height),
                     canvasViewport.contentY - dy))
             }
         }
