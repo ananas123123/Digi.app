@@ -576,8 +576,8 @@ ApplicationWindow {
                         id: previewPanel
                         parent: searchRoot
                         property bool previewMaximized: false
-                        x: previewMaximized ? 12 : resultsArea.mapToItem(searchRoot, 0, 0).x + resultsArea.width * 0.46
-                        y: previewMaximized ? 12 : resultsArea.mapToItem(searchRoot, 0, 0).y
+                        x: previewMaximized ? 12 : searchColumn.x + resultsArea.x + resultsArea.width * 0.46
+                        y: previewMaximized ? 12 : searchColumn.y + resultsArea.y
                         width: previewMaximized ? searchRoot.width - 24 : resultsArea.width * 0.54
                         height: previewMaximized ? searchRoot.height - 24 : resultsArea.height - 8
                         z: 20
