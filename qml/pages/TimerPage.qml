@@ -14,286 +14,233 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.leftMargin: 42
-        anchors.rightMargin: 42
-        anchors.topMargin: 30
-        anchors.bottomMargin: 28
-        spacing: 22
+        anchors.leftMargin: 28
+        anchors.rightMargin: 28
+        anchors.topMargin: 22
+        anchors.bottomMargin: 22
+        spacing: 0
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 12
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 4
-                Text {
-                    text: "Timer"
-                    color: theme.text
-                    font.pixelSize: 30
-                    font.weight: Font.DemiBold
-                }
-                Text {
-                    text: "Focus on one thing at a time."
-                    color: theme.mutedText
-                    font.pixelSize: 14
-                }
+            Text {
+                text: "Timer"
+                color: theme.text
+                font.pixelSize: 25
+                font.weight: Font.DemiBold
             }
-            Rectangle {
-                radius: 10
-                color: theme.surface
-                border.color: theme.border
-                implicitWidth: modeLabel.implicitWidth + 28
-                implicitHeight: 36
-                Text {
-                    id: modeLabel
-                    anchors.centerIn: parent
-                    text: "FOCUS SESSION"
-                    color: theme.accent
-                    font.pixelSize: 11
-                    font.weight: Font.DemiBold
+            Item { Layout.fillWidth: true }
+            Button {
+                id: menuButton
+                text: "☰"
+                font.pixelSize: 22
+                implicitWidth: 46
+                implicitHeight: 42
+                flat: true
+                onClicked: timerMenu.open()
+                background: Rectangle {
+                    radius: 10
+                    color: menuButton.hovered ? theme.surfaceRaised : theme.surface
+                    border.color: theme.border
+                }
+                contentItem: Text {
+                    text: menuButton.text
+                    color: theme.text
+                    font: menuButton.font
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                 }
             }
         }
 
-        RowLayout {
+        Item { Layout.fillHeight: true }
+
+        ColumnLayout {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.maximumWidth: 480
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: 20
+            spacing: 22
 
-            Rectangle {
+            TextField {
+                id: taskInput
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.minimumWidth: 360
-                radius: 20
-                color: theme.surface
-                border.color: theme.border
+                placeholderText: "What are you focusing on?"
+                color: theme.text
+                placeholderTextColor: theme.mutedText
+                font.pixelSize: 15
+                horizontalAlignment: TextInput.AlignHCenter
+                background: Rectangle {
+                    radius: 10
+                    color: theme.surface
+                    border.color: taskInput.activeFocus ? theme.accent : theme.border
+                }
+            }
 
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 26
-                    spacing: 20
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: "25:00"
+                color: theme.text
+                font.pixelSize: 84
+                font.weight: Font.Light
+            }
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text {
-                            text: "CURRENT SESSION"
-                            color: theme.mutedText
-                            font.pixelSize: 11
-                            font.weight: Font.DemiBold
-                        }
-                        Item { Layout.fillWidth: true }
-                        Rectangle {
-                            radius: 7
-                            color: "#263D8A65"
-                            implicitWidth: statusText.implicitWidth + 16
-                            implicitHeight: 25
-                            Text {
-                                id: statusText
-                                anchors.centerIn: parent
-                                text: "READY"
-                                color: "#8ED6A7"
-                                font.pixelSize: 10
-                                font.weight: Font.DemiBold
-                            }
-                        }
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: "FOCUS"
+                color: theme.mutedText
+                font.pixelSize: 12
+                font.letterSpacing: 3
+            }
+
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 12
+
+                Button {
+                    text: "Start"
+                    implicitWidth: 132
+                    implicitHeight: 46
+                    font.pixelSize: 14
+                    background: Rectangle {
+                        radius: 11
+                        color: theme.accent
                     }
-
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.minimumHeight: 220
-
-                        Rectangle {
-                            id: timerRing
-                            width: Math.min(parent.width - 20, parent.height - 10, 300)
-                            height: width
-                            anchors.centerIn: parent
-                            radius: width / 2
-                            color: "transparent"
-                            border.width: 8
-                            border.color: theme.surfaceRaised
-
-                            Rectangle {
-                                anchors.fill: parent
-                                anchors.margins: -1
-                                radius: width / 2
-                                color: "transparent"
-                                border.width: 2
-                                border.color: "#26D8BD72"
-                            }
-
-                            Column {
-                                anchors.centerIn: parent
-                                spacing: 8
-                                Text {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    text: "25:00"
-                                    color: theme.text
-                                    font.pixelSize: Math.min(58, timerRing.width * 0.22)
-                                    font.weight: Font.Light
-                                }
-                                Text {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    text: "FOCUS TIME"
-                                    color: theme.mutedText
-                                    font.pixelSize: 11
-                                    font.letterSpacing: 2
-                                }
-                            }
-                        }
+                    contentItem: Text {
+                        text: parent.text
+                        color: theme.accentText
+                        font: parent.font
+                        font.weight: Font.DemiBold
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
                     }
+                }
 
-                    TextField {
-                        id: taskInput
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 48
-                        placeholderText: "What are you focusing on?"
+                Button {
+                    text: "↻"
+                    implicitWidth: 48
+                    implicitHeight: 46
+                    font.pixelSize: 21
+                    background: Rectangle {
+                        radius: 11
+                        color: theme.surface
+                        border.color: theme.border
+                    }
+                    contentItem: Text {
+                        text: parent.text
                         color: theme.text
-                        placeholderTextColor: theme.mutedText
-                        font.pixelSize: 14
-                        leftPadding: 15
-                        background: Rectangle {
-                            radius: 11
-                            color: theme.window
-                            border.width: 1
-                            border.color: taskInput.activeFocus ? theme.accent : theme.border
-                        }
+                        font: parent.font
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
                     }
+                }
+            }
+        }
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 48
-                            radius: 11
-                            color: theme.accent
-                            Text {
-                                anchors.centerIn: parent
-                                text: "▶  Start focus"
-                                color: theme.accentText
-                                font.pixelSize: 14
-                                font.weight: Font.DemiBold
-                            }
-                        }
-                        Rectangle {
-                            Layout.preferredWidth: 50
-                            Layout.preferredHeight: 48
-                            radius: 11
-                            color: theme.surfaceRaised
-                            border.color: theme.border
-                            Text {
-                                anchors.centerIn: parent
-                                text: "↻"
-                                color: theme.text
-                                font.pixelSize: 22
-                            }
-                        }
-                    }
-                    Text {
-                        Layout.fillWidth: true
-                        text: "Timer controls are visual placeholders for now."
+        Item { Layout.fillHeight: true }
+
+        Text {
+            Layout.alignment: Qt.AlignHCenter
+            text: "Today  ·  0 min focused"
+            color: theme.mutedText
+            font.pixelSize: 12
+        }
+    }
+
+    Popup {
+        id: timerMenu
+        parent: Overlay.overlay
+        x: parent ? parent.width - width - 22 : 0
+        y: 66
+        width: 300
+        padding: 18
+        modal: false
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            radius: 14
+            color: theme.surface
+            border.color: theme.border
+        }
+
+        ColumnLayout {
+            width: parent.width
+            spacing: 16
+
+            RowLayout {
+                Layout.fillWidth: true
+                Text {
+                    text: "Timer options"
+                    color: theme.text
+                    font.pixelSize: 16
+                    font.weight: Font.DemiBold
+                }
+                Item { Layout.fillWidth: true }
+                Button {
+                    text: "×"
+                    flat: true
+                    onClicked: timerMenu.close()
+                    contentItem: Text {
+                        text: "×"
                         color: theme.mutedText
-                        opacity: 0.7
-                        font.pixelSize: 11
+                        font.pixelSize: 20
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
             }
 
-            ColumnLayout {
-                Layout.preferredWidth: 280
-                Layout.maximumWidth: 320
-                Layout.fillHeight: true
-                spacing: 16
+            Text {
+                text: "SESSION LENGTHS"
+                color: theme.mutedText
+                font.pixelSize: 10
+                font.weight: Font.DemiBold
+            }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 190
-                    radius: 18
-                    color: theme.surface
-                    border.color: theme.border
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 20
-                        spacing: 14
-                        Text {
-                            text: "SESSION PLAN"
-                            color: theme.mutedText
-                            font.pixelSize: 11
-                            font.weight: Font.DemiBold
-                        }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Text { text: "Focus"; color: theme.text; font.pixelSize: 13 }
-                            Item { Layout.fillWidth: true }
-                            Text { text: "25 min"; color: theme.accent; font.pixelSize: 13; font.weight: Font.DemiBold }
-                        }
-                        Rectangle { Layout.fillWidth: true; height: 1; color: theme.border }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Text { text: "Short break"; color: theme.text; font.pixelSize: 13 }
-                            Item { Layout.fillWidth: true }
-                            Text { text: "5 min"; color: theme.mutedText; font.pixelSize: 13 }
-                        }
-                        Rectangle { Layout.fillWidth: true; height: 1; color: theme.border }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Text { text: "Long break"; color: theme.text; font.pixelSize: 13 }
-                            Item { Layout.fillWidth: true }
-                            Text { text: "15 min"; color: theme.mutedText; font.pixelSize: 13 }
-                        }
-                    }
-                }
+            RowLayout {
+                Layout.fillWidth: true
+                Text { text: "Focus"; color: theme.text; font.pixelSize: 13 }
+                Item { Layout.fillWidth: true }
+                Text { text: "25 min"; color: theme.accent; font.pixelSize: 13 }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Text { text: "Short break"; color: theme.text; font.pixelSize: 13 }
+                Item { Layout.fillWidth: true }
+                Text { text: "5 min"; color: theme.mutedText; font.pixelSize: 13 }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Text { text: "Long break"; color: theme.text; font.pixelSize: 13 }
+                Item { Layout.fillWidth: true }
+                Text { text: "15 min"; color: theme.mutedText; font.pixelSize: 13 }
+            }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.minimumHeight: 180
-                    radius: 18
-                    color: theme.surface
-                    border.color: theme.border
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 20
-                        spacing: 14
-                        Text {
-                            text: "TODAY"
-                            color: theme.mutedText
-                            font.pixelSize: 11
-                            font.weight: Font.DemiBold
-                        }
-                        Text {
-                            text: "0h 00m"
-                            color: theme.text
-                            font.pixelSize: 30
-                            font.weight: Font.Medium
-                        }
-                        Text {
-                            text: "Focused time"
-                            color: theme.mutedText
-                            font.pixelSize: 12
-                        }
-                        Item { Layout.fillHeight: true }
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 7
-                            radius: 4
-                            color: theme.surfaceRaised
-                            Rectangle {
-                                width: 0
-                                height: parent.height
-                                radius: parent.radius
-                                color: theme.accent
-                            }
-                        }
-                        Text {
-                            text: "Your sessions will appear here."
-                            color: theme.mutedText
-                            font.pixelSize: 11
-                        }
-                    }
-                }
+            Rectangle { Layout.fillWidth: true; height: 1; color: theme.border }
+
+            Text {
+                text: "OTHER OPTIONS"
+                color: theme.mutedText
+                font.pixelSize: 10
+                font.weight: Font.DemiBold
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Text { text: "Auto-start breaks"; color: theme.text; font.pixelSize: 13 }
+                Item { Layout.fillWidth: true }
+                Switch { checked: false }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Text { text: "Daily goal"; color: theme.text; font.pixelSize: 13 }
+                Item { Layout.fillWidth: true }
+                Text { text: "2 hours"; color: theme.mutedText; font.pixelSize: 13 }
+            }
+
+            Text {
+                text: "Options are visual placeholders."
+                color: theme.mutedText
+                opacity: 0.7
+                font.pixelSize: 10
             }
         }
     }
