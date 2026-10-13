@@ -144,8 +144,9 @@ ApplicationWindow {
                 id: searchColumn
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
+                anchors.bottom: searchRoot.hasSearched ? parent.bottom : undefined
+                anchors.bottomMargin: 24
                 anchors.topMargin: searchRoot.hasSearched ? 0 : Math.max(90, parent.height * 0.19)
-                height: implicitHeight
                 Behavior on anchors.topMargin { NumberAnimation { duration: 850; easing.type: Easing.OutExpo } }
                 width: Math.min(900, parent.width - 64)
                 spacing: 22
@@ -331,7 +332,7 @@ ApplicationWindow {
                     id: resultsPanel
                     x: 0
                     width: searchRoot.selectedResultPath ? resultsArea.width * 0.42 : resultsArea.width
-                    height: resultsArea.height
+                    height: Math.min(resultsList.contentHeight + 16, resultsArea.height)
                     radius: 12
                     color: searchTheme.surface
                     border.color: searchTheme.border
@@ -349,7 +350,10 @@ ApplicationWindow {
 
                     ListView {
                         id: resultsList
-                        anchors.fill: parent
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
                         anchors.margins: 8
                         spacing: 6
                         clip: true
