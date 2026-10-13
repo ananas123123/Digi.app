@@ -100,6 +100,7 @@ Item {
                     implicitWidth: 132
                     implicitHeight: 46
                     font.pixelSize: 14
+                    font.weight: Font.DemiBold
                     background: Rectangle {
                         radius: 11
                         color: theme.accent
@@ -108,7 +109,6 @@ Item {
                         text: parent.text
                         color: theme.accentText
                         font: parent.font
-                        font.weight: Font.DemiBold
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
