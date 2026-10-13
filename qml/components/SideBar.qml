@@ -130,11 +130,16 @@ Item {
         }
     }
 
-    HoverHandler {
-        id: topHover
+    Item {
+        id: topHoverArea
         x: 0
         y: 0
         width: root.width
         height: 38
+
+        HoverHandler {
+            id: topHover
+            anchors.fill: parent
+        }
     }
 }
