@@ -37,12 +37,17 @@ QString makeExcerpt(const QString &text, qsizetype matchPosition, qsizetype quer
 }
 
 SearchService::SearchService(QObject *parent)
-    : QObject(parent),
-      m_searchRoot(QDir(QCoreApplication::applicationDirPath())
-                       .filePath(QStringLiteral("Digi/search QR")))
+    : QObject(parent)
 {
+    const QDir appDir(QCoreApplication::applicationDirPath());
+    const QString adjacentDataRoot = QDir::cleanPath(appDir.filePath(QStringLiteral("../Digi")));
+    const QString dataRoot = QDir(adjacentDataRoot).exists()
+        ? adjacentDataRoot
+        : appDir.filePath(QStringLiteral("Digi"));
+
+    m_searchRoot = QDir(dataRoot).filePath(QStringLiteral("search QR"));
     QDir().mkpath(m_searchRoot);
-    QDir().mkpath(QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("Digi/cache")));
+    QDir().mkpath(QDir(dataRoot).filePath(QStringLiteral("cache")));
 }
 
 QString SearchService::searchRoot() const
