@@ -356,6 +356,11 @@ ApplicationWindow {
                             required property string relativePath
                             required property string matchType
                             required property string excerpt
+                            property string folderName: {
+                                var normalizedPath = relativePath.split("\\\\").join("/")
+                                var parts = normalizedPath.split("/")
+                                return parts.length > 1 ? parts[parts.length - 2] : "search QR"
+                            }
 
                             width: resultsList.width
                             height: excerpt.length > 0 ? 98 : 68
@@ -376,11 +381,20 @@ ApplicationWindow {
 
                                     Text {
                                         width: parent.width - matchBadge.width - 8
-                                        text: name
+                                        text: folderName + " / " + name
                                         color: searchTheme.text
                                         font.pixelSize: 14
                                         font.weight: Font.DemiBold
                                         elide: Text.ElideRight
+
+                                        Text {
+                                            anchors.left: parent.left
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: folderName + " /"
+                                            color: searchTheme.mutedText
+                                            opacity: 0.65
+                                            font.pixelSize: 12
+                                        }
                                     }
 
                                     Rectangle {
@@ -399,14 +413,6 @@ ApplicationWindow {
                                             font.weight: Font.DemiBold
                                         }
                                     }
-                                }
-
-                                Text {
-                                    width: parent.width
-                                    text: relativePath
-                                    color: searchTheme.mutedText
-                                    font.pixelSize: 11
-                                    elide: Text.ElideMiddle
                                 }
 
                                 Text {
