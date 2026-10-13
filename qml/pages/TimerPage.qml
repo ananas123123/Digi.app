@@ -56,7 +56,7 @@ Item {
 
         ColumnLayout {
             Layout.alignment: Qt.AlignHCenter
-            Layout.maximumWidth: 600
+            Layout.maximumWidth: 700
             Layout.fillWidth: true
             spacing: 22
 
