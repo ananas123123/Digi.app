@@ -75,7 +75,7 @@ ApplicationWindow {
             MouseArea {
                 anchors.fill: parent
                 anchors.rightMargin: 110
-                z: -1
+                z: 1
                 onPressed: window.startSystemMove()
                 onDoubleClicked: window.visibility === Window.Maximized ? window.showNormal() : window.showMaximized()
             }
