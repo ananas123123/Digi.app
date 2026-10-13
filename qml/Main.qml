@@ -23,8 +23,8 @@ ApplicationWindow {
         anchors.fill: parent
         anchors.leftMargin: 0
         anchors.rightMargin: 8
-        anchors.topMargin: 30
-        anchors.bottomMargin: 30
+        anchors.topMargin: 300
+        anchors.bottomMargin: 300
         spacing: 10
 
         SideBar {
