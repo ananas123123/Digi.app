@@ -114,7 +114,7 @@ Item {
             height: 44
             radius: 13
             x: modelData.side === "left" ? banner.x - width - 12 : banner.x + banner.width + 12
-            y: (banner.height - height) / 2 + (shown ? 22 : -10)
+            y: (banner.height - height) / 2 + (shown ? 14 : -18)
             opacity: shown ? 1 : 0
             scale: shown ? 1 : 0.72
             color: utilityMouse.containsMouse ? theme.surfaceRaised : theme.surface
