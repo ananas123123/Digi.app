@@ -13,7 +13,7 @@ Item {
     Theme { id: theme }
 
     Layout.fillWidth: true
-    Layout.preferredHeight: 76
+    Layout.preferredHeight: root.bannerOpen ? 76 : 14
     Layout.leftMargin: 300
     Layout.rightMargin: 300
     z: 10
@@ -99,7 +99,6 @@ Item {
         }
     }
 
-    // Profile and settings controls appear with the navigation banner.
     Repeater {
         model: [
             { side: "left", symbol: "●", label: "Profile" },
@@ -155,7 +154,6 @@ Item {
         }
     }
 
-    // Clickable handle remains visible when the navigation is collapsed.
     Rectangle {
         id: revealTab
         width: 64
