@@ -62,9 +62,11 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.preferredHeight: 38
             z: 40
+            radius: 16
+            clip: true
             color: theme.titleBar
-            border.color: theme.border
-            border.width: 1
+            border.color: "transparent"
+            border.width: 0
 
             // Drag only the empty title-bar area; keep the controls independent.
             MouseArea {
