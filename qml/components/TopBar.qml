@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import "../themes"
 
 Rectangle {
@@ -12,20 +13,20 @@ Rectangle {
     border.color: theme.border
     border.width: 1
 
-    Row {
+    RowLayout {
         anchors.fill: parent
         anchors.leftMargin: 24
         anchors.rightMargin: 24
         spacing: 16
         Column {
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment: Qt.AlignVCenter
             spacing: 3
             Text { text: root.pageTitle; color: theme.text; font.pixelSize: 21; font.bold: true }
             Text { text: "Your workspace"; color: theme.mutedText; font.pixelSize: 11 }
         }
-        Item { width: 1; height: 1; anchors.verticalCenter: parent.verticalCenter }
+        Item { Layout.fillWidth: true }
         Button {
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment: Qt.AlignVCenter
             text: "+  New note"
             onClicked: root.newNoteRequested()
             contentItem: Text {
