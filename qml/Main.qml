@@ -122,6 +122,12 @@ ApplicationWindow {
                 blurEnabled: sideBar.bannerOpen
                 blur: sideBar.bannerOpen ? 0.85 : 0
                 blurMax: 48
+                Behavior on blur {
+                    NumberAnimation {
+                        duration: 420
+                        easing.type: Easing.OutCubic
+                    }
+                }
             }
             sourceComponent: window.activePage === "Home" ? homePage
                            : window.activePage === "Notes" ? notesPage
