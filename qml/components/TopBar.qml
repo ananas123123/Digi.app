@@ -1,0 +1,39 @@
+import QtQuick
+import QtQuick.Controls
+import "../themes"
+
+Rectangle {
+    id: root
+    property string pageTitle: "Home"
+    signal newNoteRequested()
+    Theme { id: theme }
+    height: theme.topBarHeight
+    color: theme.window
+    border.color: theme.border
+    border.width: 1
+
+    Row {
+        anchors.fill: parent
+        anchors.leftMargin: 24
+        anchors.rightMargin: 24
+        spacing: 16
+        Column {
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 3
+            Text { text: root.pageTitle; color: theme.text; font.pixelSize: 21; font.bold: true }
+            Text { text: "Your workspace"; color: theme.mutedText; font.pixelSize: 11 }
+        }
+        Item { width: 1; height: 1; anchors.verticalCenter: parent.verticalCenter }
+        Button {
+            anchors.verticalCenter: parent.verticalCenter
+            text: "+  New note"
+            onClicked: root.newNoteRequested()
+            contentItem: Text {
+                text: parent.text; color: theme.accentText; font.pixelSize: 13; font.bold: true
+                horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
+            }
+            background: Rectangle { radius: 8; color: theme.accent }
+            padding: 12
+        }
+    }
+}
