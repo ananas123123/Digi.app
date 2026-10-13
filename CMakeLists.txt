@@ -33,6 +33,7 @@ qt_add_qml_module(Digi
         qml/pages/TimerPage.qml
         qml/pages/ResourcesPage.qml
         qml/pages/AnalyticsPage.qml
+        qml/pages/DocPage.qml
         qml/themes/Theme.qml
 )
 
