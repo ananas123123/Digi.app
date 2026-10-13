@@ -194,9 +194,9 @@ ApplicationWindow {
                     color: searchInput.activeFocus ? "#303030" : searchTheme.surface
                     border.width: searchInput.activeFocus ? 2 : 1
                     border.color: searchInput.activeFocus ? searchTheme.accent : searchTheme.border
-                    scale: searchMouse.containsMouse || searchInput.activeFocus ? 1.012 : 1
+                    scale: searchRoot.hasSearched ? 0.92 : (searchMouse.containsMouse || searchInput.activeFocus ? 1.012 : 1)
 
-                    Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                    Behavior on scale { NumberAnimation { duration: 850; easing.type: Easing.OutExpo } }
                     Behavior on color { ColorAnimation { duration: 160 } }
                     Behavior on border.color { ColorAnimation { duration: 160 } }
 
