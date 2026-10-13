@@ -381,20 +381,11 @@ ApplicationWindow {
 
                                     Text {
                                         width: parent.width - matchBadge.width - 8
-                                        text: folderName + " / " + name
+                                        textFormat: Text.RichText
+                                        text: "<span style='color:#8F" + searchTheme.mutedText.toString().substring(1) + ";'>" + folderName + " /</span> <b>" + name + "</b>"
                                         color: searchTheme.text
                                         font.pixelSize: 14
-                                        font.weight: Font.DemiBold
                                         elide: Text.ElideRight
-
-                                        Text {
-                                            anchors.left: parent.left
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: folderName + " /"
-                                            color: searchTheme.mutedText
-                                            opacity: 0.65
-                                            font.pixelSize: 12
-                                        }
                                     }
 
                                     Rectangle {
