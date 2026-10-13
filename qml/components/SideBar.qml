@@ -7,8 +7,7 @@ Item {
     id: root
     property string activePage: "Home"
     signal pageSelected(string pageName)
-    property bool bannerHovered: false
-    property bool pointerInside: bannerHover.hovered || bottomHover.hovered
+    property bool bannerOpen: false
     Theme { id: theme }
 
     Layout.fillWidth: true
@@ -18,16 +17,10 @@ Item {
     z: 10
     clip: false
 
-    function updateHoverState() {
-        bannerHovered = pointerInside
-    }
-
-    onPointerInsideChanged: updateHoverState()
-
     Rectangle {
         id: banner
         x: 0
-        y: root.bannerHovered ? 0 : -38
+        y: root.bannerOpen ? 0 : -68
         width: root.width
         height: 76
         color: theme.surface
@@ -41,14 +34,9 @@ Item {
         clip: false
 
         Behavior on y {
-            NumberAnimation { duration: root.bannerHovered ? 190 : 500; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
         }
         z: 1
-
-        HoverHandler {
-            id: bannerHover
-            onHoveredChanged: root.updateHoverState()
-        }
 
         RowLayout {
             anchors.fill: parent
@@ -109,20 +97,36 @@ Item {
         }
     }
 
-    // Small reveal tab attached to the lower edge of the collapsed banner.
+    // Clickable handle remains visible when the navigation is collapsed.
     Rectangle {
         id: revealTab
-        width: 58
-        height: 8
-        radius: 4
+        width: 64
+        height: 14
+        radius: 5
         color: theme.border
         x: (root.width - width) / 2
         y: banner.y + banner.height - 1
         z: 2
 
-        HoverHandler {
-            id: bottomHover
-            onHoveredChanged: root.updateHoverState()
+        Column {
+            anchors.centerIn: parent
+            spacing: 2
+            Repeater {
+                model: 3
+                delegate: Rectangle {
+                    required property int index
+                    width: 20
+                    height: 1
+                    radius: 1
+                    color: theme.mutedText
+                }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.bannerOpen = !root.bannerOpen
         }
     }
 }
