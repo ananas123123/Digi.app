@@ -13,11 +13,11 @@ Item {
     Theme { id: theme }
 
     Layout.fillWidth: true
-    Layout.preferredHeight: 0
-    Layout.leftMargin: 0
-    Layout.rightMargin: 0
+    Layout.preferredHeight: root.bannerOpen ? 76 : 14
+    Layout.leftMargin: 300
+    Layout.rightMargin: 300
     z: 10
-    clip: true
+    clip: false
 
     Rectangle {
         id: banner
@@ -120,7 +120,7 @@ Item {
             border.color: theme.border
             border.width: 1
             z: 3
-            visible: false
+            visible: root.bannerOpen && opacity > 0.01
 
             Behavior on opacity {
                 NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
@@ -156,8 +156,8 @@ Item {
 
     Rectangle {
         id: revealTab
-        width: 0
-        height: 0
+        width: 64
+        height: 14
         radius: 5
         color: theme.border
         x: (root.width - width) / 2
@@ -182,7 +182,7 @@ Item {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: {}
+            onClicked: root.bannerOpen = !root.bannerOpen
         }
     }
 }
