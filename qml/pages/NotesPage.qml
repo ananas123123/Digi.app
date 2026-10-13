@@ -16,7 +16,7 @@ Item {
     readonly property color paperColor: "#252525"
     readonly property color paperBorderColor: "#505050"
     readonly property real minZoom: 0.25
-    readonly property real maxZoom: 4.0
+    readonly property real maxZoom: 8.0
 
     function clampZoom(value) {
         return Math.max(minZoom, Math.min(maxZoom, value))
@@ -188,7 +188,7 @@ Item {
         target: null
         acceptedDevices: PointerDevice.TouchScreen
         minimumScale: 0.25
-        maximumScale: 4.0
+        maximumScale: 8.0
         minimumPointCount: 2
         maximumPointCount: 2
 
