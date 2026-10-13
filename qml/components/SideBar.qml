@@ -25,9 +25,9 @@ Item {
         y: root.bannerOpen ? 0 : -76
         width: root.width
         height: 76
-        color: theme.surface
-        border.color: theme.border
-        border.width: 1
+        color: "transparent"
+        border.color: "transparent"
+        border.width: 0
         radius: 14
         topLeftRadius: 0
         topRightRadius: 0
