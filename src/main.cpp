@@ -7,6 +7,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QTextStream>
+#include <cstdio>
 
 #include "app/AppServices.h"
 #include "documents/DocumentService.h"
@@ -17,11 +18,6 @@ QMutex logMutex;
 void writeRuntimeLog(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
     QMutexLocker locker(&logMutex);
-    QFile file(QCoreApplication::applicationDirPath() + "/digi-runtime.log");
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
-        return;
-
-    QTextStream out(&file);
     const char *level = "INFO";
     switch (type) {
     case QtDebugMsg: level = "DEBUG"; break;
@@ -30,6 +26,19 @@ void writeRuntimeLog(QtMsgType type, const QMessageLogContext &context, const QS
     case QtCriticalMsg: level = "CRITICAL"; break;
     case QtFatalMsg: level = "FATAL"; break;
     }
+
+    const QByteArray consoleMessage = message.toLocal8Bit();
+    std::fprintf(stderr, "[%s] %s", level, consoleMessage.constData());
+    if (context.file)
+        std::fprintf(stderr, " (%s:%d)", context.file, context.line);
+    std::fprintf(stderr, "\n");
+    std::fflush(stderr);
+
+    QFile file(QCoreApplication::applicationDirPath() + "/digi-runtime.log");
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
+        return;
+
+    QTextStream out(&file);
     out << QDateTime::currentDateTime().toString(Qt::ISODateWithMs)
         << " [" << level << "] "
         << message;
