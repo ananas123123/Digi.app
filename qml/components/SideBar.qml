@@ -8,12 +8,11 @@ Item {
     property string activePage: "Home"
     signal pageSelected(string pageName)
     property bool bannerHovered: false
-    property bool pointerInside: hoverArea.containsMouse || bannerHover.containsMouse
-    property bool hidePending: false
+    property bool pointerInside: topHover.hovered || bannerHover.hovered
     Theme { id: theme }
 
     Layout.fillWidth: true
-    Layout.preferredHeight: 38
+    Layout.preferredHeight: 76
     Layout.leftMargin: 300
     Layout.rightMargin: 300
     z: 10
@@ -38,6 +37,15 @@ Item {
         }
     }
 
+    Connections {
+        target: topHover
+        function onHoveredChanged() { root.updateHoverState() }
+    }
+    Connections {
+        target: bannerHover
+        function onHoveredChanged() { root.updateHoverState() }
+    }
+
     Rectangle {
         id: banner
         x: 0
@@ -56,6 +64,11 @@ Item {
 
         Behavior on y {
             NumberAnimation { duration: 190; easing.type: Easing.OutCubic }
+        }
+
+        HoverHandler {
+            id: bannerHover
+            margin: 0
         }
 
         RowLayout {
@@ -115,26 +128,13 @@ Item {
                 }
             }
         }
-
-        MouseArea {
-            id: bannerHover
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.NoButton
-            z: -1
-            onContainsMouseChanged: root.updateHoverState()
-        }
     }
 
-    MouseArea {
-        id: hoverArea
+    HoverHandler {
+        id: topHover
         x: 0
         y: 0
         width: root.width
         height: 38
-        hoverEnabled: true
-        acceptedButtons: Qt.NoButton
-        z: 2
-        onContainsMouseChanged: root.updateHoverState()
     }
 }
