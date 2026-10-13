@@ -81,7 +81,7 @@ Item {
         Item {
             id: zoomLayer
             // Geometry and Flickable bounds now share exactly the same units.
-            // No QQuickItem scale transform is used.
+            // The Canvas is transformed, but its parent geometry defines the scroll bounds.
             width: root.documentWidth * root.zoom
             height: root.documentHeight * root.zoom
 
