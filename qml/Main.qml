@@ -126,42 +126,7 @@ ApplicationWindow {
     Component { id: homePage; HomePage {} }
     Component { id: notesPage; NotesPage {} }
 
-    Component {
-        id: searchPage
-        Item {
-            Theme { id: searchTheme }
-            Column {
-                anchors.centerIn: parent
-                spacing: 8
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Search"; color: searchTheme.text; font.pixelSize: 26; font.bold: true }
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Search will be built here."; color: searchTheme.mutedText; font.pixelSize: 13 }
-            }
-        }
-    }
-
-    Component {
-        id: resourcesPage
-        Item {
-            Theme { id: resourcesTheme }
-            Column {
-                anchors.centerIn: parent
-                spacing: 8
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Resources"; color: resourcesTheme.text; font.pixelSize: 26; font.bold: true }
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Your resources will appear here."; color: resourcesTheme.mutedText; font.pixelSize: 13 }
-            }
-        }
-    }
-
-    Component {
-        id: libraryPage
-        Item {
-            Theme { id: libraryTheme }
-            Column {
-                anchors.centerIn: parent
-                spacing: 10
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "PDF Library"; color: libraryTheme.text; font.pixelSize: 26; font.bold: true }
-                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "PDF services will live in the dedicated pdf module."; color: libraryTheme.mutedText; font.pixelSize: 13 }
-            }
-        }
-    }
+    Component { id: searchPage; Item {} }
+    Component { id: resourcesPage; Item {} }
+    Component { id: libraryPage; Item {} }
 }
