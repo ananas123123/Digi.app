@@ -8,43 +8,21 @@ Item {
     property string activePage: "Home"
     signal pageSelected(string pageName)
     property bool bannerHovered: false
-    property bool pointerInside: bannerHover.hovered || topHover.hovered
+    property bool pointerInside: bannerHover.hovered || (!bannerHovered && topHover.hovered)
     Theme { id: theme }
 
     Layout.fillWidth: true
-    Layout.preferredHeight: 38
+    Layout.preferredHeight: 76
     Layout.leftMargin: 300
     Layout.rightMargin: 300
     z: 10
     clip: false
 
-    Timer {
-        id: hideTimer
-        interval: 500
-        repeat: false
-        onTriggered: {
-            if (!root.pointerInside)
-                root.bannerHovered = false
-        }
-    }
-
     function updateHoverState() {
-        if (pointerInside) {
-            hideTimer.stop()
-            bannerHovered = true
-        } else {
-            hideTimer.restart()
-        }
+        bannerHovered = pointerInside
     }
 
-    onPointerInsideChanged: {
-        if (pointerInside) {
-            hideTimer.stop()
-            bannerHovered = true
-        } else {
-            hideTimer.restart()
-        }
-    }
+    onPointerInsideChanged: updateHoverState()
 
     Rectangle {
         id: banner
