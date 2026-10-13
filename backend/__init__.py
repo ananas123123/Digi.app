@@ -1,1 +1,0 @@
-"""Digi application functionality layer."""
