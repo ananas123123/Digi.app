@@ -70,8 +70,13 @@ Item {
                         NumberAnimation { duration: 170; easing.type: Easing.OutBack }
                     }
 
-                    // Keep navigation clicks on the Button itself; avoid competing
-                    // pointer handlers that can consume a stylus tap.
+                    // Explicit stylus handling supplements the standard Button
+                    // pointer handling without duplicating mouse/touch clicks.
+                    TapHandler {
+                        acceptedDevices: PointerDevice.Stylus
+                        onTapped: root.pageSelected(navButton.modelData.label)
+                    }
+
                     background: Rectangle {
                         radius: 10
                         color: root.activePage === navButton.modelData.label
@@ -171,6 +176,10 @@ Item {
         y: root.bannerOpen ? banner.y + banner.height - 1 : 0
         z: 2
 
+        Behavior on y {
+            NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+        }
+
         Column {
             anchors.centerIn: parent
             spacing: 2
@@ -178,8 +187,8 @@ Item {
                 model: 3
                 delegate: Rectangle {
                     required property int index
-                    width: 20
-                    height: 1
+                    width: 24
+                    height: 2
                     radius: 1
                     color: theme.mutedText
                 }
@@ -187,7 +196,7 @@ Item {
         }
 
         TapHandler {
-            acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus | PointerDevice.TouchScreen
             onTapped: root.bannerOpen = !root.bannerOpen
         }
     }
