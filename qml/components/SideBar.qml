@@ -167,8 +167,8 @@ Item {
         }
     }
 
-    // No independent animation here: the handle's position is bound directly
-    // to the animated banner, so it cannot lag behind it.
+    // Bind directly to the banner's animated y in both directions. Do not
+    // switch to a fixed y when closing, or the handle will snap into place.
     Rectangle {
         id: revealTab
         width: 64
@@ -176,7 +176,7 @@ Item {
         radius: 7
         color: theme.border
         x: (root.width - width) / 2
-        y: root.bannerOpen ? banner.y + banner.height - 1 : 0
+        y: banner.y + banner.height - 1
         z: 2
 
         Column {
