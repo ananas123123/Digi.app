@@ -157,7 +157,7 @@ ApplicationWindow {
                 }
 
                 Item {
-                    id: searchColumn
+                    id: searchHeadingContainer
                     Layout.fillWidth: true
                     implicitHeight: searchContent.implicitHeight
 
