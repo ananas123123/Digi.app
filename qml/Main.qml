@@ -1,45 +1,69 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import QtQuick.Window
+import "components"
+import "pages"
+import "themes"
 
 ApplicationWindow {
     id: window
-    width: 1200
-    height: 800
-    minimumWidth: 800
-    minimumHeight: 600
+    width: 1280
+    height: 820
+    minimumWidth: 900
+    minimumHeight: 620
     visible: true
     title: "Digi"
-    color: "#17191f"
+    color: theme.window
 
-    Rectangle {
+    Theme { id: theme }
+    property string activePage: "Home"
+
+    RowLayout {
         anchors.fill: parent
-        color: "#17191f"
+        spacing: 0
 
-        Column {
-            anchors.centerIn: parent
-            spacing: 12
+        SideBar {
+            Layout.fillHeight: true
+            activePage: window.activePage
+            onPageSelected: function(pageName) { window.activePage = pageName }
+        }
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "Digi"
-                color: "#f2f3f5"
-                font.pixelSize: 38
-                font.weight: Font.DemiBold
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 0
+
+            TopBar {
+                Layout.fillWidth: true
+                pageTitle: window.activePage
+                onNewNoteRequested: window.activePage = "Notes"
             }
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "Native frontend test environment"
-                color: "#a9afbd"
-                font.pixelSize: 16
+            Loader {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                sourceComponent: window.activePage === "Home" ? homePage
+                               : window.activePage === "Notes" ? notesPage
+                               : libraryPage
             }
+        }
+    }
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "Qt Quick + C++"
-                color: "#d8bd72"
-                font.pixelSize: 14
+    Component {
+        id: homePage
+        HomePage { onCreateNoteRequested: window.activePage = "Notes" }
+    }
+    Component { id: notesPage; NotesPage {} }
+    Component {
+        id: libraryPage
+        Item {
+            Theme { id: libraryTheme }
+            Column {
+                anchors.centerIn: parent
+                spacing: 10
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "PDF Library"; color: libraryTheme.text; font.pixelSize: 26; font.bold: true }
+                Text { anchors.horizontalCenter: parent.horizontalCenter; text: "PDF services will live in the dedicated pdf module."; color: libraryTheme.mutedText; font.pixelSize: 13 }
             }
         }
     }
