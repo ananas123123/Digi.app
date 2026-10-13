@@ -70,54 +70,15 @@ Item {
                         NumberAnimation { duration: 170; easing.type: Easing.OutBack }
                     }
 
-                    // Explicit stylus handling prevents the Notes drawing handler
-                    // from making navigation taps feel unresponsive.
-                    TapHandler {
-                        acceptedDevices: PointerDevice.Stylus
-                        onTapped: root.pageSelected(navButton.modelData.label)
-                    }
-
+                    // Keep navigation clicks on the Button itself; avoid competing
+                    // pointer handlers that can consume a stylus tap.
                     background: Rectangle {
-                        id: cardSurface
                         radius: 10
                         color: root.activePage === navButton.modelData.label
                                ? (navButton.hovered ? "#E6D8BD72" : theme.accent)
-                               : (navButton.hovered ? "#663E454D" : "#1AFFFFFF")
-                        border.width: navButton.hovered ? 1.4 : 1
-                        border.color: root.activePage === navButton.modelData.label
-                                      ? "#F4E4A8"
-                                      : (navButton.hovered ? "#D9F5FAFF" : "#3DFFFFFF")
-                        
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: parent.radius
-                            color: "transparent"
-                            border.width: navButton.hovered ? 1 : 0
-                            border.color: "#88FFFFFF"
-                            opacity: navButton.hovered ? 1 : 0
-                            Behavior on opacity {
-                                NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
-                            }
-                        }
-
-                        // Diagonal sheen gives a glass-like highlight without
-                        // introducing an expensive full-page blur/refraction pass.
-                        Rectangle {
-                            width: parent.width * 0.62
-                            height: parent.height * 0.42
-                            x: parent.width * 0.08
-                            y: parent.height * 0.08
-                            radius: parent.radius
-                            rotation: -7
-                            gradient: Gradient {
-                                GradientStop { position: 0.0; color: navButton.hovered ? "#55FFFFFF" : "#08FFFFFF" }
-                                GradientStop { position: 1.0; color: "#00FFFFFF" }
-                            }
-                            opacity: navButton.hovered ? 1 : 0.35
-                            Behavior on opacity {
-                                NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
-                            }
-                        }
+                               : (navButton.hovered ? theme.surfaceRaised : "transparent")
+                        border.width: root.activePage === navButton.modelData.label ? 0 : 1
+                        border.color: navButton.hovered ? "#777777" : "#3d3d3d"
                     }
 
                     contentItem: Item {
@@ -225,17 +186,9 @@ Item {
             }
         }
 
-        // TapHandler explicitly accepts stylus taps as well as mouse clicks.
-        // This keeps the reveal control usable on touchscreen pen devices.
         TapHandler {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
             onTapped: root.bannerOpen = !root.bannerOpen
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.bannerOpen = !root.bannerOpen
         }
     }
 }
