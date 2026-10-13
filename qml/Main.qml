@@ -320,7 +320,6 @@ ApplicationWindow {
                 Item {
                     id: resultsArea
                     Layout.fillWidth: true
-                    Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 300
                     Layout.topMargin: 0
