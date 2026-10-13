@@ -16,6 +16,16 @@ Item {
         return Math.max(minZoom, Math.min(maxZoom, value))
     }
 
+    function clampContentX(value) {
+        return Math.max(0, Math.min(
+            Math.max(0, canvasViewport.contentWidth - canvasViewport.width), value))
+    }
+
+    function clampContentY(value) {
+        return Math.max(0, Math.min(
+            Math.max(0, canvasViewport.contentHeight - canvasViewport.height), value))
+    }
+
     function addDrawingPoint(position) {
         const scenePoint = drawingInput.centroid.scenePosition
         const mapped = drawingCanvas.mapFromItem(null, scenePoint.x, scenePoint.y)
@@ -50,11 +60,10 @@ Item {
     Flickable {
         id: canvasViewport
         anchors.fill: parent
-
-        // Flickable offsets stay in document coordinates. Only the visual layer
-        // is scaled, so do not scale the content dimensions as well.
-        contentWidth: drawingCanvas.width
-        contentHeight: drawingCanvas.height
+        // Scroll offsets and content bounds use the same viewport-space units
+        // as the transformed layer's visible dimensions.
+        contentWidth: Math.max(width, drawingCanvas.width * root.zoom)
+        contentHeight: Math.max(height, drawingCanvas.height * root.zoom)
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.HorizontalAndVerticalFlick
         interactive: !drawingInput.active && !pinchHandler.active && !touchPanHandler.active
@@ -157,22 +166,16 @@ Item {
                 if (!active)
                     return
 
+                // PinchHandler.scale is relative to the start of this gesture.
+                // Derive each frame from the same starting state to avoid drift.
                 const nextZoom = root.clampZoom(startingZoom * scale)
                 const center = centroid.position
-
-                // Flickable contentX/Y are document-space offsets. Keep the
-                // document point under the original centroid under the moving
-                // centroid by converting screen distances through the new scale.
-                const documentX = startContentX + startCentroid.x / startingZoom
-                const documentY = startContentY + startCentroid.y / startingZoom
+                const documentX = (startContentX + startCentroid.x) / startingZoom
+                const documentY = (startContentY + startCentroid.y) / startingZoom
 
                 root.zoom = nextZoom
-                canvasViewport.contentX = Math.max(0, Math.min(
-                    Math.max(0, canvasViewport.contentWidth - canvasViewport.width),
-                    documentX - center.x / nextZoom))
-                canvasViewport.contentY = Math.max(0, Math.min(
-                    Math.max(0, canvasViewport.contentHeight - canvasViewport.height),
-                    documentY - center.y / nextZoom))
+                canvasViewport.contentX = root.clampContentX(documentX * nextZoom - center.x)
+                canvasViewport.contentY = root.clampContentY(documentY * nextZoom - center.y)
             }
         }
 
@@ -196,12 +199,8 @@ Item {
                 const dx = translation.x - lastTranslation.x
                 const dy = translation.y - lastTranslation.y
                 lastTranslation = translation
-                canvasViewport.contentX = Math.max(0, Math.min(
-                    Math.max(0, canvasViewport.contentWidth - canvasViewport.width),
-                    canvasViewport.contentX - dx / root.zoom))
-                canvasViewport.contentY = Math.max(0, Math.min(
-                    Math.max(0, canvasViewport.contentHeight - canvasViewport.height),
-                    canvasViewport.contentY - dy / root.zoom))
+                canvasViewport.contentX = root.clampContentX(canvasViewport.contentX - dx)
+                canvasViewport.contentY = root.clampContentY(canvasViewport.contentY - dy)
             }
         }
     }
