@@ -43,6 +43,7 @@ Item {
         Behavior on y {
             NumberAnimation { duration: root.bannerHovered ? 190 : 500; easing.type: Easing.OutCubic }
         }
+        z: 1
 
         HoverHandler {
             id: bannerHover
