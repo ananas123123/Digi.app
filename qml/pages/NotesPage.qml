@@ -61,12 +61,14 @@ Item {
                         oldZoom, oldContentX, oldContentY) {
         // All points are expressed in the viewport's coordinate system.
         // Anchor the original document point beneath the moving pinch centroid.
-        const documentX = (oldContentX + anchorX) / oldZoom
-        const documentY = (oldContentY + anchorY) / oldZoom
+        const documentX = (oldContentX + anchorX - root.canvasMargin) / oldZoom
+        const documentY = (oldContentY + anchorY - root.canvasMargin) / oldZoom
 
         root.zoom = nextZoom
-        canvasViewport.contentX = root.clampContentX(documentX * nextZoom - centerX)
-        canvasViewport.contentY = root.clampContentY(documentY * nextZoom - centerY)
+        canvasViewport.contentX = root.clampContentX(
+                    documentX * nextZoom + root.canvasMargin - centerX)
+        canvasViewport.contentY = root.clampContentY(
+                    documentY * nextZoom + root.canvasMargin - centerY)
     }
 
     Flickable {
@@ -81,10 +83,10 @@ Item {
 
         Item {
             id: canvasContent
-            x: root.canvasMargin
-            y: root.canvasMargin
-            width: root.documentWidth * root.zoom
-            height: root.documentHeight * root.zoom
+            x: 0
+            y: 0
+            width: root.documentWidth * root.zoom + root.canvasMargin * 2
+            height: root.documentHeight * root.zoom + root.canvasMargin * 2
 
             Rectangle {
                 anchors.fill: parent
@@ -96,10 +98,12 @@ Item {
                 id: zoomLayer
                 // Canvas bounds stay inset from the viewport edge, with a darker
                 // surrounding workspace visible beyond each document edge.
+                x: root.canvasMargin
+                y: root.canvasMargin
                 width: root.documentWidth * root.zoom
                 height: root.documentHeight * root.zoom
 
-            Canvas {
+                Canvas {
                 id: drawingCanvas
                 width: root.documentWidth
                 height: root.documentHeight
