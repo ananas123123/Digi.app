@@ -26,18 +26,21 @@ Rectangle {
         anchors.fill: parent
         anchors.leftMargin: 12
         anchors.rightMargin: 12
-        spacing: 10
+        spacing: 8
 
         Repeater {
             model: [
                 { label: "Home", symbol: "⌂" },
-                { label: "PDF Library", symbol: "▤" }
+                { label: "Search", symbol: "⌕" },
+                { label: "Notes", symbol: "✎" },
+                { label: "Resources", symbol: "▤" }
             ]
 
             delegate: Button {
                 required property var modelData
-                Layout.preferredWidth: modelData.label === "Home" ? 112 : 150
-                Layout.preferredHeight: 44
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.margins: 5
                 flat: true
                 onClicked: root.pageSelected(modelData.label)
 
@@ -49,15 +52,13 @@ Rectangle {
                 }
 
                 contentItem: Row {
-                    spacing: 10
-                    leftPadding: 4
+                    spacing: 8
+                    anchors.centerIn: parent
 
                     Text {
-                        width: 20
                         text: modelData.symbol
                         color: root.activePage === modelData.label ? theme.accentText : theme.mutedText
                         font.pixelSize: 18
-                        horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
 
@@ -70,7 +71,5 @@ Rectangle {
                 }
             }
         }
-
-        Item { Layout.fillWidth: true }
     }
 }
