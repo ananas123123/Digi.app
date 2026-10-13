@@ -51,7 +51,6 @@ Rectangle {
                 }
                 contentItem: Row {
                     spacing: 12
-                    leftPadding: 10
                     Text {
                         width: 20; text: modelData.symbol
                         color: root.activePage === modelData.label ? theme.accentText : theme.mutedText
@@ -65,7 +64,7 @@ Rectangle {
                 }
             }
         }
-        Item { width: 1; height: 1; Layout.fillHeight: true }
+        Item { width: 1; height: 1 }
         Rectangle { width: parent.width; height: 1; color: theme.border }
         Text { text: "Native workspace"; color: theme.mutedText; font.pixelSize: 11; leftPadding: 8; topPadding: 8 }
     }
