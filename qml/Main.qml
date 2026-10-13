@@ -144,7 +144,9 @@ ApplicationWindow {
                 id: searchColumn
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
+                anchors.bottom: parent.bottom
                 anchors.topMargin: searchRoot.hasSearched ? 0 : Math.max(90, parent.height * 0.19)
+                anchors.bottomMargin: 28
                 Behavior on anchors.topMargin { NumberAnimation { duration: 850; easing.type: Easing.OutExpo } }
                 width: Math.min(900, parent.width - 64)
                 spacing: 22
@@ -318,16 +320,18 @@ ApplicationWindow {
                 Item {
                     id: resultsArea
                     Layout.fillWidth: true
+                    Layout.fillWidth: true
                     Layout.fillHeight: true
+                    Layout.minimumHeight: 300
                     Layout.topMargin: 0
-                    Layout.bottomMargin: 16
+                    Layout.bottomMargin: 0
                     visible: searchRoot.hasSearched
 
                     Rectangle {
                     id: resultsPanel
                     x: 0
                     width: searchRoot.selectedResultPath ? resultsArea.width * 0.42 : resultsArea.width
-                    height: 260
+                    height: resultsArea.height
                     radius: 12
                     color: searchTheme.surface
                     border.color: searchTheme.border
@@ -441,9 +445,9 @@ ApplicationWindow {
                         anchors.left: resultsArea.left
                         anchors.leftMargin: resultsArea.width * 0.46
                         anchors.right: resultsArea.right
+                        anchors.top: resultsArea.top
                         anchors.bottom: resultsArea.bottom
                         anchors.bottomMargin: 8
-                        height: Math.max(260, resultsArea.height - 8)
                         z: 10
                         visible: searchRoot.selectedResultPath.length > 0
                         opacity: visible ? 1 : 0
