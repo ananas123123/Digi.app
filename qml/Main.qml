@@ -187,34 +187,6 @@ ApplicationWindow {
                 }
 
                 Rectangle {
-                    id: filtersButton
-                    width: 82
-                    height: 42
-                    anchors.right: searchBox.left
-                    anchors.rightMargin: 12
-                    anchors.verticalCenter: searchBox.verticalCenter
-                    radius: 12
-                    color: filtersMouse.containsMouse ? "#383838" : "#292929"
-                    border.width: 1
-                    border.color: "#55FFFFFF"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Filters"
-                        color: searchTheme.text
-                        font.pixelSize: 13
-                    }
-
-                    MouseArea {
-                        id: filtersMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {} // Intentionally non-functional placeholder.
-                    }
-                }
-
-                Rectangle {
                     id: searchBox
                     Layout.fillWidth: true
                     Layout.preferredHeight: 60
@@ -227,6 +199,35 @@ ApplicationWindow {
                     Behavior on scale { NumberAnimation { duration: 850; easing.type: Easing.OutExpo } }
                     Behavior on color { ColorAnimation { duration: 240 } }
                     Behavior on border.color { ColorAnimation { duration: 240 } }
+
+                    Rectangle {
+                        id: filtersButton
+                        width: 82
+                        height: 42
+                        anchors.right: parent.left
+                        anchors.rightMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        radius: 12
+                        color: filtersMouse.containsMouse ? "#383838" : "#292929"
+                        border.width: 1
+                        border.color: "#55FFFFFF"
+                        z: 3
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Filters"
+                            color: searchTheme.text
+                            font.pixelSize: 13
+                        }
+
+                        MouseArea {
+                            id: filtersMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {} // Intentionally non-functional placeholder.
+                        }
+                    }
 
                     // Subtle glass reflection: a soft top-edge highlight without obscuring input.
                     Rectangle {
