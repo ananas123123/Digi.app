@@ -120,8 +120,8 @@ ApplicationWindow {
             layer.enabled: sideBar.bannerOpen
             layer.effect: MultiEffect {
                 blurEnabled: sideBar.bannerOpen
-                blur: sideBar.bannerOpen ? 0.42 : 0
-                blurMax: 18
+                blur: sideBar.bannerOpen ? 0.85 : 0
+                blurMax: 48
             }
             sourceComponent: window.activePage === "Home" ? homePage
                            : window.activePage === "Notes" ? notesPage
