@@ -446,6 +446,11 @@ ApplicationWindow {
                                     searchRoot.selectedResultPath = path
                                     searchRoot.previewText = searchService.previewFile(path)
                                 }
+                                onDoubleClicked: {
+                                    searchRoot.selectedResultPath = path
+                                    searchRoot.previewText = searchService.previewFile(path)
+                                    searchService.openFile(path)
+                                }
                             }
                         }
                     }
