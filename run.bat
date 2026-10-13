@@ -16,12 +16,23 @@ if not exist "%~dp0build\Digi.exe" (
     exit /b 1
 )
 
+if exist "%~dp0build\digi-runtime.log" del "%~dp0build\digi-runtime.log"
+
 echo.
 echo === Launching Digi ===
 "%~dp0build\Digi.exe"
-if errorlevel 1 (
+set "DIGI_EXIT_CODE=%errorlevel%"
+if not "%DIGI_EXIT_CODE%"=="0" (
     echo.
-    echo Digi exited with an error.
+    echo Digi exited with an error. Exit code: %DIGI_EXIT_CODE%
+    echo.
+    echo === Runtime error details ===
+    if exist "%~dp0build\digi-runtime.log" (
+        type "%~dp0build\digi-runtime.log"
+    ) else (
+        echo No runtime log was created. The process may have failed before Qt logging initialized.
+    )
+    echo.
     pause
-    exit /b 1
+    exit /b %DIGI_EXIT_CODE%
 )
