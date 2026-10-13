@@ -144,9 +144,8 @@ ApplicationWindow {
                 id: searchColumn
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.bottom: parent.bottom
                 anchors.topMargin: searchRoot.hasSearched ? 0 : Math.max(90, parent.height * 0.19)
-                anchors.bottomMargin: 28
+                height: implicitHeight
                 Behavior on anchors.topMargin { NumberAnimation { duration: 850; easing.type: Easing.OutExpo } }
                 width: Math.min(900, parent.width - 64)
                 spacing: 22
@@ -323,6 +322,7 @@ ApplicationWindow {
                     Layout.fillHeight: searchRoot.hasSearched
                     Layout.preferredHeight: searchRoot.hasSearched ? 1 : 0
                     Layout.minimumHeight: searchRoot.hasSearched ? 300 : 0
+                    Layout.maximumHeight: searchRoot.hasSearched ? Number.POSITIVE_INFINITY : 0
                     Layout.topMargin: 0
                     Layout.bottomMargin: 0
                     visible: searchRoot.hasSearched
