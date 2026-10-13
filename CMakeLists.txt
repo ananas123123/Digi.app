@@ -13,6 +13,10 @@ qt_standard_project_setup(REQUIRES 6.5)
 
 qt_add_executable(Digi
     src/main.cpp
+    src/app/AppServices.cpp
+    src/app/AppServices.h
+    src/documents/DocumentService.cpp
+    src/documents/DocumentService.h
 )
 
 qt_add_qml_module(Digi
@@ -20,6 +24,12 @@ qt_add_qml_module(Digi
     VERSION 1.0
     QML_FILES
         qml/Main.qml
+        qml/components/SideBar.qml
+        qml/components/TopBar.qml
+        qml/components/WorkspaceCard.qml
+        qml/pages/HomePage.qml
+        qml/pages/NotesPage.qml
+        qml/themes/Theme.qml
 )
 
 target_link_libraries(Digi PRIVATE Qt6::Quick)
