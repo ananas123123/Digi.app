@@ -22,7 +22,7 @@ Item {
     Rectangle {
         id: banner
         x: 0
-        y: root.bannerOpen ? 0 : -68
+        y: root.bannerOpen ? 0 : -76
         width: root.width
         height: 76
         color: theme.surface
@@ -121,7 +121,7 @@ Item {
             border.color: theme.border
             border.width: 1
             z: 3
-            visible: opacity > 0.01
+            visible: root.bannerOpen && opacity > 0.01
 
             Behavior on opacity {
                 NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
@@ -163,7 +163,7 @@ Item {
         radius: 5
         color: theme.border
         x: (root.width - width) / 2
-        y: banner.y + banner.height - 1
+        y: root.bannerOpen ? banner.y + banner.height - 1 : 0
         z: 2
 
         Column {
