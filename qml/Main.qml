@@ -449,18 +449,20 @@ ApplicationWindow {
                         }
                     }
 
-                    Row {
+                    Item {
                         id: paginationControls
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
                         anchors.bottomMargin: 9
                         height: 30
-                        spacing: 8
                         visible: searchRoot.results.length > searchRoot.resultsPerPage
                         z: 2
+
+                        Row {
+                            anchors.centerIn: parent
+                            height: 30
+                            spacing: 8
 
                         Rectangle {
                             width: 112
@@ -519,6 +521,7 @@ ApplicationWindow {
                                     resultsList.contentY = 0
                                 }
                             }
+                        }
                         }
                     }
                     }
