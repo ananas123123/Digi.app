@@ -7,6 +7,8 @@ Item {
     id: root
     property string activePage: "Home"
     signal pageSelected(string pageName)
+    signal profileRequested()
+    signal settingsRequested()
     property bool bannerOpen: false
     Theme { id: theme }
 
@@ -92,6 +94,62 @@ Item {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // Profile and settings controls appear with the navigation banner.
+    Repeater {
+        model: [
+            { side: "left", symbol: "●", label: "Profile" },
+            { side: "right", symbol: "⚙", label: "Settings" }
+        ]
+
+        delegate: Rectangle {
+            id: utilityButton
+            required property var modelData
+            property bool shown: root.bannerOpen
+            width: 44
+            height: 44
+            radius: 13
+            x: modelData.side === "left" ? banner.x - width - 12 : banner.x + banner.width + 12
+            y: (banner.height - height) / 2 + (shown ? 22 : -10)
+            opacity: shown ? 1 : 0
+            scale: shown ? 1 : 0.72
+            color: utilityMouse.containsMouse ? theme.surfaceRaised : theme.surface
+            border.color: theme.border
+            border.width: 1
+            z: 3
+            visible: opacity > 0.01
+
+            Behavior on opacity {
+                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+            }
+            Behavior on y {
+                NumberAnimation { duration: 280; easing.type: Easing.OutCubic }
+            }
+            Behavior on scale {
+                NumberAnimation { duration: 260; easing.type: Easing.OutBack }
+            }
+
+            Text {
+                anchors.centerIn: parent
+                text: utilityButton.modelData.symbol
+                color: theme.text
+                font.pixelSize: utilityButton.modelData.label === "Settings" ? 22 : 20
+            }
+
+            MouseArea {
+                id: utilityMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (utilityButton.modelData.label === "Profile")
+                        root.profileRequested()
+                    else
+                        root.settingsRequested()
                 }
             }
         }
