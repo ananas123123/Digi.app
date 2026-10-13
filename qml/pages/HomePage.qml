@@ -26,6 +26,13 @@ Item {
             spacing: 18
 
             ColumnLayout {
+                id: homeHeading
+                property bool entered: false
+                opacity: entered ? 1 : 0
+                transform: Translate { y: homeHeading.entered ? 0 : 18 }
+                Behavior on opacity { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+                Behavior on transform { enabled: false }
+                Timer { interval: 40; running: true; onTriggered: homeHeading.entered = true }
                 spacing: 4
                 Text {
                     text: "Home"
@@ -41,6 +48,12 @@ Item {
             }
 
             Text {
+                id: continueHeading
+                property bool entered: false
+                opacity: entered ? 1 : 0
+                transform: Translate { y: continueHeading.entered ? 0 : 16 }
+                Behavior on opacity { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+                Timer { interval: 150; running: true; onTriggered: continueHeading.entered = true }
                 text: "Continue where you left off"
                 color: theme.text
                 font.pixelSize: 17
@@ -48,6 +61,12 @@ Item {
             }
 
             Rectangle {
+                id: continueCard
+                property bool entered: false
+                opacity: entered ? 1 : 0
+                transform: Translate { y: continueCard.entered ? 0 : 22 }
+                Behavior on opacity { NumberAnimation { duration: 520; easing.type: Easing.OutCubic } }
+                Timer { interval: 250; running: true; onTriggered: continueCard.entered = true }
                 Layout.fillWidth: true
                 Layout.preferredHeight: 160
                 radius: 16
@@ -131,6 +150,12 @@ Item {
             }
 
             Text {
+                id: quickHeading
+                property bool entered: false
+                opacity: entered ? 1 : 0
+                transform: Translate { y: quickHeading.entered ? 0 : 16 }
+                Behavior on opacity { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+                Timer { interval: 390; running: true; onTriggered: quickHeading.entered = true }
                 text: "Quick access"
                 color: theme.text
                 font.pixelSize: 17
@@ -153,6 +178,12 @@ Item {
                     delegate: Rectangle {
                         id: quickCard
                         required property var modelData
+                        required property int index
+                        property bool entered: false
+                        opacity: entered ? 1 : 0
+                        transform: Translate { y: quickCard.entered ? 0 : 20 }
+                        Behavior on opacity { NumberAnimation { duration: 440; easing.type: Easing.OutCubic } }
+                        Timer { interval: 470 + quickCard.index * 85; running: true; onTriggered: quickCard.entered = true }
                         Layout.fillWidth: true
                         Layout.preferredHeight: 76
                         radius: 13
@@ -212,6 +243,12 @@ Item {
             }
 
             RowLayout {
+                id: bottomShortcuts
+                property bool entered: false
+                opacity: entered ? 1 : 0
+                transform: Translate { y: bottomShortcuts.entered ? 0 : 18 }
+                Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+                Timer { interval: 850; running: true; onTriggered: bottomShortcuts.entered = true }
                 Layout.fillWidth: true
                 spacing: 12
 
