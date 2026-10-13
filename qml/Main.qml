@@ -25,6 +25,7 @@ ApplicationWindow {
         spacing: 0
 
         Rectangle {
+            id: titleBar
             Layout.fillWidth: true
             Layout.preferredHeight: 38
             z: 20
@@ -32,45 +33,65 @@ ApplicationWindow {
             border.color: theme.border
             border.width: 1
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 8
-                spacing: 8
-
-                MouseArea {
-                    Layout.preferredWidth: 34
-                    Layout.fillHeight: true
-                    onClicked: window.showMinimized()
-                    Text { anchors.centerIn: parent; text: "—"; color: theme.text; font.pixelSize: 14 }
-                }
-
-                MouseArea {
-                    Layout.preferredWidth: 34
-                    Layout.fillHeight: true
-                    onClicked: window.visibility === Window.Maximized ? window.showNormal() : window.showMaximized()
-                    Text { anchors.centerIn: parent; text: window.visibility === Window.Maximized ? "❐" : "□"; color: theme.text; font.pixelSize: 13 }
-                }
-
-                MouseArea {
-                    Layout.preferredWidth: 34
-                    Layout.fillHeight: true
-                    onClicked: window.close()
-                    Rectangle {
-                        anchors.fill: parent
-                        color: parent.containsMouse ? "#b94a4a" : "transparent"
-                    }
-                    Text { anchors.centerIn: parent; text: "×"; color: theme.text; font.pixelSize: 19 }
-                    hoverEnabled: true
-                }
-            }
-
+            // Drag only the empty title-bar area; keep the controls independent.
             MouseArea {
                 anchors.fill: parent
-                anchors.rightMargin: 110
+                anchors.rightMargin: 126
                 z: 1
                 onPressed: window.startSystemMove()
                 onDoubleClicked: window.visibility === Window.Maximized ? window.showNormal() : window.showMaximized()
+            }
+
+            Row {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                spacing: 0
+                z: 2
+
+                Rectangle {
+                    width: 42
+                    height: titleBar.height
+                    color: minimizeArea.containsMouse ? theme.surfaceRaised : "transparent"
+                    MouseArea {
+                        id: minimizeArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: window.showMinimized()
+                    }
+                    Text { anchors.centerIn: parent; text: "—"; color: theme.text; font.pixelSize: 14 }
+                }
+
+                Rectangle {
+                    width: 42
+                    height: titleBar.height
+                    color: maximizeArea.containsMouse ? theme.surfaceRaised : "transparent"
+                    MouseArea {
+                        id: maximizeArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: window.visibility === Window.Maximized ? window.showNormal() : window.showMaximized()
+                    }
+                    Text {
+                        anchors.centerIn: parent
+                        text: window.visibility === Window.Maximized ? "❐" : "□"
+                        color: theme.text
+                        font.pixelSize: 13
+                    }
+                }
+
+                Rectangle {
+                    width: 46
+                    height: titleBar.height
+                    color: closeArea.containsMouse ? "#b94a4a" : "transparent"
+                    MouseArea {
+                        id: closeArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: window.close()
+                    }
+                    Text { anchors.centerIn: parent; text: "×"; color: theme.text; font.pixelSize: 19 }
+                }
             }
         }
 
