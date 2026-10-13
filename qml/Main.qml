@@ -21,12 +21,18 @@ ApplicationWindow {
 
     RowLayout {
         anchors.fill: parent
-        spacing: 0
+        anchors.leftMargin: 8
+        anchors.rightMargin: 8
+        anchors.topMargin: 8
+        anchors.bottomMargin: 8
+        spacing: 10
 
         SideBar {
             Layout.fillHeight: true
             activePage: window.activePage
             onPageSelected: function(pageName) { window.activePage = pageName }
+            radius: 14
+            clip: true
         }
 
         ColumnLayout {
