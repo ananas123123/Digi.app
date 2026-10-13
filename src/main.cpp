@@ -1,8 +1,10 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QCoreApplication>
-#include <QDir>
-#include <QUrl>
+#include <QDebug>
+
+#include "app/AppServices.h"
+#include "documents/DocumentService.h"
 
 int main(int argc, char *argv[])
 {
@@ -10,8 +12,12 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("Digi");
     QCoreApplication::setOrganizationName("Digi");
 
+    AppServices appServices;
+    DocumentService documentService;
+
     QQmlApplicationEngine engine;
-    const QUrl mainUrl(QStringLiteral("qrc:/qt/qml/Digi/qml/Main.qml"));
+    engine.rootContext()->setContextProperty("appServices", &appServices);
+    engine.rootContext()->setContextProperty("documentService", &documentService);
 
     QObject::connect(
         &engine,
@@ -20,6 +26,6 @@ int main(int argc, char *argv[])
         []() { QCoreApplication::exit(EXIT_FAILURE); },
         Qt::QueuedConnection);
 
-    engine.load(mainUrl);
+    engine.loadFromModule("Digi", "Main");
     return app.exec();
 }
