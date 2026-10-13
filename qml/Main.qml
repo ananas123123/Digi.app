@@ -192,6 +192,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 60
                     radius: 15
+                    clip: true
                     color: searchInput.activeFocus ? "#D9363636" : "#A6292929"
                     border.width: searchInput.activeFocus ? 1.5 : 1
                     border.color: searchInput.activeFocus ? "#B8D8BD72" : "#55FFFFFF"
@@ -228,20 +229,6 @@ ApplicationWindow {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {} // Intentionally non-functional placeholder.
                         }
-                    }
-
-                    // Subtle glass reflection: a soft top-edge highlight without obscuring input.
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.leftMargin: 2
-                        anchors.rightMargin: 2
-                        anchors.topMargin: 1
-                        height: 1
-                        radius: 1
-                        color: "#38FFFFFF"
-                        z: 1
                     }
 
                     Rectangle {
@@ -370,8 +357,8 @@ ApplicationWindow {
                             height: excerpt.length > 0 ? 98 : 68
                             radius: 8
                             color: searchRoot.selectedResultPath === path ? "#332A2110" : (resultMouse.containsMouse ? searchTheme.surfaceRaised : "transparent")
-                            border.width: searchRoot.selectedResultPath === path ? 1 : 0
-                            border.color: searchRoot.selectedResultPath === path ? "#A6D8BD72" : "transparent"
+                            border.width: 1
+                            border.color: searchRoot.selectedResultPath === path ? "#A6D8BD72" : "#24FFFFFF"
 
                             Column {
                                 anchors.fill: parent
