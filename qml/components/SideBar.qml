@@ -11,13 +11,15 @@ Rectangle {
 
     Layout.fillWidth: true
     Layout.preferredHeight: 64
+    Layout.leftMargin: 300
+    Layout.rightMargin: 300
     color: theme.surface
     border.color: theme.border
     border.width: 1
     radius: 14
     topLeftRadius: 0
-    topRightRadius: 14
-    bottomLeftRadius: 0
+    topRightRadius: 0
+    bottomLeftRadius: 14
     bottomRightRadius: 14
 
     RowLayout {
