@@ -187,8 +187,9 @@ Item {
         id: pinchHandler
         target: null
         acceptedDevices: PointerDevice.TouchScreen
-        minimumScale: 0.25
-        maximumScale: 8.0
+        // This handler reports gesture-relative scale; root.zoom applies the document limits.
+        minimumScale: 0.01
+        maximumScale: 100.0
         minimumPointCount: 2
         maximumPointCount: 2
 
