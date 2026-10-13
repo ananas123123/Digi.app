@@ -16,6 +16,38 @@ Item {
         return Math.max(minZoom, Math.min(maxZoom, value))
     }
 
+    function addDrawingPoint(position) {
+        const p = drawingInput.centroid.position
+        const mapped = drawingInput.centroid.scenePosition
+        const localPoint = drawingCanvas.mapFromItem(null, mapped.x, mapped.y)
+        const next = root.activeStroke.slice()
+        next.push({ x: localPoint.x, y: localPoint.y })
+        root.activeStroke = next
+
+        const edgeMargin = 180
+        let growWidth = drawingCanvas.width
+        let growHeight = drawingCanvas.height
+        if (localPoint.x > drawingCanvas.width - edgeMargin)
+            growWidth = drawingCanvas.width + 1200
+        if (localPoint.y > drawingCanvas.height - edgeMargin)
+            growHeight = drawingCanvas.height + 900
+        if (growWidth !== drawingCanvas.width || growHeight !== drawingCanvas.height) {
+            drawingCanvas.width = growWidth
+            drawingCanvas.height = growHeight
+        }
+        drawingCanvas.requestPaint()
+    }
+
+    function finishStroke() {
+        if (root.activeStroke.length > 0) {
+            const nextStrokes = root.strokes.slice()
+            nextStrokes.push(root.activeStroke)
+            root.strokes = nextStrokes
+            root.activeStroke = []
+            drawingCanvas.requestPaint()
+        }
+    }
+
     Flickable {
         id: canvasViewport
         anchors.fill: parent
@@ -23,7 +55,7 @@ Item {
         contentHeight: Math.max(height, drawingCanvas.height * root.zoom)
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.HorizontalAndVerticalFlick
-        interactive: !drawingArea.pressed && !pinchHandler.active && !touchPanHandler.active
+        interactive: !drawingInput.active && !pinchHandler.active && !touchPanHandler.active
         clip: true
 
         Item {
@@ -71,56 +103,27 @@ Item {
                         ctx.stroke()
                     }
                 }
+            }
+        }
 
-                MouseArea {
-                    id: drawingArea
-                    anchors.fill: parent
-                    acceptedButtons: Qt.LeftButton
-                    acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
-                    hoverEnabled: false
-                    preventStealing: false
+        DragHandler {
+            id: drawingInput
+            target: null
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
+            dragThreshold: 0
 
-                    onPressed: function(mouse) {
-                        const p = mapToItem(drawingCanvas, mouse.x, mouse.y)
-                        root.activeStroke = [{ x: p.x, y: p.y }]
-                        drawingCanvas.requestPaint()
-                    }
-
-                    onPositionChanged: function(mouse) {
-                        if (!pressed)
-                            return
-                        const p = mapToItem(drawingCanvas, mouse.x, mouse.y)
-                        const next = root.activeStroke.slice()
-                        next.push({ x: p.x, y: p.y })
-                        root.activeStroke = next
-
-                        const edgeMargin = 180
-                        let growWidth = drawingCanvas.width
-                        let growHeight = drawingCanvas.height
-                        if (p.x > drawingCanvas.width - edgeMargin)
-                            growWidth = drawingCanvas.width + 1200
-                        if (p.y > drawingCanvas.height - edgeMargin)
-                            growHeight = drawingCanvas.height + 900
-                        if (growWidth !== drawingCanvas.width || growHeight !== drawingCanvas.height) {
-                            drawingCanvas.width = growWidth
-                            drawingCanvas.height = growHeight
-                        }
-                        drawingCanvas.requestPaint()
-                    }
-
-                    onReleased: finishStroke()
-                    onCanceled: finishStroke()
-
-                    function finishStroke() {
-                        if (root.activeStroke.length > 0) {
-                            const nextStrokes = root.strokes.slice()
-                            nextStrokes.push(root.activeStroke)
-                            root.strokes = nextStrokes
-                            root.activeStroke = []
-                            drawingCanvas.requestPaint()
-                        }
-                    }
+            onActiveChanged: {
+                if (active) {
+                    root.activeStroke = []
+                    addDrawingPoint(centroid.position)
+                } else {
+                    finishStroke()
                 }
+            }
+
+            onCentroidChanged: {
+                if (active)
+                    addDrawingPoint(centroid.position)
             }
         }
 
@@ -144,9 +147,6 @@ Item {
                     startContentX = canvasViewport.contentX
                     startContentY = canvasViewport.contentY
                     startCentroid = centroid.position
-                    drawingArea.enabled = false
-                } else {
-                    drawingArea.enabled = true
                 }
             }
 
@@ -169,16 +169,13 @@ Item {
             target: null
             acceptedDevices: PointerDevice.TouchScreen | PointerDevice.TouchPad
             dragThreshold: 8
+            maximumPointCount: 1
 
             property point lastTranslation
 
             onActiveChanged: {
-                if (active) {
+                if (active)
                     lastTranslation = translation
-                    drawingArea.enabled = false
-                } else {
-                    drawingArea.enabled = true
-                }
             }
 
             onTranslationChanged: {
