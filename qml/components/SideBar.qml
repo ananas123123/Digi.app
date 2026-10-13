@@ -49,26 +49,54 @@ Item {
 
             Repeater {
                 model: [
-                    { label: "Home", symbol: "⌂" },
-                    { label: "Search", symbol: "⌕" },
-                    { label: "Notes", symbol: "✎" },
-                    { label: "Timer", symbol: "◷" },
-                    { label: "Resources", symbol: "▤" },
-                    { label: "Analytics", symbol: "▥" },
-                    { label: "Doc", symbol: "▤" }
+                    { label: "Home", symbol: "⌂", revealDelay: 320 },
+                    { label: "Search", symbol: "⌕", revealDelay: 220 },
+                    { label: "Notes", symbol: "✎", revealDelay: 120 },
+                    { label: "Timer", symbol: "◷", revealDelay: 0 },
+                    { label: "Resources", symbol: "▤", revealDelay: 120 },
+                    { label: "Analytics", symbol: "▥", revealDelay: 220 },
+                    { label: "Doc", symbol: "▤", revealDelay: 320 }
                 ]
 
                 delegate: Button {
                     id: navButton
                     required property var modelData
+                    property bool revealed: false
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    opacity: revealed ? 1 : 0
+                    scale: revealed ? (hovered ? 1.045 : 1) : 0.88
+                    y: revealed ? 0 : 10
+                    visible: root.bannerOpen || opacity > 0.01
+                    onVisibleChanged: {
+                        if (visible && root.bannerOpen)
+                            revealTimer.restart()
+                    }
+                    Connections {
+                        target: root
+                        function onBannerOpenChanged() {
+                            if (root.bannerOpen) {
+                                navButton.visible = true
+                                revealTimer.restart()
+                            } else {
+                                revealTimer.stop()
+                                navButton.revealed = false
+                            }
+                        }
+                    }
+                    Timer {
+                        id: revealTimer
+                        interval: navButton.modelData.revealDelay
+                        repeat: false
+                        onTriggered: navButton.revealed = root.bannerOpen
+                    }
+                    Behavior on opacity { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                    Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }
+                    Behavior on y { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
                     Layout.margins: 2
                     flat: true
                     onClicked: root.pageSelected(modelData.label)
-                    scale: hovered ? 1.045 : 1
                     z: hovered ? 5 : 0
-                    Behavior on scale { NumberAnimation { duration: 170; easing.type: Easing.OutBack } }
                     TapHandler {
                         acceptedDevices: PointerDevice.Stylus
                         onTapped: root.pageSelected(navButton.modelData.label)
