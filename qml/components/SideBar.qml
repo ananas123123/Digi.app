@@ -167,8 +167,8 @@ Item {
         }
     }
 
-    // The handle moves immediately with the banner; only the four navigation
-    // cards use staggered timing.
+    // No independent animation here: the handle's position is bound directly
+    // to the animated banner, so it cannot lag behind it.
     Rectangle {
         id: revealTab
         width: 64
@@ -178,7 +178,6 @@ Item {
         x: (root.width - width) / 2
         y: root.bannerOpen ? banner.y + banner.height - 1 : 0
         z: 2
-        Behavior on y { NumberAnimation { duration: 250; easing.type: Easing.InOutCubic } }
 
         Column {
             anchors.centerIn: parent
