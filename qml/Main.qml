@@ -562,51 +562,58 @@ ApplicationWindow {
 
                     Rectangle {
                         id: previewPanel
-                        anchors.left: resultsArea.left
-                        anchors.leftMargin: resultsArea.width * 0.46
-                        anchors.right: resultsArea.right
-                        anchors.top: resultsArea.top
-                        anchors.bottom: resultsArea.bottom
-                        anchors.bottomMargin: 8
-                        z: 10
+                        parent: searchRoot
+                        property bool previewMaximized: false
+                        x: previewMaximized ? 12 : resultsArea.x + resultsArea.width * 0.46
+                        y: previewMaximized ? 12 : resultsArea.y
+                        width: previewMaximized ? searchRoot.width - 24 : resultsArea.width * 0.54
+                        height: previewMaximized ? searchRoot.height - 24 : resultsArea.height - 8
+                        z: 20
                         visible: searchRoot.selectedResultPath.length > 0
                         opacity: visible ? 1 : 0
                         scale: visible ? 1 : 0.96
                         radius: 12
-                        color: "#B8292929"
+                        color: "#F0292929"
                         border.color: "#55FFFFFF"
                         border.width: 1
                         clip: true
-                        Behavior on opacity { NumberAnimation { duration: 650; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 800; easing.type: Easing.OutExpo } }
+                        Behavior on opacity { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
+                        Behavior on x { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
+                        Behavior on width { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
+                        Behavior on height { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
 
                         ColumnLayout {
                             anchors.fill: parent
-                            anchors.margins: 16
-                            spacing: 10
+                            anchors.margins: 10
+                            spacing: 6
 
-                            Text {
+                            RowLayout {
                                 Layout.fillWidth: true
-                                text: searchRoot.selectedResultPath.split("/").pop().split("\\\\").pop()
-                                color: "#F0D78C"
-                                font.pixelSize: 16
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
-                            }
+                                Layout.preferredHeight: 30
+                                Item { Layout.fillWidth: true }
 
-                            Text {
-                                Layout.fillWidth: true
-                                text: searchRoot.selectedResultPath
-                                color: searchTheme.mutedText
-                                opacity: 0.7
-                                font.pixelSize: 10
-                                wrapMode: Text.WrapAnywhere
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                height: 1
-                                color: "#24FFFFFF"
+                                Button {
+                                    id: previewMaximizeButton
+                                    Layout.preferredWidth: 30
+                                    Layout.preferredHeight: 30
+                                    text: previewPanel.previewMaximized ? "❐" : "□"
+                                    flat: true
+                                    onClicked: previewPanel.previewMaximized = !previewPanel.previewMaximized
+                                    background: Rectangle {
+                                        radius: 7
+                                        color: previewMaximizeButton.hovered ? searchTheme.surfaceRaised : "transparent"
+                                        border.color: previewMaximizeButton.hovered ? searchTheme.border : "transparent"
+                                    }
+                                    contentItem: Text {
+                                        text: previewMaximizeButton.text
+                                        color: searchTheme.text
+                                        font.pixelSize: 15
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                }
                             }
 
                             ScrollView {
