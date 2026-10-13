@@ -23,14 +23,13 @@ Item {
         contentHeight: Math.max(height, drawingCanvas.height * root.zoom)
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.HorizontalAndVerticalFlick
-        interactive: !drawingArea.pressed && !pinchHandler.active
+        interactive: !drawingArea.pressed && !pinchHandler.active && !touchPanHandler.active
         clip: true
 
         Item {
             id: zoomLayer
             width: drawingCanvas.width * root.zoom
             height: drawingCanvas.height * root.zoom
-            scale: 1
             transformOrigin: Item.TopLeft
 
             Canvas {
@@ -77,8 +76,9 @@ Item {
                     id: drawingArea
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
                     hoverEnabled: false
-                    preventStealing: true
+                    preventStealing: false
 
                     onPressed: function(mouse) {
                         const p = mapToItem(drawingCanvas, mouse.x, mouse.y)
@@ -127,18 +127,23 @@ Item {
         PinchHandler {
             id: pinchHandler
             target: null
+            acceptedDevices: PointerDevice.TouchScreen | PointerDevice.TouchPad
             minimumScale: root.minZoom
             maximumScale: root.maxZoom
             minimumPointCount: 2
             maximumPointCount: 2
 
             property real startingZoom: 1
-            property point startingContentPosition
+            property real startContentX: 0
+            property real startContentY: 0
+            property point startCentroid
 
             onActiveChanged: {
                 if (active) {
                     startingZoom = root.zoom
-                    startingContentPosition = Qt.point(canvasViewport.contentX, canvasViewport.contentY)
+                    startContentX = canvasViewport.contentX
+                    startContentY = canvasViewport.contentY
+                    startCentroid = centroid.position
                     drawingArea.enabled = false
                 } else {
                     drawingArea.enabled = true
@@ -148,14 +153,13 @@ Item {
             onScaleChanged: {
                 if (!active)
                     return
-                const oldZoom = root.zoom
                 const nextZoom = root.clampZoom(startingZoom * scale)
                 const center = centroid.position
-                const contentXAtCenter = canvasViewport.contentX + center.x
-                const contentYAtCenter = canvasViewport.contentY + center.y
+                const anchorX = (startContentX + startCentroid.x) / startingZoom
+                const anchorY = (startContentY + startCentroid.y) / startingZoom
                 root.zoom = nextZoom
-                canvasViewport.contentX = Math.max(0, contentXAtCenter * nextZoom / oldZoom - center.x)
-                canvasViewport.contentY = Math.max(0, contentYAtCenter * nextZoom / oldZoom - center.y)
+                canvasViewport.contentX = Math.max(0, anchorX * nextZoom - center.x)
+                canvasViewport.contentY = Math.max(0, anchorY * nextZoom - center.y)
                 drawingCanvas.requestPaint()
             }
         }
@@ -165,19 +169,28 @@ Item {
             target: null
             acceptedDevices: PointerDevice.TouchScreen | PointerDevice.TouchPad
             dragThreshold: 8
+
+            property point lastTranslation
+
             onActiveChanged: {
-                if (active)
+                if (active) {
+                    lastTranslation = translation
                     drawingArea.enabled = false
-                else
+                } else {
                     drawingArea.enabled = true
+                }
             }
+
             onTranslationChanged: {
                 if (!active)
                     return
+                const dx = translation.x - lastTranslation.x
+                const dy = translation.y - lastTranslation.y
+                lastTranslation = translation
                 canvasViewport.contentX = Math.max(0, Math.min(canvasViewport.contentWidth - canvasViewport.width,
-                                                              canvasViewport.contentX - translation.x))
+                                                              canvasViewport.contentX - dx))
                 canvasViewport.contentY = Math.max(0, Math.min(canvasViewport.contentHeight - canvasViewport.height,
-                                                              canvasViewport.contentY - translation.y))
+                                                              canvasViewport.contentY - dy))
             }
         }
     }
