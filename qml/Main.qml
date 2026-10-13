@@ -52,7 +52,7 @@ ApplicationWindow {
 
     Component {
         id: homePage
-        HomePage { onCreateNoteRequested: window.activePage = "Notes" }
+        HomePage {}
     }
     Component { id: notesPage; NotesPage {} }
     Component {
