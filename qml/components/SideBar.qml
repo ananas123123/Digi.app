@@ -7,7 +7,9 @@ Item {
     id: root
     property string activePage: "Home"
     signal pageSelected(string pageName)
-    property bool bannerHovered: hoverArea.containsMouse
+    property bool bannerHovered: false
+    property bool pointerInside: hoverArea.containsMouse || bannerHover.containsMouse
+    property bool hidePending: false
     Theme { id: theme }
 
     Layout.fillWidth: true
@@ -15,6 +17,26 @@ Item {
     Layout.leftMargin: 300
     Layout.rightMargin: 300
     z: 10
+    clip: false
+
+    Timer {
+        id: hideTimer
+        interval: 2000
+        repeat: false
+        onTriggered: {
+            if (!root.pointerInside)
+                root.bannerHovered = false
+        }
+    }
+
+    function updateHoverState() {
+        if (pointerInside) {
+            hideTimer.stop()
+            bannerHovered = true
+        } else {
+            hideTimer.restart()
+        }
+    }
 
     Rectangle {
         id: banner
@@ -30,6 +52,7 @@ Item {
         topRightRadius: 0
         bottomLeftRadius: 14
         bottomRightRadius: 14
+        clip: false
 
         Behavior on y {
             NumberAnimation { duration: 190; easing.type: Easing.OutCubic }
@@ -92,17 +115,26 @@ Item {
                 }
             }
         }
+
+        MouseArea {
+            id: bannerHover
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+            z: -1
+            onContainsMouseChanged: root.updateHoverState()
+        }
     }
 
-    // This fixed hit area remains at the top while the banner slides down.
     MouseArea {
         id: hoverArea
         x: 0
         y: 0
         width: root.width
-        height: 76
+        height: 38
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
         z: 2
+        onContainsMouseChanged: root.updateHoverState()
     }
 }
