@@ -315,24 +315,23 @@ ApplicationWindow {
                     }
                 }
 
-                RowLayout {
+                Item {
                     id: resultsArea
                     Layout.fillWidth: true
                     Layout.preferredHeight: 260
-                    spacing: 14
                     visible: searchRoot.hasSearched
 
                     Rectangle {
                     id: resultsPanel
-                    Layout.fillWidth: !searchRoot.selectedResultPath
-                    Layout.preferredWidth: searchRoot.selectedResultPath ? resultsArea.width * 0.42 : resultsArea.width
-                    Layout.preferredHeight: 260
+                    x: 0
+                    width: searchRoot.selectedResultPath ? resultsArea.width * 0.42 : resultsArea.width
+                    height: 260
                     radius: 12
                     color: searchTheme.surface
                     border.color: searchTheme.border
                     border.width: 1
                     clip: true
-                    Behavior on Layout.preferredWidth { NumberAnimation { duration: 650; easing.type: Easing.OutExpo } }
+                    Behavior on width { NumberAnimation { duration: 650; easing.type: Easing.OutExpo } }
 
                     Text {
                         anchors.centerIn: parent
@@ -437,9 +436,9 @@ ApplicationWindow {
 
                     Rectangle {
                         id: previewPanel
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: resultsArea.width * 0.58
-                        Layout.preferredHeight: 260
+                        anchors.right: resultsArea.right
+                        width: resultsArea.width * 0.56
+                        height: 260
                         visible: searchRoot.selectedResultPath.length > 0
                         opacity: visible ? 1 : 0
                         scale: visible ? 1 : 0.96
