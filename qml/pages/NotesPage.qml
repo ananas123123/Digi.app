@@ -17,6 +17,9 @@ Item {
     readonly property color paperBorderColor: "#505050"
     readonly property real minZoom: 0.25
     readonly property real maxZoom: 8.0
+    // A modest sensitivity curve makes ordinary finger movement produce
+    // a more noticeable zoom without changing the absolute zoom limits.
+    readonly property real pinchSensitivity: 1.35
 
     function clampZoom(value) {
         return Math.max(minZoom, Math.min(maxZoom, value))
@@ -204,7 +207,9 @@ Item {
             // mixing a gesture-start scale/centroid with a later centroid,
             // which caused jumps when Qt updated the two values separately.
             const center = root.viewportPointFromScene(centroid.scenePosition)
-            const scaleRatio = scale / Math.max(0.0001, previousGestureScale)
+            const rawScaleRatio = scale / Math.max(0.0001, previousGestureScale)
+            const scaleRatio = Math.pow(Math.max(0.01, rawScaleRatio),
+                                        root.pinchSensitivity)
             const oldZoom = root.zoom
             const nextZoom = root.clampZoom(oldZoom * scaleRatio)
 
