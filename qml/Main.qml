@@ -137,6 +137,9 @@ ApplicationWindow {
             property bool hasQuery: searchInput.text.trim().length > 0
             property bool hasSearched: false
             property var results: []
+            property int currentPage: 0
+            readonly property int resultsPerPage: 20
+            readonly property var pageResults: results.slice(currentPage * resultsPerPage, (currentPage + 1) * resultsPerPage)
             property string selectedResultPath: ""
             property string previewText: ""
 
@@ -271,6 +274,7 @@ ApplicationWindow {
                             verticalAlignment: TextInput.AlignVCenter
                             onAccepted: {
                                 searchRoot.results = searchService.search(text)
+                                searchRoot.currentPage = 0
                                 searchRoot.selectedResultPath = ""
                                 searchRoot.hasSearched = true
                                 searchInput.focus = false
@@ -300,6 +304,7 @@ ApplicationWindow {
                                 onClicked: {
                                     searchInput.clear()
                                     searchRoot.results = []
+                                    searchRoot.currentPage = 0
                                     searchRoot.selectedResultPath = ""
                                     searchRoot.hasSearched = false
                                     searchInput.forceActiveFocus()
@@ -332,7 +337,7 @@ ApplicationWindow {
                     id: resultsPanel
                     x: 0
                     width: searchRoot.selectedResultPath ? resultsArea.width * 0.42 : resultsArea.width
-                    height: Math.min(resultsList.contentHeight + 16, resultsArea.height)
+                    height: Math.min(resultsList.contentHeight + (searchRoot.results.length > searchRoot.resultsPerPage ? 58 : 16), resultsArea.height)
                     radius: 12
                     color: searchTheme.surface
                     border.color: searchTheme.border
@@ -354,10 +359,11 @@ ApplicationWindow {
                         anchors.right: parent.right
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
+                        anchors.bottomMargin: searchRoot.results.length > searchRoot.resultsPerPage ? 48 : 8
                         anchors.margins: 8
                         spacing: 6
                         clip: true
-                        model: searchRoot.results
+                        model: searchRoot.pageResults
 
                         delegate: Rectangle {
                             required property string name
@@ -438,6 +444,79 @@ ApplicationWindow {
                                 onClicked: {
                                     searchRoot.selectedResultPath = path
                                     searchRoot.previewText = searchService.previewFile(path)
+                                }
+                            }
+                        }
+                    }
+
+                    Row {
+                        id: paginationControls
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        anchors.bottomMargin: 9
+                        height: 30
+                        spacing: 8
+                        visible: searchRoot.results.length > searchRoot.resultsPerPage
+                        z: 2
+
+                        Rectangle {
+                            width: 112
+                            height: 30
+                            radius: 8
+                            color: previousPageMouse.containsMouse && searchRoot.currentPage > 0 ? searchTheme.surfaceRaised : "transparent"
+                            border.width: 1
+                            border.color: searchRoot.currentPage > 0 ? "#40FFFFFF" : "#18FFFFFF"
+                            opacity: searchRoot.currentPage > 0 ? 1 : 0.35
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "‹ Previous page"
+                                color: searchTheme.text
+                                font.pixelSize: 11
+                            }
+
+                            MouseArea {
+                                id: previousPageMouse
+                                anchors.fill: parent
+                                enabled: searchRoot.currentPage > 0
+                                hoverEnabled: true
+                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: {
+                                    searchRoot.currentPage--
+                                    resultsList.contentY = 0
+                                }
+                            }
+                        }
+
+                        Item { width: 1; height: 1 }
+
+                        Rectangle {
+                            width: 100
+                            height: 30
+                            radius: 8
+                            color: nextPageMouse.containsMouse ? searchTheme.surfaceRaised : "transparent"
+                            border.width: 1
+                            border.color: "#40FFFFFF"
+                            visible: searchRoot.currentPage < Math.ceil(searchRoot.results.length / searchRoot.resultsPerPage) - 1
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "Next page ›"
+                                color: searchTheme.text
+                                font.pixelSize: 11
+                            }
+
+                            MouseArea {
+                                id: nextPageMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    searchRoot.currentPage++
+                                    resultsList.contentY = 0
                                 }
                             }
                         }
