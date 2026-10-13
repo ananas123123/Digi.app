@@ -138,6 +138,7 @@ ApplicationWindow {
                            : window.activePage === "Timer" ? timerPage
                            : window.activePage === "Resources" ? resourcesPage
                            : window.activePage === "Analytics" ? analyticsPage
+                           : window.activePage === "Doc" ? docPage
                            : libraryPage
         }
     }
@@ -626,5 +627,6 @@ ApplicationWindow {
     Component { id: timerPage; TimerPage {} }
     Component { id: resourcesPage; ResourcesPage {} }
     Component { id: analyticsPage; AnalyticsPage {} }
+    Component { id: docPage; DocPage {} }
     Component { id: libraryPage; Item {} }
 }
