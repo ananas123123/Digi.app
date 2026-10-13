@@ -104,6 +104,7 @@ ApplicationWindow {
 
         SideBar {
             id: sideBar
+            z: 30
             Layout.fillWidth: true
             activePage: window.activePage
             onPageSelected: function(pageName) {
