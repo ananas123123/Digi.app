@@ -179,6 +179,13 @@ Item {
             }
         }
 
+        // TapHandler explicitly accepts stylus taps as well as mouse clicks.
+        // This keeps the reveal control usable on touchscreen pen devices.
+        TapHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
+            onTapped: root.bannerOpen = !root.bannerOpen
+        }
+
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
