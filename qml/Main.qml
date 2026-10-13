@@ -27,6 +27,7 @@ ApplicationWindow {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 38
+            z: 20
             color: theme.titleBar
             border.color: theme.border
             border.width: 1
@@ -36,14 +37,6 @@ ApplicationWindow {
                 anchors.leftMargin: 12
                 anchors.rightMargin: 8
                 spacing: 8
-
-                Text {
-                    text: "Digi"
-                    color: theme.text
-                    font.pixelSize: 13
-                    Layout.fillWidth: true
-                    verticalAlignment: Text.AlignVCenter
-                }
 
                 MouseArea {
                     Layout.preferredWidth: 34
