@@ -438,10 +438,13 @@ ApplicationWindow {
 
                     Rectangle {
                         id: previewPanel
-                        x: visible ? resultsArea.width * 0.46 : resultsArea.width
-                        y: 0
-                        width: resultsArea.width * 0.52
-                        height: resultsArea.height - 8
+                        anchors.left: resultsArea.left
+                        anchors.leftMargin: resultsArea.width * 0.46
+                        anchors.right: resultsArea.right
+                        anchors.bottom: resultsArea.bottom
+                        anchors.bottomMargin: 8
+                        height: Math.max(260, resultsArea.height - 8)
+                        z: 10
                         visible: searchRoot.selectedResultPath.length > 0
                         opacity: visible ? 1 : 0
                         scale: visible ? 1 : 0.96
@@ -452,7 +455,6 @@ ApplicationWindow {
                         clip: true
                         Behavior on opacity { NumberAnimation { duration: 650; easing.type: Easing.OutCubic } }
                         Behavior on scale { NumberAnimation { duration: 800; easing.type: Easing.OutExpo } }
-                        Behavior on x { NumberAnimation { duration: 800; easing.type: Easing.OutExpo } }
 
                         ColumnLayout {
                             anchors.fill: parent
