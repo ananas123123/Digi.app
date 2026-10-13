@@ -333,11 +333,6 @@ ApplicationWindow {
                     border.width: 1
                     clip: true
                     Behavior on Layout.preferredWidth { NumberAnimation { duration: 650; easing.type: Easing.OutExpo } }
-                    radius: 12
-                    color: searchTheme.surface
-                    border.color: searchTheme.border
-                    border.width: 1
-                    clip: true
 
                     Text {
                         anchors.centerIn: parent
