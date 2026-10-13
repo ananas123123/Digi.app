@@ -52,10 +52,12 @@ Item {
         }
     }
 
-    function zoomAround(nextZoom, centerX, centerY, oldZoom, oldContentX, oldContentY) {
-        // Keep the same document point beneath the gesture centroid.
-        const documentX = (oldContentX + centerX) / oldZoom
-        const documentY = (oldContentY + centerY) / oldZoom
+    function zoomAround(nextZoom, anchorX, anchorY, centerX, centerY,
+                        oldZoom, oldContentX, oldContentY) {
+        // Resolve the document point using the centroid at gesture start,
+        // then keep that same point under the moving centroid on every frame.
+        const documentX = (oldContentX + anchorX) / oldZoom
+        const documentY = (oldContentY + anchorY) / oldZoom
 
         root.zoom = nextZoom
         canvasViewport.contentX = root.clampContentX(documentX * nextZoom - centerX)
@@ -176,6 +178,7 @@ Item {
 
             const nextZoom = root.clampZoom(startingZoom * scale)
             root.zoomAround(nextZoom,
+                            startCentroid.x, startCentroid.y,
                             centroid.position.x, centroid.position.y,
                             startingZoom, startContentX, startContentY)
         }
