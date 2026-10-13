@@ -247,6 +247,7 @@ Item {
         id: drawingInput
         target: null
         acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
+        acceptedPointerTypes: PointerDevice.Generic | PointerDevice.Pen
         dragThreshold: 0
 
         onActiveChanged: {
@@ -264,13 +265,14 @@ Item {
         }
     }
 
-    // The stylus side button is commonly reported as a right-button press.
-    // Drag with that button to remove any complete stroke touched by the eraser.
+    // Route the dedicated eraser tip separately from the normal pen tip.
+    // Some tablets report the barrel/side button as a right-button press too.
     DragHandler {
         id: stylusEraseInput
         target: null
         acceptedDevices: PointerDevice.Stylus
-        acceptedButtons: Qt.RightButton
+        acceptedPointerTypes: PointerDevice.Eraser
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         dragThreshold: 0
 
         onActiveChanged: {
