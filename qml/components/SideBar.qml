@@ -10,7 +10,7 @@ Rectangle {
     Theme { id: theme }
 
     Layout.fillWidth: true
-    Layout.preferredHeight: 64
+    Layout.preferredHeight: 76
     Layout.leftMargin: 300
     Layout.rightMargin: 300
     color: theme.surface
@@ -26,6 +26,8 @@ Rectangle {
         anchors.fill: parent
         anchors.leftMargin: 12
         anchors.rightMargin: 12
+        anchors.topMargin: 8
+        anchors.bottomMargin: 8
         spacing: 8
 
         Repeater {
@@ -37,35 +39,37 @@ Rectangle {
             ]
 
             delegate: Button {
+                id: navButton
                 required property var modelData
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.margins: 5
+                Layout.margins: 2
                 flat: true
                 onClicked: root.pageSelected(modelData.label)
 
                 background: Rectangle {
-                    radius: 8
-                    color: root.activePage === modelData.label
+                    radius: 10
+                    color: root.activePage === navButton.modelData.label
                            ? theme.accent
-                           : (parent.hovered ? theme.surfaceRaised : "transparent")
+                           : (navButton.hovered ? theme.surfaceRaised : "transparent")
+                    border.width: root.activePage === navButton.modelData.label ? 0 : 1
+                    border.color: navButton.hovered ? "#555555" : "#3d3d3d"
                 }
 
                 contentItem: Row {
-                    spacing: 8
                     anchors.centerIn: parent
-
+                    spacing: 10
                     Text {
-                        text: modelData.symbol
-                        color: root.activePage === modelData.label ? theme.accentText : theme.mutedText
-                        font.pixelSize: 18
+                        text: navButton.modelData.symbol
+                        color: root.activePage === navButton.modelData.label ? theme.accentText : theme.mutedText
+                        font.pixelSize: 21
                         verticalAlignment: Text.AlignVCenter
                     }
-
                     Text {
-                        text: modelData.label
-                        color: root.activePage === modelData.label ? theme.accentText : theme.text
-                        font.pixelSize: 14
+                        text: navButton.modelData.label
+                        color: root.activePage === navButton.modelData.label ? theme.accentText : theme.text
+                        font.pixelSize: 17
+                        font.weight: Font.Medium
                         verticalAlignment: Text.AlignVCenter
                     }
                 }
