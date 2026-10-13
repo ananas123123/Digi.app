@@ -16,10 +16,21 @@ ApplicationWindow {
     visible: true
     title: "Digi"
     flags: Qt.Window | Qt.FramelessWindowHint
-    color: theme.window
+    color: "transparent"
 
     Theme { id: theme }
     property string activePage: "Home"
+
+    Rectangle {
+        id: windowSurface
+        anchors.fill: parent
+        radius: 16
+        color: theme.window
+        border.color: theme.border
+        border.width: 1
+        antialiasing: true
+        z: -2
+    }
 
     MouseArea {
         anchors.fill: parent
@@ -29,6 +40,7 @@ ApplicationWindow {
 
     ColumnLayout {
         anchors.fill: parent
+        anchors.margins: 1
         spacing: 0
 
         Rectangle {
