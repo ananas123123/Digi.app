@@ -431,7 +431,10 @@ ApplicationWindow {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: searchRoot.selectedResultPath = path
+                                onClicked: {
+                                    searchRoot.selectedResultPath = path
+                                    searchRoot.previewText = searchService.previewFile(path)
+                                }
                             }
                         }
                     }
