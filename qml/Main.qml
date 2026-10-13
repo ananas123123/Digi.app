@@ -142,7 +142,8 @@ ApplicationWindow {
                 id: searchColumn
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.topMargin: Math.max(90, parent.height * 0.19)
+                anchors.topMargin: searchRoot.hasSearched ? 28 : Math.max(90, parent.height * 0.19)
+                Behavior on anchors.topMargin { NumberAnimation { duration: 420; easing.type: Easing.InOutCubic } }
                 width: Math.min(620, parent.width - 64)
                 spacing: 22
                 opacity: 0
@@ -162,6 +163,8 @@ ApplicationWindow {
                     id: searchHeadingContainer
                     Layout.fillWidth: true
                     implicitHeight: searchContent.implicitHeight
+                    opacity: searchRoot.hasSearched ? 0 : 1
+                    Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.InOutCubic } }
 
                     Column {
                         id: searchContent
@@ -266,17 +269,6 @@ ApplicationWindow {
                         hoverEnabled: true
                         onClicked: searchInput.forceActiveFocus()
                     }
-                }
-
-                Text {
-                    Layout.leftMargin: 3
-                    text: searchRoot.hasSearched
-                          ? searchRoot.results.length + (searchRoot.results.length === 1 ? " result" : " results")
-                          : (searchRoot.hasQuery ? "Press Enter to search" : "Start typing to search")
-                    color: searchTheme.mutedText
-                    font.pixelSize: 12
-                    opacity: 0.75
-                    Behavior on opacity { NumberAnimation { duration: 160 } }
                 }
 
                 Rectangle {
