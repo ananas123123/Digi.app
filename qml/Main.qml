@@ -135,7 +135,8 @@ ApplicationWindow {
             sourceComponent: window.activePage === "Home" ? homePage
                            : window.activePage === "Notes" ? notesPage
                            : window.activePage === "Search" ? searchPage
-                           : window.activePage === "Resources" ? resourcesPage
+                           : window.activePage === "Resources" ? timerPage
+                           : window.activePage === "Analytics" ? analyticsPage
                            : libraryPage
         }
     }
@@ -621,6 +622,7 @@ ApplicationWindow {
 
         }
     }
-    Component { id: resourcesPage; Item {} }
+    Component { id: timerPage; TimerPage {} }
+    Component { id: analyticsPage; Item {} }
     Component { id: libraryPage; Item {} }
 }
