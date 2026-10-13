@@ -111,7 +111,7 @@ Item {
             required property var modelData
             property bool shown: root.bannerOpen
             property bool movementShown: false
-            readonly property int stagger: modelData.side === "left" ? 140 : 140
+            readonly property int stagger: 140
             width: 44
             height: 44
             radius: 13
@@ -167,6 +167,8 @@ Item {
         }
     }
 
+    // The handle moves immediately with the banner; only the four navigation
+    // cards use staggered timing.
     Rectangle {
         id: revealTab
         width: 64
