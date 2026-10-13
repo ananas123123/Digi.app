@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
+import QtQuick.Effects
 import "components"
 import "pages"
 import "themes"
@@ -113,8 +114,15 @@ ApplicationWindow {
         }
 
         Loader {
+            id: pageLoader
             Layout.fillWidth: true
             Layout.fillHeight: true
+            layer.enabled: sideBar.bannerOpen
+            layer.effect: MultiEffect {
+                blurEnabled: sideBar.bannerOpen
+                blur: sideBar.bannerOpen ? 0.42 : 0
+                blurMax: 18
+            }
             sourceComponent: window.activePage === "Home" ? homePage
                            : window.activePage === "Notes" ? notesPage
                            : window.activePage === "Search" ? searchPage
