@@ -320,8 +320,9 @@ ApplicationWindow {
                 Item {
                     id: resultsArea
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.minimumHeight: 300
+                    Layout.fillHeight: searchRoot.hasSearched
+                    Layout.preferredHeight: searchRoot.hasSearched ? 1 : 0
+                    Layout.minimumHeight: searchRoot.hasSearched ? 300 : 0
                     Layout.topMargin: 0
                     Layout.bottomMargin: 0
                     visible: searchRoot.hasSearched
