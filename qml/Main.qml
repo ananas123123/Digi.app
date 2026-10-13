@@ -137,6 +137,7 @@ ApplicationWindow {
             property bool hasQuery: searchInput.text.trim().length > 0
             property bool hasSearched: false
             property var results: []
+            property string selectedResultPath: ""
 
             ColumnLayout {
                 id: searchColumn
@@ -144,7 +145,7 @@ ApplicationWindow {
                 anchors.top: parent.top
                 anchors.topMargin: searchRoot.hasSearched ? 0 : Math.max(90, parent.height * 0.19)
                 Behavior on anchors.topMargin { NumberAnimation { duration: 850; easing.type: Easing.OutExpo } }
-                width: Math.min(620, parent.width - 64)
+                width: Math.min(900, parent.width - 64)
                 spacing: 22
                 opacity: 0
                 y: 14
@@ -280,6 +281,7 @@ ApplicationWindow {
                             verticalAlignment: TextInput.AlignVCenter
                             onAccepted: {
                                 searchRoot.results = searchService.search(text)
+                                searchRoot.selectedResultPath = ""
                                 searchRoot.hasSearched = true
                                 searchInput.focus = false
                             }
@@ -308,6 +310,7 @@ ApplicationWindow {
                                 onClicked: {
                                     searchInput.clear()
                                     searchRoot.results = []
+                                    searchRoot.selectedResultPath = ""
                                     searchRoot.hasSearched = false
                                     searchInput.forceActiveFocus()
                                 }
@@ -356,6 +359,7 @@ ApplicationWindow {
                             required property string relativePath
                             required property string matchType
                             required property string excerpt
+                            required property string path
                             property string folderName: {
                                 var normalizedPath = relativePath.split("\\\\").join("/")
                                 var parts = normalizedPath.split("/")
@@ -365,7 +369,9 @@ ApplicationWindow {
                             width: resultsList.width
                             height: excerpt.length > 0 ? 98 : 68
                             radius: 8
-                            color: resultMouse.containsMouse ? searchTheme.surfaceRaised : "transparent"
+                            color: searchRoot.selectedResultPath === path ? "#332A2110" : (resultMouse.containsMouse ? searchTheme.surfaceRaised : "transparent")
+                            border.width: searchRoot.selectedResultPath === path ? 1 : 0
+                            border.color: searchRoot.selectedResultPath === path ? "#A6D8BD72" : "transparent"
 
                             Column {
                                 anchors.fill: parent
@@ -382,8 +388,8 @@ ApplicationWindow {
                                     Text {
                                         width: parent.width - matchBadge.width - 8
                                         textFormat: Text.RichText
-                                        text: "<span style='color:#8F" + searchTheme.mutedText.toString().substring(1) + ";'>" + folderName + " /</span> <b>" + name + "</b>"
-                                        color: searchTheme.text
+                                        text: searchRoot.selectedResultPath === path ? "<span style='color:#8F" + searchTheme.mutedText.toString().substring(1) + ";'>" + folderName + " /</span> <b>" + name + "</b>" : "<b>" + name + "</b>"
+                                        color: searchRoot.selectedResultPath === path ? "#F0D78C" : searchTheme.text
                                         font.pixelSize: 14
                                         elide: Text.ElideRight
                                     }
@@ -423,7 +429,8 @@ ApplicationWindow {
                                 id: resultMouse
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                z: -1
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: searchRoot.selectedResultPath = path
                             }
                         }
                     }
