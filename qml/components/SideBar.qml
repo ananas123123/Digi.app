@@ -14,8 +14,10 @@ Item {
 
     Layout.fillWidth: true
     Layout.preferredHeight: 0
-    Layout.leftMargin: 300
-    Layout.rightMargin: 300
+    // Let the navigation cards use most of the window width instead of
+    // squeezing six sections into a narrow center strip.
+    Layout.leftMargin: 100
+    Layout.rightMargin: 100
     z: 10
     clip: false
 
@@ -52,7 +54,8 @@ Item {
                     { label: "Notes", symbol: "✎" },
                     { label: "Timer", symbol: "◷" },
                     { label: "Resources", symbol: "▤" },
-                    { label: "Analytics", symbol: "▥" }
+                    { label: "Analytics", symbol: "▥" },
+                    { label: "Doc", symbol: "▤" }
                 ]
 
                 delegate: Button {
