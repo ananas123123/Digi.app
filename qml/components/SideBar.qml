@@ -37,13 +37,13 @@ Item {
         }
     }
 
-    Connections {
-        target: topHover
-        function onHoveredChanged() { root.updateHoverState() }
-    }
-    Connections {
-        target: bannerHover
-        function onHoveredChanged() { root.updateHoverState() }
+    onPointerInsideChanged: {
+        if (pointerInside) {
+            hideTimer.stop()
+            bannerHovered = true
+        } else {
+            hideTimer.restart()
+        }
     }
 
     Rectangle {
