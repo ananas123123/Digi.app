@@ -40,6 +40,63 @@ Item {
         }
         z: 1
 
+        // Subtle edge refraction: bright rim and soft side glints over the glass surface.
+        Rectangle {
+            anchors.fill: parent
+            radius: banner.radius
+            color: "transparent"
+            border.width: 1
+            border.color: "#38FFFFFF"
+            z: 2
+        }
+
+        Rectangle {
+            width: 20
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            radius: 14
+            color: "transparent"
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: "#22FFFFFF" }
+                GradientStop { position: 0.45; color: "#0BFFFFFF" }
+                GradientStop { position: 1.0; color: "#00FFFFFF" }
+            }
+            z: 2
+        }
+
+        Rectangle {
+            width: 20
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            radius: 14
+            color: "transparent"
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: "#00FFFFFF" }
+                GradientStop { position: 0.55; color: "#0BFFFFFF" }
+                GradientStop { position: 1.0; color: "#22FFFFFF" }
+            }
+            z: 2
+        }
+
+        Rectangle {
+            height: 12
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            radius: 14
+            color: "transparent"
+            gradient: Gradient {
+                orientation: Gradient.Vertical
+                GradientStop { position: 0.0; color: "#20FFFFFF" }
+                GradientStop { position: 1.0; color: "#00FFFFFF" }
+            }
+            z: 2
+        }
+
         RowLayout {
             anchors.fill: parent
             anchors.leftMargin: 12
