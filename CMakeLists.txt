@@ -30,6 +30,7 @@ qt_add_qml_module(Digi
         qml/components/WorkspaceCard.qml
         qml/pages/HomePage.qml
         qml/pages/NotesPage.qml
+        qml/pages/TimerPage.qml
         qml/themes/Theme.qml
 )
 
