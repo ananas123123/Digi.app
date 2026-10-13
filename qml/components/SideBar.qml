@@ -34,10 +34,7 @@ Item {
         bottomLeftRadius: 14
         bottomRightRadius: 14
         clip: false
-
-        Behavior on y {
-            NumberAnimation { duration: 250; easing.type: Easing.InOutCubic }
-        }
+        Behavior on y { NumberAnimation { duration: 250; easing.type: Easing.InOutCubic } }
         z: 1
 
         RowLayout {
@@ -66,15 +63,11 @@ Item {
                     onClicked: root.pageSelected(modelData.label)
                     scale: hovered ? 1.045 : 1
                     z: hovered ? 5 : 0
-                    Behavior on scale {
-                        NumberAnimation { duration: 170; easing.type: Easing.OutBack }
-                    }
-
+                    Behavior on scale { NumberAnimation { duration: 170; easing.type: Easing.OutBack } }
                     TapHandler {
                         acceptedDevices: PointerDevice.Stylus
                         onTapped: root.pageSelected(navButton.modelData.label)
                     }
-
                     background: Rectangle {
                         radius: 10
                         color: root.activePage === navButton.modelData.label
@@ -83,12 +76,10 @@ Item {
                         border.width: root.activePage === navButton.modelData.label ? 0 : 1
                         border.color: navButton.hovered ? "#777777" : "#3d3d3d"
                     }
-
                     contentItem: Item {
                         Row {
                             anchors.centerIn: parent
                             spacing: 10
-
                             Text {
                                 text: navButton.modelData.symbol
                                 color: root.activePage === navButton.modelData.label ? theme.accentText : theme.mutedText
@@ -119,53 +110,40 @@ Item {
             id: utilityButton
             required property var modelData
             property bool shown: root.bannerOpen
+            property bool movementShown: false
             readonly property int stagger: modelData.side === "left" ? 90 : 150
             width: 44
             height: 44
             radius: 13
             x: modelData.side === "left" ? banner.x - width - 12 : banner.x + banner.width + 12
-            y: (banner.height - height) / 2 + (shown ? 14 : -18)
-            opacity: shown ? 1 : 0
-            scale: shown ? 1 : 0.72
+            y: (banner.height - height) / 2 + (movementShown ? 14 : -18)
+            opacity: movementShown ? 1 : 0
+            scale: movementShown ? 1 : 0.72
             color: utilityMouse.containsMouse ? theme.surfaceRaised : theme.surface
             border.color: theme.border
             border.width: 1
             z: 3
             visible: root.bannerOpen || opacity > 0.01
 
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 220
-                    easing.type: Easing.OutCubic
-                    onRunningChanged: {
-                        if (!running && !utilityButton.shown)
-                            utilityButton.visible = false
-                    }
+            onShownChanged: {
+                if (shown) {
+                    visible = true
+                    staggerTimer.restart()
+                } else {
+                    staggerTimer.restart()
                 }
-            }
-            Behavior on y {
-                NumberAnimation {
-                    duration: 280
-                    easing.type: Easing.OutCubic
-                    onRunningChanged: {
-                        if (running)
-                            animationTimer.restart()
-                    }
-                }
-            }
-            Behavior on scale {
-                NumberAnimation { duration: 260; easing.type: Easing.OutBack }
             }
 
             Timer {
-                id: animationTimer
+                id: staggerTimer
                 interval: utilityButton.stagger
                 repeat: false
-                onTriggered: {
-                    utilityButton.y = (utilityButton.height - utilityButton.height) / 2
-                                       + (utilityButton.shown ? 14 : -18)
-                }
+                onTriggered: utilityButton.movementShown = utilityButton.shown
             }
+
+            Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+            Behavior on y { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
+            Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack } }
 
             Text {
                 anchors.centerIn: parent
@@ -198,10 +176,7 @@ Item {
         x: (root.width - width) / 2
         y: root.bannerOpen ? banner.y + banner.height - 1 : 0
         z: 2
-
-        Behavior on y {
-            NumberAnimation { duration: 250; easing.type: Easing.InOutCubic }
-        }
+        Behavior on y { NumberAnimation { duration: 250; easing.type: Easing.InOutCubic } }
 
         Column {
             anchors.centerIn: parent
