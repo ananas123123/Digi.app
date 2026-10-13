@@ -50,7 +50,8 @@ Item {
                     { label: "Home", symbol: "⌂" },
                     { label: "Search", symbol: "⌕" },
                     { label: "Notes", symbol: "✎" },
-                    { label: "Resources", symbol: "◷" },
+                    { label: "Timer", symbol: "◷" },
+                    { label: "Resources", symbol: "▤" },
                     { label: "Analytics", symbol: "▥" }
                 ]
 
