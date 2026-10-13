@@ -88,10 +88,6 @@ QString SearchService::previewFile(const QString &path) const
     if (!info.isFile() || !info.isReadable())
         return QStringLiteral("Preview unavailable.");
 
-    constexpr qint64 maxPreviewBytes = 1024 * 1024;
-    if (info.size() > maxPreviewBytes)
-        return QStringLiteral("Preview unavailable for files larger than 1 MB.");
-
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return QStringLiteral("Preview unavailable.");
