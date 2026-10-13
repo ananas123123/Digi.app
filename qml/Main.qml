@@ -624,7 +624,7 @@ ApplicationWindow {
         }
     }
     Component { id: timerPage; TimerPage {} }
-    Component { id: resourcesPage; Item {} }
-    Component { id: analyticsPage; Item {} }
+    Component { id: resourcesPage; ResourcesPage {} }
+    Component { id: analyticsPage; AnalyticsPage {} }
     Component { id: libraryPage; Item {} }
 }
