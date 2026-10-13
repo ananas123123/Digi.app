@@ -13,7 +13,7 @@ Item {
     Theme { id: theme }
 
     Layout.fillWidth: true
-    Layout.preferredHeight: root.bannerOpen ? 76 : 14
+    Layout.preferredHeight: 0
     Layout.leftMargin: 300
     Layout.rightMargin: 300
     z: 10
