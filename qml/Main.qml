@@ -143,7 +143,15 @@ ApplicationWindow {
         }
     }
 
-    Component { id: homePage; HomePage {} }
+    Component {
+        id: homePage
+        HomePage {
+            onOpenPage: function(pageName) {
+                window.activePage = pageName
+                sideBar.bannerOpen = false
+            }
+        }
+    }
     Component { id: notesPage; NotesPage {} }
 
     Component {
