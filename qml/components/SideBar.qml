@@ -11,7 +11,9 @@ Rectangle {
     color: theme.surface
     border.color: theme.border
     border.width: 1
-    radius: 0
+    radius: 14
+    topLeftRadius: 0
+    bottomLeftRadius: 0
 
     Column {
         anchors.fill: parent
