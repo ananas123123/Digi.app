@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import " ../themes"
+import "../themes"
 
 Rectangle {
     id: root
