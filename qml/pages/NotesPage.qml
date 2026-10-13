@@ -192,31 +192,40 @@ Item {
         minimumPointCount: 2
         maximumPointCount: 2
 
-        property real startingZoom: 1
-        property real startContentX: 0
-        property real startContentY: 0
-        property point startCentroid
+        property real previousGestureScale: 1
+        property point previousCenter
 
         function updatePinch() {
             if (!active)
                 return
 
-            // scenePosition avoids assumptions about the handler's parent
-            // coordinate space and matches the viewport used for scroll offsets.
+            // Apply only the change since the previous event. This avoids
+            // mixing a gesture-start scale/centroid with a later centroid,
+            // which caused jumps when Qt updated the two values separately.
             const center = root.viewportPointFromScene(centroid.scenePosition)
-            const nextZoom = root.clampZoom(startingZoom * scale)
-            root.zoomAround(nextZoom,
-                            startCentroid.x, startCentroid.y,
-                            center.x, center.y,
-                            startingZoom, startContentX, startContentY)
+            const scaleRatio = scale / Math.max(0.0001, previousGestureScale)
+            const oldZoom = root.zoom
+            const nextZoom = root.clampZoom(oldZoom * scaleRatio)
+
+            const documentX = (canvasViewport.contentX + previousCenter.x
+                               - root.canvasMargin) / oldZoom
+            const documentY = (canvasViewport.contentY + previousCenter.y
+                               - root.canvasMargin) / oldZoom
+
+            root.zoom = nextZoom
+            canvasViewport.contentX = root.clampContentX(
+                        documentX * nextZoom + root.canvasMargin - center.x)
+            canvasViewport.contentY = root.clampContentY(
+                        documentY * nextZoom + root.canvasMargin - center.y)
+
+            previousGestureScale = scale
+            previousCenter = center
         }
 
         onActiveChanged: {
             if (active) {
-                startingZoom = root.zoom
-                startContentX = canvasViewport.contentX
-                startContentY = canvasViewport.contentY
-                startCentroid = root.viewportPointFromScene(centroid.scenePosition)
+                previousGestureScale = scale
+                previousCenter = root.viewportPointFromScene(centroid.scenePosition)
             }
         }
 
