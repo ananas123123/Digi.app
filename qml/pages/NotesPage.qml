@@ -12,6 +12,9 @@ Item {
     property real documentWidth: 6000
     property real documentHeight: 4500
     property real canvasMargin: 160
+    readonly property color workspaceColor: "#1B1B1B"
+    readonly property color paperColor: "#252525"
+    readonly property color paperBorderColor: "#505050"
     readonly property real minZoom: 0.25
     readonly property real maxZoom: 4.0
 
@@ -90,7 +93,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                color: "#252525"
+                color: root.workspaceColor
                 z: -1
             }
 
@@ -103,12 +106,20 @@ Item {
                 width: root.documentWidth * root.zoom
                 height: root.documentHeight * root.zoom
 
+                Rectangle {
+                    anchors.fill: parent
+                    color: root.paperColor
+                    border.width: 1
+                    border.color: root.paperBorderColor
+                    z: -1
+                }
+
                 Canvas {
-                id: drawingCanvas
-                width: root.documentWidth
-                height: root.documentHeight
-                scale: root.zoom
-                transformOrigin: Item.TopLeft
+                    id: drawingCanvas
+                    width: root.documentWidth
+                    height: root.documentHeight
+                    scale: root.zoom
+                    transformOrigin: Item.TopLeft
                 renderTarget: Canvas.FramebufferObject
                 antialiasing: true
 
