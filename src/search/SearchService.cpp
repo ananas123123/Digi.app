@@ -42,6 +42,7 @@ SearchService::SearchService(QObject *parent)
                        .filePath(QStringLiteral("Digi/search QR")))
 {
     QDir().mkpath(m_searchRoot);
+    QDir().mkpath(QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("Digi/cache")));
 }
 
 QString SearchService::searchRoot() const
