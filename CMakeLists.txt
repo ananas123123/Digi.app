@@ -16,6 +16,8 @@ qt_add_executable(Digi
     src/app/AppServices.h
     src/documents/DocumentService.cpp
     src/documents/DocumentService.h
+    src/search/SearchService.cpp
+    src/search/SearchService.h
 )
 
 qt_add_qml_module(Digi
