@@ -20,6 +20,12 @@ ApplicationWindow {
     Theme { id: theme }
     property string activePage: "Home"
 
+    MouseArea {
+        anchors.fill: parent
+        z: -1
+        onClicked: sideBar.bannerOpen = false
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -96,9 +102,13 @@ ApplicationWindow {
         }
 
         SideBar {
+            id: sideBar
             Layout.fillWidth: true
             activePage: window.activePage
-            onPageSelected: function(pageName) { window.activePage = pageName }
+            onPageSelected: function(pageName) {
+                window.activePage = pageName
+                sideBar.bannerOpen = false
+            }
             clip: false
         }
 
