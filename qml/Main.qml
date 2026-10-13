@@ -19,40 +19,23 @@ ApplicationWindow {
     Theme { id: theme }
     property string activePage: "Home"
 
-    RowLayout {
+    ColumnLayout {
         anchors.fill: parent
-        anchors.leftMargin: 0
-        anchors.rightMargin: 8
-        anchors.topMargin: 300
-        anchors.bottomMargin: 300
-        spacing: 10
+        spacing: 0
 
         SideBar {
-            Layout.fillHeight: true
+            Layout.fillWidth: true
             activePage: window.activePage
             onPageSelected: function(pageName) { window.activePage = pageName }
-            radius: 14
             clip: true
         }
 
-        ColumnLayout {
+        Loader {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 0
-
-            TopBar {
-                Layout.fillWidth: true
-                pageTitle: window.activePage
-                onNewNoteRequested: window.activePage = "Notes"
-            }
-
-            Loader {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                sourceComponent: window.activePage === "Home" ? homePage
-                               : window.activePage === "Notes" ? notesPage
-                               : libraryPage
-            }
+            sourceComponent: window.activePage === "Home" ? homePage
+                           : window.activePage === "Notes" ? notesPage
+                           : libraryPage
         }
     }
 
