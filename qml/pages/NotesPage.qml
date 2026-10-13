@@ -66,8 +66,10 @@ Item {
 
             Canvas {
                 id: drawingCanvas
-                width: Math.max(canvasViewport.width / root.zoom, 2400)
-                height: Math.max(canvasViewport.height / root.zoom, 1800)
+                // Keep document dimensions independent of zoom. Changing the zoom
+                // must not resize/re-render the drawing surface.
+                width: 2400
+                height: 1800
                 renderTarget: Canvas.FramebufferObject
                 antialiasing: true
 
@@ -78,8 +80,6 @@ Item {
                     ctx.lineCap = "round"
                     ctx.lineJoin = "round"
                     ctx.strokeStyle = "#FFFFFF"
-                    // Keep the pen's document-space width constant. Zoom is applied
-                    // to the canvas as a whole, so do not divide the stroke by zoom.
                     ctx.lineWidth = 2.6
 
                     for (let s = 0; s < root.strokes.length; ++s) {
@@ -155,14 +155,22 @@ Item {
             onScaleChanged: {
                 if (!active)
                     return
+
                 const nextZoom = root.clampZoom(startingZoom * scale)
                 const center = centroid.position
-                const anchorX = (startContentX + startCentroid.x) / startingZoom
-                const anchorY = (startContentY + startCentroid.y) / startingZoom
+
+                // Preserve the document point initially beneath the fingers.
+                // Content offsets are in scaled viewport coordinates.
+                const documentX = (startContentX + startCentroid.x) / startingZoom
+                const documentY = (startContentY + startCentroid.y) / startingZoom
+
                 root.zoom = nextZoom
-                canvasViewport.contentX = Math.max(0, anchorX * nextZoom - center.x)
-                canvasViewport.contentY = Math.max(0, anchorY * nextZoom - center.y)
-                drawingCanvas.requestPaint()
+                canvasViewport.contentX = Math.max(0, Math.min(
+                    canvasViewport.contentWidth - canvasViewport.width,
+                    documentX * nextZoom - center.x))
+                canvasViewport.contentY = Math.max(0, Math.min(
+                    canvasViewport.contentHeight - canvasViewport.height,
+                    documentY * nextZoom - center.y))
             }
         }
 
@@ -186,10 +194,12 @@ Item {
                 const dx = translation.x - lastTranslation.x
                 const dy = translation.y - lastTranslation.y
                 lastTranslation = translation
-                canvasViewport.contentX = Math.max(0, Math.min(canvasViewport.contentWidth - canvasViewport.width,
-                                                              canvasViewport.contentX - dx))
-                canvasViewport.contentY = Math.max(0, Math.min(canvasViewport.contentHeight - canvasViewport.height,
-                                                              canvasViewport.contentY - dy))
+                canvasViewport.contentX = Math.max(0, Math.min(
+                    canvasViewport.contentWidth - canvasViewport.width,
+                    canvasViewport.contentX - dx))
+                canvasViewport.contentY = Math.max(0, Math.min(
+                    canvasViewport.contentHeight - canvasViewport.height,
+                    canvasViewport.contentY - dy))
             }
         }
     }
