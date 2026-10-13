@@ -9,9 +9,6 @@ Item {
     property var strokes: []
     property var activeStroke: []
     property real zoom: 1.0
-    property real pendingContentX: 0
-    property real pendingContentY: 0
-    property bool zoomOffsetUpdatePending: false
     readonly property real minZoom: 0.25
     readonly property real maxZoom: 4.0
 
@@ -19,28 +16,9 @@ Item {
         return Math.max(minZoom, Math.min(maxZoom, value))
     }
 
-    function applyPendingZoomOffsets() {
-        zoomOffsetUpdatePending = false
-        canvasViewport.contentX = Math.max(0, Math.min(
-            Math.max(0, canvasViewport.contentWidth - canvasViewport.width),
-            pendingContentX))
-        canvasViewport.contentY = Math.max(0, Math.min(
-            Math.max(0, canvasViewport.contentHeight - canvasViewport.height),
-            pendingContentY))
-    }
-
-    function scheduleZoomOffsetUpdate(x, y) {
-        pendingContentX = x
-        pendingContentY = y
-        if (zoomOffsetUpdatePending)
-            return
-        zoomOffsetUpdatePending = true
-        Qt.callLater(applyPendingZoomOffsets)
-    }
-
     function addDrawingPoint(position) {
-        const mapped = drawingCanvas.mapFromItem(null, drawingInput.centroid.scenePosition.x,
-                                                  drawingInput.centroid.scenePosition.y)
+        const scenePoint = drawingInput.centroid.scenePosition
+        const mapped = drawingCanvas.mapFromItem(null, scenePoint.x, scenePoint.y)
         const next = root.activeStroke.slice()
         next.push({ x: mapped.x, y: mapped.y })
         root.activeStroke = next
@@ -72,8 +50,11 @@ Item {
     Flickable {
         id: canvasViewport
         anchors.fill: parent
-        contentWidth: Math.max(width, drawingCanvas.width * root.zoom)
-        contentHeight: Math.max(height, drawingCanvas.height * root.zoom)
+
+        // Flickable offsets stay in document coordinates. Only the visual layer
+        // is scaled, so do not scale the content dimensions as well.
+        contentWidth: drawingCanvas.width
+        contentHeight: drawingCanvas.height
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.HorizontalAndVerticalFlick
         interactive: !drawingInput.active && !pinchHandler.active && !touchPanHandler.active
@@ -178,15 +159,20 @@ Item {
 
                 const nextZoom = root.clampZoom(startingZoom * scale)
                 const center = centroid.position
-                const documentX = (startContentX + startCentroid.x) / startingZoom
-                const documentY = (startContentY + startCentroid.y) / startingZoom
 
-                // Update the scale first, then apply the offset after Flickable's
-                // content dimensions have recalculated for the new zoom.
+                // Flickable contentX/Y are document-space offsets. Keep the
+                // document point under the original centroid under the moving
+                // centroid by converting screen distances through the new scale.
+                const documentX = startContentX + startCentroid.x / startingZoom
+                const documentY = startContentY + startCentroid.y / startingZoom
+
                 root.zoom = nextZoom
-                scheduleZoomOffsetUpdate(
-                    documentX * nextZoom - center.x,
-                    documentY * nextZoom - center.y)
+                canvasViewport.contentX = Math.max(0, Math.min(
+                    Math.max(0, canvasViewport.contentWidth - canvasViewport.width),
+                    documentX - center.x / nextZoom))
+                canvasViewport.contentY = Math.max(0, Math.min(
+                    Math.max(0, canvasViewport.contentHeight - canvasViewport.height),
+                    documentY - center.y / nextZoom))
             }
         }
 
@@ -212,10 +198,10 @@ Item {
                 lastTranslation = translation
                 canvasViewport.contentX = Math.max(0, Math.min(
                     Math.max(0, canvasViewport.contentWidth - canvasViewport.width),
-                    canvasViewport.contentX - dx))
+                    canvasViewport.contentX - dx / root.zoom))
                 canvasViewport.contentY = Math.max(0, Math.min(
                     Math.max(0, canvasViewport.contentHeight - canvasViewport.height),
-                    canvasViewport.contentY - dy))
+                    canvasViewport.contentY - dy / root.zoom))
             }
         }
     }
