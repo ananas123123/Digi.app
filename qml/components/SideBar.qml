@@ -111,7 +111,7 @@ Item {
             required property var modelData
             property bool shown: root.bannerOpen
             property bool movementShown: false
-            readonly property int stagger: modelData.side === "left" ? 90 : 150
+            readonly property int stagger: modelData.side === "left" ? 140 : 140
             width: 44
             height: 44
             radius: 13
@@ -170,8 +170,8 @@ Item {
     Rectangle {
         id: revealTab
         width: 64
-        height: 14
-        radius: 5
+        height: 28
+        radius: 7
         color: theme.border
         x: (root.width - width) / 2
         y: root.bannerOpen ? banner.y + banner.height - 1 : 0
