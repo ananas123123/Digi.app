@@ -33,7 +33,7 @@ Item {
         // local coordinates and dividing by zoom yields stable document units.
         const scenePoint = drawingInput.centroid.scenePosition
         const mapped = drawingCanvas.mapFromItem(null, scenePoint.x, scenePoint.y)
-        const documentPoint = Qt.point(mapped.x / root.zoom, mapped.y / root.zoom)
+        const documentPoint = Qt.point(mapped.x, mapped.y)
 
         const next = root.activeStroke.slice()
         next.push({ x: documentPoint.x, y: documentPoint.y })
@@ -87,8 +87,10 @@ Item {
 
             Canvas {
                 id: drawingCanvas
-                width: zoomLayer.width
-                height: zoomLayer.height
+                width: root.documentWidth
+                height: root.documentHeight
+                scale: root.zoom
+                transformOrigin: Item.TopLeft
                 renderTarget: Canvas.FramebufferObject
                 antialiasing: true
 
@@ -96,7 +98,6 @@ Item {
                     const ctx = getContext("2d")
                     ctx.reset()
                     ctx.clearRect(0, 0, width, height)
-                    ctx.scale(root.zoom, root.zoom)
                     ctx.lineCap = "round"
                     ctx.lineJoin = "round"
                     ctx.strokeStyle = "#FFFFFF"
