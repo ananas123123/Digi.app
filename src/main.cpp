@@ -1,7 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QCoreApplication>
-#include <QDebug>
 
 #include "app/AppServices.h"
 #include "documents/DocumentService.h"
