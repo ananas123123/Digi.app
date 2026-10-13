@@ -138,6 +138,7 @@ ApplicationWindow {
             property bool hasSearched: false
             property var results: []
             property string selectedResultPath: ""
+            property string previewText: ""
 
             ColumnLayout {
                 id: searchColumn
@@ -314,11 +315,24 @@ ApplicationWindow {
                     }
                 }
 
-                Rectangle {
-                    id: resultsPanel
+                RowLayout {
+                    id: resultsArea
                     Layout.fillWidth: true
                     Layout.preferredHeight: 260
+                    spacing: 14
                     visible: searchRoot.hasSearched
+
+                    Rectangle {
+                    id: resultsPanel
+                    Layout.fillWidth: !searchRoot.selectedResultPath
+                    Layout.preferredWidth: searchRoot.selectedResultPath ? resultsArea.width * 0.42 : resultsArea.width
+                    Layout.preferredHeight: 260
+                    radius: 12
+                    color: searchTheme.surface
+                    border.color: searchTheme.border
+                    border.width: 1
+                    clip: true
+                    Behavior on Layout.preferredWidth { NumberAnimation { duration: 650; easing.type: Easing.OutExpo } }
                     radius: 12
                     color: searchTheme.surface
                     border.color: searchTheme.border
@@ -418,6 +432,71 @@ ApplicationWindow {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: searchRoot.selectedResultPath = path
+                            }
+                        }
+                    }
+                    }
+
+                    Rectangle {
+                        id: previewPanel
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: resultsArea.width * 0.58
+                        Layout.preferredHeight: 260
+                        visible: searchRoot.selectedResultPath.length > 0
+                        opacity: visible ? 1 : 0
+                        scale: visible ? 1 : 0.96
+                        radius: 12
+                        color: "#B8292929"
+                        border.color: "#55FFFFFF"
+                        border.width: 1
+                        clip: true
+                        Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 600; easing.type: Easing.OutExpo } }
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 16
+                            spacing: 10
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: searchRoot.selectedResultPath.split("/").pop().split("\\\\").pop()
+                                color: "#F0D78C"
+                                font.pixelSize: 16
+                                font.weight: Font.DemiBold
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: searchRoot.selectedResultPath
+                                color: searchTheme.mutedText
+                                opacity: 0.7
+                                font.pixelSize: 10
+                                wrapMode: Text.WrapAnywhere
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 1
+                                color: "#24FFFFFF"
+                            }
+
+                            ScrollView {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                clip: true
+
+                                TextArea {
+                                    width: parent.width
+                                    readOnly: true
+                                    selectByMouse: true
+                                    wrapMode: TextEdit.Wrap
+                                    text: searchRoot.previewText
+                                    color: searchTheme.text
+                                    font.pixelSize: 12
+                                    background: Item {}
+                                }
                             }
                         }
                     }
