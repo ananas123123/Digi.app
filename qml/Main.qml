@@ -318,7 +318,9 @@ ApplicationWindow {
                 Item {
                     id: resultsArea
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 260
+                    Layout.fillHeight: true
+                    Layout.topMargin: 0
+                    Layout.bottomMargin: 16
                     visible: searchRoot.hasSearched
 
                     Rectangle {
@@ -437,8 +439,11 @@ ApplicationWindow {
                     Rectangle {
                         id: previewPanel
                         anchors.right: resultsArea.right
-                        width: resultsArea.width * 0.56
-                        height: 260
+                        anchors.bottom: resultsArea.bottom
+                        anchors.bottomMargin: 0
+                        x: visible ? resultsArea.width * 0.46 : resultsArea.width
+                        width: resultsArea.width * 0.54
+                        height: resultsArea.height - 8
                         visible: searchRoot.selectedResultPath.length > 0
                         opacity: visible ? 1 : 0
                         scale: visible ? 1 : 0.96
@@ -447,8 +452,9 @@ ApplicationWindow {
                         border.color: "#55FFFFFF"
                         border.width: 1
                         clip: true
-                        Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 600; easing.type: Easing.OutExpo } }
+                        Behavior on opacity { NumberAnimation { duration: 650; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 800; easing.type: Easing.OutExpo } }
+                        Behavior on x { NumberAnimation { duration: 800; easing.type: Easing.OutExpo } }
 
                         ColumnLayout {
                             anchors.fill: parent
