@@ -9,8 +9,8 @@ Item {
     property var strokes: []
     property var activeStroke: []
     property real zoom: 1.0
-    property real documentWidth: 2400
-    property real documentHeight: 1800
+    property real documentWidth: 6000
+    property real documentHeight: 4500
     readonly property real minZoom: 0.25
     readonly property real maxZoom: 4.0
 
@@ -38,12 +38,6 @@ Item {
         const next = root.activeStroke.slice()
         next.push({ x: documentPoint.x, y: documentPoint.y })
         root.activeStroke = next
-
-        const edgeMargin = 180
-        if (documentPoint.x > root.documentWidth - edgeMargin)
-            root.documentWidth += 1200
-        if (documentPoint.y > root.documentHeight - edgeMargin)
-            root.documentHeight += 900
 
         drawingCanvas.requestPaint()
     }
