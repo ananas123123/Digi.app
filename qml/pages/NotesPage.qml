@@ -17,19 +17,18 @@ Item {
     }
 
     function addDrawingPoint(position) {
-        const p = drawingInput.centroid.position
-        const mapped = drawingInput.centroid.scenePosition
-        const localPoint = drawingCanvas.mapFromItem(null, mapped.x, mapped.y)
+        const mapped = drawingCanvas.mapFromItem(null, drawingInput.centroid.scenePosition.x,
+                                                  drawingInput.centroid.scenePosition.y)
         const next = root.activeStroke.slice()
-        next.push({ x: localPoint.x, y: localPoint.y })
+        next.push({ x: mapped.x, y: mapped.y })
         root.activeStroke = next
 
         const edgeMargin = 180
         let growWidth = drawingCanvas.width
         let growHeight = drawingCanvas.height
-        if (localPoint.x > drawingCanvas.width - edgeMargin)
+        if (mapped.x > drawingCanvas.width - edgeMargin)
             growWidth = drawingCanvas.width + 1200
-        if (localPoint.y > drawingCanvas.height - edgeMargin)
+        if (mapped.y > drawingCanvas.height - edgeMargin)
             growHeight = drawingCanvas.height + 900
         if (growWidth !== drawingCanvas.width || growHeight !== drawingCanvas.height) {
             drawingCanvas.width = growWidth
@@ -60,8 +59,9 @@ Item {
 
         Item {
             id: zoomLayer
-            width: drawingCanvas.width * root.zoom
-            height: drawingCanvas.height * root.zoom
+            width: drawingCanvas.width
+            height: drawingCanvas.height
+            scale: root.zoom
             transformOrigin: Item.TopLeft
 
             Canvas {
@@ -78,7 +78,9 @@ Item {
                     ctx.lineCap = "round"
                     ctx.lineJoin = "round"
                     ctx.strokeStyle = "#FFFFFF"
-                    ctx.lineWidth = 2.6 / root.zoom
+                    // Keep the pen's document-space width constant. Zoom is applied
+                    // to the canvas as a whole, so do not divide the stroke by zoom.
+                    ctx.lineWidth = 2.6
 
                     for (let s = 0; s < root.strokes.length; ++s) {
                         const points = root.strokes[s]
