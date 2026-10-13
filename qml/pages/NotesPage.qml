@@ -147,33 +147,44 @@ Item {
                     }
 
                 }
-                Canvas {
-                    id: liveStrokeCanvas
-                    anchors.fill: parent
-                    renderTarget: Canvas.FramebufferObject
-                    antialiasing: true
 
-                    onPaint: {
-                        const ctx = getContext("2d")
-                        ctx.reset()
-                        ctx.clearRect(0, 0, width, height)
-                        ctx.lineCap = "round"
-                        ctx.lineJoin = "round"
-                        ctx.strokeStyle = "#FFFFFF"
-                        ctx.lineWidth = 2.6
+                }
+            }
+        }
+    }
 
-                        if (root.activeStroke.length > 0) {
-                            ctx.beginPath()
-                            ctx.moveTo(root.activeStroke[0].x, root.activeStroke[0].y)
-                            for (let p = 1; p < root.activeStroke.length; ++p)
-                                ctx.lineTo(root.activeStroke[p].x, root.activeStroke[p].y)
-                            if (root.activeStroke.length === 1)
-                                ctx.lineTo(root.activeStroke[0].x + 0.1, root.activeStroke[0].y + 0.1)
-                            ctx.stroke()
-                        }
-                    }
+    // Keep live ink in a viewport-sized layer. Repainting a 6000x4500 canvas
+    // for every pointer event causes severe input lag even when only one stroke changes.
+    Canvas {
+        id: liveStrokeCanvas
+        anchors.fill: parent
+        z: 10
+        renderTarget: Canvas.FramebufferObject
+        antialiasing: true
+
+        onPaint: {
+            const ctx = getContext("2d")
+            ctx.reset()
+            ctx.clearRect(0, 0, width, height)
+            ctx.lineCap = "round"
+            ctx.lineJoin = "round"
+            ctx.strokeStyle = "#FFFFFF"
+            ctx.lineWidth = 2.6 * root.zoom
+
+            if (root.activeStroke.length > 0) {
+                const first = root.activeStroke[0]
+                ctx.beginPath()
+                ctx.moveTo(first.x * root.zoom + root.canvasMargin - canvasViewport.contentX,
+                           first.y * root.zoom + root.canvasMargin - canvasViewport.contentY)
+                for (let p = 1; p < root.activeStroke.length; ++p) {
+                    const point = root.activeStroke[p]
+                    ctx.lineTo(point.x * root.zoom + root.canvasMargin - canvasViewport.contentX,
+                               point.y * root.zoom + root.canvasMargin - canvasViewport.contentY)
                 }
-                }
+                if (root.activeStroke.length === 1)
+                    ctx.lineTo(first.x * root.zoom + root.canvasMargin - canvasViewport.contentX + 0.1,
+                               first.y * root.zoom + root.canvasMargin - canvasViewport.contentY + 0.1)
+                ctx.stroke()
             }
         }
     }
