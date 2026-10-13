@@ -191,20 +191,44 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 60
                     radius: 15
-                    color: searchInput.activeFocus ? "#303030" : searchTheme.surface
-                    border.width: searchInput.activeFocus ? 2 : 1
-                    border.color: searchInput.activeFocus ? searchTheme.accent : searchTheme.border
+                    color: searchInput.activeFocus ? "#D9363636" : "#A6292929"
+                    border.width: searchInput.activeFocus ? 1.5 : 1
+                    border.color: searchInput.activeFocus ? "#B8D8BD72" : "#55FFFFFF"
                     scale: searchRoot.hasSearched ? 0.92 : (searchMouse.containsMouse || searchInput.activeFocus ? 1.012 : 1)
 
                     Behavior on scale { NumberAnimation { duration: 850; easing.type: Easing.OutExpo } }
-                    Behavior on color { ColorAnimation { duration: 160 } }
-                    Behavior on border.color { ColorAnimation { duration: 160 } }
+                    Behavior on color { ColorAnimation { duration: 240 } }
+                    Behavior on border.color { ColorAnimation { duration: 240 } }
+
+                    // Subtle glass reflection: a soft top-edge highlight without obscuring input.
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.leftMargin: 2
+                        anchors.rightMargin: 2
+                        anchors.topMargin: 1
+                        height: 1
+                        radius: 1
+                        color: "#38FFFFFF"
+                        z: 1
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        color: "transparent"
+                        border.width: 1
+                        border.color: "#12FFFFFF"
+                        z: 1
+                    }
 
                     RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: 19
                         anchors.rightMargin: 12
                         spacing: 12
+                        z: 2
 
                         Text {
                             text: "⌕"
