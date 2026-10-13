@@ -68,7 +68,6 @@ Item {
 
         HoverHandler {
             id: bannerHover
-            margin: 0
         }
 
         RowLayout {
@@ -139,7 +138,6 @@ Item {
 
         HoverHandler {
             id: topHover
-            anchors.fill: parent
         }
     }
 }
