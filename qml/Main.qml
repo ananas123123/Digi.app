@@ -438,11 +438,9 @@ ApplicationWindow {
 
                     Rectangle {
                         id: previewPanel
-                        anchors.right: resultsArea.right
-                        anchors.bottom: resultsArea.bottom
-                        anchors.bottomMargin: 0
                         x: visible ? resultsArea.width * 0.46 : resultsArea.width
-                        width: resultsArea.width * 0.54
+                        y: 0
+                        width: resultsArea.width * 0.52
                         height: resultsArea.height - 8
                         visible: searchRoot.selectedResultPath.length > 0
                         opacity: visible ? 1 : 0
