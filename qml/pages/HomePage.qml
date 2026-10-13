@@ -31,7 +31,6 @@ Item {
                 opacity: entered ? 1 : 0
                 transform: Translate { y: homeHeading.entered ? 0 : 18 }
                 Behavior on opacity { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
-                Behavior on transform { enabled: false }
                 Timer { interval: 40; running: true; onTriggered: homeHeading.entered = true }
                 spacing: 4
                 Text {
