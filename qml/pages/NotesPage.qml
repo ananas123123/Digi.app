@@ -57,6 +57,58 @@ Item {
         }
     }
 
+    function eraseStrokeAtScene(scenePoint) {
+        const mapped = drawingCanvas.mapFromItem(null, scenePoint.x, scenePoint.y)
+        const eraseRadius = 14 / Math.max(0.25, root.zoom)
+        const nextStrokes = []
+        let removedAny = false
+
+        for (let s = 0; s < root.strokes.length; ++s) {
+            const points = root.strokes[s]
+            let hit = false
+
+            for (let p = 0; p < points.length; ++p) {
+                const point = points[p]
+                const dx = point.x - mapped.x
+                const dy = point.y - mapped.y
+                if (dx * dx + dy * dy <= eraseRadius * eraseRadius) {
+                    hit = true
+                    break
+                }
+
+                if (p > 0) {
+                    const previous = points[p - 1]
+                    const vx = point.x - previous.x
+                    const vy = point.y - previous.y
+                    const lengthSquared = vx * vx + vy * vy
+                    const t = lengthSquared > 0
+                        ? Math.max(0, Math.min(1, ((mapped.x - previous.x) * vx
+                            + (mapped.y - previous.y) * vy) / lengthSquared))
+                        : 0
+                    const closestX = previous.x + t * vx
+                    const closestY = previous.y + t * vy
+                    const segmentX = mapped.x - closestX
+                    const segmentY = mapped.y - closestY
+                    if (segmentX * segmentX + segmentY * segmentY
+                            <= eraseRadius * eraseRadius) {
+                        hit = true
+                        break
+                    }
+                }
+            }
+
+            if (hit)
+                removedAny = true
+            else
+                nextStrokes.push(points)
+        }
+
+        if (removedAny) {
+            root.strokes = nextStrokes
+            drawingCanvas.requestPaint()
+        }
+    }
+
     function viewportPointFromScene(scenePoint) {
         return canvasViewport.mapFromItem(null, scenePoint.x, scenePoint.y)
     }
@@ -212,6 +264,26 @@ Item {
         }
     }
 
+    // The stylus side button is commonly reported as a right-button press.
+    // Drag with that button to remove any complete stroke touched by the eraser.
+    DragHandler {
+        id: stylusEraseInput
+        target: null
+        acceptedDevices: PointerDevice.Stylus
+        acceptedButtons: Qt.RightButton
+        dragThreshold: 0
+
+        onActiveChanged: {
+            if (active)
+                root.eraseStrokeAtScene(centroid.scenePosition)
+        }
+
+        onCentroidChanged: {
+            if (active)
+                root.eraseStrokeAtScene(centroid.scenePosition)
+        }
+    }
+
     PinchHandler {
         id: pinchHandler
         target: null
@@ -290,3 +362,4 @@ Item {
         }
     }
 }
+
