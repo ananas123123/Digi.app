@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
 import QtQuick.Effects
+import QtQuick.Pdf
 import "components"
 import "pages"
 import "themes"
@@ -644,20 +645,68 @@ ApplicationWindow {
                                 }
                             }
 
-                            ScrollView {
+                            Loader {
+                                id: filePreviewLoader
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                clip: true
+                                sourceComponent: {
+                                    var path = searchRoot.selectedResultPath.toLowerCase()
+                                    if (path.endsWith(".pdf")) return pdfPreviewComponent
+                                    if (path.endsWith(".png") || path.endsWith(".jpg") ||
+                                        path.endsWith(".jpeg") || path.endsWith(".bmp") ||
+                                        path.endsWith(".gif") || path.endsWith(".webp") ||
+                                        path.endsWith(".tif") || path.endsWith(".tiff"))
+                                        return imagePreviewComponent
+                                    return textPreviewComponent
+                                }
+                            }
 
-                                TextArea {
-                                    width: parent.width
-                                    readOnly: true
-                                    selectByMouse: true
-                                    wrapMode: TextEdit.Wrap
-                                    text: searchRoot.previewText
-                                    color: searchTheme.text
-                                    font.pixelSize: 12
-                                    background: Item {}
+                            Component {
+                                id: pdfPreviewComponent
+                                Item {
+                                    PdfDocument {
+                                        id: pdfDocument
+                                        source: "file:///" + searchRoot.selectedResultPath.replace(/\\/g, "/")
+                                    }
+                                    PdfMultiPageView {
+                                        anchors.fill: parent
+                                        document: pdfDocument
+                                        clip: true
+                                    }
+                                }
+                            }
+
+                            Component {
+                                id: imagePreviewComponent
+                                Flickable {
+                                    contentWidth: Math.max(width, previewImage.implicitWidth)
+                                    contentHeight: Math.max(height, previewImage.implicitHeight)
+                                    clip: true
+                                    Image {
+                                        id: previewImage
+                                        source: "file:///" + searchRoot.selectedResultPath.replace(/\\/g, "/")
+                                        fillMode: Image.PreserveAspectFit
+                                        width: parent.width
+                                        height: parent.height
+                                        asynchronous: true
+                                        cache: false
+                                    }
+                                }
+                            }
+
+                            Component {
+                                id: textPreviewComponent
+                                ScrollView {
+                                    TextArea {
+                                        width: parent.width
+                                        readOnly: true
+                                        selectByMouse: true
+                                        wrapMode: TextEdit.Wrap
+                                        text: searchRoot.previewText
+                                        color: searchTheme.text
+                                        font.pixelSize: 12
+                                        background: Item {}
+                                    }
                                 }
                             }
                         }
