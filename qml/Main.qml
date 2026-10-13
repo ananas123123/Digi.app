@@ -85,7 +85,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             activePage: window.activePage
             onPageSelected: function(pageName) { window.activePage = pageName }
-            clip: true
+            clip: false
         }
 
         Loader {
