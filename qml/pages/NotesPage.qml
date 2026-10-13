@@ -52,10 +52,14 @@ Item {
         }
     }
 
+    function viewportPointFromScene(scenePoint) {
+        return canvasViewport.mapFromItem(null, scenePoint.x, scenePoint.y)
+    }
+
     function zoomAround(nextZoom, anchorX, anchorY, centerX, centerY,
                         oldZoom, oldContentX, oldContentY) {
-        // Resolve the document point using the centroid at gesture start,
-        // then keep that same point under the moving centroid on every frame.
+        // All points are expressed in the viewport's coordinate system.
+        // Anchor the original document point beneath the moving pinch centroid.
         const documentX = (oldContentX + anchorX) / oldZoom
         const documentY = (oldContentY + anchorY) / oldZoom
 
@@ -163,25 +167,31 @@ Item {
         property real startContentY: 0
         property point startCentroid
 
+        function updatePinch() {
+            if (!active)
+                return
+
+            // scenePosition avoids assumptions about the handler's parent
+            // coordinate space and matches the viewport used for scroll offsets.
+            const center = root.viewportPointFromScene(centroid.scenePosition)
+            const nextZoom = root.clampZoom(startingZoom * scale)
+            root.zoomAround(nextZoom,
+                            startCentroid.x, startCentroid.y,
+                            center.x, center.y,
+                            startingZoom, startContentX, startContentY)
+        }
+
         onActiveChanged: {
             if (active) {
                 startingZoom = root.zoom
                 startContentX = canvasViewport.contentX
                 startContentY = canvasViewport.contentY
-                startCentroid = centroid.position
+                startCentroid = root.viewportPointFromScene(centroid.scenePosition)
             }
         }
 
-        onScaleChanged: {
-            if (!active)
-                return
-
-            const nextZoom = root.clampZoom(startingZoom * scale)
-            root.zoomAround(nextZoom,
-                            startCentroid.x, startCentroid.y,
-                            centroid.position.x, centroid.position.y,
-                            startingZoom, startContentX, startContentY)
-        }
+        onScaleChanged: updatePinch()
+        onCentroidChanged: updatePinch()
     }
 
     DragHandler {
