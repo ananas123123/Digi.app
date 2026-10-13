@@ -117,15 +117,17 @@ ApplicationWindow {
             id: pageLoader
             Layout.fillWidth: true
             Layout.fillHeight: true
-            layer.enabled: sideBar.bannerOpen
+            // Keep the effect active so the blur radius itself can animate from
+            // clear to blurred. Toggling blurEnabled/layer.enabled caused a pop-in.
+            layer.enabled: true
             layer.effect: MultiEffect {
-                blurEnabled: sideBar.bannerOpen
+                blurEnabled: true
                 blur: sideBar.bannerOpen ? 0.85 : 0
                 blurMax: 48
                 Behavior on blur {
                     NumberAnimation {
-                        duration: 420
-                        easing.type: Easing.OutCubic
+                        duration: 520
+                        easing.type: Easing.InOutCubic
                     }
                 }
             }
