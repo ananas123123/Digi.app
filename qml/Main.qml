@@ -21,10 +21,10 @@ ApplicationWindow {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 8
+        anchors.leftMargin: 0
         anchors.rightMargin: 8
-        anchors.topMargin: 8
-        anchors.bottomMargin: 8
+        anchors.topMargin: 30
+        anchors.bottomMargin: 30
         spacing: 10
 
         SideBar {
