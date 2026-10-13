@@ -11,6 +11,7 @@ Item {
     property real zoom: 1.0
     property real documentWidth: 6000
     property real documentHeight: 4500
+    property real canvasMargin: 160
     readonly property real minZoom: 0.25
     readonly property real maxZoom: 4.0
 
@@ -71,19 +72,32 @@ Item {
     Flickable {
         id: canvasViewport
         anchors.fill: parent
-        contentWidth: Math.max(width, zoomLayer.width)
-        contentHeight: Math.max(height, zoomLayer.height)
+        contentWidth: zoomLayer.width + root.canvasMargin * 2
+        contentHeight: zoomLayer.height + root.canvasMargin * 2
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.HorizontalAndVerticalFlick
         interactive: false
         clip: true
 
         Item {
-            id: zoomLayer
-            // Geometry and Flickable bounds now share exactly the same units.
-            // The Canvas is transformed, but its parent geometry defines the scroll bounds.
+            id: canvasContent
+            x: root.canvasMargin
+            y: root.canvasMargin
             width: root.documentWidth * root.zoom
             height: root.documentHeight * root.zoom
+
+            Rectangle {
+                anchors.fill: parent
+                color: "#252525"
+                z: -1
+            }
+
+            Item {
+                id: zoomLayer
+                // Canvas bounds stay inset from the viewport edge, with a darker
+                // surrounding workspace visible beyond each document edge.
+                width: root.documentWidth * root.zoom
+                height: root.documentHeight * root.zoom
 
             Canvas {
                 id: drawingCanvas
@@ -125,6 +139,7 @@ Item {
                             ctx.lineTo(root.activeStroke[0].x + 0.1, root.activeStroke[0].y + 0.1)
                         ctx.stroke()
                     }
+                }
                 }
             }
         }
