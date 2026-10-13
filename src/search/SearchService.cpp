@@ -4,6 +4,9 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QFileInfo>
+#include <QFile>
+#include <QTextStream>
+#include <QDir>
 
 namespace {
 constexpr int maxResults = 200;
@@ -63,4 +66,39 @@ QVariantList SearchService::search(const QString &query) const
     }
 
     return results;
+}
+
+QString SearchService::previewFile(const QString &path) const
+{
+    const QString rootPath = QDir(m_searchRoot).canonicalPath();
+    const QString filePath = QFileInfo(path).canonicalFilePath();
+    if (rootPath.isEmpty() || filePath.isEmpty())
+        return QStringLiteral("Preview unavailable.");
+
+    const QString relativePath = QDir(rootPath).relativeFilePath(filePath);
+    if (relativePath == QStringLiteral("..")
+        || relativePath.startsWith(QStringLiteral("../"))
+        || QFileInfo(relativePath).isAbsolute()) {
+        return QStringLiteral("Preview unavailable.");
+    }
+
+    QFileInfo info(filePath);
+    if (!info.isFile() || !info.isReadable())
+        return QStringLiteral("Preview unavailable.");
+
+    constexpr qint64 maxPreviewBytes = 1024 * 1024;
+    if (info.size() > maxPreviewBytes)
+        return QStringLiteral("Preview unavailable for files larger than 1 MB.");
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return QStringLiteral("Preview unavailable.");
+
+    QTextStream stream(&file);
+    stream.setEncoding(QStringConverter::Utf8);
+    QString contents = stream.readAll();
+    constexpr qsizetype maxPreviewCharacters = 12000;
+    if (contents.size() > maxPreviewCharacters)
+        contents = contents.left(maxPreviewCharacters) + QStringLiteral("\\n\\n… Preview truncated.");
+    return contents.isEmpty() ? QStringLiteral("This file is empty.") : contents;
 }
