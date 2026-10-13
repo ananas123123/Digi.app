@@ -491,7 +491,7 @@ ApplicationWindow {
                             }
                         }
 
-                        Item { width: 1; height: 1 }
+                        Item { Layout.fillWidth: true; height: 1 }
 
                         Rectangle {
                             width: 100
