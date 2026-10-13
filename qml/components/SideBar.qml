@@ -8,11 +8,11 @@ Item {
     property string activePage: "Home"
     signal pageSelected(string pageName)
     property bool bannerHovered: false
-    property bool pointerInside: topHover.hovered || bannerHover.hovered
+    property bool pointerInside: bannerHover.hovered || topHover.hovered
     Theme { id: theme }
 
     Layout.fillWidth: true
-    Layout.preferredHeight: 76
+    Layout.preferredHeight: 38
     Layout.leftMargin: 300
     Layout.rightMargin: 300
     z: 10
@@ -20,7 +20,7 @@ Item {
 
     Timer {
         id: hideTimer
-        interval: 2000
+        interval: 500
         repeat: false
         onTriggered: {
             if (!root.pointerInside)
@@ -63,11 +63,12 @@ Item {
         clip: false
 
         Behavior on y {
-            NumberAnimation { duration: 190; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: root.bannerHovered ? 190 : 500; easing.type: Easing.OutCubic }
         }
 
         HoverHandler {
             id: bannerHover
+            onHoveredChanged: root.updateHoverState()
         }
 
         RowLayout {
@@ -138,6 +139,7 @@ Item {
 
         HoverHandler {
             id: topHover
+            onHoveredChanged: root.updateHoverState()
         }
     }
 }
