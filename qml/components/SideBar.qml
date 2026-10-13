@@ -36,7 +36,7 @@ Item {
         clip: false
 
         Behavior on y {
-            NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: 250; easing.type: Easing.InOutCubic }
         }
         z: 1
 
@@ -70,8 +70,6 @@ Item {
                         NumberAnimation { duration: 170; easing.type: Easing.OutBack }
                     }
 
-                    // Explicit stylus handling supplements the standard Button
-                    // pointer handling without duplicating mouse/touch clicks.
                     TapHandler {
                         acceptedDevices: PointerDevice.Stylus
                         onTapped: root.pageSelected(navButton.modelData.label)
@@ -121,6 +119,7 @@ Item {
             id: utilityButton
             required property var modelData
             property bool shown: root.bannerOpen
+            readonly property int stagger: modelData.side === "left" ? 90 : 150
             width: 44
             height: 44
             radius: 13
@@ -132,16 +131,40 @@ Item {
             border.color: theme.border
             border.width: 1
             z: 3
-            visible: root.bannerOpen && opacity > 0.01
+            visible: root.bannerOpen || opacity > 0.01
 
             Behavior on opacity {
-                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                NumberAnimation {
+                    duration: 220
+                    easing.type: Easing.OutCubic
+                    onRunningChanged: {
+                        if (!running && !utilityButton.shown)
+                            utilityButton.visible = false
+                    }
+                }
             }
             Behavior on y {
-                NumberAnimation { duration: 280; easing.type: Easing.OutCubic }
+                NumberAnimation {
+                    duration: 280
+                    easing.type: Easing.OutCubic
+                    onRunningChanged: {
+                        if (running)
+                            animationTimer.restart()
+                    }
+                }
             }
             Behavior on scale {
                 NumberAnimation { duration: 260; easing.type: Easing.OutBack }
+            }
+
+            Timer {
+                id: animationTimer
+                interval: utilityButton.stagger
+                repeat: false
+                onTriggered: {
+                    utilityButton.y = (utilityButton.height - utilityButton.height) / 2
+                                       + (utilityButton.shown ? 14 : -18)
+                }
             }
 
             Text {
@@ -177,18 +200,18 @@ Item {
         z: 2
 
         Behavior on y {
-            NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: 250; easing.type: Easing.InOutCubic }
         }
 
         Column {
             anchors.centerIn: parent
-            spacing: 2
+            spacing: 1
             Repeater {
                 model: 3
                 delegate: Rectangle {
                     required property int index
                     width: 24
-                    height: 2
+                    height: 3
                     radius: 1
                     color: theme.mutedText
                 }
