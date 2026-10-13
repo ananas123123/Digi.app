@@ -11,6 +11,7 @@
 
 #include "app/AppServices.h"
 #include "documents/DocumentService.h"
+#include "search/SearchService.h"
 
 namespace {
 QMutex logMutex;
@@ -57,10 +58,12 @@ int main(int argc, char *argv[])
 
     AppServices appServices;
     DocumentService documentService;
+    SearchService searchService;
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("appServices", &appServices);
     engine.rootContext()->setContextProperty("documentService", &documentService);
+    engine.rootContext()->setContextProperty("searchService", &searchService);
 
     QObject::connect(
         &engine,
