@@ -19,10 +19,10 @@ Item {
 
         ColumnLayout {
             id: homeContent
-            width: Math.min(1000, parent.width - 56)
+            width: Math.min(1240, parent.width - 80)
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
-            anchors.topMargin: 34
+            anchors.topMargin: 52
             spacing: 18
 
             ColumnLayout {
@@ -67,7 +67,7 @@ Item {
                 Behavior on opacity { NumberAnimation { duration: 520; easing.type: Easing.OutCubic } }
                 Timer { interval: 250; running: true; onTriggered: continueCard.entered = true }
                 Layout.fillWidth: true
-                Layout.preferredHeight: 160
+                Layout.preferredHeight: 176
                 radius: 16
                 color: continueMouse.containsMouse ? theme.surfaceRaised : theme.surface
                 border.color: continueMouse.containsMouse ? theme.accent : theme.border
@@ -164,8 +164,8 @@ Item {
             GridLayout {
                 Layout.fillWidth: true
                 columns: width < 620 ? 2 : 4
-                columnSpacing: 10
-                rowSpacing: 10
+                columnSpacing: 8
+                rowSpacing: 8
 
                 Repeater {
                     model: [
@@ -184,7 +184,7 @@ Item {
                         Behavior on opacity { NumberAnimation { duration: 440; easing.type: Easing.OutCubic } }
                         Timer { interval: 470 + quickCard.index * 85; running: true; onTriggered: quickCard.entered = true }
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 76
+                        Layout.preferredHeight: 52
                         radius: 13
                         color: quickMouse.containsMouse ? theme.surfaceRaised : theme.surface
                         border.color: quickMouse.containsMouse ? theme.accent : theme.border
@@ -201,16 +201,17 @@ Item {
                             anchors.fill: parent
                             anchors.leftMargin: 14
                             anchors.rightMargin: 14
-                            anchors.topMargin: 10
-                            anchors.bottomMargin: 10
-                            spacing: 4
+                            anchors.topMargin: 6
+                            anchors.bottomMargin: 6
+                            spacing: 0
                             RowLayout {
                                 Layout.fillWidth: true
+                                Layout.fillHeight: true
                                 Text {
                                     id: quickIcon
                                     text: quickCard.modelData.symbol
                                     color: theme.accent
-                                    font.pixelSize: 22
+                                    font.pixelSize: 20
                                     transformOrigin: Item.Center
                                     scale: quickMouse.containsMouse ? 1.3 : 1
                                     rotation: quickMouse.containsMouse ? -8 : 0
@@ -255,8 +256,18 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 82
                     radius: 12
-                    color: theme.surface
-                    border.color: theme.border
+                    color: focusMouse.containsMouse ? theme.surfaceRaised : theme.surface
+                    border.color: focusMouse.containsMouse ? theme.accent : theme.border
+                    scale: focusMouse.containsMouse ? 1.015 : 1
+                    Behavior on color { ColorAnimation { duration: 170 } }
+                    Behavior on border.color { ColorAnimation { duration: 170 } }
+                    Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+                    MouseArea {
+                        id: focusMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        acceptedButtons: Qt.NoButton
+                    }
                     RowLayout {
                         anchors.fill: parent
                         anchors.margins: 15
@@ -275,8 +286,18 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 82
                     radius: 12
-                    color: theme.surface
-                    border.color: theme.border
+                    color: resourcesMouse.containsMouse ? theme.surfaceRaised : theme.surface
+                    border.color: resourcesMouse.containsMouse ? theme.accent : theme.border
+                    scale: resourcesMouse.containsMouse ? 1.015 : 1
+                    Behavior on color { ColorAnimation { duration: 170 } }
+                    Behavior on border.color { ColorAnimation { duration: 170 } }
+                    Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+                    MouseArea {
+                        id: resourcesMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        acceptedButtons: Qt.NoButton
+                    }
                     RowLayout {
                         anchors.fill: parent
                         anchors.margins: 15
