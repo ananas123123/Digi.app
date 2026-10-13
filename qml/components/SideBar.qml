@@ -8,7 +8,7 @@ Item {
     property string activePage: "Home"
     signal pageSelected(string pageName)
     property bool bannerHovered: false
-    property bool pointerInside: bannerHover.hovered || (!bannerHovered && topHover.hovered)
+    property bool pointerInside: bannerHover.hovered || bottomHover.hovered
     Theme { id: theme }
 
     Layout.fillWidth: true
@@ -109,15 +109,19 @@ Item {
         }
     }
 
-    Item {
-        id: topHoverArea
-        x: 0
-        y: 0
-        width: root.width
-        height: 38
+    // Small reveal tab attached to the lower edge of the collapsed banner.
+    Rectangle {
+        id: revealTab
+        width: 58
+        height: 8
+        radius: 4
+        color: theme.border
+        x: (root.width - width) / 2
+        y: banner.y + banner.height - 1
+        z: 2
 
         HoverHandler {
-            id: topHover
+            id: bottomHover
             onHoveredChanged: root.updateHoverState()
         }
     }
