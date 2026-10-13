@@ -142,8 +142,8 @@ ApplicationWindow {
                 id: searchColumn
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.topMargin: searchRoot.hasSearched ? 28 : Math.max(90, parent.height * 0.19)
-                Behavior on anchors.topMargin { NumberAnimation { duration: 420; easing.type: Easing.InOutCubic } }
+                anchors.topMargin: searchRoot.hasSearched ? 0 : Math.max(90, parent.height * 0.19)
+                Behavior on anchors.topMargin { NumberAnimation { duration: 850; easing.type: Easing.OutExpo } }
                 width: Math.min(620, parent.width - 64)
                 spacing: 22
                 opacity: 0
@@ -164,7 +164,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     implicitHeight: searchContent.implicitHeight
                     opacity: searchRoot.hasSearched ? 0 : 1
-                    Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.InOutCubic } }
+                    Behavior on opacity { NumberAnimation { duration: 700; easing.type: Easing.OutExpo } }
 
                     Column {
                         id: searchContent
