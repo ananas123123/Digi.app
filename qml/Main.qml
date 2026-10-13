@@ -35,7 +35,7 @@ ApplicationWindow {
             id: titleBar
             Layout.fillWidth: true
             Layout.preferredHeight: 38
-            z: 20
+            z: 40
             color: theme.titleBar
             border.color: theme.border
             border.width: 1
