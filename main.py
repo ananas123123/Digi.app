@@ -61,11 +61,32 @@ def _word_export(source: Path, staging: Path, use_saveas: bool = False) -> int:
         word.Visible = False
         word.DisplayAlerts = 0
         word.AutomationSecurity = 3
-        document = word.Documents.Open(
-            str(source.resolve()), ConfirmConversions=False, ReadOnly=True,
-            AddToRecentFiles=False, Visible=False, OpenAndRepair=True,
-            NoEncodingDialog=True,
-        )
+        # Some legacy .doc files cause Word's OpenAndRepair automation call to
+        # return an empty COM result. Try a normal read-only open first, then
+        # use OpenAndRepair only as a fallback and explicitly validate the result.
+        try:
+            document = word.Documents.Open(
+                FileName=str(source.resolve()),
+                ConfirmConversions=False,
+                ReadOnly=True,
+                AddToRecentFiles=False,
+                Visible=False,
+                NoEncodingDialog=True,
+            )
+        except Exception:
+            document = None
+        if document is None:
+            document = word.Documents.Open(
+                FileName=str(source.resolve()),
+                ConfirmConversions=False,
+                ReadOnly=True,
+                AddToRecentFiles=False,
+                Visible=False,
+                OpenAndRepair=True,
+                NoEncodingDialog=True,
+            )
+        if document is None:
+            raise RuntimeError("Microsoft Word did not return a document object when opening this file.")
         if use_saveas:
             document.SaveAs2(FileName=str(staging.resolve()), FileFormat=17, AddToRecentFiles=False)
         else:
