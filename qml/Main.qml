@@ -717,52 +717,36 @@ ApplicationWindow {
                                     property var annotationByPage: ({})
                                     property real zoomFactor: 1.0
 
+                                    PinchHandler {
+                                        id: pdfPinchZoom
+                                        target: null
+                                        minimumPointCount: 2
+                                        maximumPointCount: 2
+                                        property real zoomAtPinchStart: 1.0
+
+                                        onActiveChanged: {
+                                            if (active)
+                                                zoomAtPinchStart = pdfPreviewRoot.zoomFactor
+                                        }
+                                        onScaleChanged: {
+                                            if (active) {
+                                                var nextZoom = zoomAtPinchStart * scale
+                                                pdfPreviewRoot.zoomFactor = Math.max(0.5, Math.min(4.0, nextZoom))
+                                            }
+                                        }
+                                    }
+
                                     PdfDocument {
                                         id: pdfDocument
                                         source: "file:///" + searchRoot.selectedResultPath.replace(/\\\\/g, "/")
                                     }
 
-                                    Row {
-                                        id: zoomControls
-                                        anchors.top: parent.top
-                                        anchors.right: parent.right
-                                        anchors.topMargin: 8
-                                        anchors.rightMargin: 8
-                                        spacing: 4
-                                        z: 10
-
-                                        Rectangle {
-                                            width: 30; height: 28; radius: 6
-                                            color: zoomOutMouse.containsMouse ? "#3A3A3A" : "#292929"
-                                            border.color: "#555555"
-                                            Text { anchors.centerIn: parent; text: "−"; color: "white"; font.pixelSize: 18 }
-                                            MouseArea { id: zoomOutMouse; anchors.fill: parent; hoverEnabled: true; onClicked: pdfPreviewRoot.zoomFactor = Math.max(0.5, Math.round((pdfPreviewRoot.zoomFactor - 0.1) * 10) / 10) }
-                                        }
-                                        Rectangle {
-                                            width: 48; height: 28; radius: 6; color: "#292929"; border.color: "#555555"
-                                            Text { anchors.centerIn: parent; text: Math.round(pdfPreviewRoot.zoomFactor * 100) + "%"; color: "white"; font.pixelSize: 11 }
-                                        }
-                                        Rectangle {
-                                            width: 30; height: 28; radius: 6
-                                            color: zoomInMouse.containsMouse ? "#3A3A3A" : "#292929"
-                                            border.color: "#555555"
-                                            Text { anchors.centerIn: parent; text: "+"; color: "white"; font.pixelSize: 18 }
-                                            MouseArea { id: zoomInMouse; anchors.fill: parent; hoverEnabled: true; onClicked: pdfPreviewRoot.zoomFactor = Math.min(2.0, Math.round((pdfPreviewRoot.zoomFactor + 0.1) * 10) / 10) }
-                                        }
-                                        Rectangle {
-                                            width: 38; height: 28; radius: 6
-                                            color: resetZoomMouse.containsMouse ? "#3A3A3A" : "#292929"
-                                            border.color: "#555555"
-                                            Text { anchors.centerIn: parent; text: "Fit"; color: "white"; font.pixelSize: 10 }
-                                            MouseArea { id: resetZoomMouse; anchors.fill: parent; hoverEnabled: true; onClicked: pdfPreviewRoot.zoomFactor = 1.0 }
-                                        }
-                                    }
-
                                     ListView {
                                         id: pdfPages
                                         anchors.fill: parent
-                                        anchors.topMargin: 40
                                         clip: true
+                                        contentWidth: Math.max(width, width * pdfPreviewRoot.zoomFactor)
+                                        contentHeight: contentItem.childrenRect.height
                                         spacing: 14
                                         model: pdfDocument.status === PdfDocument.Ready ? pdfDocument.pageCount : 0
                                         boundsBehavior: Flickable.StopAtBounds
