@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import tempfile
 import threading
 import tkinter as tk
@@ -86,13 +87,17 @@ def render_word_to_intermediate_pdf(source: Path, output_pdf: Path) -> None:
                 word.Quit(False)
             except Exception:
                 pass
+        # Release COM proxies before the temporary directory is cleaned up.
+        document = None
+        word = None
+        gc.collect()
         pythoncom.CoUninitialize()
 
 
 def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> int:
     """Rasterize each Word-rendered page to a lossless PNG and embed it in a PDF."""
     try:
-        import fitz
+        import pymupdf
         from reportlab.lib.utils import ImageReader
         from reportlab.pdfgen import canvas
     except ImportError as exc:
@@ -101,7 +106,7 @@ def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> 
             "'py -m pip install -r requirements.txt'."
         ) from exc
 
-    document = fitz.open(intermediate_pdf)
+    document = pymupdf.open(intermediate_pdf)
     if document.page_count < 1:
         document.close()
         raise RuntimeError("Word produced a document with no pages.")
@@ -121,8 +126,8 @@ def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> 
             page = document.load_page(page_number)
             rect = page.rect
             pixmap = page.get_pixmap(
-                matrix=fitz.Matrix(zoom, zoom),
-                colorspace=fitz.csRGB,
+                matrix=pymupdf.Matrix(zoom, zoom),
+                colorspace=pymupdf.csRGB,
                 alpha=False,
                 annots=True,
             )
@@ -182,8 +187,8 @@ def convert_documents(log, progress) -> tuple[int, int, int]:
                     raise RuntimeError("The image-based PDF was not created.")
 
                 # Confirm the final PDF opens and contains the expected page count.
-                import fitz
-                with fitz.open(staging) as check_pdf:
+                import pymupdf
+                with pymupdf.open(staging) as check_pdf:
                     if check_pdf.page_count != page_count:
                         raise RuntimeError("Final PDF page-count verification failed.")
                     if any(page.get_images(full=True) == [] for page in check_pdf):
@@ -335,7 +340,7 @@ class ConverterApp:
 
         try:
             import win32com.client  # noqa: F401
-            import fitz  # noqa: F401
+            import pymupdf  # noqa: F401
             import reportlab  # noqa: F401
         except ImportError:
             messagebox.showerror(
