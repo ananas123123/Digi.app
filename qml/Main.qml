@@ -479,12 +479,12 @@ ApplicationWindow {
                             required property string excerpt
                             required property string path
                             property string folderName: {
-                                // Derive the immediate parent folder from the actual result path.
-                                var normalizedPath = (path.length > 0 ? path : relativePath).replace(/\\\\/g, "/")
+                                // relativePath is rooted at "search QR"; use only the immediate parent folder.
+                                var normalizedPath = relativePath.replace(/\\/g, "/")
                                 var parts = normalizedPath.split("/")
                                 while (parts.length > 0 && parts[parts.length - 1].length === 0)
                                     parts.pop()
-                                return parts.length > 1 ? parts[parts.length - 2] : (parts.length ? parts[0] : "")
+                                return parts.length > 1 ? parts[parts.length - 2] : "search QR"
                             }
 
                             width: resultsList.width
