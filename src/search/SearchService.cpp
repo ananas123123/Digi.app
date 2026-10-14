@@ -72,6 +72,38 @@ QVariantList SearchService::search(const QString &query, bool folders) const
     return results;
 }
 
+QVariantList SearchService::listFolderContents(const QString &path) const
+{
+    QVariantList entries;
+    const QString rootPath = QFileInfo(m_searchRoot).canonicalFilePath();
+    const QString folderPath = QFileInfo(path).canonicalFilePath();
+    if (rootPath.isEmpty() || folderPath.isEmpty())
+        return entries;
+
+    const QString relativePath = QDir(rootPath).relativeFilePath(folderPath);
+    if (relativePath == QStringLiteral("..")
+        || relativePath.startsWith(QStringLiteral("../"))
+        || QFileInfo(relativePath).isAbsolute()
+        || !QFileInfo(folderPath).isDir()) {
+        return entries;
+    }
+
+    QDir folder(folderPath);
+    const QFileInfoList children = folder.entryInfoList(
+        QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Readable,
+        QDir::DirsFirst | QDir::Name | QDir::IgnoreCase);
+    for (const QFileInfo &info : children) {
+        if (info.isHidden())
+            continue;
+        QVariantMap entry;
+        entry.insert(QStringLiteral("name"), info.fileName());
+        entry.insert(QStringLiteral("path"), QDir::toNativeSeparators(info.absoluteFilePath()));
+        entry.insert(QStringLiteral("isFolder"), info.isDir());
+        entries.append(entry);
+    }
+    return entries;
+}
+
 QString SearchService::previewFile(const QString &path) const
 {
     const QString rootPath = QDir(m_searchRoot).canonicalPath();
