@@ -760,7 +760,9 @@ ApplicationWindow {
                                 id: filePreviewLoader
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                sourceComponent: searchRoot.folderSearch ? folderContentsComponent : {
+                                sourceComponent: searchRoot.folderSearch ? folderContentsComponent : choosePreviewComponent()
+
+                                function choosePreviewComponent() {
                                     var path = searchRoot.selectedResultPath.toLowerCase()
                                     if (path.endsWith(".pdf")) return pdfPreviewComponent
                                     if (path.endsWith(".png") || path.endsWith(".jpg") ||
