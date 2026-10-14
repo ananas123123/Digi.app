@@ -737,18 +737,42 @@ ApplicationWindow {
                                         target: null
                                         minimumPointCount: 2
                                         maximumPointCount: 2
-                                        property real zoomAtPinchStart: 1.0
+                                        property real previousGestureScale: 1.0
+                                        property point previousCenter
+
+                                        function updateZoom() {
+                                            if (!active)
+                                                return
+
+                                            const center = pdfPages.mapFromItem(null,
+                                                centroid.scenePosition.x, centroid.scenePosition.y)
+                                            const ratio = scale / Math.max(0.0001, previousGestureScale)
+                                            const oldZoom = pdfPreviewRoot.zoomFactor
+                                            const nextZoom = pdfPreviewRoot.clampZoom(oldZoom * ratio)
+
+                                            // Keep the document point beneath the pinch centroid fixed.
+                                            const documentX = (pdfPages.contentX + previousCenter.x) / oldZoom
+                                            const documentY = (pdfPages.contentY + previousCenter.y) / oldZoom
+
+                                            pdfPreviewRoot.zoomFactor = nextZoom
+                                            pdfPages.contentX = pdfPreviewRoot.clampContentX(
+                                                documentX * nextZoom - center.x)
+                                            pdfPages.contentY = pdfPreviewRoot.clampContentY(
+                                                documentY * nextZoom - center.y)
+
+                                            previousGestureScale = scale
+                                            previousCenter = center
+                                        }
 
                                         onActiveChanged: {
-                                            if (active)
-                                                zoomAtPinchStart = pdfPreviewRoot.zoomFactor
-                                        }
-                                        onScaleChanged: {
                                             if (active) {
-                                                var nextZoom = zoomAtPinchStart * scale
-                                                pdfPreviewRoot.zoomFactor = Math.max(0.5, Math.min(4.0, nextZoom))
+                                                previousGestureScale = scale
+                                                previousCenter = pdfPages.mapFromItem(null,
+                                                    centroid.scenePosition.x, centroid.scenePosition.y)
                                             }
                                         }
+                                        onScaleChanged: updateZoom()
+                                        onCentroidChanged: updateZoom()
                                     }
 
                                     PdfDocument {
@@ -762,6 +786,8 @@ ApplicationWindow {
                                         clip: true
                                         contentWidth: Math.max(width, (width - 28) * pdfPreviewRoot.zoomFactor + 28)
                                         contentHeight: contentItem.childrenRect.height
+                                        interactive: true
+                                        flickableDirection: Flickable.AutoFlickIfNeeded
                                         spacing: 14
                                         model: pdfDocument.status === PdfDocument.Ready ? pdfDocument.pageCount : 0
                                         boundsBehavior: Flickable.StopAtBounds
