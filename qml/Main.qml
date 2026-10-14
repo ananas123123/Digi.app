@@ -213,6 +213,7 @@ ApplicationWindow {
             sourceComponent: window.activePage === "Home" ? homePage
                            : window.activePage === "Notes" ? notesPage
                            : window.activePage === "Search" ? searchPage
+                           : window.activePage === "Explorer" ? explorerPage
                            : window.activePage === "Timer" ? timerPage
                            : window.activePage === "Resources" ? resourcesPage
                            : window.activePage === "Analytics" ? analyticsPage
@@ -231,6 +232,7 @@ ApplicationWindow {
         }
     }
     Component { id: notesPage; NotesPage {} }
+    Component { id: explorerPage; Item { Rectangle { anchors.fill: parent; color: theme.window } Text { anchors.centerIn: parent; text: "▰"; color: theme.accent; font.pixelSize: 48 } } }
 
     Component {
         id: searchPage
