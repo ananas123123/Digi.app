@@ -11,6 +11,7 @@ Item {
     signal settingsRequested()
     signal fullscreenRequested()
     property bool bannerOpen: false
+    property bool notesHandleDimmed: false
     Theme { id: theme }
 
     Layout.fillWidth: true
@@ -212,6 +213,34 @@ Item {
         x: (root.width - width) / 2
         y: banner.y + banner.height - 1
         z: 2
+        opacity: root.activePage === "Notes" && !root.bannerOpen && root.notesHandleDimmed ? 0.08 : 1
+        Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.OutCubic } }
+
+        Timer {
+            id: notesHandleIdleTimer
+            interval: 2000
+            repeat: false
+            onTriggered: {
+                if (root.activePage === "Notes" && !root.bannerOpen)
+                    root.notesHandleDimmed = true
+            }
+        }
+
+        Connections {
+            target: root
+            function onActivePageChanged() {
+                notesHandleIdleTimer.stop()
+                root.notesHandleDimmed = false
+                if (root.activePage === "Notes" && !root.bannerOpen)
+                    notesHandleIdleTimer.restart()
+            }
+            function onBannerOpenChanged() {
+                notesHandleIdleTimer.stop()
+                root.notesHandleDimmed = false
+                if (root.activePage === "Notes" && !root.bannerOpen)
+                    notesHandleIdleTimer.restart()
+            }
+        }
 
         Column {
             anchors.centerIn: parent
@@ -230,7 +259,13 @@ Item {
 
         TapHandler {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus | PointerDevice.TouchScreen
-            onTapped: root.bannerOpen = !root.bannerOpen
+            onTapped: {
+                notesHandleIdleTimer.stop()
+                root.notesHandleDimmed = false
+                root.bannerOpen = !root.bannerOpen
+                if (root.activePage === "Notes" && !root.bannerOpen)
+                    notesHandleIdleTimer.restart()
+            }
         }
     }
 }
