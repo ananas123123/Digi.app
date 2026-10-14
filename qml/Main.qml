@@ -481,7 +481,8 @@ ApplicationWindow {
                             property string folderName: {
                                 var normalizedPath = relativePath.split("\\\\").join("/")
                                 var parts = normalizedPath.split("/")
-                                return parts.length > 1 ? parts[parts.length - 2] : "search QR"
+                                var closestChild = parts.length > 1 ? parts[parts.length - 2] : ""
+                                return closestChild.length > 0 ? closestChild : "search QR"
                             }
 
                             width: resultsList.width
