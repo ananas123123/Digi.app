@@ -109,12 +109,11 @@ def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> 
         ) from exc
 
     with pymupdf.open(intermediate_pdf) as document:
-        if document.page_count < 1:
+        page_count = document.page_count
+        if page_count < 1:
             raise RuntimeError("Word produced a document with no pages.")
 
-        try:
-        first_page = document.load_page(0)
-        first_rect = first_page.rect
+        first_rect = document.load_page(0).rect
         pdf_canvas = canvas.Canvas(
             str(final_pdf),
             pagesize=(first_rect.width, first_rect.height),
@@ -123,7 +122,7 @@ def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> 
         )
         zoom = RENDER_DPI / 72.0
 
-        for page_number in range(document.page_count):
+        for page_number in range(page_count):
             page = document.load_page(page_number)
             rect = page.rect
             pixmap = page.get_pixmap(
@@ -133,7 +132,7 @@ def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> 
                 annots=True,
             )
             png_path = temp_dir / f"page_{page_number + 1:05d}.png"
-            pixmap.save(str(png_path))  # PNG encoding is lossless.
+            pixmap.save(str(png_path))
 
             pdf_canvas.setPageSize((rect.width, rect.height))
             pdf_canvas.drawImage(
@@ -149,8 +148,7 @@ def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> 
             png_path.unlink(missing_ok=True)
 
         pdf_canvas.save()
-            return document.page_count
-
+        return page_count
 
 def remove_temp_directory_safely(path: Path, attempts: int = 8) -> None:
     """Remove temporary files with retries for transient Windows file locks."""
