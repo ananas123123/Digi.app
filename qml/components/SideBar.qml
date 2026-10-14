@@ -134,39 +134,6 @@ Item {
         }
     }
 
-    Rectangle {
-        id: fullscreenButton
-        width: 44
-        height: 38
-        radius: 11
-        x: (root.width - width) / 2
-        y: root.height - height - 14
-        z: 4
-        visible: root.bannerOpen || opacity > 0.01
-        opacity: root.bannerOpen ? 1 : 0
-        scale: root.bannerOpen ? 1 : 0.86
-        color: fullscreenMouse.containsMouse ? theme.surfaceRaised : theme.surface
-        border.color: fullscreenMouse.containsMouse ? theme.accent : theme.border
-        border.width: 1
-        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutBack } }
-
-        Text {
-            anchors.centerIn: parent
-            text: "⛶"
-            color: theme.text
-            font.pixelSize: 22
-        }
-
-        MouseArea {
-            id: fullscreenMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.fullscreenRequested()
-        }
-    }
-
     Repeater {
         model: [
             { side: "left", symbol: "●", label: "Profile" },
