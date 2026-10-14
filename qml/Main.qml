@@ -715,15 +715,53 @@ ApplicationWindow {
                                 Item {
                                     id: pdfPreviewRoot
                                     property var annotationByPage: ({})
+                                    property real zoomFactor: 1.0
 
                                     PdfDocument {
                                         id: pdfDocument
                                         source: "file:///" + searchRoot.selectedResultPath.replace(/\\\\/g, "/")
                                     }
 
+                                    Row {
+                                        id: zoomControls
+                                        anchors.top: parent.top
+                                        anchors.right: parent.right
+                                        anchors.topMargin: 8
+                                        anchors.rightMargin: 8
+                                        spacing: 4
+                                        z: 10
+
+                                        Rectangle {
+                                            width: 30; height: 28; radius: 6
+                                            color: zoomOutMouse.containsMouse ? "#3A3A3A" : "#292929"
+                                            border.color: "#555555"
+                                            Text { anchors.centerIn: parent; text: "−"; color: "white"; font.pixelSize: 18 }
+                                            MouseArea { id: zoomOutMouse; anchors.fill: parent; hoverEnabled: true; onClicked: pdfPreviewRoot.zoomFactor = Math.max(0.5, Math.round((pdfPreviewRoot.zoomFactor - 0.1) * 10) / 10) }
+                                        }
+                                        Rectangle {
+                                            width: 48; height: 28; radius: 6; color: "#292929"; border.color: "#555555"
+                                            Text { anchors.centerIn: parent; text: Math.round(pdfPreviewRoot.zoomFactor * 100) + "%"; color: "white"; font.pixelSize: 11 }
+                                        }
+                                        Rectangle {
+                                            width: 30; height: 28; radius: 6
+                                            color: zoomInMouse.containsMouse ? "#3A3A3A" : "#292929"
+                                            border.color: "#555555"
+                                            Text { anchors.centerIn: parent; text: "+"; color: "white"; font.pixelSize: 18 }
+                                            MouseArea { id: zoomInMouse; anchors.fill: parent; hoverEnabled: true; onClicked: pdfPreviewRoot.zoomFactor = Math.min(2.0, Math.round((pdfPreviewRoot.zoomFactor + 0.1) * 10) / 10) }
+                                        }
+                                        Rectangle {
+                                            width: 38; height: 28; radius: 6
+                                            color: resetZoomMouse.containsMouse ? "#3A3A3A" : "#292929"
+                                            border.color: "#555555"
+                                            Text { anchors.centerIn: parent; text: "Fit"; color: "white"; font.pixelSize: 10 }
+                                            MouseArea { id: resetZoomMouse; anchors.fill: parent; hoverEnabled: true; onClicked: pdfPreviewRoot.zoomFactor = 1.0 }
+                                        }
+                                    }
+
                                     ListView {
                                         id: pdfPages
                                         anchors.fill: parent
+                                        anchors.topMargin: 40
                                         clip: true
                                         spacing: 14
                                         model: pdfDocument.status === PdfDocument.Ready ? pdfDocument.pageCount : 0
@@ -734,15 +772,15 @@ ApplicationWindow {
                                             id: pdfPage
                                             required property int index
                                             property size pageSize: pdfDocument.pagePointSize(index)
-                                            property real pageWidth: Math.max(1, pdfPages.width - 28)
+                                            property real pageWidth: Math.max(1, (pdfPages.width - 28) * pdfPreviewRoot.zoomFactor)
                                             property real pageHeight: pageSize.width > 0
                                                 ? pageWidth * pageSize.height / pageSize.width : pageWidth * 1.414
                                             property var pageStrokes: pdfPreviewRoot.annotationByPage[index] || []
-                                            width: pdfPages.width
+                                            width: Math.max(pdfPages.width, pageWidth + 28)
                                             height: pageHeight + 2
                                             
                                             Rectangle {
-                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                x: (pdfPage.width - width) / 2
                                                 width: pdfPage.pageWidth
                                                 height: pdfPage.pageHeight
                                                 color: "#FFFFFF"
@@ -761,7 +799,7 @@ ApplicationWindow {
                                                 Canvas {
                                                     id: pageInk
                                                     anchors.fill: parent
-                                                    renderTarget: Canvas.FramebufferObject
+                                                    renderTarget: Canvas.Immediate
                                                     onPaint: {
                                                         var ctx = getContext("2d")
                                                         ctx.clearRect(0, 0, width, height)
@@ -788,7 +826,10 @@ ApplicationWindow {
                                                 property var activeStroke: null
 
                                                 function beginStroke(position) {
-                                                    activeStroke = { points: [{ x: position.x / width, y: position.y / height }] }
+                                                    activeStroke = { points: [
+                                                        { x: position.x / width, y: position.y / height },
+                                                        { x: position.x / width, y: position.y / height }
+                                                    ] }
                                                     pageInk.requestPaint()
                                                 }
 
