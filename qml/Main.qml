@@ -441,8 +441,8 @@ ApplicationWindow {
                             height: 30
                             radius: 8
                             color: clearMouse.containsMouse ? searchTheme.surfaceRaised : "transparent"
-                            visible: searchInput.text.length > 0
-                            opacity: visible ? 1 : 0
+                            visible: true
+                            opacity: 1
 
                             Text {
                                 anchors.centerIn: parent
