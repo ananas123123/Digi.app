@@ -242,6 +242,7 @@ ApplicationWindow {
             property bool focused: searchInput.activeFocus
             property bool hasQuery: searchInput.text.trim().length > 0
             property bool hasSearched: false
+            property bool folderSearch: false
             property var results: []
             property int currentPage: 0
             readonly property int resultsPerPage: 20
@@ -380,11 +381,58 @@ ApplicationWindow {
                             background: Item {}
                             verticalAlignment: TextInput.AlignVCenter
                             onAccepted: {
-                                searchRoot.results = searchService.search(text)
+                                searchRoot.results = searchService.search(text, searchRoot.folderSearch)
                                 searchRoot.currentPage = 0
                                 searchRoot.selectedResultPath = ""
                                 searchRoot.hasSearched = true
                                 searchInput.focus = false
+                            }
+                        }
+
+                        Column {
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 1
+
+                            Text {
+                                text: "folder"
+                                color: searchRoot.folderSearch ? searchTheme.accent : searchTheme.mutedText
+                                font.pixelSize: 9
+                                horizontalAlignment: Text.AlignHCenter
+                                width: 38
+                            }
+
+                            Rectangle {
+                                width: 38
+                                height: 24
+                                radius: 12
+                                color: "#343434"
+                                border.width: 1
+                                border.color: searchRoot.folderSearch ? searchTheme.accent : "#666666"
+
+                                Rectangle {
+                                    width: 16
+                                    height: 16
+                                    radius: 8
+                                    y: 3
+                                    x: searchRoot.folderSearch ? parent.width - width - 3 : 3
+                                    color: searchRoot.folderSearch ? searchTheme.accent : "#BDBDBD"
+                                    Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: searchRoot.folderSearch = !searchRoot.folderSearch
+                                }
+                            }
+
+                            Text {
+                                text: "file"
+                                color: searchRoot.folderSearch ? searchTheme.mutedText : searchTheme.accent
+                                font.pixelSize: 9
+                                horizontalAlignment: Text.AlignHCenter
+                                width: 38
                             }
                         }
 
