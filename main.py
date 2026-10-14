@@ -25,6 +25,17 @@ def find_documents() -> list[Path]:
     )
 
 
+def find_word_documents() -> list[Path]:
+    """Find only .doc and .docx files recursively."""
+    if not REPOSITORY_DIR.is_dir():
+        return []
+    return sorted(
+        (p for p in REPOSITORY_DIR.rglob("*")
+         if p.is_file() and p.suffix.lower() in {".doc", ".docx"}),
+        key=lambda p: str(p).casefold(),
+    )
+
+
 def validate_pdf(path: Path) -> int:
     import pymupdf
     if not path.is_file() or path.stat().st_size == 0:
@@ -234,6 +245,8 @@ class ConverterApp:
         actions.pack(fill="x", pady=(12, 12))
         self.refresh_button = ttk.Button(actions, text="Refresh folder", command=self._refresh_status)
         self.refresh_button.pack(side="left")
+        self.check_button = ttk.Button(actions, text="Check remaining Word files", command=self._check_remaining)
+        self.check_button.pack(side="left", padx=(8, 0))
         self.start_button = ttk.Button(actions, text="Convert to PDF", command=self._start)
         self.start_button.pack(side="right")
 
@@ -278,6 +291,28 @@ class ConverterApp:
         )
         if not self.running:
             self.start_button.configure(state="normal" if count else "disabled")
+
+    def _check_remaining(self) -> None:
+        if self.running:
+            return
+        remaining = find_word_documents()
+        self._log(f"Verification scan: {len(remaining)} .doc/.docx file(s) remain in repository.")
+        if not remaining:
+            messagebox.showinfo(
+                "Verification complete",
+                "No .doc or .docx files were found anywhere inside repository.\n\n"
+                "All files with those extensions have been converted or removed.",
+            )
+            return
+
+        self._log("Remaining Word files:")
+        for path in remaining:
+            self._log(f"REMAINS: {path.relative_to(REPOSITORY_DIR)}")
+        messagebox.showwarning(
+            "Word files remain",
+            f"Found {len(remaining)} .doc/.docx file(s).\n\n"
+            "Their paths are listed in Activity.",
+        )
 
     def _start(self) -> None:
         if self.running:
