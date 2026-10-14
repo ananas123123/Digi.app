@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 import shutil
 import subprocess
 import tempfile
@@ -14,7 +15,7 @@ from tkinter import filedialog, messagebox, ttk
 
 APP_TITLE = "Word to PDF"
 WORD_EXTENSIONS = {".doc", ".docx", ".docm", ".dot", ".dotx", ".dotm"}
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 REPOSITORY_DIR = BASE_DIR / "repository"
 
 
