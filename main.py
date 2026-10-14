@@ -27,7 +27,7 @@ def find_documents() -> list[Path]:
     )
 
 
-def render_word_to_intermediate_pdf(source: Path, output_pdf: Path) -> None:
+def render_word_to_intermediate_pdf(source: Path, output_pdf: Path, log=lambda _message: None) -> None:
     """Use Microsoft Word's own layout engine to paginate and export the document.
 
     This PDF is temporary only. The final PDF is built from rendered PNG page
@@ -46,11 +46,13 @@ def render_word_to_intermediate_pdf(source: Path, output_pdf: Path) -> None:
     word = None
     document = None
     try:
+        log(f"Opening Microsoft Word for: {source.name}")
         word = win32com.client.DispatchEx("Word.Application")
         word.Visible = False
         word.DisplayAlerts = 0
         # Disable macros for documents opened by the converter.
         word.AutomationSecurity = 3
+        log(f"Opening document: {source.name}")
         document = word.Documents.Open(
             str(source.resolve()),
             ConfirmConversions=False,
@@ -60,6 +62,7 @@ def render_word_to_intermediate_pdf(source: Path, output_pdf: Path) -> None:
             OpenAndRepair=True,
             NoEncodingDialog=True,
         )
+        log(f"Exporting Word layout: {source.name}")
         # wdExportFormatPDF = 17. This is only an internal intermediate so
         # Word can calculate the exact pagination and layout.
         document.ExportAsFixedFormat(
@@ -193,11 +196,14 @@ def convert_documents(log, progress) -> tuple[int, int, int]:
             try:
                 intermediate = temp_dir / "word_layout_intermediate.pdf"
 
-                render_word_to_intermediate_pdf(source, intermediate)
+                log(f"[{index}/{total}] Processing: {source.relative_to(REPOSITORY_DIR)}")
+                render_word_to_intermediate_pdf(source, intermediate, log)
                 if not intermediate.is_file() or intermediate.stat().st_size == 0:
                     raise RuntimeError("Microsoft Word did not create its intermediate layout file.")
 
+                log(f"Rendering PNG pages: {source.name}")
                 page_count = build_image_pdf(intermediate, staging, temp_dir)
+                log(f"Verifying generated PDF: {source.name}")
                 if not staging.is_file() or staging.stat().st_size == 0:
                     raise RuntimeError("The image-based PDF was not created.")
 
