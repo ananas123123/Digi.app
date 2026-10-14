@@ -140,7 +140,7 @@ Item {
         height: 38
         radius: 11
         x: (root.width - width) / 2
-        y: revealTab.y + revealTab.height + 7
+        y: root.height - height - 14
         z: 4
         visible: root.bannerOpen || opacity > 0.01
         opacity: root.bannerOpen ? 1 : 0
