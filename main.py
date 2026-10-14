@@ -1,241 +1,151 @@
 from __future__ import annotations
 
-import gc
+import os
+import shutil
+import subprocess
 import tempfile
 import threading
 import tkinter as tk
+import uuid
 from pathlib import Path
 from tkinter import messagebox, ttk
 
-APP_TITLE = "Word to PDF (PNG pages)"
+APP_TITLE = "Word to PDF"
 WORD_EXTENSIONS = {".doc", ".docx", ".docm", ".dot", ".dotx", ".dotm"}
 BASE_DIR = Path(__file__).resolve().parent
 REPOSITORY_DIR = BASE_DIR / "repository"
-RENDER_DPI = 300
 
 
 def find_documents() -> list[Path]:
-    """Find supported Word documents anywhere inside repository/."""
     if not REPOSITORY_DIR.is_dir():
         return []
     return sorted(
-        (
-            path for path in REPOSITORY_DIR.rglob("*")
-            if path.is_file() and path.suffix.lower() in WORD_EXTENSIONS
-        ),
-        key=lambda path: str(path).casefold(),
+        (p for p in REPOSITORY_DIR.rglob("*") if p.is_file() and p.suffix.lower() in WORD_EXTENSIONS),
+        key=lambda p: str(p).casefold(),
     )
 
 
-def render_word_to_intermediate_pdf(source: Path, output_pdf: Path, log=lambda _message: None) -> None:
-    """Use Microsoft Word's own layout engine to paginate and export the document.
+def validate_pdf(path: Path) -> int:
+    import pymupdf
+    if not path.is_file() or path.stat().st_size == 0:
+        raise RuntimeError("The converter did not produce a usable PDF.")
+    with pymupdf.open(path) as pdf:
+        if pdf.page_count < 1:
+            raise RuntimeError("The converter produced a PDF with no pages.")
+        return pdf.page_count
 
-    This PDF is temporary only. The final PDF is built from rendered PNG page
-    images, so the delivered PDF pages are raster images rather than live text.
-    """
+
+def convert_one(source: Path, staging: Path, log) -> int:
+    errors = []
     try:
         import pythoncom
         import win32com.client
-    except ImportError as exc:
-        raise RuntimeError(
-            "Microsoft Word automation requires pywin32. Install dependencies with "
-            "'py -m pip install -r requirements.txt'."
-        ) from exc
-
-    pythoncom.CoInitialize()
-    word = None
-    document = None
-    try:
-        log(f"Opening Microsoft Word for: {source.name}")
-        word = win32com.client.DispatchEx("Word.Application")
-        word.Visible = False
-        word.DisplayAlerts = 0
-        # Disable macros for documents opened by the converter.
-        word.AutomationSecurity = 3
-        log(f"Opening document: {source.name}")
-        document = word.Documents.Open(
-            str(source.resolve()),
-            ConfirmConversions=False,
-            ReadOnly=True,
-            AddToRecentFiles=False,
-            Visible=False,
-            OpenAndRepair=True,
-            NoEncodingDialog=True,
-        )
-        log(f"Exporting Word layout: {source.name}")
-        # wdExportFormatPDF = 17. This is only an internal intermediate so
-        # Word can calculate the exact pagination and layout.
-        document.ExportAsFixedFormat(
-            OutputFileName=str(output_pdf.resolve()),
-            ExportFormat=17,
-            OpenAfterExport=False,
-            OptimizeFor=0,
-            Range=0,
-            Item=0,
-            IncludeDocProps=False,
-            KeepIRM=False,
-            CreateBookmarks=0,
-            DocStructureTags=False,
-            BitmapMissingFonts=True,
-            UseISO19005_1=False,
-        )
-    finally:
-        if document is not None:
-            try:
-                document.Close(False)
-            except Exception:
-                pass
-        if word is not None:
-            try:
-                word.Quit(False)
-            except Exception:
-                pass
-        # Release COM proxies before the temporary directory is cleaned up.
-        document = None
+        pythoncom.CoInitialize()
         word = None
-        gc.collect()
-        pythoncom.CoUninitialize()
-        # Word can briefly retain a handle to its exported PDF after Quit().
-        # The caller retries cleanup if Windows has not released the file yet.
-
-
-def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> int:
-    """Rasterize each Word-rendered page to a lossless PNG and embed it in a PDF."""
-    try:
-        import pymupdf
-        from reportlab.lib.utils import ImageReader
-        from reportlab.pdfgen import canvas
-    except ImportError as exc:
-        raise RuntimeError(
-            "PNG rendering dependencies are missing. Install them with "
-            "'py -m pip install -r requirements.txt'."
-        ) from exc
-
-    with pymupdf.open(intermediate_pdf) as document:
-        page_count = document.page_count
-        if page_count < 1:
-            raise RuntimeError("Word produced a document with no pages.")
-
-        first_rect = document.load_page(0).rect
-        pdf_canvas = canvas.Canvas(
-            str(final_pdf),
-            pagesize=(first_rect.width, first_rect.height),
-            pageCompression=1,
-            invariant=1,
-        )
-        zoom = RENDER_DPI / 72.0
-
-        for page_number in range(page_count):
-            page = document.load_page(page_number)
-            rect = page.rect
-            pixmap = page.get_pixmap(
-                matrix=pymupdf.Matrix(zoom, zoom),
-                colorspace=pymupdf.csRGB,
-                alpha=False,
-                annots=True,
-            )
-            png_path = temp_dir / f"page_{page_number + 1:05d}.png"
-            pixmap.save(str(png_path))
-
-            pdf_canvas.setPageSize((rect.width, rect.height))
-            pdf_canvas.drawImage(
-                ImageReader(str(png_path)),
-                0,
-                0,
-                width=rect.width,
-                height=rect.height,
-                preserveAspectRatio=False,
-                mask=None,
-            )
-            pdf_canvas.showPage()
-            png_path.unlink(missing_ok=True)
-
-        pdf_canvas.save()
-        return page_count
-
-def remove_temp_directory_safely(path: Path, attempts: int = 8) -> None:
-    """Remove temporary files with retries for transient Windows file locks."""
-    import shutil
-    import time
-
-    last_error = None
-    for attempt in range(attempts):
+        document = None
         try:
-            shutil.rmtree(path)
-            return
-        except PermissionError as exc:
-            last_error = exc
-            gc.collect()
-            time.sleep(0.25 * (attempt + 1))
-    if last_error is not None:
-        raise last_error
+            log(f"Using Microsoft Word: {source.name}")
+            word = win32com.client.DispatchEx("Word.Application")
+            word.Visible = False
+            word.DisplayAlerts = 0
+            word.AutomationSecurity = 3
+            document = word.Documents.Open(
+                str(source.resolve()), ConfirmConversions=False, ReadOnly=True,
+                AddToRecentFiles=False, Visible=False, OpenAndRepair=True,
+                NoEncodingDialog=True,
+            )
+            document.ExportAsFixedFormat(
+                OutputFileName=str(staging.resolve()), ExportFormat=17,
+                OpenAfterExport=False, OptimizeFor=0, Range=0, Item=0,
+                IncludeDocProps=False, KeepIRM=False, CreateBookmarks=0,
+                DocStructureTags=False, BitmapMissingFonts=True, UseISO19005_1=False,
+            )
+        finally:
+            if document is not None:
+                try:
+                    document.Close(False)
+                except Exception:
+                    pass
+            if word is not None:
+                try:
+                    word.Quit(False)
+                except Exception:
+                    pass
+            document = None
+            word = None
+            pythoncom.CoUninitialize()
+        return validate_pdf(staging)
+    except Exception as exc:
+        errors.append(f"Microsoft Word: {exc}")
+        staging.unlink(missing_ok=True)
+
+    libre = shutil.which("soffice") or shutil.which("libreoffice")
+    if libre:
+        try:
+            log(f"Word export failed; trying LibreOffice: {source.name}")
+            with tempfile.TemporaryDirectory(prefix="digi-convert-") as temp_name:
+                result = subprocess.run(
+                    [libre, "--headless", "--convert-to", "pdf", "--outdir", temp_name, str(source)],
+                    capture_output=True, text=True, timeout=180,
+                )
+                generated = Path(temp_name) / (source.stem + ".pdf")
+                if result.returncode != 0 or not generated.is_file() or generated.stat().st_size == 0:
+                    raise RuntimeError(result.stderr.strip() or result.stdout.strip() or "LibreOffice produced no PDF.")
+                shutil.copy2(generated, staging)
+            return validate_pdf(staging)
+        except Exception as exc:
+            errors.append(f"LibreOffice: {exc}")
+    raise RuntimeError("Conversion methods failed. " + " | ".join(errors))
 
 
 def convert_documents(log, progress) -> tuple[int, int, int]:
     documents = find_documents()
     converted = failed = skipped = 0
     total = len(documents)
-
     if not documents:
-        log("No Word documents found in the repository folder.")
+        log("No Word documents found in repository.")
         return converted, failed, skipped
-
-    log(f"Found {total} Word document(s). Rendering at {RENDER_DPI} DPI.")
+    log(f"Found {total} Word document(s). Using the main-branch conversion algorithm.")
     for index, source in enumerate(documents, start=1):
         destination = source.with_suffix(".pdf")
         progress(index - 1, total)
-
         if destination.exists():
             skipped += 1
             log(f"SKIPPED: {source.relative_to(REPOSITORY_DIR)} — PDF already exists; Word file kept.")
+            progress(index, total)
             continue
-
-        staging = source.with_name(f".{source.stem}.digi-staging.pdf")
+        staging = source.with_name(f".{source.stem}.digi-staging-{uuid.uuid4().hex}.pdf")
         try:
-            temp_dir = Path(tempfile.mkdtemp(prefix="digi_word_png_"))
+            log(f"[{index}/{total}] Converting: {source.relative_to(REPOSITORY_DIR)}")
+            page_count = convert_one(source, staging, log)
             try:
-                intermediate = temp_dir / "word_layout_intermediate.pdf"
-
-                log(f"[{index}/{total}] Processing: {source.relative_to(REPOSITORY_DIR)}")
-                render_word_to_intermediate_pdf(source, intermediate, log)
-                if not intermediate.is_file() or intermediate.stat().st_size == 0:
-                    raise RuntimeError("Microsoft Word did not create its intermediate layout file.")
-
-                log(f"Rendering PNG pages: {source.name}")
-                page_count = build_image_pdf(intermediate, staging, temp_dir)
-                log(f"Verifying generated PDF: {source.name}")
-                if not staging.is_file() or staging.stat().st_size == 0:
-                    raise RuntimeError("The image-based PDF was not created.")
-
-                # Confirm the final PDF opens and contains the expected page count.
-                import pymupdf
-                with pymupdf.open(staging) as check_pdf:
-                    if check_pdf.page_count != page_count:
-                        raise RuntimeError("Final PDF page-count verification failed.")
-                    if any(page.get_images(full=True) == [] for page in check_pdf):
-                        raise RuntimeError("At least one PDF page is missing its embedded page image.")
-
-                # Install the completed PDF first, then remove the source document.
-                staging.replace(destination)
+                os.link(staging, destination)
+            except FileExistsError:
+                skipped += 1
+                log(f"SKIPPED: {source.name} — destination PDF appeared; Word file kept.")
+                continue
+            except OSError as exc:
+                raise RuntimeError("Could not safely install PDF without overwriting another file; source preserved.") from exc
+            try:
                 source.unlink()
-                converted += 1
-                log(
-                    f"CONVERTED: {source.relative_to(REPOSITORY_DIR)} "
-                    f"→ {destination.name} ({page_count} PNG page(s), {RENDER_DPI} DPI)"
-                )
-            finally:
-                remove_temp_directory_safely(temp_dir)
+            except OSError as exc:
+                try:
+                    if (destination.stat().st_dev, destination.stat().st_ino) == (staging.stat().st_dev, staging.stat().st_ino):
+                        destination.unlink()
+                except OSError:
+                    pass
+                raise RuntimeError("PDF created, but the Word source could not be removed. Check locks and permissions.") from exc
+            converted += 1
+            log(f"CONVERTED: {source.relative_to(REPOSITORY_DIR)} -> {destination.name} ({page_count} page(s))")
         except Exception as exc:
             failed += 1
             log(f"FAILED: {source.relative_to(REPOSITORY_DIR)} — {exc}")
         finally:
-            if staging.exists():
-                try:
-                    staging.unlink()
-                except OSError:
-                    pass
-        progress(index, total)
-
+            try:
+                staging.unlink(missing_ok=True)
+            except OSError:
+                pass
+            progress(index, total)
     return converted, failed, skipped
 
 
@@ -304,7 +214,7 @@ class ConverterApp:
         actions.pack(fill="x", pady=(12, 12))
         self.refresh_button = ttk.Button(actions, text="Refresh folder", command=self._refresh_status)
         self.refresh_button.pack(side="left")
-        self.start_button = ttk.Button(actions, text="Convert to image-based PDF", command=self._start)
+        self.start_button = ttk.Button(actions, text="Convert to PDF", command=self._start)
         self.start_button.pack(side="right")
 
         self.progress = ttk.Progressbar(outer, mode="determinate", maximum=100)
@@ -364,7 +274,6 @@ class ConverterApp:
         try:
             import win32com.client  # noqa: F401
             import pymupdf  # noqa: F401
-            import reportlab  # noqa: F401
         except ImportError:
             messagebox.showerror(
                 "Dependencies missing",
@@ -398,7 +307,7 @@ class ConverterApp:
         self.start_button.configure(state="disabled")
         self.refresh_button.configure(state="disabled")
         self.progress.configure(value=0, maximum=max(1, len(documents)))
-        self._log(f"Starting image-based conversion in {REPOSITORY_DIR}")
+        self._log(f"Starting Word-to-PDF conversion in {REPOSITORY_DIR}")
 
         def worker() -> None:
             result = convert_documents(
