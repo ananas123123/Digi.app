@@ -22,6 +22,19 @@ ApplicationWindow {
     Theme { id: theme }
     property string activePage: "Home"
 
+    function toggleFullscreen() {
+        if (window.visibility === Window.FullScreen) {
+            window.showNormal()
+        } else {
+            window.showFullScreen()
+        }
+    }
+
+    Shortcut {
+        sequence: "F11"
+        onActivated: window.toggleFullscreen()
+    }
+
     Rectangle {
         id: windowSurface
         anchors.fill: parent
@@ -61,7 +74,8 @@ ApplicationWindow {
         Rectangle {
             id: titleBar
             Layout.fillWidth: true
-            Layout.preferredHeight: 38
+            Layout.preferredHeight: visible ? 38 : 0
+            visible: window.visibility !== Window.FullScreen
             z: 40
             radius: 16
             clip: true
@@ -140,6 +154,7 @@ ApplicationWindow {
                 window.activePage = pageName
                 sideBar.bannerOpen = false
             }
+            onFullscreenRequested: window.toggleFullscreen()
             clip: false
         }
 
