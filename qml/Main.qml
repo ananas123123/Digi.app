@@ -38,10 +38,10 @@ ApplicationWindow {
     Rectangle {
         id: windowSurface
         anchors.fill: parent
-        radius: 16
+        radius: window.visibility === Window.FullScreen ? 0 : 16
         color: theme.window
-        border.color: theme.border
-        border.width: 1
+        border.color: window.visibility === Window.FullScreen ? "transparent" : theme.border
+        border.width: window.visibility === Window.FullScreen ? 0 : 1
         antialiasing: true
         z: -2
     }
@@ -55,10 +55,10 @@ ApplicationWindow {
     Rectangle {
         id: windowEdge
         anchors.fill: parent
-        radius: 16
+        radius: window.visibility === Window.FullScreen ? 0 : 16
         color: "transparent"
-        border.color: theme.border
-        border.width: 1
+        border.color: window.visibility === Window.FullScreen ? "transparent" : theme.border
+        border.width: window.visibility === Window.FullScreen ? 0 : 1
         antialiasing: true
         z: 100
         // Keep the border visible without intercepting window interaction.
@@ -68,7 +68,7 @@ ApplicationWindow {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 1
+        anchors.margins: window.visibility === Window.FullScreen ? 0 : 1
         spacing: 0
 
         Rectangle {
