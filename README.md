@@ -1,54 +1,58 @@
-# Word to PDF — lossless PNG page edition
+# Digi Word-to-PDF
 
-This desktop utility reads Word documents from the `repository` folder, including nested subfolders. It renders each Word page to a lossless PNG image at 300 DPI, then builds a PDF containing one image per PDF page. After verification, the PDF replaces the original Word file.
+A Windows desktop utility that converts Word documents to PDFs while preserving the input folder structure.
 
-## Requirements
+## Build a standalone application
 
+Requirements:
 - Windows
-- Desktop Microsoft Word installed and activated (used for accurate Word layout and pagination)
-- Python 3.10 or newer
+- Python 3.10+
+- Desktop Microsoft Word installed and activated
+- Internet access during the first build to install PyInstaller and dependencies
 
-Install Python dependencies:
+1. Pull the latest `file-converter` branch.
+2. Double-click `build_exe.bat`.
+3. When the build finishes, open `dist\Digi Word to PDF\`.
+4. Run `Digi Word to PDF.exe`.
 
-```powershell
-py -m pip install -r requirements.txt
+Distribute or move the **entire** `Digi Word to PDF` folder, not only the EXE. The folder contains the executable's bundled runtime files.
+
+## Where input files go
+
+Put documents and any nested folders in:
+
+```
+dist/
+└── Digi Word to PDF/
+    ├── Digi Word to PDF.exe
+    └── repository/
+        ├── Essay.docx
+        └── Chemistry/
+            └── Topic 1/
+                └── Notes.doc
 ```
 
-## Folder layout
+The app always uses the `repository` folder next to the executable. It scans subfolders recursively.
 
-```text
-file-converter/
-├── main.py
-├── requirements.txt
-├── README.md
-└── repository/
-    ├── Essay.docx
-    └── School/
-        └── Notes.docx
+## Output and folder structure
+
+A document such as:
+
+```
+repository/Chemistry/Topic 1/Notes.docx
 ```
 
-Run:
+produces:
 
-```powershell
-py main.py
+```
+repository/Chemistry/Topic 1/Notes.pdf
 ```
 
-Click **Refresh folder**, then **Convert to image-based PDF**.
+Subfolders are preserved. The PDF is validated before Digi removes the Word source. If a PDF with the same name already exists, Digi skips that source and keeps the Word file. If conversion or source cleanup fails, the source is retained and the Activity log explains the failure.
 
-## Rendering pipeline
+## Important notes
 
-1. Microsoft Word opens each document read-only and exports a temporary layout file so Word itself determines pagination and layout.
-2. PyMuPDF renders each page to an RGB PNG at 300 DPI. PNG encoding is lossless.
-3. ReportLab embeds each PNG as a full-page image in the final PDF.
-4. The final PDF is reopened and checked for matching page count and embedded page images.
-5. Only after validation is the PDF moved into place and the Word source removed.
-
-The temporary layout file is not the delivered output. The delivered PDF contains rasterized page images, not selectable text. Because pages are images, final PDFs can be large; 300 DPI is the current quality setting.
-
-## Safety
-
-- Existing PDFs are never overwritten; their source Word documents are skipped and retained.
-- Source documents are opened read-only.
-- A Word source is removed only after the final image-based PDF passes validation.
-- Failed conversions leave the original Word document in place.
-- Back up important files before batch conversion.
+- The executable is built in `--onedir` mode so its bundled components are kept alongside it. Keep the complete output folder together.
+- Microsoft Word must be installed and activated on each computer that uses Word COM conversion. PyInstaller does not bundle Microsoft Word.
+- LibreOffice can be used as a fallback only if it is separately installed and available on PATH.
+- The build script creates the EXE on your computer; the GitHub branch contains the source and build script, not a prebuilt Windows binary.
