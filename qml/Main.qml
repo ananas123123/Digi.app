@@ -717,9 +717,39 @@ ApplicationWindow {
                                     property var annotationStrokes: []
                                     property var activeStroke: null
 
+                                    function beginStroke(position) {
+                                        activeStroke = {
+                                            points: [{
+                                                x: width > 0 ? position.x / width : 0,
+                                                y: height > 0 ? position.y / height : 0
+                                            }]
+                                        }
+                                        annotationCanvas.requestPaint()
+                                    }
+
+                                    function appendStrokePoint(position) {
+                                        if (!activeStroke || width <= 0 || height <= 0)
+                                            return
+                                        var stroke = activeStroke
+                                        stroke.points = stroke.points.concat([{
+                                            x: position.x / width,
+                                            y: position.y / height
+                                        }])
+                                        activeStroke = stroke
+                                        annotationCanvas.requestPaint()
+                                    }
+
+                                    function finishStroke() {
+                                        if (!activeStroke)
+                                            return
+                                        annotationStrokes = annotationStrokes.concat([activeStroke])
+                                        activeStroke = null
+                                        annotationCanvas.requestPaint()
+                                    }
+
                                     PdfDocument {
                                         id: pdfDocument
-                                        source: "file:///" + searchRoot.selectedResultPath.replace(/\\/g, "/")
+                                        source: "file:///" + searchRoot.selectedResultPath.replace(/\\\\/g, "/")
                                     }
 
                                     PdfMultiPageView {
@@ -749,48 +779,52 @@ ApplicationWindow {
                                                 if (!points || points.length < 2)
                                                     continue
                                                 ctx.beginPath()
-                                                ctx.moveTo(points[0].x, points[0].y)
+                                                ctx.moveTo(points[0].x * width, points[0].y * height)
                                                 for (var j = 1; j < points.length; ++j)
-                                                    ctx.lineTo(points[j].x, points[j].y)
+                                                    ctx.lineTo(points[j].x * width, points[j].y * height)
                                                 ctx.stroke()
                                             }
                                         }
                                     }
 
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        z: 3
+                                    // Handle actual pen events separately from mouse events.
+                                    // PointHandler tracks the stylus without relying on synthesized mouse events.
+                                    PointHandler {
+                                        id: stylusHandler
+                                        acceptedPointerTypes: PointerDevice.Pen
+                                        acceptedButtons: Qt.NoButton
+                                        onActiveChanged: {
+                                            if (active)
+                                                pdfPreviewRoot.beginStroke(point.position)
+                                            else
+                                                pdfPreviewRoot.finishStroke()
+                                        }
+                                        onPointChanged: {
+                                            if (active)
+                                                pdfPreviewRoot.appendStrokePoint(point.position)
+                                        }
+                                    }
+
+                                    // Keep ordinary mouse drawing available as well.
+                                    PointHandler {
+                                        id: mouseHandler
+                                        acceptedPointerTypes: PointerDevice.Generic
                                         acceptedButtons: Qt.LeftButton
-                                        preventStealing: true
-                                        cursorShape: Qt.CrossCursor
-                                        onPressed: function(mouse) {
-                                            pdfPreviewRoot.activeStroke = {
-                                                points: [{ x: mouse.x, y: mouse.y }]
-                                            }
-                                            annotationCanvas.requestPaint()
+                                        onActiveChanged: {
+                                            if (active)
+                                                pdfPreviewRoot.beginStroke(point.position)
+                                            else
+                                                pdfPreviewRoot.finishStroke()
                                         }
-                                        onPositionChanged: function(mouse) {
-                                            if (!pressed || !pdfPreviewRoot.activeStroke)
-                                                return
-                                            var stroke = pdfPreviewRoot.activeStroke
-                                            stroke.points = stroke.points.concat([{ x: mouse.x, y: mouse.y }])
-                                            pdfPreviewRoot.activeStroke = stroke
-                                            annotationCanvas.requestPaint()
-                                        }
-                                        onReleased: {
-                                            if (pdfPreviewRoot.activeStroke) {
-                                                pdfPreviewRoot.annotationStrokes = pdfPreviewRoot.annotationStrokes.concat([pdfPreviewRoot.activeStroke])
-                                                pdfPreviewRoot.activeStroke = null
-                                                annotationCanvas.requestPaint()
-                                            }
-                                        }
-                                        onCanceled: {
-                                            pdfPreviewRoot.activeStroke = null
-                                            annotationCanvas.requestPaint()
+                                        onPointChanged: {
+                                            if (active)
+                                                pdfPreviewRoot.appendStrokePoint(point.position)
                                         }
                                     }
 
                                     onAnnotationStrokesChanged: annotationCanvas.requestPaint()
+                                    onWidthChanged: annotationCanvas.requestPaint()
+                                    onHeightChanged: annotationCanvas.requestPaint()
                                 }
                             }
 
