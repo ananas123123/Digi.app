@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 import threading
 import tkinter as tk
 import uuid
@@ -46,59 +47,68 @@ def validate_pdf(path: Path) -> int:
         return pdf.page_count
 
 
-def convert_one(source: Path, staging: Path, log) -> int:
-    """Prefer native Word export; retry with SaveAs2 and then LibreOffice."""
-    errors = []
+def _word_export(source: Path, staging: Path, use_saveas: bool = False) -> int:
+    """Run one isolated Word COM export attempt and always release Word."""
+    import gc
+    import pythoncom
+    import win32com.client
+
+    pythoncom.CoInitialize()
+    word = None
+    document = None
     try:
-        import gc
-        import pythoncom
-        import win32com.client
-        pythoncom.CoInitialize()
-        word = None
-        document = None
-        try:
-            log(f"Using Microsoft Word: {source.name}")
-            word = win32com.client.DispatchEx("Word.Application")
-            word.Visible = False
-            word.DisplayAlerts = 0
-            word.AutomationSecurity = 3
-            document = word.Documents.Open(
-                str(source.resolve()), ConfirmConversions=False, ReadOnly=True,
-                AddToRecentFiles=False, Visible=False, OpenAndRepair=True,
-                NoEncodingDialog=True,
+        word = win32com.client.DispatchEx("Word.Application")
+        word.Visible = False
+        word.DisplayAlerts = 0
+        word.AutomationSecurity = 3
+        document = word.Documents.Open(
+            str(source.resolve()), ConfirmConversions=False, ReadOnly=True,
+            AddToRecentFiles=False, Visible=False, OpenAndRepair=True,
+            NoEncodingDialog=True,
+        )
+        if use_saveas:
+            document.SaveAs2(FileName=str(staging.resolve()), FileFormat=17, AddToRecentFiles=False)
+        else:
+            document.ExportAsFixedFormat(
+                OutputFileName=str(staging.resolve()), ExportFormat=17,
+                OpenAfterExport=False, OptimizeFor=0, Range=0, Item=0,
+                IncludeDocProps=False, KeepIRM=False, CreateBookmarks=0,
+                DocStructureTags=False, BitmapMissingFonts=True, UseISO19005_1=False,
             )
-            try:
-                document.ExportAsFixedFormat(
-                    OutputFileName=str(staging.resolve()), ExportFormat=17,
-                    OpenAfterExport=False, OptimizeFor=0, Range=0, Item=0,
-                    IncludeDocProps=False, KeepIRM=False, CreateBookmarks=0,
-                    DocStructureTags=False, BitmapMissingFonts=True, UseISO19005_1=False,
-                )
-            except Exception as export_error:
-                log(f"ExportAsFixedFormat failed; retrying with Word SaveAs2: {source.name}")
+        document.Close(False)
+        document = None
+        word.Quit(False)
+        word = None
+    finally:
+        if document is not None:
+            try: document.Close(False)
+            except Exception: pass
+        if word is not None:
+            try: word.Quit(False)
+            except Exception: pass
+        document = None
+        word = None
+        gc.collect()
+        pythoncom.CoUninitialize()
+    return validate_pdf(staging)
+
+
+def convert_one(source: Path, staging: Path, log) -> int:
+    """Use Word native export, retry in a fresh Word process, then LibreOffice."""
+    errors = []
+    for use_saveas in (False, True):
+        try:
+            if use_saveas:
+                log(f"Retrying with Word SaveAs2 in a fresh Word instance: {source.name}")
                 staging.unlink(missing_ok=True)
-                document.SaveAs2(FileName=str(staging.resolve()), FileFormat=17, AddToRecentFiles=False)
-            document.Close(False)
-            document = None
-            word.Quit(False)
-            word = None
-            gc.collect()
-        finally:
-            if document is not None:
-                try: document.Close(False)
-                except Exception: pass
-            if word is not None:
-                try: word.Quit(False)
-                except Exception: pass
-            document = None
-            word = None
-            gc.collect()
-            pythoncom.CoUninitialize()
-        return validate_pdf(staging)
-    except Exception as exc:
-        errors.append(f"Microsoft Word: {exc}")
-        try: staging.unlink(missing_ok=True)
-        except OSError: pass
+            else:
+                log(f"Using Microsoft Word: {source.name}")
+            return _word_export(source, staging, use_saveas=use_saveas)
+        except Exception as exc:
+            method = "Word SaveAs2" if use_saveas else "Word ExportAsFixedFormat"
+            errors.append(f"{method}: {exc}")
+            try: staging.unlink(missing_ok=True)
+            except OSError: pass
 
     libre = shutil.which("soffice") or shutil.which("libreoffice")
     if libre:
@@ -117,7 +127,6 @@ def convert_one(source: Path, staging: Path, log) -> int:
         except Exception as exc:
             errors.append(f"LibreOffice: {exc}")
     raise RuntimeError("Conversion methods failed. " + " | ".join(errors))
-
 
 def convert_documents(log, progress) -> tuple[int, int, int]:
     documents = find_documents()
@@ -147,25 +156,32 @@ def convert_documents(log, progress) -> tuple[int, int, int]:
                 continue
             except OSError as exc:
                 raise RuntimeError("Could not safely install PDF without overwriting another file; source preserved.") from exc
-            try:
-                # Legacy .doc files may carry the Windows read-only attribute.
-                original_mode = source.stat().st_mode
-                was_readonly = not bool(original_mode & 0o200)
-                if was_readonly:
-                    os.chmod(source, original_mode | 0o200)
+            # Keep the validated PDF even if Windows temporarily prevents source deletion.
+            original_mode = source.stat().st_mode
+            was_readonly = not bool(original_mode & 0o200)
+            if was_readonly:
+                os.chmod(source, original_mode | 0o200)
+            delete_error = None
+            for attempt in range(5):
                 try:
                     source.unlink()
-                except OSError:
-                    if was_readonly and source.exists():
-                        os.chmod(source, original_mode)
-                    raise
-            except OSError as exc:
-                try:
-                    if (destination.stat().st_dev, destination.stat().st_ino) == (staging.stat().st_dev, staging.stat().st_ino):
-                        destination.unlink()
-                except OSError:
-                    pass
-                raise RuntimeError("PDF created, but the Word source could not be removed. Check locks and permissions.") from exc
+                    delete_error = None
+                    break
+                except PermissionError as exc:
+                    delete_error = exc
+                    if attempt < 4:
+                        time.sleep(0.4 * (attempt + 1))
+                except OSError as exc:
+                    delete_error = exc
+                    break
+            if delete_error is not None:
+                if was_readonly and source.exists():
+                    try: os.chmod(source, original_mode)
+                    except OSError: pass
+                failed += 1
+                log(f"PDF CREATED BUT WORD FILE REMAINS: {source.relative_to(REPOSITORY_DIR)} — {delete_error}")
+                log("The validated PDF was kept. Close any app using the Word file and retry cleanup later.")
+                continue
             converted += 1
             log(f"CONVERTED: {source.relative_to(REPOSITORY_DIR)} -> {destination.name} ({page_count} page(s))")
         except Exception as exc:
