@@ -6,10 +6,11 @@ import subprocess
 import tempfile
 import time
 import threading
+import traceback
 import tkinter as tk
 import uuid
 from pathlib import Path
-from tkinter import messagebox, ttk
+from tkinter import filedialog, messagebox, ttk
 
 APP_TITLE = "Word to PDF"
 WORD_EXTENSIONS = {".doc", ".docx", ".docm", ".dot", ".dotx", ".dotm"}
@@ -219,7 +220,11 @@ def convert_documents(log, progress) -> tuple[int, int, int]:
             log(f"CONVERTED: {source.relative_to(REPOSITORY_DIR)} -> {destination.name} ({page_count} page(s))")
         except Exception as exc:
             failed += 1
-            log(f"FAILED: {source.relative_to(REPOSITORY_DIR)} — {exc}")
+            log(f"FAILED: {source.relative_to(REPOSITORY_DIR)} — {type(exc).__name__}: {exc}")
+            log("DIAGNOSTIC TRACEBACK BEGIN")
+            for line in traceback.format_exc().rstrip().splitlines():
+                log("    " + line)
+            log("DIAGNOSTIC TRACEBACK END")
         finally:
             try:
                 staging.unlink(missing_ok=True)
@@ -296,6 +301,8 @@ class ConverterApp:
         self.refresh_button.pack(side="left")
         self.check_button = ttk.Button(actions, text="Check remaining Word files", command=self._check_remaining)
         self.check_button.pack(side="left", padx=(8, 0))
+        self.export_log_button = ttk.Button(actions, text="Export full log", command=self._export_log)
+        self.export_log_button.pack(side="left", padx=(8, 0))
         self.start_button = ttk.Button(actions, text="Convert to PDF", command=self._start)
         self.start_button.pack(side="right")
 
@@ -331,6 +338,23 @@ class ConverterApp:
         self.log.insert("end", text + "\n")
         self.log.see("end")
         self.log.configure(state="disabled")
+
+    def _export_log(self) -> None:
+        content = self.log.get("1.0", "end-1c")
+        target = filedialog.asksaveasfilename(
+            title="Export full diagnostic log",
+            initialfile="digi-conversion-log.txt",
+            defaultextension=".txt",
+            filetypes=[("Text log", "*.txt"), ("All files", "*.*")],
+        )
+        if not target:
+            return
+        try:
+            Path(target).write_text(content + chr(10), encoding="utf-8")
+        except OSError as exc:
+            messagebox.showerror("Log export failed", "Could not save the log:\n" + str(exc))
+            return
+        messagebox.showinfo("Log exported", "Full activity log saved to:\n" + target)
 
     def _refresh_status(self) -> None:
         REPOSITORY_DIR.mkdir(parents=True, exist_ok=True)
