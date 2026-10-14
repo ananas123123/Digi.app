@@ -92,6 +92,8 @@ def render_word_to_intermediate_pdf(source: Path, output_pdf: Path) -> None:
         word = None
         gc.collect()
         pythoncom.CoUninitialize()
+        # Word can briefly retain a handle to its exported PDF after Quit().
+        # The caller retries cleanup if Windows has not released the file yet.
 
 
 def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> int:
@@ -106,12 +108,11 @@ def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> 
             "'py -m pip install -r requirements.txt'."
         ) from exc
 
-    document = pymupdf.open(intermediate_pdf)
-    if document.page_count < 1:
-        document.close()
-        raise RuntimeError("Word produced a document with no pages.")
+    with pymupdf.open(intermediate_pdf) as document:
+        if document.page_count < 1:
+            raise RuntimeError("Word produced a document with no pages.")
 
-    try:
+        try:
         first_page = document.load_page(0)
         first_rect = first_page.rect
         pdf_canvas = canvas.Canvas(
@@ -148,9 +149,25 @@ def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> 
             png_path.unlink(missing_ok=True)
 
         pdf_canvas.save()
-        return document.page_count
-    finally:
-        document.close()
+            return document.page_count
+
+
+def remove_temp_directory_safely(path: Path, attempts: int = 8) -> None:
+    """Remove temporary files with retries for transient Windows file locks."""
+    import shutil
+    import time
+
+    last_error = None
+    for attempt in range(attempts):
+        try:
+            shutil.rmtree(path)
+            return
+        except PermissionError as exc:
+            last_error = exc
+            gc.collect()
+            time.sleep(0.25 * (attempt + 1))
+    if last_error is not None:
+        raise last_error
 
 
 def convert_documents(log, progress) -> tuple[int, int, int]:
@@ -174,8 +191,8 @@ def convert_documents(log, progress) -> tuple[int, int, int]:
 
         staging = source.with_name(f".{source.stem}.digi-staging.pdf")
         try:
-            with tempfile.TemporaryDirectory(prefix="digi_word_png_") as temp_name:
-                temp_dir = Path(temp_name)
+            temp_dir = Path(tempfile.mkdtemp(prefix="digi_word_png_"))
+            try:
                 intermediate = temp_dir / "word_layout_intermediate.pdf"
 
                 render_word_to_intermediate_pdf(source, intermediate)
@@ -202,6 +219,8 @@ def convert_documents(log, progress) -> tuple[int, int, int]:
                     f"CONVERTED: {source.relative_to(REPOSITORY_DIR)} "
                     f"→ {destination.name} ({page_count} PNG page(s), {RENDER_DPI} DPI)"
                 )
+            finally:
+                remove_temp_directory_safely(temp_dir)
         except Exception as exc:
             failed += 1
             log(f"FAILED: {source.relative_to(REPOSITORY_DIR)} — {exc}")
