@@ -179,7 +179,7 @@ class ConverterApp:
         ).pack(anchor="w")
         tk.Label(
             outer,
-            text="Each Word page becomes a lossless PNG image embedded as a PDF page. "
+            text="Convert Word documents directly to PDF using Microsoft Word, with LibreOffice as a fallback. "
                  "Documents are read from repository, including nested folders.",
             font=("Segoe UI", 10), bg="#f4f5f7", fg="#596273",
             wraplength=700, justify="left",
@@ -238,8 +238,8 @@ class ConverterApp:
 
         tk.Label(
             outer,
-            text="Final PDFs contain one lossless PNG image per page at 300 DPI. Text will not be selectable or searchable. "
-                 "Existing PDFs are skipped and their Word files are kept.",
+            text="Uses native PDF export first, with LibreOffice as a fallback. Existing PDFs are skipped; "
+                 "Word files are removed only after validation.",
             font=("Segoe UI", 9), bg="#f4f5f7", fg="#6a7280",
             wraplength=700, justify="left",
         ).pack(anchor="w", pady=(10, 0))
@@ -271,35 +271,11 @@ class ConverterApp:
             )
             return
 
-        try:
-            import win32com.client  # noqa: F401
-            import pymupdf  # noqa: F401
-        except ImportError:
-            messagebox.showerror(
-                "Dependencies missing",
-                "Install the Python dependencies first:\n\npy -m pip install -r requirements.txt",
-            )
-            return
-
-        try:
-            import win32com.client
-            word = win32com.client.DispatchEx("Word.Application")
-            word.Quit(False)
-        except Exception as exc:
-            messagebox.showerror(
-                "Microsoft Word required",
-                "This version uses Microsoft Word's own layout engine to render the pages. "
-                "Install desktop Microsoft Word and ensure it is activated.\n\n"
-                f"Details: {exc}",
-            )
-            return
-
         if not messagebox.askyesno(
             "Replace Word files?",
             f"{len(documents)} Word document(s) were found under repository.\n\n"
-            "Every page will be rendered to a lossless PNG at 300 DPI and embedded in a PDF. "
-            "After verification, the PDF will replace its Word source.\n"
-            "Existing PDFs will not be overwritten. Text in the final PDF will be image-based.\n\nContinue?",
+            "The PDF will be validated before the Word source is removed. "
+            "Existing PDFs will not be overwritten.\n\nContinue?",
         ):
             return
 
