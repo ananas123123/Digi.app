@@ -714,9 +714,6 @@ ApplicationWindow {
                                 id: pdfPreviewComponent
                                 Item {
                                     id: pdfPreviewRoot
-                                    property string annotationTool: "select"
-                                    property color annotationColor: "#FFE36A"
-                                    property real annotationWidth: 3
                                     property var annotationStrokes: []
                                     property var activeStroke: null
 
@@ -725,205 +722,71 @@ ApplicationWindow {
                                         source: "file:///" + searchRoot.selectedResultPath.replace(/\\/g, "/")
                                     }
 
-                                    ColumnLayout {
+                                    PdfMultiPageView {
+                                        id: pdfMultiPageView
                                         anchors.fill: parent
-                                        spacing: 6
+                                        document: pdfDocument
+                                        clip: true
+                                    }
 
-                                        Rectangle {
-                                            Layout.fillWidth: true
-                                            Layout.preferredHeight: 40
-                                            radius: 9
-                                            color: "#252525"
-                                            border.color: "#383838"
-                                            border.width: 1
-
-                                            Row {
-                                                anchors.fill: parent
-                                                anchors.leftMargin: 7
-                                                anchors.rightMargin: 7
-                                                spacing: 5
-
-                                                Repeater {
-                                                    model: [
-                                                        { label: "Select", tool: "select", glyph: "↖" },
-                                                        { label: "Pen", tool: "pen", glyph: "✎" },
-                                                        { label: "Highlight", tool: "highlight", glyph: "▰" },
-                                                        { label: "Eraser", tool: "eraser", glyph: "⌫" }
-                                                    ]
-                                                    delegate: Rectangle {
-                                                        required property var modelData
-                                                        width: modelData.tool === "highlight" ? 78 : 60
-                                                        height: 28
-                                                        anchors.verticalCenter: parent.verticalCenter
-                                                        radius: 7
-                                                        color: pdfPreviewRoot.annotationTool === modelData.tool ? "#D8BD72" : (toolMouse.containsMouse ? "#3B3B3B" : "transparent")
-                                                        border.color: pdfPreviewRoot.annotationTool === modelData.tool ? "#D8BD72" : "#484848"
-                                                        border.width: 1
-                                                        Text {
-                                                            anchors.centerIn: parent
-                                                            text: modelData.glyph + " " + modelData.label
-                                                            color: pdfPreviewRoot.annotationTool === modelData.tool ? "#171717" : "#E5E5E5"
-                                                            font.pixelSize: 11
-                                                        }
-                                                        MouseArea {
-                                                            id: toolMouse
-                                                            anchors.fill: parent
-                                                            hoverEnabled: true
-                                                            cursorShape: Qt.PointingHandCursor
-                                                            onClicked: pdfPreviewRoot.annotationTool = modelData.tool
-                                                        }
-                                                    }
-                                                }
-
-                                                Rectangle { width: 1; height: 22; anchors.verticalCenter: parent.verticalCenter; color: "#484848" }
-
-                                                Repeater {
-                                                    model: ["#FFE36A", "#FF6B6B", "#67B7FF", "#75D69C", "#FFFFFF"]
-                                                    delegate: Rectangle {
-                                                        required property string modelData
-                                                        width: 17
-                                                        height: 17
-                                                        anchors.verticalCenter: parent.verticalCenter
-                                                        radius: 9
-                                                        color: modelData
-                                                        border.width: pdfPreviewRoot.annotationColor.toString() === modelData ? 2 : 1
-                                                        border.color: pdfPreviewRoot.annotationColor.toString() === modelData ? "#FFFFFF" : "#777777"
-                                                        MouseArea {
-                                                            anchors.fill: parent
-                                                            cursorShape: Qt.PointingHandCursor
-                                                            onClicked: pdfPreviewRoot.annotationColor = modelData
-                                                        }
-                                                    }
-                                                }
-
-                                                Item { width: 1; height: 1 }
-
-                                                Rectangle {
-                                                    width: 28
-                                                    height: 26
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    radius: 6
-                                                    color: undoMouse.containsMouse ? "#3B3B3B" : "transparent"
-                                                    Text { anchors.centerIn: parent; text: "↶"; color: "#E5E5E5"; font.pixelSize: 19 }
-                                                    MouseArea {
-                                                        id: undoMouse
-                                                        anchors.fill: parent
-                                                        hoverEnabled: true
-                                                        cursorShape: Qt.PointingHandCursor
-                                                        onClicked: {
-                                                            if (pdfPreviewRoot.annotationStrokes.length > 0) {
-                                                                var copy = pdfPreviewRoot.annotationStrokes.slice(0, -1)
-                                                                pdfPreviewRoot.annotationStrokes = copy
-                                                                annotationCanvas.requestPaint()
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                Rectangle {
-                                                    width: 28
-                                                    height: 26
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    radius: 6
-                                                    color: clearAnnotationsMouse.containsMouse ? "#3B3B3B" : "transparent"
-                                                    Text { anchors.centerIn: parent; text: "×"; color: "#E5E5E5"; font.pixelSize: 19 }
-                                                    MouseArea {
-                                                        id: clearAnnotationsMouse
-                                                        anchors.fill: parent
-                                                        hoverEnabled: true
-                                                        cursorShape: Qt.PointingHandCursor
-                                                        onClicked: {
-                                                            pdfPreviewRoot.annotationStrokes = []
-                                                            annotationCanvas.requestPaint()
-                                                        }
-                                                    }
-                                                }
+                                    Canvas {
+                                        id: annotationCanvas
+                                        anchors.fill: parent
+                                        z: 2
+                                        renderTarget: Canvas.FramebufferObject
+                                        onPaint: {
+                                            var ctx = getContext("2d")
+                                            ctx.clearRect(0, 0, width, height)
+                                            var allStrokes = pdfPreviewRoot.annotationStrokes.slice()
+                                            if (pdfPreviewRoot.activeStroke)
+                                                allStrokes.push(pdfPreviewRoot.activeStroke)
+                                            ctx.strokeStyle = "#000000"
+                                            ctx.lineWidth = 2
+                                            ctx.lineCap = "round"
+                                            ctx.lineJoin = "round"
+                                            for (var i = 0; i < allStrokes.length; ++i) {
+                                                var points = allStrokes[i].points
+                                                if (!points || points.length < 2)
+                                                    continue
+                                                ctx.beginPath()
+                                                ctx.moveTo(points[0].x, points[0].y)
+                                                for (var j = 1; j < points.length; ++j)
+                                                    ctx.lineTo(points[j].x, points[j].y)
+                                                ctx.stroke()
                                             }
                                         }
+                                    }
 
-                                        Item {
-                                            id: pdfPageViewport
-                                            Layout.fillWidth: true
-                                            Layout.fillHeight: true
-                                            clip: true
-
-                                            PdfMultiPageView {
-                                                id: pdfMultiPageView
-                                                anchors.fill: parent
-                                                document: pdfDocument
-                                                clip: true
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        z: 3
+                                        acceptedButtons: Qt.LeftButton
+                                        preventStealing: true
+                                        cursorShape: Qt.CrossCursor
+                                        onPressed: function(mouse) {
+                                            pdfPreviewRoot.activeStroke = {
+                                                points: [{ x: mouse.x, y: mouse.y }]
                                             }
-
-                                            Canvas {
-                                                id: annotationCanvas
-                                                anchors.fill: parent
-                                                z: 2
-                                                renderTarget: Canvas.FramebufferObject
-                                                onPaint: {
-                                                    var ctx = getContext("2d")
-                                                    ctx.clearRect(0, 0, width, height)
-                                                    var allStrokes = pdfPreviewRoot.annotationStrokes.slice()
-                                                    if (pdfPreviewRoot.activeStroke)
-                                                        allStrokes.push(pdfPreviewRoot.activeStroke)
-                                                    for (var i = 0; i < allStrokes.length; ++i) {
-                                                        var stroke = allStrokes[i]
-                                                        if (!stroke.points || stroke.points.length < 2)
-                                                            continue
-                                                        ctx.beginPath()
-                                                        ctx.moveTo(stroke.points[0].x, stroke.points[0].y)
-                                                        for (var j = 1; j < stroke.points.length; ++j)
-                                                            ctx.lineTo(stroke.points[j].x, stroke.points[j].y)
-                                                        ctx.strokeStyle = stroke.color
-                                                        ctx.lineWidth = stroke.width
-                                                        ctx.lineCap = "round"
-                                                        ctx.lineJoin = "round"
-                                                        ctx.globalAlpha = stroke.tool === "highlight" ? 0.32 : 1
-                                                        ctx.globalCompositeOperation = stroke.tool === "eraser" ? "destination-out" : "source-over"
-                                                        ctx.stroke()
-                                                    }
-                                                    ctx.globalAlpha = 1
-                                                    ctx.globalCompositeOperation = "source-over"
-                                                }
+                                            annotationCanvas.requestPaint()
+                                        }
+                                        onPositionChanged: function(mouse) {
+                                            if (!pressed || !pdfPreviewRoot.activeStroke)
+                                                return
+                                            var stroke = pdfPreviewRoot.activeStroke
+                                            stroke.points = stroke.points.concat([{ x: mouse.x, y: mouse.y }])
+                                            pdfPreviewRoot.activeStroke = stroke
+                                            annotationCanvas.requestPaint()
+                                        }
+                                        onReleased: {
+                                            if (pdfPreviewRoot.activeStroke) {
+                                                pdfPreviewRoot.annotationStrokes = pdfPreviewRoot.annotationStrokes.concat([pdfPreviewRoot.activeStroke])
+                                                pdfPreviewRoot.activeStroke = null
+                                                annotationCanvas.requestPaint()
                                             }
-
-                                            MouseArea {
-                                                id: annotationInput
-                                                anchors.fill: parent
-                                                z: 3
-                                                enabled: pdfPreviewRoot.annotationTool !== "select"
-                                                acceptedButtons: Qt.LeftButton
-                                                hoverEnabled: true
-                                                preventStealing: true
-                                                cursorShape: enabled ? Qt.CrossCursor : Qt.ArrowCursor
-                                                onPressed: function(mouse) {
-                                                    pdfPreviewRoot.activeStroke = {
-                                                        tool: pdfPreviewRoot.annotationTool,
-                                                        color: pdfPreviewRoot.annotationColor.toString(),
-                                                        width: pdfPreviewRoot.annotationTool === "highlight" ? 16 : (pdfPreviewRoot.annotationTool === "eraser" ? 22 : pdfPreviewRoot.annotationWidth),
-                                                        points: [{ x: mouse.x, y: mouse.y }]
-                                                    }
-                                                    annotationCanvas.requestPaint()
-                                                }
-                                                onPositionChanged: function(mouse) {
-                                                    if (!pressed || !pdfPreviewRoot.activeStroke)
-                                                        return
-                                                    var stroke = pdfPreviewRoot.activeStroke
-                                                    stroke.points = stroke.points.concat([{ x: mouse.x, y: mouse.y }])
-                                                    pdfPreviewRoot.activeStroke = stroke
-                                                    annotationCanvas.requestPaint()
-                                                }
-                                                onReleased: {
-                                                    if (pdfPreviewRoot.activeStroke) {
-                                                        pdfPreviewRoot.annotationStrokes = pdfPreviewRoot.annotationStrokes.concat([pdfPreviewRoot.activeStroke])
-                                                        pdfPreviewRoot.activeStroke = null
-                                                        annotationCanvas.requestPaint()
-                                                    }
-                                                }
-                                                onCanceled: {
-                                                    pdfPreviewRoot.activeStroke = null
-                                                    annotationCanvas.requestPaint()
-                                                }
-                                            }
+                                        }
+                                        onCanceled: {
+                                            pdfPreviewRoot.activeStroke = null
+                                            annotationCanvas.requestPaint()
                                         }
                                     }
 
