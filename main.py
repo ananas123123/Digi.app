@@ -86,7 +86,19 @@ def _word_export(source: Path, staging: Path, use_saveas: bool = False) -> int:
                 NoEncodingDialog=True,
             )
         if document is None:
-            raise RuntimeError("Microsoft Word did not return a document object when opening this file.")
+            # Final Word-native attempt for legacy .doc files: bypass repair dialogs.
+            try:
+                document = word.Documents.OpenNoRepairDialog(
+                    str(source.resolve()), False, True, False
+                )
+            except Exception:
+                document = None
+        if document is None:
+            raise RuntimeError(
+                "Microsoft Word could not open this document through COM. "
+                "Open it manually in Word and use Save As to create a fresh .docx, "
+                "or install LibreOffice for the fallback converter."
+            )
         if use_saveas:
             document.SaveAs2(FileName=str(staging.resolve()), FileFormat=17, AddToRecentFiles=False)
         else:
