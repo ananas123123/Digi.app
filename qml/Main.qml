@@ -716,6 +716,21 @@ ApplicationWindow {
                                     id: pdfPreviewRoot
                                     property var annotationByPage: ({})
                                     property real zoomFactor: 1.0
+                                    readonly property real minZoom: 0.25
+                                    readonly property real maxZoom: 8.0
+                                    readonly property real pinchSensitivity: 1.35
+
+                                    function clampZoom(value) {
+                                        return Math.max(minZoom, Math.min(maxZoom, value))
+                                    }
+
+                                    function clampContentX(value) {
+                                        return Math.max(0, Math.min(Math.max(0, pdfPages.contentWidth - pdfPages.width), value))
+                                    }
+
+                                    function clampContentY(value) {
+                                        return Math.max(0, Math.min(Math.max(0, pdfPages.contentHeight - pdfPages.height), value))
+                                    }
 
                                     PinchHandler {
                                         id: pdfPinchZoom
@@ -745,7 +760,7 @@ ApplicationWindow {
                                         id: pdfPages
                                         anchors.fill: parent
                                         clip: true
-                                        contentWidth: Math.max(width, width * pdfPreviewRoot.zoomFactor)
+                                        contentWidth: Math.max(width, (width - 28) * pdfPreviewRoot.zoomFactor + 28)
                                         contentHeight: contentItem.childrenRect.height
                                         spacing: 14
                                         model: pdfDocument.status === PdfDocument.Ready ? pdfDocument.pageCount : 0
