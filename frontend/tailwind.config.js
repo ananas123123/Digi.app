@@ -1,1 +1,0 @@
-tailwind.config={theme:{extend:{colors:{digi:{950:"#090909",900:"#111111"}}}}};
