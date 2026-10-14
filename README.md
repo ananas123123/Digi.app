@@ -1,10 +1,20 @@
-# Word to PDF — repository-folder edition
+# Word to PDF — lossless PNG page edition
 
-This version always processes the folder named `repository` beside `main.py`. You do not need to drag a folder into the app or choose one in the interface.
+This desktop utility reads Word documents from the `repository` folder, including nested subfolders. It renders each Word page to a lossless PNG image at 300 DPI, then builds a PDF containing one image per PDF page. After verification, the PDF replaces the original Word file.
+
+## Requirements
+
+- Windows
+- Desktop Microsoft Word installed and activated (used for accurate Word layout and pagination)
+- Python 3.10 or newer
+
+Install Python dependencies:
+
+```powershell
+py -m pip install -r requirements.txt
+```
 
 ## Folder layout
-
-Keep the app files together and place your documents inside `repository`:
 
 ```text
 file-converter/
@@ -17,38 +27,28 @@ file-converter/
         └── Notes.docx
 ```
 
-After conversion, the structure becomes:
-
-```text
-repository/
-├── Essay.pdf
-└── School/
-    └── Notes.pdf
-```
-
-The converter searches `repository` recursively, so subfolders are included.
-
-## Requirements
-
-- Python 3.10 or newer
-- LibreOffice installed: https://www.libreoffice.org/download/download-libreoffice/
-
-## Run on Windows
-
-From the folder containing `main.py`:
+Run:
 
 ```powershell
-py -m pip install -r requirements.txt
 py main.py
 ```
 
-Put Word files into `repository`, click **Refresh folder**, then click **Convert to PDF**.
+Click **Refresh folder**, then **Convert to image-based PDF**.
 
-Supported extensions: `.doc`, `.docx`, `.docm`, `.dot`, `.dotx`, and `.dotm`.
+## Rendering pipeline
 
-## Replacement and safety
+1. Microsoft Word opens each document read-only and exports a temporary layout file so Word itself determines pagination and layout.
+2. PyMuPDF renders each page to an RGB PNG at 300 DPI. PNG encoding is lossless.
+3. ReportLab embeds each PNG as a full-page image in the final PDF.
+4. The final PDF is reopened and checked for matching page count and embedded page images.
+5. Only after validation is the PDF moved into place and the Word source removed.
 
-- Each PDF is created beside its source, preserving the folder layout and base filename.
-- The source Word file is removed only after a non-empty PDF has been created and placed successfully.
-- If the matching PDF already exists, that document is skipped and the Word file is retained.
-- The app asks for confirmation before starting. Keep a backup of important files before batch conversion.
+The temporary layout file is not the delivered output. The delivered PDF contains rasterized page images, not selectable text. Because pages are images, final PDFs can be large; 300 DPI is the current quality setting.
+
+## Safety
+
+- Existing PDFs are never overwritten; their source Word documents are skipped and retained.
+- Source documents are opened read-only.
+- A Word source is removed only after the final image-based PDF passes validation.
+- Failed conversions leave the original Word document in place.
+- Back up important files before batch conversion.
