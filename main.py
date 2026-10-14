@@ -1,33 +1,20 @@
 from __future__ import annotations
 
-import shutil
-import subprocess
 import tempfile
 import threading
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox, ttk
 
-APP_TITLE = "Word to PDF"
+APP_TITLE = "Word to PDF (PNG pages)"
 WORD_EXTENSIONS = {".doc", ".docx", ".docm", ".dot", ".dotx", ".dotm"}
 BASE_DIR = Path(__file__).resolve().parent
 REPOSITORY_DIR = BASE_DIR / "repository"
-
-
-def find_libreoffice() -> str | None:
-    executable = shutil.which("soffice") or shutil.which("libreoffice")
-    if executable:
-        return executable
-
-    candidates = (
-        Path(r"C:\Program Files\LibreOffice\program\soffice.exe"),
-        Path(r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"),
-    )
-    return next((str(path) for path in candidates if path.is_file()), None)
+RENDER_DPI = 300
 
 
 def find_documents() -> list[Path]:
-    """Find supported Word files anywhere inside repository/."""
+    """Find supported Word documents anywhere inside repository/."""
     if not REPOSITORY_DIR.is_dir():
         return []
     return sorted(
@@ -39,63 +26,182 @@ def find_documents() -> list[Path]:
     )
 
 
-def convert_documents(executable: str, log, progress) -> tuple[int, int, int]:
+def render_word_to_intermediate_pdf(source: Path, output_pdf: Path) -> None:
+    """Use Microsoft Word's own layout engine to paginate and export the document.
+
+    This PDF is temporary only. The final PDF is built from rendered PNG page
+    images, so the delivered PDF pages are raster images rather than live text.
+    """
+    try:
+        import pythoncom
+        import win32com.client
+    except ImportError as exc:
+        raise RuntimeError(
+            "Microsoft Word automation requires pywin32. Install dependencies with "
+            "'py -m pip install -r requirements.txt'."
+        ) from exc
+
+    pythoncom.CoInitialize()
+    word = None
+    document = None
+    try:
+        word = win32com.client.DispatchEx("Word.Application")
+        word.Visible = False
+        word.DisplayAlerts = 0
+        # Disable macros for documents opened by the converter.
+        word.AutomationSecurity = 3
+        document = word.Documents.Open(
+            str(source.resolve()),
+            ConfirmConversions=False,
+            ReadOnly=True,
+            AddToRecentFiles=False,
+            Visible=False,
+            OpenAndRepair=True,
+            NoEncodingDialog=True,
+        )
+        # wdExportFormatPDF = 17. This is only an internal intermediate so
+        # Word can calculate the exact pagination and layout.
+        document.ExportAsFixedFormat(
+            OutputFileName=str(output_pdf.resolve()),
+            ExportFormat=17,
+            OpenAfterExport=False,
+            OptimizeFor=0,
+            Range=0,
+            Item=0,
+            IncludeDocProps=False,
+            KeepIRM=False,
+            CreateBookmarks=0,
+            DocStructureTags=False,
+            BitmapMissingFonts=True,
+            UseISO19005_1=False,
+        )
+    finally:
+        if document is not None:
+            try:
+                document.Close(False)
+            except Exception:
+                pass
+        if word is not None:
+            try:
+                word.Quit(False)
+            except Exception:
+                pass
+        pythoncom.CoUninitialize()
+
+
+def build_image_pdf(intermediate_pdf: Path, final_pdf: Path, temp_dir: Path) -> int:
+    """Rasterize each Word-rendered page to a lossless PNG and embed it in a PDF."""
+    try:
+        import fitz
+        from reportlab.lib.utils import ImageReader
+        from reportlab.pdfgen import canvas
+    except ImportError as exc:
+        raise RuntimeError(
+            "PNG rendering dependencies are missing. Install them with "
+            "'py -m pip install -r requirements.txt'."
+        ) from exc
+
+    document = fitz.open(intermediate_pdf)
+    if document.page_count < 1:
+        document.close()
+        raise RuntimeError("Word produced a document with no pages.")
+
+    try:
+        first_page = document.load_page(0)
+        first_rect = first_page.rect
+        pdf_canvas = canvas.Canvas(
+            str(final_pdf),
+            pagesize=(first_rect.width, first_rect.height),
+            pageCompression=1,
+            invariant=1,
+        )
+        zoom = RENDER_DPI / 72.0
+
+        for page_number in range(document.page_count):
+            page = document.load_page(page_number)
+            rect = page.rect
+            pixmap = page.get_pixmap(
+                matrix=fitz.Matrix(zoom, zoom),
+                colorspace=fitz.csRGB,
+                alpha=False,
+                annots=True,
+            )
+            png_path = temp_dir / f"page_{page_number + 1:05d}.png"
+            pixmap.save(str(png_path))  # PNG encoding is lossless.
+
+            pdf_canvas.setPageSize((rect.width, rect.height))
+            pdf_canvas.drawImage(
+                ImageReader(str(png_path)),
+                0,
+                0,
+                width=rect.width,
+                height=rect.height,
+                preserveAspectRatio=False,
+                mask=None,
+            )
+            pdf_canvas.showPage()
+            png_path.unlink(missing_ok=True)
+
+        pdf_canvas.save()
+        return document.page_count
+    finally:
+        document.close()
+
+
+def convert_documents(log, progress) -> tuple[int, int, int]:
     documents = find_documents()
     converted = failed = skipped = 0
     total = len(documents)
 
-    if total == 0:
+    if not documents:
         log("No Word documents found in the repository folder.")
         return converted, failed, skipped
 
-    log(f"Found {total} Word document(s).")
+    log(f"Found {total} Word document(s). Rendering at {RENDER_DPI} DPI.")
     for index, source in enumerate(documents, start=1):
         destination = source.with_suffix(".pdf")
         progress(index - 1, total)
 
-        # Never replace an existing PDF or delete its source document.
         if destination.exists():
             skipped += 1
             log(f"SKIPPED: {source.relative_to(REPOSITORY_DIR)} — PDF already exists; Word file kept.")
             continue
 
-        staging: Path | None = None
+        staging = source.with_name(f".{source.stem}.digi-staging.pdf")
         try:
-            with tempfile.TemporaryDirectory(prefix="digi_pdf_") as temp:
-                profile = (Path(temp) / "profile").resolve().as_uri()
-                output = Path(temp) / "output"
-                output.mkdir()
-                result = subprocess.run(
-                    [
-                        executable,
-                        f"-env:UserInstallation={profile}",
-                        "--headless",
-                        "--convert-to", "pdf",
-                        "--outdir", str(output),
-                        str(source),
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=180,
-                    check=False,
-                )
-                generated = output / f"{source.stem}.pdf"
-                if result.returncode != 0 or not generated.is_file() or generated.stat().st_size == 0:
-                    details = (result.stderr or result.stdout or "No PDF was generated").strip()
-                    raise RuntimeError(details)
+            with tempfile.TemporaryDirectory(prefix="digi_word_png_") as temp_name:
+                temp_dir = Path(temp_name)
+                intermediate = temp_dir / "word_layout_intermediate.pdf"
 
-                staging = source.with_name(f".{source.stem}.digi-staging.pdf")
-                shutil.copy2(generated, staging)
+                render_word_to_intermediate_pdf(source, intermediate)
+                if not intermediate.is_file() or intermediate.stat().st_size == 0:
+                    raise RuntimeError("Microsoft Word did not create its intermediate layout file.")
+
+                page_count = build_image_pdf(intermediate, staging, temp_dir)
+                if not staging.is_file() or staging.stat().st_size == 0:
+                    raise RuntimeError("The image-based PDF was not created.")
+
+                # Confirm the final PDF opens and contains the expected page count.
+                import fitz
+                with fitz.open(staging) as check_pdf:
+                    if check_pdf.page_count != page_count:
+                        raise RuntimeError("Final PDF page-count verification failed.")
+                    if any(page.get_images(full=True) == [] for page in check_pdf):
+                        raise RuntimeError("At least one PDF page is missing its embedded page image.")
+
+                # Install the completed PDF first, then remove the source document.
                 staging.replace(destination)
-                # Remove the source only after the finished PDF is in place.
                 source.unlink()
                 converted += 1
-                log(f"CONVERTED: {source.relative_to(REPOSITORY_DIR)}")
+                log(
+                    f"CONVERTED: {source.relative_to(REPOSITORY_DIR)} "
+                    f"→ {destination.name} ({page_count} PNG page(s), {RENDER_DPI} DPI)"
+                )
         except Exception as exc:
             failed += 1
             log(f"FAILED: {source.relative_to(REPOSITORY_DIR)} — {exc}")
         finally:
-            if staging is not None and staging.exists():
+            if staging.exists():
                 try:
                     staging.unlink()
                 except OSError:
@@ -109,8 +215,8 @@ class ConverterApp:
     def __init__(self) -> None:
         self.root = tk.Tk()
         self.root.title(APP_TITLE)
-        self.root.geometry("740x540")
-        self.root.minsize(600, 440)
+        self.root.geometry("760x560")
+        self.root.minsize(620, 460)
         self.root.configure(bg="#f4f5f7")
         self.running = False
 
@@ -135,9 +241,10 @@ class ConverterApp:
         ).pack(anchor="w")
         tk.Label(
             outer,
-            text="Put your documents inside the repository folder. The converter handles nested folders automatically.",
+            text="Each Word page becomes a lossless PNG image embedded as a PDF page. "
+                 "Documents are read from repository, including nested folders.",
             font=("Segoe UI", 10), bg="#f4f5f7", fg="#596273",
-            wraplength=680, justify="left",
+            wraplength=700, justify="left",
         ).pack(anchor="w", pady=(5, 16))
 
         panel = tk.Frame(
@@ -156,7 +263,7 @@ class ConverterApp:
         ).pack(anchor="w", pady=(4, 2))
         self.path_label = tk.Label(
             panel, text=str(REPOSITORY_DIR), font=("Segoe UI", 9),
-            bg="#ffffff", fg="#596273", wraplength=660, justify="left",
+            bg="#ffffff", fg="#596273", wraplength=680, justify="left",
         )
         self.path_label.pack(anchor="w")
         self.status_label = tk.Label(
@@ -169,7 +276,7 @@ class ConverterApp:
         actions.pack(fill="x", pady=(12, 12))
         self.refresh_button = ttk.Button(actions, text="Refresh folder", command=self._refresh_status)
         self.refresh_button.pack(side="left")
-        self.start_button = ttk.Button(actions, text="Convert to PDF", command=self._start)
+        self.start_button = ttk.Button(actions, text="Convert to image-based PDF", command=self._start)
         self.start_button.pack(side="right")
 
         self.progress = ttk.Progressbar(outer, mode="determinate", maximum=100)
@@ -193,9 +300,10 @@ class ConverterApp:
 
         tk.Label(
             outer,
-            text="PDFs replace their Word files in the same locations. Existing PDFs are skipped, and their Word files are kept.",
+            text="Final PDFs contain one lossless PNG image per page at 300 DPI. Text will not be selectable or searchable. "
+                 "Existing PDFs are skipped and their Word files are kept.",
             font=("Segoe UI", 9), bg="#f4f5f7", fg="#6a7280",
-            wraplength=680, justify="left",
+            wraplength=700, justify="left",
         ).pack(anchor="w", pady=(10, 0))
 
     def _log(self, text: str) -> None:
@@ -206,8 +314,7 @@ class ConverterApp:
 
     def _refresh_status(self) -> None:
         REPOSITORY_DIR.mkdir(parents=True, exist_ok=True)
-        documents = find_documents()
-        count = len(documents)
+        count = len(find_documents())
         self.status_label.configure(
             text=f"{count} Word document(s) found" if count else "No Word documents found yet."
         )
@@ -226,20 +333,36 @@ class ConverterApp:
             )
             return
 
-        executable = find_libreoffice()
-        if not executable:
+        try:
+            import win32com.client  # noqa: F401
+            import fitz  # noqa: F401
+            import reportlab  # noqa: F401
+        except ImportError:
             messagebox.showerror(
-                "LibreOffice required",
-                "LibreOffice was not found. Install it, then reopen this app. "
-                "LibreOffice performs the Word-to-PDF conversion.",
+                "Dependencies missing",
+                "Install the Python dependencies first:\n\npy -m pip install -r requirements.txt",
+            )
+            return
+
+        try:
+            import win32com.client
+            word = win32com.client.DispatchEx("Word.Application")
+            word.Quit(False)
+        except Exception as exc:
+            messagebox.showerror(
+                "Microsoft Word required",
+                "This version uses Microsoft Word's own layout engine to render the pages. "
+                "Install desktop Microsoft Word and ensure it is activated.\n\n"
+                f"Details: {exc}",
             )
             return
 
         if not messagebox.askyesno(
             "Replace Word files?",
             f"{len(documents)} Word document(s) were found under repository.\n\n"
-            "Each successful PDF will be saved beside its Word file, then the Word file will be removed.\n"
-            "Existing PDFs will not be overwritten.\n\nContinue?",
+            "Every page will be rendered to a lossless PNG at 300 DPI and embedded in a PDF. "
+            "After verification, the PDF will replace its Word source.\n"
+            "Existing PDFs will not be overwritten. Text in the final PDF will be image-based.\n\nContinue?",
         ):
             return
 
@@ -247,11 +370,10 @@ class ConverterApp:
         self.start_button.configure(state="disabled")
         self.refresh_button.configure(state="disabled")
         self.progress.configure(value=0, maximum=max(1, len(documents)))
-        self._log(f"Starting conversion in {REPOSITORY_DIR}")
+        self._log(f"Starting image-based conversion in {REPOSITORY_DIR}")
 
         def worker() -> None:
             result = convert_documents(
-                executable,
                 lambda message: self.root.after(0, self._log, message),
                 lambda current, total: self.root.after(
                     0, lambda: self.progress.configure(value=current, maximum=max(1, total))
