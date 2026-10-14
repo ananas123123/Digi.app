@@ -249,6 +249,7 @@ ApplicationWindow {
             readonly property var pageResults: results.slice(currentPage * resultsPerPage, (currentPage + 1) * resultsPerPage)
             property string selectedResultPath: ""
             property string previewText: ""
+            property var folderContents: []
 
             ColumnLayout {
                 id: searchColumn
@@ -601,12 +602,20 @@ ApplicationWindow {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     searchRoot.selectedResultPath = path
-                                    searchRoot.previewText = searchService.previewFile(path)
+                                    if (searchRoot.folderSearch) {
+                                        searchRoot.folderContents = searchService.listFolderContents(path)
+                                    } else {
+                                        searchRoot.previewText = searchService.previewFile(path)
+                                    }
                                 }
                                 onDoubleClicked: {
                                     searchRoot.selectedResultPath = path
-                                    searchRoot.previewText = searchService.previewFile(path)
-                                    searchService.openFile(path)
+                                    if (searchRoot.folderSearch) {
+                                        searchRoot.folderContents = searchService.listFolderContents(path)
+                                    } else {
+                                        searchRoot.previewText = searchService.previewFile(path)
+                                        searchService.openFile(path)
+                                    }
                                 }
                             }
                         }
@@ -749,7 +758,7 @@ ApplicationWindow {
                                 id: filePreviewLoader
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                sourceComponent: {
+                                sourceComponent: searchRoot.folderSearch ? folderContentsComponent : {
                                     var path = searchRoot.selectedResultPath.toLowerCase()
                                     if (path.endsWith(".pdf")) return pdfPreviewComponent
                                     if (path.endsWith(".png") || path.endsWith(".jpg") ||
@@ -758,6 +767,85 @@ ApplicationWindow {
                                         path.endsWith(".tif") || path.endsWith(".tiff"))
                                         return imagePreviewComponent
                                     return textPreviewComponent
+                                }
+                            }
+
+                            Component {
+                                id: folderContentsComponent
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    spacing: 8
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: "Contents"
+                                        color: searchTheme.text
+                                        font.pixelSize: 14
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                    ListView {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        clip: true
+                                        spacing: 4
+                                        model: searchRoot.folderContents
+
+                                        delegate: Rectangle {
+                                            required property string name
+                                            required property string path
+                                            required property bool isFolder
+                                            width: ListView.view.width
+                                            height: 38
+                                            radius: 7
+                                            color: childMouse.containsMouse ? searchTheme.surfaceRaised : "transparent"
+                                            border.width: 1
+                                            border.color: "#24FFFFFF"
+
+                                            Row {
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 10
+                                                spacing: 8
+
+                                                Text {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: isFolder ? "▰" : "▤"
+                                                    color: isFolder ? searchTheme.accent : searchTheme.mutedText
+                                                    font.pixelSize: 14
+                                                }
+
+                                                Text {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    width: parent.width - 42
+                                                    text: name
+                                                    color: searchTheme.text
+                                                    font.pixelSize: 12
+                                                    elide: Text.ElideRight
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                id: childMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    if (isFolder) {
+                                                        searchRoot.selectedResultPath = path
+                                                        searchRoot.folderContents = searchService.listFolderContents(path)
+                                                    } else {
+                                                        searchRoot.folderSearch = false
+                                                        searchRoot.selectedResultPath = path
+                                                        searchRoot.previewText = searchService.previewFile(path)
+                                                    }
+                                                }
+                                                onDoubleClicked: {
+                                                    if (!isFolder)
+                                                        searchService.openFile(path)
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
