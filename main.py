@@ -36,8 +36,10 @@ def validate_pdf(path: Path) -> int:
 
 
 def convert_one(source: Path, staging: Path, log) -> int:
+    """Prefer native Word export; retry with SaveAs2 and then LibreOffice."""
     errors = []
     try:
+        import gc
         import pythoncom
         import win32com.client
         pythoncom.CoInitialize()
@@ -54,30 +56,38 @@ def convert_one(source: Path, staging: Path, log) -> int:
                 AddToRecentFiles=False, Visible=False, OpenAndRepair=True,
                 NoEncodingDialog=True,
             )
-            document.ExportAsFixedFormat(
-                OutputFileName=str(staging.resolve()), ExportFormat=17,
-                OpenAfterExport=False, OptimizeFor=0, Range=0, Item=0,
-                IncludeDocProps=False, KeepIRM=False, CreateBookmarks=0,
-                DocStructureTags=False, BitmapMissingFonts=True, UseISO19005_1=False,
-            )
+            try:
+                document.ExportAsFixedFormat(
+                    OutputFileName=str(staging.resolve()), ExportFormat=17,
+                    OpenAfterExport=False, OptimizeFor=0, Range=0, Item=0,
+                    IncludeDocProps=False, KeepIRM=False, CreateBookmarks=0,
+                    DocStructureTags=False, BitmapMissingFonts=True, UseISO19005_1=False,
+                )
+            except Exception as export_error:
+                log(f"ExportAsFixedFormat failed; retrying with Word SaveAs2: {source.name}")
+                staging.unlink(missing_ok=True)
+                document.SaveAs2(FileName=str(staging.resolve()), FileFormat=17, AddToRecentFiles=False)
+            document.Close(False)
+            document = None
+            word.Quit(False)
+            word = None
+            gc.collect()
         finally:
             if document is not None:
-                try:
-                    document.Close(False)
-                except Exception:
-                    pass
+                try: document.Close(False)
+                except Exception: pass
             if word is not None:
-                try:
-                    word.Quit(False)
-                except Exception:
-                    pass
+                try: word.Quit(False)
+                except Exception: pass
             document = None
             word = None
+            gc.collect()
             pythoncom.CoUninitialize()
         return validate_pdf(staging)
     except Exception as exc:
         errors.append(f"Microsoft Word: {exc}")
-        staging.unlink(missing_ok=True)
+        try: staging.unlink(missing_ok=True)
+        except OSError: pass
 
     libre = shutil.which("soffice") or shutil.which("libreoffice")
     if libre:
@@ -114,7 +124,7 @@ def convert_documents(log, progress) -> tuple[int, int, int]:
             log(f"SKIPPED: {source.relative_to(REPOSITORY_DIR)} — PDF already exists; Word file kept.")
             progress(index, total)
             continue
-        staging = source.with_name(f".{source.stem}.digi-staging-{uuid.uuid4().hex}.pdf")
+        staging = REPOSITORY_DIR / f".digi-staging-{uuid.uuid4().hex}.pdf"
         try:
             log(f"[{index}/{total}] Converting: {source.relative_to(REPOSITORY_DIR)}")
             page_count = convert_one(source, staging, log)
@@ -127,7 +137,17 @@ def convert_documents(log, progress) -> tuple[int, int, int]:
             except OSError as exc:
                 raise RuntimeError("Could not safely install PDF without overwriting another file; source preserved.") from exc
             try:
-                source.unlink()
+                # Legacy .doc files may carry the Windows read-only attribute.
+                original_mode = source.stat().st_mode
+                was_readonly = not bool(original_mode & 0o200)
+                if was_readonly:
+                    os.chmod(source, original_mode | 0o200)
+                try:
+                    source.unlink()
+                except OSError:
+                    if was_readonly and source.exists():
+                        os.chmod(source, original_mode)
+                    raise
             except OSError as exc:
                 try:
                     if (destination.stat().st_dev, destination.stat().st_ino) == (staging.stat().st_dev, staging.stat().st_ino):
