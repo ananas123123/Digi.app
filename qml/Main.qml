@@ -731,13 +731,48 @@ ApplicationWindow {
 
                             RowLayout {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 30
-                                Item { Layout.fillWidth: true }
+                                Layout.preferredHeight: 34
+                                spacing: 8
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: searchRoot.folderSearch
+                                        ? searchRoot.selectedResultPath.split(/[\\\\/]/).filter(function(part) { return part.length > 0 }).slice(-1)[0] || "Folder preview"
+                                        : searchRoot.selectedResultPath.split(/[\\\\/]/).filter(function(part) { return part.length > 0 }).slice(-1)[0] || "File preview"
+                                    color: searchTheme.text
+                                    font.pixelSize: 13
+                                    font.weight: Font.DemiBold
+                                    elide: Text.ElideMiddle
+                                }
+
+                                Button {
+                                    Layout.preferredWidth: 28
+                                    Layout.preferredHeight: 28
+                                    text: "×"
+                                    flat: true
+                                    onClicked: {
+                                        searchRoot.selectedResultPath = ""
+                                        searchRoot.previewText = ""
+                                        searchRoot.folderContents = []
+                                        previewPanel.previewMaximized = false
+                                    }
+                                    background: Rectangle {
+                                        radius: 7
+                                        color: parent.hovered ? searchTheme.surfaceRaised : "transparent"
+                                    }
+                                    contentItem: Text {
+                                        text: parent.text
+                                        color: searchTheme.text
+                                        font.pixelSize: 20
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                }
 
                                 Button {
                                     id: previewMaximizeButton
-                                    Layout.preferredWidth: 30
-                                    Layout.preferredHeight: 30
+                                    Layout.preferredWidth: 28
+                                    Layout.preferredHeight: 28
                                     text: previewPanel.previewMaximized ? "❐" : "□"
                                     flat: true
                                     onClicked: previewPanel.previewMaximized = !previewPanel.previewMaximized
@@ -760,11 +795,12 @@ ApplicationWindow {
                                 id: filePreviewLoader
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                sourceComponent: searchRoot.folderSearch ? folderContentsComponent : choosePreviewComponent()
-
-                                function choosePreviewComponent() {
+                                sourceComponent: {
+                                    if (searchRoot.folderSearch)
+                                        return folderContentsComponent
                                     var path = searchRoot.selectedResultPath.toLowerCase()
-                                    if (path.endsWith(".pdf")) return pdfPreviewComponent
+                                    if (path.endsWith(".pdf"))
+                                        return pdfPreviewComponent
                                     if (path.endsWith(".png") || path.endsWith(".jpg") ||
                                         path.endsWith(".jpeg") || path.endsWith(".bmp") ||
                                         path.endsWith(".gif") || path.endsWith(".webp") ||
