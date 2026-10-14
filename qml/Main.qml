@@ -53,6 +53,40 @@ ApplicationWindow {
     }
 
     Rectangle {
+        id: fullscreenButton
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 14
+        width: 44
+        height: 38
+        radius: 11
+        z: 200
+        visible: sideBar.bannerOpen || opacity > 0.01
+        opacity: sideBar.bannerOpen ? 1 : 0
+        scale: sideBar.bannerOpen ? 1 : 0.86
+        color: fullscreenMouse.containsMouse ? theme.surfaceRaised : theme.surface
+        border.color: fullscreenMouse.containsMouse ? theme.accent : theme.border
+        border.width: 1
+        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutBack } }
+
+        Text {
+            anchors.centerIn: parent
+            text: "⛶"
+            color: theme.text
+            font.pixelSize: 22
+        }
+
+        MouseArea {
+            id: fullscreenMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: window.toggleFullscreen()
+        }
+    }
+
+    Rectangle {
         id: windowEdge
         anchors.fill: parent
         radius: window.visibility === Window.FullScreen ? 0 : 16
