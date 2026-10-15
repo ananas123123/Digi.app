@@ -83,7 +83,7 @@ Item {
             }
             Item { Layout.fillWidth: true }
             Text {
-                text: "Digi Doc"
+                text: "Lubis Doc"
                 color: theme.mutedText
                 font.pixelSize: 12
             }
