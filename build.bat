@@ -27,7 +27,7 @@ if not exist "%MINGW_ROOT%\bin\mingw32-make.exe" (
 set "PATH=%MINGW_ROOT%\bin;%QT_ROOT%\bin;%PATH%"
 
 echo.
-echo === Configuring Digi ===
+echo === Configuring Lubis ===
 cmake -S "%~dp0." -B "%BUILD_DIR%" -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="%QT_ROOT%" -DCMAKE_CXX_COMPILER="%MINGW_ROOT%\bin\g++.exe" -DCMAKE_MAKE_PROGRAM="%MINGW_ROOT%\bin\mingw32-make.exe"
 if errorlevel 1 (
     echo [ERROR] CMake configuration failed.
@@ -36,7 +36,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo === Building Digi ===
+echo === Building Lubis ===
 cmake --build "%BUILD_DIR%" --parallel
 if errorlevel 1 (
     echo [ERROR] Build failed.
