@@ -15,7 +15,7 @@ ApplicationWindow {
     minimumWidth: 900
     minimumHeight: 620
     visible: true
-    title: "Digi"
+    title: "Lubis"
     flags: Qt.Window | Qt.FramelessWindowHint
     color: "transparent"
 
@@ -297,7 +297,7 @@ ApplicationWindow {
                         }
 
                         Text {
-                            text: "Find your way through Digi."
+                            text: "Find your way through Lubis."
                             color: searchTheme.mutedText
                             font.pixelSize: 14
                         }
