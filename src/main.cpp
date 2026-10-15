@@ -35,7 +35,7 @@ void writeRuntimeLog(QtMsgType type, const QMessageLogContext &context, const QS
     std::fprintf(stderr, "\n");
     std::fflush(stderr);
 
-    QFile file(QCoreApplication::applicationDirPath() + "/digi-runtime.log");
+    QFile file(QCoreApplication::applicationDirPath() + "/lubis-runtime.log");
     if (!file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
         return;
 
@@ -53,8 +53,8 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     qInstallMessageHandler(writeRuntimeLog);
-    QCoreApplication::setApplicationName("Digi");
-    QCoreApplication::setOrganizationName("Digi");
+    QCoreApplication::setApplicationName("Lubis");
+    QCoreApplication::setOrganizationName("Lubis");
 
     AppServices appServices;
     DocumentService documentService;
@@ -72,6 +72,6 @@ int main(int argc, char *argv[])
         []() { QCoreApplication::exit(EXIT_FAILURE); },
         Qt::QueuedConnection);
 
-    engine.loadFromModule("Digi", "Main");
+    engine.loadFromModule("Lubis", "Main");
     return app.exec();
 }
