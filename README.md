@@ -1,4 +1,4 @@
-# Digi — native rebuild
+# Lubis — native app
 
 ## Stack
 - **Frontend:** Qt Quick / QML
@@ -8,7 +8,7 @@
 
 ## Run locally
 The scripts expect Qt at `C:\Qt\6.12.0\mingw_64` and MinGW at `C:\Qt\Tools\mingw1310_64`.
-Double-click `run.bat` to configure, build and launch Digi. Build output is placed in `build\`.
+Double-click `run.bat` to configure, build and launch Lubis. Build output is placed in `build\`.
 
 ## Architecture
 - `src/app/`: application-wide services and lifecycle integration.
