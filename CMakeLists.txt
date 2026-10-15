@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(Digi LANGUAGES CXX)
+project(Lubis LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,7 +10,7 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2 Pdf PdfQuick)
 qt_standard_project_setup(REQUIRES 6.5)
 
-qt_add_executable(Digi
+qt_add_executable(Lubis
     src/main.cpp
     src/app/AppServices.cpp
     src/app/AppServices.h
@@ -20,8 +20,8 @@ qt_add_executable(Digi
     src/search/SearchService.h
 )
 
-qt_add_qml_module(Digi
-    URI Digi
+qt_add_qml_module(Lubis
+    URI Lubis
     VERSION 1.0
     QML_FILES
         qml/Main.qml
@@ -37,8 +37,8 @@ qt_add_qml_module(Digi
         qml/themes/Theme.qml
 )
 
-target_link_libraries(Digi PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Pdf Qt6::PdfQuick)
+target_link_libraries(Lubis PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Pdf Qt6::PdfQuick)
 
 if(WIN32)
-    set_target_properties(Digi PROPERTIES WIN32_EXECUTABLE TRUE)
+    set_target_properties(Lubis PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
