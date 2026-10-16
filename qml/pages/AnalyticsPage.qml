@@ -26,13 +26,6 @@ Item {
         anchors.bottomMargin: 22
         spacing: 0
 
-        Text {
-            text: "Analytics"
-            color: theme.text
-            font.pixelSize: 25
-            font.weight: Font.DemiBold
-        }
-
         Item { Layout.fillHeight: true }
 
         ColumnLayout {
@@ -57,15 +50,6 @@ Item {
 
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                text: dailyAnalyticsService.completedFocusSessionsToday + " focus " +
-                      (dailyAnalyticsService.completedFocusSessionsToday === 1 ? "session" : "sessions") +
-                      " completed"
-                color: theme.mutedText
-                font.pixelSize: 13
-            }
-
-            Text {
-                Layout.alignment: Qt.AlignHCenter
                 text: Qt.formatDate(new Date(), "dddd, d MMMM yyyy")
                 color: theme.mutedText
                 font.pixelSize: 12
@@ -73,14 +57,5 @@ Item {
         }
 
         Item { Layout.fillHeight: true }
-
-        Text {
-            Layout.alignment: Qt.AlignHCenter
-            text: "Daily analytics are saved locally and stored separately by date."
-            color: theme.mutedText
-            font.pixelSize: 12
-            wrapMode: Text.WordWrap
-            horizontalAlignment: Text.AlignHCenter
-        }
     }
 }
