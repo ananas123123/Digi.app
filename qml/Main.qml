@@ -21,7 +21,7 @@ ApplicationWindow {
 
     Theme { id: theme }
     TimerController { id: timerControllerInstance }
-    property string activePage: "Home"
+    property string activePage: "Search"
     property bool settingsOpen: false
     property bool settingsExpanded: false
     property real settingsBaseY: 0
@@ -36,7 +36,6 @@ ApplicationWindow {
     property bool searchIncludeHidden: false
     property bool notesShowGrid: true
     property bool notesPressureSensitivity: true
-    property bool homeShowQuickAccess: true
     property bool timerSoundEnabled: true
     property bool universalTimerView: false
 
@@ -174,13 +173,6 @@ ApplicationWindow {
                 visible: window.activePage === "Notes"
                 Text { Layout.fillWidth: true; text: "Pen pressure sensitivity"; color: theme.text; font.pixelSize: 12 }
                 Switch { checked: window.notesPressureSensitivity; onToggled: window.notesPressureSensitivity = checked }
-            }
-            Text { Layout.fillWidth: true; visible: window.activePage === "Home"; text: "Home options"; color: theme.accent; font.pixelSize: 12; font.weight: Font.DemiBold }
-            RowLayout {
-                Layout.fillWidth: true
-                visible: window.activePage === "Home"
-                Text { Layout.fillWidth: true; text: "Show quick access"; color: theme.text; font.pixelSize: 12 }
-                Switch { checked: window.homeShowQuickAccess; onToggled: window.homeShowQuickAccess = checked }
             }
             Text { Layout.fillWidth: true; visible: window.activePage === "Timer"; text: "Timer options"; color: theme.accent; font.pixelSize: 12; font.weight: Font.DemiBold }
             RowLayout {
@@ -634,8 +626,7 @@ ApplicationWindow {
                     }
                 }
             }
-            sourceComponent: window.activePage === "Home" ? homePage
-                           : window.activePage === "Notes" ? notesPage
+            sourceComponent: window.activePage === "Notes" ? notesPage
                            : window.activePage === "Search" ? searchPage
                            : window.activePage === "Explorer" ? explorerPage
                            : window.activePage === "Timer" ? timerPage
@@ -752,16 +743,6 @@ ApplicationWindow {
         onPointChanged: universalTimerOverlay.noteActivity()
     }
 
-    Component {
-        id: homePage
-        HomePage {
-            onOpenPage: function(pageName) {
-                window.activePage = pageName
-                window.settingsOpen = false
-                sideBar.bannerOpen = false
-            }
-        }
-    }
     Component {
         id: notesPage
         NotesPage {
