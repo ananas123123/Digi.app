@@ -434,12 +434,19 @@ Item {
         clip: true
         z: 4
         opacity: root.introProgress(0.02)
-        scale: (root.calendarExpanded ? 1.02 : 0.96)
-               * (0.96 + 0.04 * root.introProgress(0.02))
+        scale: root.calendarExpanded ? 1.02 : 0.96
 
-        transform: Translate {
-            y: (1 - root.introProgress(0.02)) * 13
-        }
+        transform: [
+            Scale {
+                origin.x: monthlyCalendarCard.width / 2
+                origin.y: monthlyCalendarCard.height / 2
+                xScale: 0.96 + 0.04 * root.introProgress(0.02)
+                yScale: 0.96 + 0.04 * root.introProgress(0.02)
+            },
+            Translate {
+                y: (1 - root.introProgress(0.02)) * 13
+            }
+        ]
 
         Behavior on x {
             NumberAnimation {
@@ -815,13 +822,20 @@ Item {
         border.width: calendarHandleHover.containsMouse ? 1.4 : 1
         z: 5
         opacity: root.introProgress(0.10)
-        scale: (calendarHandleHover.containsMouse
-                ? 1.09 : (root.calendarHandleExpanded ? 1.02 : 0.96))
-               * (0.95 + 0.05 * root.introProgress(0.10))
+        scale: calendarHandleHover.containsMouse
+               ? 1.09 : (root.calendarHandleExpanded ? 1.02 : 0.96)
 
-        transform: Translate {
-            y: (1 - root.introProgress(0.10)) * 12
-        }
+        transform: [
+            Scale {
+                origin.x: calendarCardHandle.width / 2
+                origin.y: calendarCardHandle.height / 2
+                xScale: 0.95 + 0.05 * root.introProgress(0.10)
+                yScale: 0.95 + 0.05 * root.introProgress(0.10)
+            },
+            Translate {
+                y: (1 - root.introProgress(0.10)) * 12
+            }
+        ]
 
         Behavior on x {
             SequentialAnimation {
@@ -958,12 +972,19 @@ Item {
         width: 248
         height: 178
         radius: 16
-        scale: (root.dailyCardExpanded ? 1.02 : 0.96)
-               * (0.96 + 0.04 * root.introProgress(0.32))
+        scale: root.dailyCardExpanded ? 1.02 : 0.96
         opacity: root.introProgress(0.32)
-        transform: Translate {
-            y: (1 - root.introProgress(0.32)) * 14
-        }
+        transform: [
+            Scale {
+                origin.x: dailyFocusedCard.width / 2
+                origin.y: dailyFocusedCard.height / 2
+                xScale: 0.96 + 0.04 * root.introProgress(0.32)
+                yScale: 0.96 + 0.04 * root.introProgress(0.32)
+            },
+            Translate {
+                y: (1 - root.introProgress(0.32)) * 14
+            }
+        ]
         color: Qt.lighter(theme.surface, 1.0 + 0.11 * root.dailyCardCloudPhase)
         border.color: Qt.lighter(theme.border, 1.0 + 0.06 * root.dailyCardCloudPhase)
         border.width: 1
@@ -1071,12 +1092,19 @@ Item {
         border.width: handleHover.containsMouse ? 1.4 : 1
         z: 5
         opacity: root.introProgress(0.40)
-        scale: (handleHover.containsMouse
-                ? 1.09 : (root.handleExpanded ? 1.02 : 0.96))
-               * (0.95 + 0.05 * root.introProgress(0.40))
-        transform: Translate {
-            y: (1 - root.introProgress(0.40)) * 12
-        }
+        scale: handleHover.containsMouse
+               ? 1.09 : (root.handleExpanded ? 1.02 : 0.96)
+        transform: [
+            Scale {
+                origin.x: dailyCardHandle.width / 2
+                origin.y: dailyCardHandle.height / 2
+                xScale: 0.95 + 0.05 * root.introProgress(0.40)
+                yScale: 0.95 + 0.05 * root.introProgress(0.40)
+            },
+            Translate {
+                y: (1 - root.introProgress(0.40)) * 12
+            }
+        ]
 
         Behavior on x {
             SequentialAnimation {
