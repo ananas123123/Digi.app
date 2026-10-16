@@ -916,9 +916,7 @@ Item {
                 implicitHeight: 46
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
-                scale: hovered ? 1.045 : 1
-                readonly property bool isPausedState:
-                    !controller.timerRunning && controller.statusMessage === "Paused."
+                scale: hovered ? 1.035 : 1
                 onClicked: controller.toggleTimer()
 
                 Behavior on scale {
@@ -930,62 +928,28 @@ Item {
 
                 background: Rectangle {
                     radius: 11
-                    clip: true
                     color: stopwatchToggleButton.hovered
                            ? (controller.timerRunning
                               ? "#D8E8D8"
-                              : (stopwatchToggleButton.isPausedState
+                              : (controller.elapsedMilliseconds > 0
                                  ? "#E8D0CE" : Qt.lighter(theme.accent, 1.08)))
                            : theme.accent
                     border.width: stopwatchToggleButton.hovered ? 1 : 0
                     border.color: controller.timerRunning ? "#6FA879"
-                                 : (stopwatchToggleButton.isPausedState ? "#C96B66" : "#E6C978")
-
-                    // A quick diagonal sheen makes this hover treatment distinct from reset.
-                    Rectangle {
-                        id: toggleButtonSheen
-                        width: 30
-                        height: parent.height * 1.65
-                        y: (parent.height - height) / 2
-                        x: stopwatchToggleButton.hovered ? parent.width + width : -width
-                        rotation: 18
-                        radius: width / 2
-                        color: controller.timerRunning
-                               ? Qt.rgba(0.20, 0.52, 0.28, 0.24)
-                               : (stopwatchToggleButton.isPausedState
-                                  ? Qt.rgba(0.72, 0.20, 0.18, 0.22)
-                                  : Qt.rgba(1, 1, 1, 0.26))
-                        opacity: stopwatchToggleButton.hovered ? 1 : 0
-                        z: 1
-
-                        Behavior on x {
-                            NumberAnimation {
-                                duration: 420
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: 120
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                    }
+                                 : (controller.elapsedMilliseconds > 0 ? "#C96B66" : "#E6C978")
 
                     Rectangle {
                         anchors.fill: parent
                         anchors.margins: 1
                         radius: 10
                         color: "transparent"
-                        border.width: stopwatchToggleButton.hovered
-                                      && (controller.timerRunning || stopwatchToggleButton.isPausedState) ? 1 : 0
+                        border.width: stopwatchToggleButton.hovered ? 1 : 0
                         border.color: controller.timerRunning
                                       ? Qt.rgba(0.18, 0.55, 0.28, 0.42)
                                       : Qt.rgba(0.70, 0.22, 0.19, 0.34)
                         opacity: stopwatchToggleButton.hovered
-                                 && (controller.timerRunning || stopwatchToggleButton.isPausedState)
+                                 && (controller.timerRunning || controller.elapsedMilliseconds > 0)
                                  ? 1 : 0
-                        z: 2
 
                         Behavior on opacity {
                             NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
@@ -1003,7 +967,7 @@ Item {
                 contentItem: Text {
                     text: stopwatchToggleButton.text
                     color: stopwatchToggleButton.hovered
-                           && (controller.timerRunning || stopwatchToggleButton.isPausedState)
+                           && (controller.timerRunning || controller.elapsedMilliseconds > 0)
                            ? "#252525" : theme.accentText
                     font: stopwatchToggleButton.font
                     horizontalAlignment: Text.AlignHCenter
