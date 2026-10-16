@@ -24,7 +24,7 @@ Item {
         color: theme.window
     }
 
-    // The stopwatch occupies the full page and is centered independently.
+    // The stopwatch is centered independently of the daily focused-time card.
     ColumnLayout {
         anchors.centerIn: parent
         spacing: 26
@@ -94,20 +94,34 @@ Item {
         }
     }
 
-    // Positioned directly against the page, not laid out beside the stopwatch.
-    Text {
-        id: dailyFocusedTime
+    // Independent card: moving it does not affect the stopwatch layout.
+    Rectangle {
+        id: dailyFocusedCard
         anchors.right: parent.right
         anchors.rightMargin: 48
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -18
         width: 248
-        horizontalAlignment: Text.AlignHCenter
-        text: root.formattedFocusedTime()
-        color: theme.text
-        font.pixelSize: 32
-        font.weight: Font.Light
-        minimumPixelSize: 22
-        fontSizeMode: Text.Fit
+        height: 178
+        radius: 16
+        color: theme.surface
+        border.color: theme.border
+        border.width: 1
+
+        Text {
+            anchors.fill: parent
+            anchors.leftMargin: 16
+            anchors.rightMargin: 16
+            anchors.topMargin: 20
+            anchors.bottomMargin: 20
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            text: root.formattedFocusedTime()
+            color: theme.text
+            font.pixelSize: 32
+            font.weight: Font.Light
+            minimumPixelSize: 22
+            fontSizeMode: Text.Fit
+        }
     }
 }
