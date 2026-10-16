@@ -472,7 +472,7 @@ Item {
 
                                 Text {
                                     anchors.bottom: parent.bottom
-                                    anchors.bottomMargin: 1
+                                    anchors.bottomMargin: 5
                                     width: parent.width
                                     height: 12
                                     text: root.formatCalendarDuration(calendarDayCell.focusedSeconds)
