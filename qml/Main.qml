@@ -2018,7 +2018,6 @@ ApplicationWindow {
             }
 
         }
-    }
 
     Window {
         id: lubisExplorerWindow
