@@ -172,13 +172,13 @@ ApplicationWindow {
     Rectangle {
         id: profilePanel
         width: 292
-        height: profileColumn.implicitHeight + 28
+        height: contextualSettings.height
         property bool tuckedByNavigation: sideBar.bannerOpen
-        x: window.profileOpen ? 10 : (tuckedByNavigation ? 0 : -width + 24)
+        x: window.profileOpen ? 10 : (tuckedByNavigation ? -width + 24 : -width)
         y: window.height * 0.25 - height / 2
         z: 150
         radius: 14
-        visible: window.profileOpen || x < window.width
+        visible: window.profileOpen || (sideBar.bannerOpen && x > -width)
         color: Qt.rgba(0.12, 0.12, 0.12, 0.48)
         border.color: theme.border
         border.width: 1
@@ -360,8 +360,14 @@ ApplicationWindow {
                 sideBar.bannerOpen = false
             }
             onFullscreenRequested: window.toggleFullscreen()
-            onSettingsRequested: window.settingsOpen = !window.settingsOpen
-            onProfileRequested: window.profileOpen = !window.profileOpen
+            onSettingsRequested: {
+                window.profileOpen = false
+                window.settingsOpen = !window.settingsOpen
+            }
+            onProfileRequested: {
+                window.settingsOpen = false
+                window.profileOpen = !window.profileOpen
+            }
             clip: false
         }
 
