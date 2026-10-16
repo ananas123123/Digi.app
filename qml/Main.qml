@@ -1153,11 +1153,11 @@ ApplicationWindow {
                         border.width: 1
                         clip: true
                         Behavior on opacity { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 760; easing.type: Easing.InOutCubic } }
-                        Behavior on x { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
-                        Behavior on width { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
-                        Behavior on height { NumberAnimation { duration: 360; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 420; easing.type: Easing.OutExpo } }
+                        Behavior on x { NumberAnimation { duration: 420; easing.type: Easing.OutExpo } }
+                        Behavior on y { NumberAnimation { duration: 420; easing.type: Easing.OutExpo } }
+                        Behavior on width { NumberAnimation { duration: 420; easing.type: Easing.OutExpo } }
+                        Behavior on height { NumberAnimation { duration: 420; easing.type: Easing.OutExpo } }
 
                         ColumnLayout {
                             anchors.fill: parent
