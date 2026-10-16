@@ -4,6 +4,8 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QPdfDocument>
+#include <QPdfSelection>
 #include <QSet>
 #include <QVariantMap>
 
@@ -38,6 +40,45 @@ QString contentExcerpt(const QString &content, qsizetype position, qsizetype nee
     if (start + length < content.size())
         excerpt.append(QStringLiteral("…"));
     return excerpt;
+}
+
+bool findPdfContentMatch(const QFileInfo &info,
+                         const QString &needle,
+                         Qt::CaseSensitivity sensitivity,
+                         qint64 &contentBytesRead,
+                         QString &excerpt,
+                         quint64 requestId,
+                         const std::atomic<quint64> &latestRequestId)
+{
+    constexpr qint64 maxPdfFileBytes = 100 * 1024 * 1024;
+    constexpr int maxPagesPerPdf = 1000;
+    if (info.size() <= 0 || info.size() > maxPdfFileBytes
+        || contentBytesRead >= maxTotalTextBytes) {
+        return false;
+    }
+
+    QPdfDocument document;
+    if (document.load(info.absoluteFilePath()) != QPdfDocument::Error::None)
+        return false;
+
+    const int pageCount = qMin(document.pageCount(), maxPagesPerPdf);
+    for (int page = 0; page < pageCount; ++page) {
+        if (latestRequestId.load(std::memory_order_relaxed) != requestId)
+            return false;
+
+        const QString pageText = document.getAllText(page).text();
+        contentBytesRead += pageText.toUtf8().size();
+        const qsizetype matchPosition = pageText.indexOf(needle, sensitivity);
+        if (matchPosition >= 0) {
+            excerpt = contentExcerpt(pageText, matchPosition, needle.size());
+            return true;
+        }
+
+        if (contentBytesRead >= maxTotalTextBytes)
+            break;
+    }
+
+    return false;
 }
 }
 
@@ -97,29 +138,37 @@ void SearchWorker::performSearch(quint64 requestId,
             matchType = QStringLiteral("filename");
         } else {
             const QString suffix = info.suffix().toLower();
-            if (!searchableTextExtensions.contains(suffix)
-                || info.size() <= 0
-                || info.size() > maxTextFileBytes
-                || contentBytesRead + info.size() > maxTotalTextBytes) {
-                continue;
+            if (suffix == QStringLiteral("pdf")) {
+                if (!findPdfContentMatch(info, needle, sensitivity, contentBytesRead,
+                                         excerpt, requestId, m_latestRequestId)) {
+                    continue;
+                }
+                matchType = QStringLiteral("content");
+            } else {
+                if (!searchableTextExtensions.contains(suffix)
+                    || info.size() <= 0
+                    || info.size() > maxTextFileBytes
+                    || contentBytesRead + info.size() > maxTotalTextBytes) {
+                    continue;
+                }
+
+                QFile file(path);
+                if (!file.open(QIODevice::ReadOnly))
+                    continue;
+
+                const QByteArray bytes = file.read(maxTextFileBytes);
+                contentBytesRead += bytes.size();
+                if (bytes.isEmpty() && file.error() != QFile::NoError)
+                    continue;
+
+                const QString content = QString::fromUtf8(bytes);
+                const qsizetype matchPosition = content.indexOf(needle, sensitivity);
+                if (matchPosition < 0)
+                    continue;
+
+                matchType = QStringLiteral("content");
+                excerpt = contentExcerpt(content, matchPosition, needle.size());
             }
-
-            QFile file(path);
-            if (!file.open(QIODevice::ReadOnly))
-                continue;
-
-            const QByteArray bytes = file.read(maxTextFileBytes);
-            contentBytesRead += bytes.size();
-            if (bytes.isEmpty() && file.error() != QFile::NoError)
-                continue;
-
-            const QString content = QString::fromUtf8(bytes);
-            const qsizetype matchPosition = content.indexOf(needle, sensitivity);
-            if (matchPosition < 0)
-                continue;
-
-            matchType = QStringLiteral("content");
-            excerpt = contentExcerpt(content, matchPosition, needle.size());
         }
 
         QVariantMap result;
