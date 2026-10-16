@@ -618,14 +618,13 @@ ApplicationWindow {
             id: pageLoader
             Layout.fillWidth: true
             Layout.fillHeight: true
-            // Keep the page visible and blurred, but disable all page interaction
-            // while the sidebar menu is open.
+            // Render the page directly at native resolution unless the sidebar
+            // actually needs the blurred backdrop. This avoids persistent
+            // off-screen compositing softening text in the normal window.
             enabled: !sideBar.bannerOpen
-            // Keep the effect active so the blur radius itself can animate from
-            // clear to blurred. Toggling blurEnabled/layer.enabled caused a pop-in.
-            layer.enabled: true
+            layer.enabled: sideBar.bannerOpen
             layer.effect: MultiEffect {
-                blurEnabled: true
+                blurEnabled: sideBar.bannerOpen
                 blur: sideBar.bannerOpen ? 0.85 : 0
                 blurMax: 48
                 Behavior on blur {
