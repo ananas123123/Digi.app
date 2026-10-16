@@ -1876,19 +1876,6 @@ ApplicationWindow {
                                         }
                                     }
 
-                                    WheelHandler {
-                                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                                        onWheel: function(event) {
-                                            var delta = event.angleDelta.y
-                                            if (delta === 0)
-                                                return
-                                            pdfAnnotationWorkspace.zoomAt(
-                                                pdfAnnotationWorkspace.zoomFactor * (delta > 0 ? 1.1 : 0.9),
-                                                event.position.x, event.position.y)
-                                            event.accepted = true
-                                        }
-                                    }
-
                                     Row {
                                         anchors.right: parent.right
                                         anchors.bottom: parent.bottom
