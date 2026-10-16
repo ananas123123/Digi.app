@@ -17,6 +17,18 @@ Item {
         return Math.floor(totalMinutes / 60) + " h " + (totalMinutes % 60) + " min"
     }
 
+    function formattedDate() {
+        var date = new Date()
+        var day = date.getDate()
+        var suffix = "th"
+        if (day % 100 < 11 || day % 100 > 13) {
+            if (day % 10 === 1) suffix = "st"
+            else if (day % 10 === 2) suffix = "nd"
+            else if (day % 10 === 3) suffix = "rd"
+        }
+        return Qt.formatDate(date, "MMMM ") + day + suffix
+    }
+
     Component.onCompleted: dailyAnalyticsService.refreshToday()
 
     Rectangle {
@@ -108,20 +120,41 @@ Item {
         border.color: theme.border
         border.width: 1
 
-        Text {
+        Column {
             anchors.fill: parent
             anchors.leftMargin: 16
             anchors.rightMargin: 16
             anchors.topMargin: 20
             anchors.bottomMargin: 20
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            text: root.formattedFocusedTime()
-            color: theme.text
-            font.pixelSize: 32
-            font.weight: Font.Light
-            minimumPixelSize: 22
-            fontSizeMode: Text.Fit
+            spacing: 12
+
+            Text {
+                width: parent.width
+                height: 42
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: root.formattedFocusedTime()
+                color: theme.text
+                font.pixelSize: 32
+                font.weight: Font.Light
+                minimumPixelSize: 22
+                fontSizeMode: Text.Fit
+            }
+
+            Rectangle {
+                x: 12
+                width: parent.width - 24
+                height: 1
+                color: theme.border
+            }
+
+            Text {
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                text: root.formattedDate()
+                color: theme.mutedText
+                font.pixelSize: 13
+            }
         }
     }
 }
