@@ -537,9 +537,25 @@ ApplicationWindow {
 
 
     ColumnLayout {
+        id: appContentLayout
         anchors.fill: parent
         anchors.margins: window.visibility === Window.FullScreen ? 0 : 1
         spacing: 0
+
+        // Only composite the app into a blur layer while the explorer popup is open.
+        // The popup is a sibling of this layout, so it remains perfectly sharp.
+        layer.enabled: window.lubisExplorerOpen
+        layer.effect: MultiEffect {
+            blurEnabled: window.lubisExplorerOpen
+            blur: window.lubisExplorerOpen ? 0.58 : 0
+            blurMax: 48
+            Behavior on blur {
+                NumberAnimation {
+                    duration: 340
+                    easing.type: Easing.OutCubic
+                }
+            }
+        }
 
         Rectangle {
             id: titleBar
@@ -784,8 +800,11 @@ ApplicationWindow {
 
     Item {
         id: lubisExplorerPopup
-        parent: pageLoader
-        anchors.fill: parent
+        parent: window.contentItem
+        x: appContentLayout.x + pageLoader.x
+        y: appContentLayout.y + pageLoader.y
+        width: pageLoader.width
+        height: pageLoader.height
         z: 800
         visible: window.lubisExplorerOpen && window.activePage === "Search"
         enabled: visible
@@ -960,6 +979,8 @@ ApplicationWindow {
 
             Rectangle {
                 anchors.fill: parent
+                radius: lubisExplorerPanel.radius
+                clip: true
                 visible: searchService.importInProgress
                 color: Qt.rgba(0.06, 0.06, 0.06, 0.84)
                 z: 10
@@ -1011,8 +1032,11 @@ ApplicationWindow {
 
     DropArea {
         id: searchImportDropArea
-        parent: pageLoader
-        anchors.fill: parent
+        parent: window.contentItem
+        x: appContentLayout.x + pageLoader.x
+        y: appContentLayout.y + pageLoader.y
+        width: pageLoader.width
+        height: pageLoader.height
         z: 900
         enabled: window.activePage === "Search"
 
