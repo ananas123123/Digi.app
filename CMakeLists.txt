@@ -31,7 +31,6 @@ qt_add_qml_module(Lubis
         qml/components/TimerController.qml
         qml/components/TopBar.qml
         qml/components/WorkspaceCard.qml
-        qml/pages/HomePage.qml
         qml/pages/NotesPage.qml
         qml/pages/TimerPage.qml
         qml/pages/ResourcesPage.qml
