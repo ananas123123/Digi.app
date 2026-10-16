@@ -1,9 +1,9 @@
 #include "SearchService.h"
 #include "DropImportWorker.h"
+#include "SearchWorker.h"
 
 #include <QCoreApplication>
 #include <QDir>
-#include <QDirIterator>
 #include <QFileInfo>
 #include <QFile>
 #include <QTextStream>
@@ -15,8 +15,6 @@
 #include <QVariant>
 
 namespace {
-constexpr int maxResults = 200;
-
 QString normalizedPath(QString path)
 {
     path = QDir::cleanPath(QDir::fromNativeSeparators(path));
@@ -97,10 +95,34 @@ SearchService::SearchService(QObject *parent)
     }, Qt::QueuedConnection);
 
     m_importThread.start();
+
+    m_searchWorker = new SearchWorker;
+    m_searchWorker->moveToThread(&m_searchThread);
+    connect(&m_searchThread, &QThread::finished,
+            m_searchWorker, &QObject::deleteLater);
+    connect(m_searchWorker, &SearchWorker::searchCompleted, this,
+            [this](quint64 requestId, const QVariantList &results) {
+        if (requestId != m_searchRequestId)
+            return;
+
+        m_searchResults = results;
+        emit searchResultsChanged();
+
+        if (m_searching) {
+            m_searching = false;
+            emit searchStateChanged();
+        }
+    }, Qt::QueuedConnection);
+    m_searchThread.start();
 }
 
 SearchService::~SearchService()
 {
+    if (m_searchWorker)
+        m_searchWorker->setLatestRequestId(++m_searchRequestId);
+    m_searchThread.quit();
+    m_searchThread.wait();
+
     m_importThread.quit();
     m_importThread.wait();
 }
@@ -192,41 +214,58 @@ bool SearchService::importDroppedUrls(const QVariantList &urls,
     return true;
 }
 
-QVariantList SearchService::search(const QString &query) const
+QVariantList SearchService::searchResults() const
 {
-    QVariantList results;
+    return m_searchResults;
+}
+
+bool SearchService::searching() const
+{
+    return m_searching;
+}
+
+void SearchService::requestSearch(const QString &query, bool caseSensitive, bool includeHidden)
+{
+    const quint64 requestId = ++m_searchRequestId;
+    m_searchWorker->setLatestRequestId(requestId);
+
     const QString needle = query.trimmed();
-    if (needle.isEmpty())
-        return results;
-
-    const QDir root(m_searchRoot);
-    if (!root.exists())
-        return results;
-
-    QDirIterator iterator(root.absolutePath(),
-                          QDir::Files | QDir::NoDotAndDotDot,
-                          QDirIterator::Subdirectories);
-
-    while (iterator.hasNext() && results.size() < maxResults) {
-        const QString path = iterator.next();
-        const QFileInfo info(path);
-        if (info.isHidden() || !info.isFile())
-            continue;
-
-        const QString name = info.fileName();
-        if (!name.contains(needle, Qt::CaseInsensitive))
-            continue;
-
-        QVariantMap result;
-        result.insert(QStringLiteral("name"), name);
-        result.insert(QStringLiteral("path"), QDir::toNativeSeparators(info.absoluteFilePath()));
-        result.insert(QStringLiteral("relativePath"), QDir::toNativeSeparators(root.relativeFilePath(path)));
-        result.insert(QStringLiteral("matchType"), QStringLiteral("filename"));
-        result.insert(QStringLiteral("excerpt"), QString());
-        results.append(result);
+    if (!m_searchResults.isEmpty()) {
+        m_searchResults.clear();
+        emit searchResultsChanged();
     }
 
-    return results;
+    if (needle.isEmpty()) {
+        if (m_searching) {
+            m_searching = false;
+            emit searchStateChanged();
+        }
+        return;
+    }
+
+    if (!m_searching) {
+        m_searching = true;
+        emit searchStateChanged();
+    }
+
+    const bool queued = QMetaObject::invokeMethod(
+        m_searchWorker,
+        "performSearch",
+        Qt::QueuedConnection,
+        Q_ARG(quint64, requestId),
+        Q_ARG(QString, m_searchRoot),
+        Q_ARG(QString, needle),
+        Q_ARG(bool, caseSensitive),
+        Q_ARG(bool, includeHidden));
+
+    if (!queued) {
+        m_searchResults.clear();
+        emit searchResultsChanged();
+        if (m_searching) {
+            m_searching = false;
+            emit searchStateChanged();
+        }
+    }
 }
 
 QVariantList SearchService::listFolderContents(const QString &path) const
