@@ -1345,7 +1345,6 @@ ApplicationWindow {
                                         PdfPageView {
                                             id: centeredPdfPage
                                             document: centeredPdfDocument
-                                            page: 0
                                             width: Math.min(centeredPageViewport.width - 32, 760) * pdfAnnotationWorkspace.zoomFactor
                                             height: width * 1.294
                                             anchors.centerIn: parent
