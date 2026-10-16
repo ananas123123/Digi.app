@@ -8,156 +8,11 @@ Item {
     Theme { id: theme }
     signal pageSelected(string pageName)
 
-    property string mode: "focus"
-    property bool timerRunning: false
-    property int focusMinutes: 25
-    property int shortBreakMinutes: 5
-    property int longBreakMinutes: 15
-    property real remainingMilliseconds: focusMinutes * 60 * 1000
-    property real lastTickAt: 0
-    property real focusedRemainderMilliseconds: 0
-    property string statusMessage: ""
-
-    function durationForMode(modeName) {
-        if (modeName === "shortBreak")
-            return shortBreakMinutes
-        if (modeName === "longBreak")
-            return longBreakMinutes
-        return focusMinutes
-    }
-
-    function formattedTime() {
-        var secondsRemaining = Math.max(0, Math.ceil(remainingMilliseconds / 1000))
-        var minutes = Math.floor(secondsRemaining / 60)
-        var seconds = secondsRemaining % 60
-        return (minutes < 10 ? "0" : "") + minutes + ":" +
-               (seconds < 10 ? "0" : "") + seconds
-    }
-
-    function modeLabel() {
-        if (mode === "shortBreak")
-            return "SHORT BREAK"
-        if (mode === "longBreak")
-            return "LONG BREAK"
-        return "FOCUS"
-    }
-
-    function resetTimer() {
-        if (timerRunning)
-            tick()
-        timerRunning = false
-        remainingMilliseconds = durationForMode(mode) * 60 * 1000
-        focusedRemainderMilliseconds = 0
-        lastTickAt = Date.now()
-        statusMessage = "Timer reset."
-    }
-
-    function setMode(modeName) {
-        if (timerRunning)
-            tick()
-
-        timerRunning = false
-        mode = modeName
-        remainingMilliseconds = durationForMode(mode) * 60 * 1000
-        focusedRemainderMilliseconds = 0
-        lastTickAt = Date.now()
-        statusMessage = ""
-    }
-
-    function updateDuration(modeName, minutes) {
-        if (modeName === "focus")
-            focusMinutes = minutes
-        else if (modeName === "shortBreak")
-            shortBreakMinutes = minutes
-        else
-            longBreakMinutes = minutes
-
-        if (!timerRunning && mode === modeName) {
-            remainingMilliseconds = durationForMode(mode) * 60 * 1000
-            focusedRemainderMilliseconds = 0
-        }
-    }
-
-    function toggleTimer() {
-        if (timerRunning) {
-            tick()
-            if (timerRunning) {
-                timerRunning = false
-                statusMessage = "Paused."
-            }
-            return
-        }
-
-        if (remainingMilliseconds <= 0)
-            remainingMilliseconds = durationForMode(mode) * 60 * 1000
-        timerRunning = true
-        lastTickAt = Date.now()
-        statusMessage = ""
-    }
-
-    function tick() {
-        var now = Date.now()
-        dailyAnalyticsService.refreshToday()
-
-        if (!timerRunning) {
-            lastTickAt = now
-            return
-        }
-
-        var elapsed = Math.max(0, now - lastTickAt)
-        lastTickAt = now
-        if (elapsed <= 0)
-            return
-
-        // Never count time beyond the current session's end, even after a long stall.
-        var elapsedForSession = Math.min(elapsed, remainingMilliseconds)
-        if (mode === "focus" && elapsedForSession > 0) {
-            var accumulated = focusedRemainderMilliseconds + elapsedForSession
-            var wholeSeconds = Math.floor(accumulated / 1000)
-            focusedRemainderMilliseconds = accumulated - wholeSeconds * 1000
-            if (wholeSeconds > 0)
-                dailyAnalyticsService.addFocusedSeconds(wholeSeconds)
-        }
-
-        remainingMilliseconds = Math.max(0, remainingMilliseconds - elapsedForSession)
-        if (remainingMilliseconds <= 0)
-            finishSession()
-    }
-
-    function finishSession() {
-        timerRunning = false
-        if (mode === "focus") {
-            dailyAnalyticsService.recordFocusSessionCompleted()
-            statusMessage = "Focus session completed."
-
-            // Every fourth completed focus session is followed by a long break.
-            mode = dailyAnalyticsService.completedFocusSessionsToday % 4 === 0
-                   ? "longBreak" : "shortBreak"
-        } else {
-            statusMessage = "Break completed."
-            mode = "focus"
-        }
-
-        remainingMilliseconds = durationForMode(mode) * 60 * 1000
-        focusedRemainderMilliseconds = 0
-        lastTickAt = Date.now()
-    }
-
-    Component.onCompleted: {
-        lastTickAt = Date.now()
-        dailyAnalyticsService.refreshToday()
-    }
+    property var controller: null
 
     Rectangle {
         anchors.fill: parent
         color: theme.window
-    }
-
-    Timer {
-        interval: 200
-        repeat: true
-        running: true
-        onTriggered: root.tick()
     }
 
     ColumnLayout {
@@ -265,17 +120,17 @@ Item {
                     implicitWidth: 108
                     implicitHeight: 38
                     flat: true
-                    onClicked: root.setMode("focus")
+                    onClicked: controller.setMode("focus")
                     background: Rectangle {
                         radius: 9
-                        color: root.mode === "focus" ? theme.accent : theme.surface
-                        border.color: root.mode === "focus" ? theme.accent : theme.border
+                        color: controller.mode === "focus" ? theme.accent : theme.surface
+                        border.color: controller.mode === "focus" ? theme.accent : theme.border
                     }
                     contentItem: Text {
                         text: parent.text
-                        color: root.mode === "focus" ? theme.accentText : theme.text
+                        color: controller.mode === "focus" ? theme.accentText : theme.text
                         font.pixelSize: 13
-                        font.weight: root.mode === "focus" ? Font.DemiBold : Font.Normal
+                        font.weight: controller.mode === "focus" ? Font.DemiBold : Font.Normal
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -285,17 +140,17 @@ Item {
                     implicitWidth: 108
                     implicitHeight: 38
                     flat: true
-                    onClicked: root.setMode("shortBreak")
+                    onClicked: controller.setMode("shortBreak")
                     background: Rectangle {
                         radius: 9
-                        color: root.mode === "shortBreak" ? theme.accent : theme.surface
-                        border.color: root.mode === "shortBreak" ? theme.accent : theme.border
+                        color: controller.mode === "shortBreak" ? theme.accent : theme.surface
+                        border.color: controller.mode === "shortBreak" ? theme.accent : theme.border
                     }
                     contentItem: Text {
                         text: parent.text
-                        color: root.mode === "shortBreak" ? theme.accentText : theme.text
+                        color: controller.mode === "shortBreak" ? theme.accentText : theme.text
                         font.pixelSize: 13
-                        font.weight: root.mode === "shortBreak" ? Font.DemiBold : Font.Normal
+                        font.weight: controller.mode === "shortBreak" ? Font.DemiBold : Font.Normal
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -305,17 +160,17 @@ Item {
                     implicitWidth: 108
                     implicitHeight: 38
                     flat: true
-                    onClicked: root.setMode("longBreak")
+                    onClicked: controller.setMode("longBreak")
                     background: Rectangle {
                         radius: 9
-                        color: root.mode === "longBreak" ? theme.accent : theme.surface
-                        border.color: root.mode === "longBreak" ? theme.accent : theme.border
+                        color: controller.mode === "longBreak" ? theme.accent : theme.surface
+                        border.color: controller.mode === "longBreak" ? theme.accent : theme.border
                     }
                     contentItem: Text {
                         text: parent.text
-                        color: root.mode === "longBreak" ? theme.accentText : theme.text
+                        color: controller.mode === "longBreak" ? theme.accentText : theme.text
                         font.pixelSize: 13
-                        font.weight: root.mode === "longBreak" ? Font.DemiBold : Font.Normal
+                        font.weight: controller.mode === "longBreak" ? Font.DemiBold : Font.Normal
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -324,7 +179,7 @@ Item {
 
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                text: root.formattedTime()
+                text: controller.formattedTime()
                 color: theme.text
                 font.pixelSize: 84
                 font.weight: Font.Light
@@ -332,7 +187,7 @@ Item {
 
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                text: root.modeLabel()
+                text: controller.modeLabel()
                 color: theme.mutedText
                 font.pixelSize: 12
                 font.letterSpacing: 3
@@ -343,12 +198,12 @@ Item {
                 spacing: 12
 
                 Button {
-                    text: root.timerRunning ? "Pause" : "Start"
+                    text: controller.timerRunning ? "Pause" : "Start"
                     implicitWidth: 132
                     implicitHeight: 46
                     font.pixelSize: 14
                     font.weight: Font.DemiBold
-                    onClicked: root.toggleTimer()
+                    onClicked: controller.toggleTimer()
                     background: Rectangle {
                         radius: 11
                         color: theme.accent
@@ -369,7 +224,7 @@ Item {
                     implicitWidth: 48
                     implicitHeight: 46
                     font.pixelSize: 21
-                    onClicked: root.resetTimer()
+                    onClicked: controller.resetTimer()
                     background: Rectangle {
                         radius: 11
                         color: theme.surface
@@ -387,8 +242,8 @@ Item {
 
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                visible: root.statusMessage.length > 0
-                text: root.statusMessage
+                visible: controller.statusMessage.length > 0
+                text: controller.statusMessage
                 color: theme.mutedText
                 font.pixelSize: 12
             }
@@ -464,9 +319,9 @@ Item {
                     Layout.preferredWidth: 96
                     from: 1
                     to: 120
-                    value: root.focusMinutes
+                    value: controller.focusMinutes
                     editable: true
-                    onValueModified: root.updateDuration("focus", value)
+                    onValueModified: controller.updateDuration("focus", value)
                 }
             }
             RowLayout {
@@ -477,9 +332,9 @@ Item {
                     Layout.preferredWidth: 96
                     from: 1
                     to: 30
-                    value: root.shortBreakMinutes
+                    value: controller.shortBreakMinutes
                     editable: true
-                    onValueModified: root.updateDuration("shortBreak", value)
+                    onValueModified: controller.updateDuration("shortBreak", value)
                 }
             }
             RowLayout {
@@ -490,9 +345,9 @@ Item {
                     Layout.preferredWidth: 96
                     from: 1
                     to: 60
-                    value: root.longBreakMinutes
+                    value: controller.longBreakMinutes
                     editable: true
-                    onValueModified: root.updateDuration("longBreak", value)
+                    onValueModified: controller.updateDuration("longBreak", value)
                 }
             }
 
