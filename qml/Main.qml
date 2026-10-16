@@ -1250,7 +1250,7 @@ ApplicationWindow {
                     Behavior on color { ColorAnimation { duration: 240 } }
                     Behavior on border.color { ColorAnimation { duration: 240 } }
 
-remove fake Filters control                    Rectangle {
+                    Rectangle {
                         anchors.fill: parent
                         radius: parent.radius
                         color: "transparent"
