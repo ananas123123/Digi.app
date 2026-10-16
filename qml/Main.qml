@@ -69,6 +69,8 @@ ApplicationWindow {
             sideBar.bannerOpen = false
             window.settingsOpen = false
             window.profileOpen = false
+            window.settingsExpanded = false
+            window.profileExpanded = false
         }
     }
 
@@ -122,7 +124,10 @@ ApplicationWindow {
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     flat: true
-                    onClicked: window.settingsOpen = false
+                    onClicked: {
+                        window.settingsOpen = false
+                        window.settingsExpanded = false
+                    }
                     background: Rectangle {
                         radius: 8
                         color: parent.hovered ? theme.surfaceRaised : "transparent"
@@ -200,7 +205,7 @@ ApplicationWindow {
         border.color: theme.border
         border.width: 1
         Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
-        Behavior on y { NumberAnimation { duration: 455; easing.type: Easing.OutExpo } }
+
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         Column {
             anchors.centerIn: parent
@@ -272,7 +277,10 @@ ApplicationWindow {
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     flat: true
-                    onClicked: window.profileOpen = false
+                    onClicked: {
+                        window.profileOpen = false
+                        window.profileExpanded = false
+                    }
                     background: Rectangle { radius: 8; color: parent.hovered ? theme.surfaceRaised : "transparent" }
                     contentItem: Text { text: "×"; color: theme.text; font.pixelSize: 22; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                 }
@@ -424,7 +432,7 @@ ApplicationWindow {
         border.color: theme.border
         border.width: 1
         Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
-        Behavior on y { NumberAnimation { duration: 450; easing.type: Easing.OutExpo } }
+
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         Column {
             anchors.centerIn: parent
