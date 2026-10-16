@@ -19,11 +19,13 @@ Item {
     property int displayedCalendarMonth: new Date().getMonth()
     property real calendarSwipeStartX: 0
     property real calendarSwipeStartY: 0
+    property int pendingCalendarOffset: 0
 
     function changeCalendarMonth(offset) {
-        var date = new Date(displayedCalendarYear, displayedCalendarMonth + offset, 1)
-        displayedCalendarYear = date.getFullYear()
-        displayedCalendarMonth = date.getMonth()
+        if (calendarTransition.running || offset === 0)
+            return
+        pendingCalendarOffset = offset
+        calendarTransition.start()
     }
 
 
@@ -196,6 +198,45 @@ Item {
         border.width: 1
         clip: true
 
+        SequentialAnimation {
+            id: calendarTransition
+
+            NumberAnimation {
+                target: calendarContent
+                property: "opacity"
+                to: 0
+                duration: 100
+                easing.type: Easing.OutCubic
+            }
+
+            ScriptAction {
+                script: {
+                    var date = new Date(root.displayedCalendarYear,
+                                        root.displayedCalendarMonth + root.pendingCalendarOffset, 1)
+                    root.displayedCalendarYear = date.getFullYear()
+                    root.displayedCalendarMonth = date.getMonth()
+                    calendarContentSlide.x = root.pendingCalendarOffset > 0 ? 26 : -26
+                }
+            }
+
+            ParallelAnimation {
+                NumberAnimation {
+                    target: calendarContent
+                    property: "opacity"
+                    to: 1
+                    duration: 220
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    target: calendarContentSlide
+                    property: "x"
+                    to: 0
+                    duration: 260
+                    easing.type: Easing.OutCubic
+                }
+            }
+        }
+
         // Swipe handling is confined to the calendar card.
         MouseArea {
             id: calendarSwipeArea
@@ -215,9 +256,16 @@ Item {
         }
 
         Column {
+            id: calendarContent
             anchors.fill: parent
             anchors.margins: 18
             spacing: 14
+            opacity: 1
+
+            transform: Translate {
+                id: calendarContentSlide
+                x: 0
+            }
 
             Text {
                 width: parent.width
@@ -268,13 +316,13 @@ Item {
                             width: 25
                             height: 25
                             radius: 8
-                            color: root.isToday(parent.dayNumber) ? theme.accent : "transparent"
+                            color: root.isToday(parent.dayNumber) ? "#D4A72C" : "transparent"
                         }
 
                         Text {
                             anchors.fill: parent
                             text: parent.dayNumber
-                            color: root.isToday(parent.dayNumber) ? theme.accentText : theme.text
+                            color: root.isToday(parent.dayNumber) ? "#17130A" : theme.text
                             font.pixelSize: 12
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
