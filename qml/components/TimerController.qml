@@ -143,7 +143,7 @@ QtObject {
         dailyAnalyticsService.refreshToday()
     }
 
-    Timer {
+    property Timer clock: Timer {
         interval: 200
         repeat: true
         running: true
