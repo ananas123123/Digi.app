@@ -453,11 +453,10 @@ ApplicationWindow {
     Rectangle {
         id: fullscreenButton
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 14
-        width: 44
-        height: 38
-        radius: 11
+        anchors.verticalCenter: parent.verticalCenter
+        width: 64
+        height: 56
+        radius: 15
         z: 200
         visible: sideBar.bannerOpen || opacity > 0.01
         opacity: sideBar.bannerOpen ? 1 : 0
@@ -472,7 +471,7 @@ ApplicationWindow {
             anchors.centerIn: parent
             text: "⛶"
             color: theme.text
-            font.pixelSize: 22
+            font.pixelSize: 30
         }
 
         MouseArea {
