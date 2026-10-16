@@ -55,9 +55,7 @@ Item {
                     { label: "Search", symbol: "⌕", revealDelay: 220 },
                     { label: "Explorer", symbol: "▰", revealDelay: 260 },
                     { label: "Notes", symbol: "✎", revealDelay: 120 },
-                    { label: "Timer", symbol: "◷", revealDelay: 0 },
-                    { label: "Resources", symbol: "▤", revealDelay: 120, compact: true },
-                    { label: "Analytics", symbol: "▥", revealDelay: 220, compact: true },
+                    { label: "Timer", symbol: "◷", revealDelay: 0, extraPages: ["Resources", "Analytics"] },
                     { label: "Doc", symbol: "▤", revealDelay: 320 }
                 ]
 
@@ -65,10 +63,7 @@ Item {
                     id: navButton
                     required property var modelData
                     property bool revealed: false
-                    Layout.fillWidth: !modelData.compact
-                    Layout.preferredWidth: modelData.compact ? 48 : -1
-                    Layout.minimumWidth: modelData.compact ? 48 : 0
-                    Layout.maximumWidth: modelData.compact ? 48 : 10000
+                    Layout.fillWidth: true
                     Layout.fillHeight: true
                     opacity: revealed ? 1 : 0
                     scale: revealed ? (hovered ? 1.045 : 1) : 0.88
@@ -118,7 +113,7 @@ Item {
                     contentItem: Item {
                         Row {
                             anchors.centerIn: parent
-                            spacing: navButton.modelData.compact ? 0 : 10
+                            spacing: 10
                             Text {
                                 text: navButton.modelData.symbol
                                 color: root.activePage === navButton.modelData.label ? theme.accentText : theme.mutedText
@@ -127,11 +122,26 @@ Item {
                             }
                             Text {
                                 text: navButton.modelData.label
-                                visible: !navButton.modelData.compact
                                 color: root.activePage === navButton.modelData.label ? theme.accentText : theme.text
                                 font.pixelSize: 18
                                 font.weight: Font.Medium
                                 verticalAlignment: Text.AlignVCenter
+                            }
+                            Row {
+                                visible: navButton.modelData.label === "Timer"
+                                spacing: 8
+                                Rectangle {
+                                    width: 28; height: 30; radius: 6
+                                    color: root.activePage === "Resources" ? theme.accent : "transparent"
+                                    Text { anchors.centerIn: parent; text: "▤"; color: root.activePage === "Resources" ? theme.accentText : theme.mutedText; font.pixelSize: 15 }
+                                    TapHandler { onTapped: root.pageSelected("Resources") }
+                                }
+                                Rectangle {
+                                    width: 28; height: 30; radius: 6
+                                    color: root.activePage === "Analytics" ? theme.accent : "transparent"
+                                    Text { anchors.centerIn: parent; text: "▥"; color: root.activePage === "Analytics" ? theme.accentText : theme.mutedText; font.pixelSize: 15 }
+                                    TapHandler { onTapped: root.pageSelected("Analytics") }
+                                }
                             }
                         }
                     }
