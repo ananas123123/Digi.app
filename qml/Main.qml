@@ -38,6 +38,9 @@ ApplicationWindow {
     property bool notesPressureSensitivity: true
     property bool timerSoundEnabled: true
     property bool universalTimerView: false
+    property bool lubisExplorerOpen: false
+    property string lubisExplorerCurrentPath: ""
+    property var lubisExplorerEntries: []
 
     function toggleFullscreen() {
         if (window.visibility === Window.FullScreen) {
@@ -45,6 +48,40 @@ ApplicationWindow {
         } else {
             window.showFullScreen()
         }
+    }
+
+    onActivePageChanged: {
+        if (activePage !== "Search")
+            lubisExplorerOpen = false
+    }
+
+    function refreshLubisExplorerEntries() {
+        if (lubisExplorerCurrentPath.length === 0)
+            lubisExplorerCurrentPath = searchService.searchRoot
+        lubisExplorerEntries = searchService.listFolderContents(lubisExplorerCurrentPath)
+    }
+
+    function openLubisExplorer() {
+        lubisExplorerCurrentPath = searchService.searchRoot
+        refreshLubisExplorerEntries()
+        lubisExplorerOpen = true
+    }
+
+    function goBackLubisExplorer() {
+        var rootPath = searchService.searchRoot
+        var currentPath = lubisExplorerCurrentPath
+        if (currentPath.toLowerCase() === rootPath.toLowerCase()) {
+            lubisExplorerOpen = false
+            return
+        }
+
+        var separator = Math.max(currentPath.lastIndexOf("/"), currentPath.lastIndexOf("\\"))
+        var parentPath = separator < 0 ? rootPath : currentPath.substring(0, separator)
+        if (parentPath.toLowerCase().indexOf(rootPath.toLowerCase()) !== 0)
+            parentPath = rootPath
+
+        lubisExplorerCurrentPath = parentPath
+        refreshLubisExplorerEntries()
     }
 
     Shortcut {
@@ -743,6 +780,186 @@ ApplicationWindow {
         onPointChanged: universalTimerOverlay.noteActivity()
     }
 
+    Item {
+        id: lubisExplorerPopup
+        parent: pageLoader
+        anchors.fill: parent
+        z: 800
+        visible: window.lubisExplorerOpen && window.activePage === "Search"
+        enabled: visible
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#24000000"
+            z: 0
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: window.lubisExplorerOpen = false
+            }
+        }
+
+        Rectangle {
+            id: lubisExplorerPanel
+            width: Math.min(520, parent.width - 40)
+            height: Math.min(500, parent.height - 40)
+            anchors.centerIn: parent
+            radius: 14
+            color: theme.surface
+            border.color: theme.border
+            border.width: 1
+            clip: true
+            z: 1
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 8
+
+                Rectangle {
+                    Layout.preferredWidth: 36
+                    Layout.preferredHeight: 34
+                    radius: 9
+                    color: explorerBackMouse.containsMouse ? theme.surfaceRaised : "transparent"
+                    border.color: explorerBackMouse.containsMouse ? theme.border : "transparent"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "←"
+                        color: theme.text
+                        font.pixelSize: 22
+                    }
+
+                    MouseArea {
+                        id: explorerBackMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: window.goBackLubisExplorer()
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    radius: 9
+                    color: Qt.rgba(0, 0, 0, 0.08)
+                    clip: true
+
+                    ListView {
+                        id: lubisExplorerEntriesList
+                        anchors.fill: parent
+                        anchors.margins: 5
+                        model: window.lubisExplorerEntries
+                        clip: true
+                        spacing: 1
+
+                        delegate: Item {
+                            required property var modelData
+                            width: lubisExplorerEntriesList.width
+                            height: 40
+                            opacity: modelData.isFolder ? 1.0 : 0.18
+
+                            Row {
+                                anchors.fill: parent
+                                anchors.leftMargin: 9
+                                anchors.rightMargin: 9
+                                spacing: 10
+
+                                Item {
+                                    width: 19
+                                    height: 17
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: modelData.isFolder
+
+                                    Rectangle {
+                                        x: 1
+                                        y: 5
+                                        width: 17
+                                        height: 11
+                                        radius: 2
+                                        color: "transparent"
+                                        border.color: theme.text
+                                        border.width: 1.2
+                                    }
+
+                                    Rectangle {
+                                        x: 2
+                                        y: 2
+                                        width: 7
+                                        height: 5
+                                        radius: 1
+                                        color: "transparent"
+                                        border.color: theme.text
+                                        border.width: 1.1
+                                    }
+                                }
+
+                                Item {
+                                    width: 19
+                                    height: 17
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: !modelData.isFolder
+
+                                    Rectangle {
+                                        x: 4
+                                        y: 1
+                                        width: 11
+                                        height: 15
+                                        radius: 1
+                                        color: "transparent"
+                                        border.color: theme.text
+                                        border.width: 1.1
+                                    }
+
+                                    Rectangle {
+                                        x: 6
+                                        y: 5
+                                        width: 7
+                                        height: 1
+                                        color: theme.text
+                                    }
+
+                                    Rectangle {
+                                        x: 6
+                                        y: 8
+                                        width: 7
+                                        height: 1
+                                        color: theme.text
+                                    }
+                                }
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width - 42
+                                    text: modelData.name
+                                    color: theme.text
+                                    font.pixelSize: 13
+                                    elide: Text.ElideRight
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (modelData.isFolder) {
+                                        window.lubisExplorerCurrentPath = modelData.path
+                                        window.refreshLubisExplorerEntries()
+                                    }
+                                }
+                                onDoubleClicked: {
+                                    if (!modelData.isFolder)
+                                        searchService.openFile(modelData.path)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Component {
         id: notesPage
         NotesPage {
@@ -764,14 +981,12 @@ ApplicationWindow {
             property bool focused: searchInput.activeFocus
             property bool hasQuery: searchInput.text.trim().length > 0
             property bool hasSearched: false
-            property bool folderSearch: false
             property var results: []
             property int currentPage: 0
             readonly property int resultsPerPage: 20
             readonly property var pageResults: results.slice(currentPage * resultsPerPage, (currentPage + 1) * resultsPerPage)
             property string selectedResultPath: ""
             property string previewText: ""
-            property var folderContents: []
 
             ColumnLayout {
                 id: searchColumn
@@ -911,7 +1126,7 @@ ApplicationWindow {
                             background: Item {}
                             verticalAlignment: TextInput.AlignVCenter
                             onAccepted: {
-                                searchRoot.results = searchService.search(text, searchRoot.folderSearch)
+                                searchRoot.results = searchService.search(text, false)
                                 searchRoot.currentPage = 0
                                 searchRoot.selectedResultPath = ""
                                 searchRoot.hasSearched = true
@@ -959,55 +1174,6 @@ ApplicationWindow {
                         onClicked: searchInput.forceActiveFocus()
                     }
                     }
-                        Column {
-                            Layout.alignment: Qt.AlignVCenter
-                            spacing: 1
-
-                            Text {
-                                text: "folder"
-                                color: searchRoot.folderSearch ? searchTheme.accent : searchTheme.mutedText
-                                font.pixelSize: 9
-                                horizontalAlignment: Text.AlignHCenter
-                                width: 38
-                            }
-
-                            Rectangle {
-                                width: 38
-                                height: 24
-                                radius: 12
-                                color: "#343434"
-                                border.width: 1
-                                border.color: searchRoot.folderSearch ? searchTheme.accent : "#666666"
-
-                                Rectangle {
-                                    width: 16
-                                    height: 16
-                                    radius: 8
-                                    y: 3
-                                    x: searchRoot.folderSearch ? parent.width - width - 3 : 3
-                                    color: searchRoot.folderSearch ? searchTheme.accent : "#BDBDBD"
-                                    Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: searchRoot.folderSearch = !searchRoot.folderSearch
-                                }
-                            }
-
-                            Text {
-                                text: "file"
-                                color: searchRoot.folderSearch ? searchTheme.mutedText : searchTheme.accent
-                                font.pixelSize: 9
-                                horizontalAlignment: Text.AlignHCenter
-                                width: 38
-                            }
-                        }
-
-                        }
-
                         Rectangle {
                             id: lubisExplorerButton
                             Layout.preferredWidth: 42
@@ -1058,13 +1224,7 @@ ApplicationWindow {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    lubisExplorerWindow.currentPath = searchService.searchRoot
-                                    lubisExplorerWindow.refreshEntries()
-                                    lubisExplorerWindow.show()
-                                    lubisExplorerWindow.raise()
-                                    lubisExplorerWindow.requestActivate()
-                                }
+                                onClicked: window.openLubisExplorer()
                             }
                         }
                 }
@@ -1193,20 +1353,12 @@ ApplicationWindow {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     searchRoot.selectedResultPath = path
-                                    if (searchRoot.folderSearch) {
-                                        searchRoot.folderContents = searchService.listFolderContents(path)
-                                    } else {
-                                        searchRoot.previewText = searchService.previewFile(path)
-                                    }
+                                    searchRoot.previewText = searchService.previewFile(path)
                                 }
                                 onDoubleClicked: {
                                     searchRoot.selectedResultPath = path
-                                    if (searchRoot.folderSearch) {
-                                        searchRoot.folderContents = searchService.listFolderContents(path)
-                                    } else {
-                                        searchRoot.previewText = searchService.previewFile(path)
-                                        searchService.openFile(path)
-                                    }
+                                    searchRoot.previewText = searchService.previewFile(path)
+                                    searchService.openFile(path)
                                 }
                             }
                         }
@@ -1359,9 +1511,7 @@ ApplicationWindow {
 
                                 Text {
                                     Layout.fillWidth: true
-                                    text: searchRoot.folderSearch
-                                        ? searchRoot.selectedResultPath.split(/[\\\\/]/).filter(function(part) { return part.length > 0 }).slice(-1)[0] || "Folder preview"
-                                        : searchRoot.selectedResultPath.split(/[\\\\/]/).filter(function(part) { return part.length > 0 }).slice(-1)[0] || "File preview"
+                                    text: searchRoot.selectedResultPath.split(/[\\\\/]/).filter(function(part) { return part.length > 0 }).slice(-1)[0] || "File preview"
                                     color: searchTheme.text
                                     font.pixelSize: 13
                                     font.weight: Font.DemiBold
@@ -1376,7 +1526,6 @@ ApplicationWindow {
                                     onClicked: {
                                         searchRoot.selectedResultPath = ""
                                         searchRoot.previewText = ""
-                                        searchRoot.folderContents = []
                                         previewPanel.previewMaximized = false
                                     }
                                     background: Rectangle {
@@ -1419,8 +1568,6 @@ ApplicationWindow {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 sourceComponent: {
-                                    if (searchRoot.folderSearch)
-                                        return folderContentsComponent
                                     var path = searchRoot.selectedResultPath.toLowerCase()
                                     if (path.endsWith(".pdf"))
                                         return pdfPreviewComponent
@@ -1430,85 +1577,6 @@ ApplicationWindow {
                                         path.endsWith(".tif") || path.endsWith(".tiff"))
                                         return imagePreviewComponent
                                     return textPreviewComponent
-                                }
-                            }
-
-                            Component {
-                                id: folderContentsComponent
-                                ColumnLayout {
-                                    anchors.fill: parent
-                                    spacing: 8
-
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: "Contents"
-                                        color: searchTheme.text
-                                        font.pixelSize: 14
-                                        font.weight: Font.DemiBold
-                                    }
-
-                                    ListView {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        clip: true
-                                        spacing: 4
-                                        model: searchRoot.folderContents
-
-                                        delegate: Rectangle {
-                                            required property string name
-                                            required property string path
-                                            required property bool isFolder
-                                            width: ListView.view.width
-                                            height: 38
-                                            radius: 7
-                                            color: childMouse.containsMouse ? searchTheme.surfaceRaised : "transparent"
-                                            border.width: 1
-                                            border.color: "#24FFFFFF"
-
-                                            Row {
-                                                anchors.fill: parent
-                                                anchors.leftMargin: 10
-                                                spacing: 8
-
-                                                Text {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    text: isFolder ? "▰" : "▤"
-                                                    color: isFolder ? searchTheme.accent : searchTheme.mutedText
-                                                    font.pixelSize: 14
-                                                }
-
-                                                Text {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    width: parent.width - 42
-                                                    text: name
-                                                    color: searchTheme.text
-                                                    font.pixelSize: 12
-                                                    elide: Text.ElideRight
-                                                }
-                                            }
-
-                                            MouseArea {
-                                                id: childMouse
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: {
-                                                    if (isFolder) {
-                                                        searchRoot.selectedResultPath = path
-                                                        searchRoot.folderContents = searchService.listFolderContents(path)
-                                                    } else {
-                                                        searchRoot.folderSearch = false
-                                                        searchRoot.selectedResultPath = path
-                                                        searchRoot.previewText = searchService.previewFile(path)
-                                                    }
-                                                }
-                                                onDoubleClicked: {
-                                                    if (!isFolder)
-                                                        searchService.openFile(path)
-                                                }
-                                            }
-                                        }
-                                    }
                                 }
                             }
 
@@ -2018,190 +2086,6 @@ ApplicationWindow {
             }
 
         }
-
-    Window {
-        id: lubisExplorerWindow
-        width: 780
-        height: 560
-        minimumWidth: 600
-        minimumHeight: 420
-        title: "Lubis explorer"
-        color: theme.window
-        visible: false
-        flags: Qt.Window
-        modality: Qt.NonModal
-
-        property string currentPath: searchService.searchRoot
-        property var entries: []
-
-        function refreshEntries() {
-            entries = searchService.listFolderContents(currentPath)
-        }
-
-        function navigateUp() {
-            if (currentPath === searchService.searchRoot)
-                return
-            var normalizedRoot = searchService.searchRoot.replace(/\\\\/g, "/")
-            var normalizedPath = currentPath.replace(/\\\\/g, "/")
-            if (normalizedPath === normalizedRoot)
-                return
-            var separator = currentPath.lastIndexOf("/")
-            var backslash = currentPath.lastIndexOf("\\")
-            separator = Math.max(separator, backslash)
-            if (separator < 0)
-                return
-            var parentPath = currentPath.substring(0, separator)
-            if (parentPath.length < searchService.searchRoot.length)
-                parentPath = searchService.searchRoot
-            currentPath = parentPath
-            refreshEntries()
-        }
-
-        onVisibleChanged: {
-            if (visible) {
-                currentPath = searchService.searchRoot
-                refreshEntries()
-            }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            color: theme.window
-        }
-
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 18
-            spacing: 12
-
-            RowLayout {
-                Layout.fillWidth: true
-                Text {
-                    text: "Lubis explorer"
-                    color: theme.text
-                    font.pixelSize: 22
-                    font.weight: Font.DemiBold
-                    Layout.fillWidth: true
-                }
-                Button {
-                    text: "×"
-                    onClicked: lubisExplorerWindow.close()
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-                Button {
-                    text: "↑"
-                    enabled: lubisExplorerWindow.currentPath !== searchService.searchRoot
-                    onClicked: lubisExplorerWindow.navigateUp()
-                }
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 38
-                    radius: 8
-                    color: theme.surface
-                    border.color: theme.border
-                    Text {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        text: lubisExplorerWindow.currentPath
-                        color: theme.mutedText
-                        elide: Text.ElideMiddle
-                        verticalAlignment: Text.AlignVCenter
-                        font.pixelSize: 11
-                    }
-                }
-                Button {
-                    text: "Refresh"
-                    onClicked: lubisExplorerWindow.refreshEntries()
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                radius: 10
-                color: theme.surface
-                border.color: theme.border
-                clip: true
-
-                ListView {
-                    id: explorerEntriesList
-                    anchors.fill: parent
-                    anchors.margins: 6
-                    model: lubisExplorerWindow.entries
-                    clip: true
-                    delegate: Rectangle {
-                        required property var modelData
-                        width: explorerEntriesList.width
-                        height: 42
-                        radius: 7
-                        color: explorerEntryMouse.containsMouse ? theme.surfaceRaised : "transparent"
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            spacing: 10
-                            Text {
-                                text: modelData.isFolder ? "▰" : "▱"
-                                color: modelData.isFolder ? theme.accent : theme.mutedText
-                                font.pixelSize: 17
-                            }
-                            Text {
-                                Layout.fillWidth: true
-                                text: modelData.name
-                                color: theme.text
-                                font.pixelSize: 13
-                                elide: Text.ElideRight
-                            }
-                            Text {
-                                text: modelData.isFolder ? "Folder" : "File"
-                                color: theme.mutedText
-                                font.pixelSize: 10
-                            }
-                        }
-
-                        MouseArea {
-                            id: explorerEntryMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onDoubleClicked: {
-                                if (modelData.isFolder) {
-                                    lubisExplorerWindow.currentPath = modelData.path
-                                    lubisExplorerWindow.refreshEntries()
-                                }
-                            }
-                            onClicked: {
-                                if (modelData.isFolder) {
-                                    // Single-click selects; double-click opens.
-                                }
-                            }
-                        }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        visible: lubisExplorerWindow.entries.length === 0
-                        text: "This searchQR folder is empty."
-                        color: theme.mutedText
-                        font.pixelSize: 13
-                    }
-                }
-            }
-
-            Text {
-                Layout.fillWidth: true
-                text: "Browsing inside search QR"
-                color: theme.mutedText
-                font.pixelSize: 10
-            }
-        }
-    }
 
     Component {
         id: timerPage
