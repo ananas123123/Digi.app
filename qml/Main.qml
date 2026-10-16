@@ -1547,7 +1547,11 @@ ApplicationWindow {
                                     // coordinates so ink stays attached to the page while zooming and scrolling.
                                     Canvas {
                                         id: annotationCanvas
-                                        anchors.fill: parent
+                                        parent: pdfScaledContent
+                                        x: 0
+                                        y: 0
+                                        width: pdfScaledContent.width
+                                        height: pdfScaledContent.height
                                         renderTarget: Canvas.Image
                                         antialiasing: true
                                         visible: previewPanel.previewMaximized
@@ -1608,9 +1612,10 @@ ApplicationWindow {
                                             property bool strokeStarted: false
 
                                             function documentPoint(position) {
+                                                var contentPoint = inkInputHandler.mapToItem(pdfScaledContent, position.x, position.y)
                                                 return {
-                                                    x: (pdfFlickable.contentX + position.x) / pdfAnnotationWorkspace.zoomFactor,
-                                                    y: (pdfFlickable.contentY + position.y) / pdfAnnotationWorkspace.zoomFactor
+                                                    x: contentPoint.x / pdfAnnotationWorkspace.zoomFactor,
+                                                    y: contentPoint.y / pdfAnnotationWorkspace.zoomFactor
                                                 }
                                             }
 
