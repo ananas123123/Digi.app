@@ -1361,7 +1361,7 @@ ApplicationWindow {
                                                 onPaint: {
                                                     var ctx = getContext("2d")
                                                     ctx.strokeStyle = "#FFFFFF"
-                                                    ctx.lineWidth = 3 * pdfAnnotationWorkspace.zoomFactor
+                                                    ctx.lineWidth = 3
                                                     ctx.lineCap = "round"
                                                     ctx.lineJoin = "round"
                                                 }
@@ -1380,7 +1380,7 @@ ApplicationWindow {
                                                             return
                                                         var ctx = annotationCanvas.getContext("2d")
                                                         ctx.strokeStyle = "#FFFFFF"
-                                                        ctx.lineWidth = 3 * pdfAnnotationWorkspace.zoomFactor
+                                                        ctx.lineWidth = 3
                                                         ctx.lineCap = "round"
                                                         ctx.lineJoin = "round"
                                                         ctx.beginPath()
