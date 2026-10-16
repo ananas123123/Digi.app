@@ -1376,6 +1376,7 @@ ApplicationWindow {
                                             anchors.fill: parent
                                             enabled: previewPanel.previewMaximized
                                             acceptedButtons: Qt.LeftButton
+                                            acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
                                             hoverEnabled: true
                                             preventStealing: false
                                             onPressed: function(mouse) {
