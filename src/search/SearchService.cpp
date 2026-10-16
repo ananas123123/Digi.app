@@ -124,7 +124,7 @@ QString SearchService::importStatus() const
     return m_importStatus;
 }
 
-bool SearchService::importDroppedUrls(const QStringList &urls,
+bool SearchService::importDroppedUrls(const QVariantList &urls,
                                       const QString &destinationDirectory)
 {
     if (m_importInProgress || urls.isEmpty())
@@ -145,8 +145,8 @@ bool SearchService::importDroppedUrls(const QStringList &urls,
 
     QStringList sourcePaths;
     QSet<QString> uniquePaths;
-    for (const QString &urlString : urls) {
-        const QUrl url(urlString);
+    for (const QVariant &urlValue : urls) {
+        const QUrl url(urlValue.toString());
         if (!url.isLocalFile())
             continue;
 
