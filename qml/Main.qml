@@ -649,13 +649,13 @@ ApplicationWindow {
     }
 
 
-    // This is parented to pageLoader so it follows every page and shares
-    // the same blur effect while the sidebar is open.
+    // Keep this overlay above pageLoader so its backdrop can sample the
+    // rendered page without capturing the overlay itself.
     Item {
         id: universalTimerOverlay
-        parent: pageLoader
-        x: 18
-        y: 14
+        parent: window
+        x: pageLoader.x + 18
+        y: pageLoader.y + 14
         width: 204
         height: 56
         z: 500
@@ -681,12 +681,34 @@ ApplicationWindow {
         }
         opacity: idle ? 0.075 : (sideBar.bannerOpen ? 0.45 : 1)
 
+        ShaderEffectSource {
+            id: universalTimerBackdrop
+            anchors.fill: parent
+            sourceItem: pageLoader
+            sourceRect: Qt.rect(18, 14, universalTimerOverlay.width, universalTimerOverlay.height)
+            textureSize: Qt.size(universalTimerOverlay.width * 2, universalTimerOverlay.height * 2)
+            live: true
+            hideSource: false
+            visible: window.universalTimerView
+        }
+
+        MultiEffect {
+            anchors.fill: parent
+            source: universalTimerBackdrop
+            blurEnabled: true
+            blur: 0.9
+            blurMax: 48
+            brightness: 0
+            saturation: 0
+            z: -1
+        }
+
         Rectangle {
             anchors.fill: parent
             anchors.topMargin: 3
             radius: 14
             color: Qt.rgba(0, 0, 0, 0.16)
-            z: -1
+            z: -2
         }
 
         Rectangle {
