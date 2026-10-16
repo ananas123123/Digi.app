@@ -28,6 +28,7 @@ qt_add_qml_module(Lubis
     QML_FILES
         qml/Main.qml
         qml/components/SideBar.qml
+        qml/components/TimerController.qml
         qml/components/TopBar.qml
         qml/components/WorkspaceCard.qml
         qml/pages/HomePage.qml
