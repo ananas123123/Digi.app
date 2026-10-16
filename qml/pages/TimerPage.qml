@@ -33,6 +33,13 @@ Item {
     property int calendarCommitOffset: 0
     property bool calendarGestureDecided: false
     property bool calendarHorizontalGesture: false
+    property real timerIntroProgress: 0
+
+    function introProgress(delay) {
+        if (timerIntroProgress <= delay)
+            return 0
+        return Math.min(1, (timerIntroProgress - delay) / (1 - delay))
+    }
 
     function applyCalendarMonthOffset(offset) {
         var date = new Date(displayedCalendarYear, displayedCalendarMonth + offset, 1)
@@ -381,9 +388,21 @@ Item {
         }
     }
 
+    NumberAnimation {
+        id: timerPageEntrance
+        target: root
+        property: "timerIntroProgress"
+        from: 0
+        to: 1
+        duration: 920
+        easing.type: Easing.OutCubic
+    }
+
     Component.onCompleted: {
         dailyAnalyticsService.refreshToday()
         refreshCalendarData()
+        timerIntroProgress = 0
+        timerPageEntrance.start()
     }
 
     Connections {
@@ -409,12 +428,18 @@ Item {
         width: 300
         height: 360
         radius: 16
-        scale: root.calendarExpanded ? 1.02 : 0.96
         color: Qt.lighter(theme.surface, 1.0 + 0.11 * root.calendarCloudPhase)
         border.color: Qt.lighter(theme.border, 1.0 + 0.06 * root.calendarCloudPhase)
         border.width: 1
         clip: true
         z: 4
+        opacity: root.introProgress(0.02)
+        scale: (root.calendarExpanded ? 1.02 : 0.96)
+               * (0.96 + 0.04 * root.introProgress(0.02))
+
+        transform: Translate {
+            y: (1 - root.introProgress(0.02)) * 13
+        }
 
         Behavior on x {
             NumberAnimation {
@@ -773,7 +798,7 @@ Item {
     // Mirrored counterpart of the daily-focus handle, attached to the calendar's right edge.
     Rectangle {
         id: calendarCardHandle
-        x: (root.calendarExpanded ? 22 : 24 - monthlyCalendarCard.width) + monthlyCalendarCard.width - 8
+        x: (root.calendarExpanded ? 22 : 24 - monthlyCalendarCard.width) + monthlyCalendarCard.width - 12
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -8
             + (root.calendarHandleSettled
@@ -781,8 +806,6 @@ Item {
         width: 38
         height: 54
         radius: 9
-        scale: calendarHandleHover.containsMouse
-               ? 1.09 : (root.calendarHandleExpanded ? 1.02 : 0.96)
         color: calendarHandleHover.containsMouse
                ? Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b, 0.14)
                : Qt.lighter(theme.surface, 1.0 + 0.11 * root.calendarHandleCloudPhase)
@@ -791,6 +814,14 @@ Item {
                       : Qt.lighter(theme.border, 1.0 + 0.06 * root.calendarHandleCloudPhase)
         border.width: calendarHandleHover.containsMouse ? 1.4 : 1
         z: 5
+        opacity: root.introProgress(0.10)
+        scale: (calendarHandleHover.containsMouse
+                ? 1.09 : (root.calendarHandleExpanded ? 1.02 : 0.96))
+               * (0.95 + 0.05 * root.introProgress(0.10))
+
+        transform: Translate {
+            y: (1 - root.introProgress(0.10)) * 12
+        }
 
         Behavior on x {
             SequentialAnimation {
@@ -844,6 +875,12 @@ Item {
     ColumnLayout {
         anchors.centerIn: parent
         spacing: 26
+        opacity: root.introProgress(0.20)
+        scale: 0.96 + 0.04 * root.introProgress(0.20)
+
+        transform: Translate {
+            y: (1 - root.introProgress(0.20)) * 14
+        }
 
         Text {
             Layout.alignment: Qt.AlignHCenter
@@ -921,7 +958,12 @@ Item {
         width: 248
         height: 178
         radius: 16
-        scale: root.dailyCardExpanded ? 1.02 : 0.96
+        scale: (root.dailyCardExpanded ? 1.02 : 0.96)
+               * (0.96 + 0.04 * root.introProgress(0.32))
+        opacity: root.introProgress(0.32)
+        transform: Translate {
+            y: (1 - root.introProgress(0.32)) * 14
+        }
         color: Qt.lighter(theme.surface, 1.0 + 0.11 * root.dailyCardCloudPhase)
         border.color: Qt.lighter(theme.border, 1.0 + 0.06 * root.dailyCardCloudPhase)
         border.width: 1
@@ -1020,8 +1062,6 @@ Item {
         width: 38
         height: 54
         radius: 9
-        scale: handleHover.containsMouse
-               ? 1.09 : (root.handleExpanded ? 1.02 : 0.96)
         color: handleHover.containsMouse
                ? Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b, 0.14)
                : Qt.lighter(theme.surface, 1.0 + 0.11 * root.dailyHandleCloudPhase)
@@ -1030,6 +1070,13 @@ Item {
                       : Qt.lighter(theme.border, 1.0 + 0.06 * root.dailyHandleCloudPhase)
         border.width: handleHover.containsMouse ? 1.4 : 1
         z: 5
+        opacity: root.introProgress(0.40)
+        scale: (handleHover.containsMouse
+                ? 1.09 : (root.handleExpanded ? 1.02 : 0.96))
+               * (0.95 + 0.05 * root.introProgress(0.40))
+        transform: Translate {
+            y: (1 - root.introProgress(0.40)) * 12
+        }
 
         Behavior on x {
             SequentialAnimation {
