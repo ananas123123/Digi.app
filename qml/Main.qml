@@ -1154,10 +1154,10 @@ ApplicationWindow {
                         clip: true
                         Behavior on opacity { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
                         Behavior on scale { NumberAnimation { duration: 420; easing.type: Easing.OutExpo } }
-                        Behavior on x { NumberAnimation { duration: 420; easing.type: Easing.OutExpo } }
-                        Behavior on y { NumberAnimation { duration: 420; easing.type: Easing.OutExpo } }
-                        Behavior on width { NumberAnimation { duration: 420; easing.type: Easing.OutExpo } }
-                        Behavior on height { NumberAnimation { duration: 420; easing.type: Easing.OutExpo } }
+                        // Resize instantly: animating the PDF viewport through hundreds of
+                        // intermediate sizes forces expensive page relayout/raster work.
+                        // Keep only the lightweight opacity/scale transition.
+
 
                         ColumnLayout {
                             anchors.fill: parent
@@ -1422,6 +1422,8 @@ ApplicationWindow {
                                     }
 
                                     onWidthChanged: {
+                                        // Avoid recalculating the document's base scale for every frame of
+                                        // a preview resize animation. Preview geometry now changes in one step.
                                         if (centeredPdfDocument.status === PdfDocument.Ready) {
                                             var widest = largestPageWidth()
                                             basePageScale = widest > 0
