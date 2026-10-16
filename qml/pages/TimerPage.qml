@@ -448,7 +448,7 @@ Item {
             onReleased: {
                 root.calendarCommitOffset = 0
                 if (root.calendarHorizontalGesture) {
-                    var threshold = calendarViewport.width * 0.45
+                    var threshold = calendarViewport.width * 0.5
                     if (root.calendarDragOffset < -threshold)
                         root.calendarCommitOffset = 1
                     else if (root.calendarDragOffset > threshold)
