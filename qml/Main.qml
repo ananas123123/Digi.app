@@ -1396,28 +1396,27 @@ ApplicationWindow {
                                         enabled: previewPanel.previewMaximized
                                         minimumScale: 0.5
                                         maximumScale: 3.0
+                                        property real previousGestureScale: 1.0
+
                                         onActiveChanged: {
-                                            if (active) {
-                                                pdfAnnotationWorkspace.pinchStartZoom = pdfAnnotationWorkspace.zoomFactor
-                                                pdfAnnotationWorkspace.pinchStartContentX = pdfFlickable.contentX
-                                                pdfAnnotationWorkspace.pinchStartContentY = pdfFlickable.contentY
-                                                pdfAnnotationWorkspace.pinchStartGestureScale = scale
-                                            }
+                                            if (active)
+                                                previousGestureScale = scale
+                                            else
+                                                previousGestureScale = 1.0
                                         }
+
                                         onScaleChanged: {
-                                            if (active) {
-                                                var relativeScale = scale / Math.max(0.001, pdfAnnotationWorkspace.pinchStartGestureScale)
-                                                var nextZoom = Math.max(0.5, Math.min(3.0,
-                                                    pdfAnnotationWorkspace.pinchStartZoom * relativeScale))
-                                                var ratio = nextZoom / pdfAnnotationWorkspace.pinchStartZoom
-                                                pdfAnnotationWorkspace.zoomFactor = nextZoom
-                                                pdfFlickable.contentX = Math.max(0,
-                                                    Math.min(pdfFlickable.contentWidth - pdfFlickable.width,
-                                                        (pdfAnnotationWorkspace.pinchStartContentX + centroid.position.x) * nextZoom / pdfAnnotationWorkspace.pinchStartZoom - centroid.position.x))
-                                                pdfFlickable.contentY = Math.max(0,
-                                                    Math.min(pdfFlickable.contentHeight - pdfFlickable.height,
-                                                        (pdfAnnotationWorkspace.pinchStartContentY + centroid.position.y) * nextZoom / pdfAnnotationWorkspace.pinchStartZoom - centroid.position.y))
-                                            }
+                                            if (!active)
+                                                return
+
+                                            var safePrevious = Math.max(0.001, previousGestureScale)
+                                            var stepScale = scale / safePrevious
+                                            previousGestureScale = scale
+
+                                            pdfAnnotationWorkspace.zoomAt(
+                                                pdfAnnotationWorkspace.zoomFactor * stepScale,
+                                                centroid.position.x,
+                                                centroid.position.y)
                                         }
                                     }
 
