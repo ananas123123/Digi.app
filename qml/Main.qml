@@ -1183,9 +1183,8 @@ ApplicationWindow {
                 height: searchRoot.hasSearched
                     ? Math.max(0, parent.height - searchColumn.animatedTopMargin - 24)
                     : implicitHeight
-                // Keep the search controls anchored in a predictable place when results appear.
-                // Animating the anchor margin while the results area expands caused the controls
-                // to visibly jump in some window sizes.
+                // The top margin animates between the idle layout and the results layout;
+                // the intro motion uses a transform so it never competes with the anchors.
                 width: Math.min(900, parent.width - 64)
                 spacing: searchRoot.hasSearched ? 12 : 22
                 opacity: 0
