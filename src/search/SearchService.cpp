@@ -18,11 +18,12 @@ SearchService::SearchService(QObject *parent)
     : QObject(parent)
 {
     const QDir appDir(QCoreApplication::applicationDirPath());
-    const QString adjacentDataRoot = QDir::cleanPath(appDir.filePath(QStringLiteral("../Digi")));
+    const QString adjacentDataRoot = QDir::cleanPath(appDir.filePath(QStringLiteral("../Lubis")));
     const QString dataRoot = QDir(adjacentDataRoot).exists()
         ? adjacentDataRoot
-        : appDir.filePath(QStringLiteral("Digi"));
+        : QDir::cleanPath(appDir.filePath(QStringLiteral("Lubis")));
 
+    // Search and the custom explorer share this single root.
     m_searchRoot = QDir(dataRoot).filePath(QStringLiteral("search QR"));
     QDir().mkpath(m_searchRoot);
     QDir().mkpath(QDir(dataRoot).filePath(QStringLiteral("cache")));
