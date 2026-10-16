@@ -112,7 +112,7 @@ Item {
         anchors.right: parent.right
         anchors.rightMargin: 48
         anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: -18
+        anchors.verticalCenterOffset: -8
         width: 248
         height: 178
         radius: 16
@@ -124,20 +124,20 @@ Item {
             anchors.fill: parent
             anchors.leftMargin: 16
             anchors.rightMargin: 16
-            anchors.topMargin: 20
-            anchors.bottomMargin: 20
-            spacing: 12
+            anchors.topMargin: 16
+            anchors.bottomMargin: 16
+            spacing: 10
 
             Text {
                 width: parent.width
-                height: 42
+                height: 58
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 text: root.formattedFocusedTime()
                 color: theme.text
-                font.pixelSize: 32
+                font.pixelSize: 40
                 font.weight: Font.Light
-                minimumPixelSize: 22
+                minimumPixelSize: 28
                 fontSizeMode: Text.Fit
             }
 
