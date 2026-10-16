@@ -20,6 +20,7 @@ ApplicationWindow {
     color: "transparent"
 
     Theme { id: theme }
+    TimerController { id: timerControllerInstance }
     property string activePage: "Home"
     property bool settingsOpen: false
     property bool settingsExpanded: false
@@ -1868,6 +1869,7 @@ ApplicationWindow {
     Component {
         id: timerPage
         TimerPage {
+            controller: timerControllerInstance
             onPageSelected: function(pageName) {
                 window.activePage = pageName
                 sideBar.bannerOpen = false
