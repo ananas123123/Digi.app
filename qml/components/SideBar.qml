@@ -16,18 +16,17 @@ Item {
 
     Layout.fillWidth: true
     Layout.preferredHeight: 0
-    // Let the navigation cards use most of the window width instead of
-    // squeezing six sections into a narrow center strip.
-    Layout.leftMargin: 100
-    Layout.rightMargin: 100
+    // Keep the navigation menu as a compact, centered group.
+    Layout.leftMargin: 16
+    Layout.rightMargin: 16
     z: 10
     clip: false
 
     Rectangle {
         id: banner
-        x: 0
+        x: (root.width - width) / 2
         y: root.bannerOpen ? 0 : -76
-        width: root.width
+        width: Math.min(root.width - 32, 760)
         height: 76
         color: "transparent"
         border.color: "transparent"
