@@ -1330,6 +1330,28 @@ ApplicationWindow {
                                     id: pdfAnnotationWorkspace
                                     property real zoomFactor: 1.0
 
+                                    // Render the selected PDF as a centered page. Annotation
+                                    // behavior is intentionally unchanged in this step.
+                                    PdfDocument {
+                                        id: centeredPdfDocument
+                                        source: "file:///" + searchRoot.selectedResultPath.replace(/\\/g, "/")
+                                    }
+
+                                    Item {
+                                        id: centeredPageViewport
+                                        anchors.fill: parent
+                                        clip: true
+
+                                        PdfPageView {
+                                            id: centeredPdfPage
+                                            document: centeredPdfDocument
+                                            page: 0
+                                            width: Math.min(centeredPageViewport.width - 32, 760) * pdfAnnotationWorkspace.zoomFactor
+                                            height: width * 1.294
+                                            anchors.centerIn: parent
+                                        }
+                                    }
+
                                     // Drawing is enabled only when the preview is maximized.
                                     // The transparent canvas covers the entire expanded preview,
                                     // rather than a separate page-shaped drawing surface.
