@@ -220,7 +220,10 @@ Item {
         Item {
             id: calendarViewport
             anchors.fill: parent
-            anchors.margins: 18
+            anchors.leftMargin: 18
+            anchors.rightMargin: 18
+            anchors.topMargin: 24
+            anchors.bottomMargin: 12
             clip: true
 
             Row {
@@ -270,7 +273,7 @@ Item {
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 5
-                        height: 24
+                        height: 28
 
                         Item {
                             width: monthNameText.implicitWidth
@@ -347,18 +350,6 @@ Item {
                                 property string dayNumber: root.calendarCellDay(index, monthPage.monthOffset)
                                 property bool today: root.isToday(dayNumber, monthPage.monthOffset)
 
-                                MultiEffect {
-                                    anchors.fill: dayNumberText
-                                    source: dayNumberText
-                                    shadowEnabled: calendarDayCell.today
-                                    shadowColor: "#E6B83F"
-                                    shadowBlur: 0.95
-                                    shadowOpacity: 1
-                                    shadowHorizontalOffset: 0
-                                    shadowVerticalOffset: 0
-                                    z: 1
-                                }
-
                                 Rectangle {
                                     anchors.centerIn: parent
                                     width: 25
@@ -395,7 +386,7 @@ Item {
             property: "calendarDragOffset"
             to: root.calendarCommitOffset === 0
                 ? 0 : -root.calendarCommitOffset * calendarViewport.width
-            duration: 220
+            duration: 140
             easing.type: Easing.OutCubic
             onFinished: {
                 if (root.calendarCommitOffset !== 0)
@@ -439,6 +430,7 @@ Item {
                 }
 
                 if (root.calendarHorizontalGesture) {
+                    calendarSnapAnimation.stop()
                     root.calendarDragOffset = Math.max(
                                 -calendarViewport.width,
                                 Math.min(calendarViewport.width, dx))
