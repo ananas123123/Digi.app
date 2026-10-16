@@ -910,44 +910,131 @@ Item {
             spacing: 12
 
             Button {
+                id: stopwatchToggleButton
                 text: controller.timerRunning ? "Pause" : "Start"
                 implicitWidth: 132
                 implicitHeight: 46
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
+                scale: hovered ? 1.035 : 1
                 onClicked: controller.toggleTimer()
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 180
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
                 background: Rectangle {
                     radius: 11
-                    color: theme.accent
+                    color: stopwatchToggleButton.hovered
+                           ? (controller.timerRunning
+                              ? "#D8E8D8"
+                              : (controller.elapsedMilliseconds > 0
+                                 ? "#E8D0CE" : Qt.lighter(theme.accent, 1.08)))
+                           : theme.accent
+                    border.width: stopwatchToggleButton.hovered ? 1 : 0
+                    border.color: controller.timerRunning ? "#6FA879"
+                                 : (controller.elapsedMilliseconds > 0 ? "#C96B66" : "#E6C978")
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        radius: 10
+                        color: "transparent"
+                        border.width: stopwatchToggleButton.hovered ? 1 : 0
+                        border.color: controller.timerRunning
+                                      ? Qt.rgba(0.18, 0.55, 0.28, 0.42)
+                                      : Qt.rgba(0.70, 0.22, 0.19, 0.34)
+                        opacity: stopwatchToggleButton.hovered
+                                 && (controller.timerRunning || controller.elapsedMilliseconds > 0)
+                                 ? 1 : 0
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: 220; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on border.color {
+                        ColorAnimation { duration: 220; easing.type: Easing.OutCubic }
+                    }
                 }
+
                 contentItem: Text {
-                    text: parent.text
-                    color: theme.accentText
-                    font: parent.font
+                    text: stopwatchToggleButton.text
+                    color: stopwatchToggleButton.hovered
+                           && (controller.timerRunning || controller.elapsedMilliseconds > 0)
+                           ? "#252525" : theme.accentText
+                    font: stopwatchToggleButton.font
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+
+                    Behavior on color {
+                        ColorAnimation { duration: 180; easing.type: Easing.OutCubic }
+                    }
                 }
             }
 
             Button {
+                id: stopwatchResetButton
                 text: "↻"
                 ToolTip.visible: hovered
                 ToolTip.text: "Reset stopwatch"
                 implicitWidth: 48
                 implicitHeight: 46
                 font.pixelSize: 21
+                scale: hovered ? 1.08 : 1
                 onClicked: controller.resetTimer()
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 220
+                        easing.type: Easing.OutBack
+                    }
+                }
+
                 background: Rectangle {
                     radius: 11
-                    color: theme.surface
-                    border.color: theme.border
+                    color: stopwatchResetButton.hovered ? Qt.lighter(theme.surface, 1.14) : theme.surface
+                    border.width: stopwatchResetButton.hovered ? 1.2 : 1
+                    border.color: stopwatchResetButton.hovered ? theme.accent : theme.border
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: stopwatchResetButton.hovered ? 28 : 0
+                        height: stopwatchResetButton.hovered ? 28 : 0
+                        radius: 14
+                        color: "transparent"
+                        border.color: theme.accent
+                        border.width: 1
+                        opacity: stopwatchResetButton.hovered ? 0.55 : 0
+
+                        Behavior on width {
+                            NumberAnimation { duration: 240; easing.type: Easing.OutBack }
+                        }
+                        Behavior on height {
+                            NumberAnimation { duration: 240; easing.type: Easing.OutBack }
+                        }
+                        Behavior on opacity {
+                            NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    Behavior on color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                    Behavior on border.color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
                 }
+
                 contentItem: Text {
-                    text: parent.text
-                    color: theme.text
-                    font: parent.font
+                    text: stopwatchResetButton.text
+                    color: stopwatchResetButton.hovered ? theme.accent : theme.text
+                    font: stopwatchResetButton.font
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+                    Behavior on color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
                 }
             }
         }
