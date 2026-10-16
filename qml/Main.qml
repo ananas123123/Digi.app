@@ -64,15 +64,16 @@ ApplicationWindow {
         id: contextualSettings
         width: 292
         height: settingsColumn.implicitHeight + 28
-        x: Math.max(16, window.width - width - 24)
-        y: 50
+        x: window.settingsOpen ? window.width - width : window.width
+        y: 38
         z: 150
         radius: 14
-        visible: window.settingsOpen
+        visible: window.settingsOpen || x < window.width
         color: theme.surface
         border.color: theme.border
         border.width: 1
         clip: true
+        Behavior on x { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
         ColumnLayout {
             id: settingsColumn
             anchors.fill: parent
@@ -266,10 +267,16 @@ ApplicationWindow {
             activePage: window.activePage
             onPageSelected: function(pageName) {
                 window.activePage = pageName
+                window.settingsOpen = false
                 sideBar.bannerOpen = false
             }
             onFullscreenRequested: window.toggleFullscreen()
-            onSettingsRequested: window.settingsOpen = !window.settingsOpen
+            onSettingsRequested: {
+                if (window.activePage === "Home" || window.activePage === "Search")
+                    window.settingsOpen = !window.settingsOpen
+                else
+                    window.settingsOpen = !window.settingsOpen
+            }
             clip: false
         }
 
@@ -308,6 +315,7 @@ ApplicationWindow {
         HomePage {
             onOpenPage: function(pageName) {
                 window.activePage = pageName
+                window.settingsOpen = false
                 sideBar.bannerOpen = false
             }
         }
