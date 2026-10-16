@@ -1504,27 +1504,37 @@ ApplicationWindow {
                                                     width: unscaledPageWidth * pdfAnnotationWorkspace.zoomFactor
                                                     height: unscaledPageHeight * pdfAnnotationWorkspace.zoomFactor
 
-                                                    Loader {
+                                                    // A solid page backing keeps the paper bounds visible even while
+                                                    // Qt's asynchronous PDF raster is loading or being refreshed.
+                                                    Rectangle {
                                                         anchors.fill: parent
-                                                        active: Math.abs(pdfPageSlot.index - pdfAnnotationWorkspace.currentPageIndex) <= 1
-                                                        asynchronous: true
-                                                        sourceComponent: Component {
-                                                            PdfPageImage {
-                                                                anchors.fill: parent
-                                                                document: centeredPdfDocument
-                                                                currentFrame: pdfPageSlot.index
-                                                                asynchronous: true
-                                                                cache: true
-                                                                smooth: true
-                                                                fillMode: Image.PreserveAspectFit
+                                                        color: "white"
+                                                        border.color: "#D0D0D0"
+                                                        border.width: 1
 
-                                                                // Keep a stable raster size so scrolling does not trigger
-                                                                // repeated high-resolution PDF rerenders.
-                                                                sourceSize.width: Math.max(1, Math.ceil(
-                                                                    pdfPageSlot.pointSize.width
-                                                                    * pdfAnnotationWorkspace.basePageScale
-                                                                    * Screen.devicePixelRatio * 1.5))
-                                                                sourceSize.height: 0
+                                                        Loader {
+                                                            anchors.fill: parent
+                                                            active: Math.abs(pdfPageSlot.index - pdfAnnotationWorkspace.currentPageIndex) <= 1
+                                                            asynchronous: true
+                                                            sourceComponent: Component {
+                                                                PdfPageImage {
+                                                                    anchors.fill: parent
+                                                                    document: centeredPdfDocument
+                                                                    currentFrame: pdfPageSlot.index
+                                                                    asynchronous: true
+                                                                    cache: true
+                                                                    smooth: true
+                                                                    fillMode: Image.Stretch
+
+                                                                    // Render enough pixels for the current zoom while retaining
+                                                                    // a minimum raster size for crisp initial display.
+                                                                    sourceSize.width: Math.max(1, Math.ceil(
+                                                                        pdfPageSlot.pointSize.width
+                                                                        * pdfAnnotationWorkspace.basePageScale
+                                                                        * Math.max(1.0, pdfAnnotationWorkspace.zoomFactor)
+                                                                        * Screen.devicePixelRatio))
+                                                                    sourceSize.height: 0
+                                                                }
                                                             }
                                                         }
                                                     }
