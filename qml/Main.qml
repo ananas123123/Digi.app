@@ -57,7 +57,10 @@ ApplicationWindow {
     MouseArea {
         anchors.fill: parent
         z: -1
-        onClicked: sideBar.bannerOpen = false
+        onClicked: {
+            sideBar.bannerOpen = false
+            window.settingsOpen = false
+        }
     }
 
     Rectangle {
@@ -78,7 +81,10 @@ ApplicationWindow {
         Behavior on x { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
         Connections {
             target: sideBar
-            function onBannerOpenChanged() {}
+            function onBannerOpenChanged() {
+                if (!sideBar.bannerOpen && window.settingsOpen)
+                    window.settingsOpen = false
+            }
         }
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         ColumnLayout {
