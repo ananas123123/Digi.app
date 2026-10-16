@@ -1139,6 +1139,17 @@ ApplicationWindow {
                         id: previewPanel
                         parent: searchRoot
                         property bool previewMaximized: false
+                        property bool instantGeometryChange: false
+                        onPreviewMaximizedChanged: {
+                            instantGeometryChange = true
+                            geometryAnimationReset.restart()
+                        }
+                        Timer {
+                            id: geometryAnimationReset
+                            interval: 0
+                            repeat: false
+                            onTriggered: previewPanel.instantGeometryChange = false
+                        }
                         x: previewMaximized ? 12 : searchColumn.x + resultsArea.x + resultsArea.width * 0.46
                         y: previewMaximized ? 12 : searchColumn.y + resultsArea.y
                         width: previewMaximized ? searchRoot.width - 24 : resultsArea.width * 0.54
@@ -1154,9 +1165,32 @@ ApplicationWindow {
                         clip: true
                         Behavior on opacity { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
                         Behavior on scale { NumberAnimation { duration: 420; easing.type: Easing.OutExpo } }
-                        // Resize instantly: animating the PDF viewport through hundreds of
-                        // intermediate sizes forces expensive page relayout/raster work.
-                        // Keep only the lightweight opacity/scale transition.
+                        // Preserve the popup animation when a file preview appears, but skip
+                        // geometry animation when maximizing/unmaximizing the PDF viewport.
+                        Behavior on x {
+                            NumberAnimation {
+                                duration: previewPanel.instantGeometryChange ? 0 : 420
+                                easing.type: Easing.OutExpo
+                            }
+                        }
+                        Behavior on y {
+                            NumberAnimation {
+                                duration: previewPanel.instantGeometryChange ? 0 : 420
+                                easing.type: Easing.OutExpo
+                            }
+                        }
+                        Behavior on width {
+                            NumberAnimation {
+                                duration: previewPanel.instantGeometryChange ? 0 : 420
+                                easing.type: Easing.OutExpo
+                            }
+                        }
+                        Behavior on height {
+                            NumberAnimation {
+                                duration: previewPanel.instantGeometryChange ? 0 : 420
+                                easing.type: Easing.OutExpo
+                            }
+                        }
 
 
                         ColumnLayout {
