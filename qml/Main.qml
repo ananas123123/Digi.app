@@ -1545,19 +1545,15 @@ ApplicationWindow {
                                         id: pdfPinchHandler
                                         target: null
                                         enabled: previewPanel.previewMaximized
-                                        // This handler must never activate for a single touch point.
+                                        acceptedDevices: PointerDevice.TouchScreen | PointerDevice.TouchPad
                                         minimumPointCount: 2
                                         maximumPointCount: 2
-                                        grabPermissions: PointerHandler.TakeOverForbidden
                                         minimumScale: 0.5
                                         maximumScale: 4.0
                                         property real previousGestureScale: 1.0
 
                                         onActiveChanged: {
-                                            if (active)
-                                                previousGestureScale = scale
-                                            else
-                                                previousGestureScale = 1.0
+                                            previousGestureScale = active ? scale : 1.0
                                         }
 
                                         onScaleChanged: {
