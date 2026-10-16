@@ -1526,13 +1526,13 @@ ApplicationWindow {
                                                                     smooth: true
                                                                     fillMode: Image.Stretch
 
-                                                                    // Render enough pixels for the current zoom while retaining
-                                                                    // a minimum raster size for crisp initial display.
+                                                                    // Keep PDF raster dimensions stable during gestures.
+                                                                    // Scaling the cached raster on screen avoids expensive rerenders
+                                                                    // on every pinch update; refresh quality only when reloading.
                                                                     sourceSize.width: Math.max(1, Math.ceil(
                                                                         pdfPageSlot.pointSize.width
                                                                         * pdfAnnotationWorkspace.basePageScale
-                                                                        * Math.max(1.0, pdfAnnotationWorkspace.zoomFactor)
-                                                                        * Screen.devicePixelRatio))
+                                                                        * Screen.devicePixelRatio * 1.25))
                                                                     sourceSize.height: 0
                                                                 }
                                                             }
