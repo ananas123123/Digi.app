@@ -39,8 +39,11 @@ Item {
         cardSettleTimer.stop()
         handleDelayTimer.stop()
         handleSettleTimer.stop()
+        dateFadeTimer.stop()
 
         if (dailyCardExpanded) {
+            focusedTimeText.opacity = 0
+            focusedDateText.opacity = 0
             cardSettleTimer.start()
             handleDelayTimer.start()
             handleSettleTimer.start()
@@ -49,7 +52,9 @@ Item {
             dailyHandleSettled = false
             dailyCardCloudPhase = 0
             dailyHandleCloudPhase = 0
-            dailyCardContent.opacity = 0
+            focusedTimeText.opacity = 0
+            focusedDateText.opacity = 0
+            handleExpanded = false
         }
     }
 
@@ -60,27 +65,38 @@ Item {
         onTriggered: {
             if (root.dailyCardExpanded) {
                 root.dailyCardSettled = true
-                dailyCardContent.opacity = 1
+                focusedTimeText.opacity = 1
+                dateFadeTimer.start()
             }
         }
     }
 
-    // The handle starts its own scale change 200 ms after the card begins moving.
+    // Just over one frame at 180 Hz: the handle trails the card very slightly.
     Timer {
         id: handleDelayTimer
-        interval: 200
+        interval: 8
         repeat: false
         onTriggered: root.handleExpanded = root.dailyCardExpanded
     }
 
-    // The card floats first; the handle's cloud motion follows 200 ms later.
     Timer {
         id: handleSettleTimer
-        interval: 1100
+        interval: 908
         repeat: false
         onTriggered: {
             if (root.dailyCardExpanded)
                 root.dailyHandleSettled = true
+        }
+    }
+
+    // Let the time appear first, then reveal the date a beat later.
+    Timer {
+        id: dateFadeTimer
+        interval: 115
+        repeat: false
+        onTriggered: {
+            if (root.dailyCardExpanded)
+                focusedDateText.opacity = 1
         }
     }
 
@@ -237,14 +253,6 @@ Item {
             anchors.leftMargin: 16
             anchors.rightMargin: 16
             spacing: 10
-            opacity: 0
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 500
-                    easing.type: Easing.OutCubic
-                }
-            }
 
             transform: Translate {
                 y: root.dailyCardSettled ? 0 : 8
@@ -257,6 +265,7 @@ Item {
             }
 
             Text {
+                id: focusedTimeText
                 width: parent.width
                 height: 58
                 horizontalAlignment: Text.AlignHCenter
@@ -267,6 +276,13 @@ Item {
                 font.weight: Font.Light
                 minimumPixelSize: 28
                 fontSizeMode: Text.Fit
+                opacity: 0
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 190
+                        easing.type: Easing.OutCubic
+                    }
+                }
             }
 
             Rectangle {
@@ -274,19 +290,31 @@ Item {
                 width: parent.width - 24
                 height: 1
                 color: Qt.lighter(theme.border, 1.0 + 0.06 * root.dailyCardCloudPhase)
+                opacity: focusedTimeText.opacity
+                Behavior on opacity {
+                    NumberAnimation { duration: 190; easing.type: Easing.OutCubic }
+                }
             }
 
             Text {
+                id: focusedDateText
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 text: root.formattedDate()
                 color: theme.mutedText
                 font.pixelSize: 13
+                opacity: 0
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 260
+                        easing.type: Easing.OutCubic
+                    }
+                }
             }
         }
     }
 
-    // Separate handle: position follows the card with a deliberate 200 ms delay.
+    // Separate handle: x and expansion state trail the card by only 8 ms.
     Rectangle {
         id: dailyCardHandle
         x: root.width - (root.dailyCardExpanded ? dailyFocusedCard.width + 48 : 24) - 30
@@ -310,7 +338,7 @@ Item {
 
         Behavior on x {
             SequentialAnimation {
-                PauseAnimation { duration: 200 }
+                PauseAnimation { duration: 8 }
                 NumberAnimation {
                     duration: 900
                     easing.type: Easing.OutExpo
