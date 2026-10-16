@@ -23,6 +23,7 @@ public:
     Q_INVOKABLE void addFocusedSeconds(qint64 seconds);
     Q_INVOKABLE void recordFocusSessionCompleted();
     Q_INVOKABLE void refreshToday();
+    Q_INVOKABLE qint64 focusedSecondsForDate(const QString &isoDate) const;
 
 signals:
     void dailyStatsChanged();
