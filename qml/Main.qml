@@ -1361,6 +1361,25 @@ ApplicationWindow {
                                         return top
                                     }
 
+                                    // Only keep the page at the viewport center and its immediate neighbors
+                                    // instantiated. The rest retain layout geometry but no page renderer.
+                                    readonly property real viewportCenterDocumentY:
+                                        (pdfFlickable.contentY + pdfFlickable.height * 0.5) / zoomFactor
+                                    readonly property int currentPageIndex: pageIndexAt(viewportCenterDocumentY)
+
+                                    function pageIndexAt(documentY) {
+                                        if (centeredPdfDocument.status !== PdfDocument.Ready
+                                                || centeredPdfDocument.pageCount <= 0)
+                                            return 0
+                                        for (var i = 0; i < centeredPdfDocument.pageCount; ++i) {
+                                            var top = pageTop(i)
+                                            var bottom = top + pageSizeAt(i).height * basePageScale
+                                            if (documentY >= top && documentY <= bottom)
+                                                return i
+                                        }
+                                        return documentY < pageMargin ? 0 : centeredPdfDocument.pageCount - 1
+                                    }
+
                                     function totalDocumentHeight() {
                                         if (centeredPdfDocument.status !== PdfDocument.Ready)
                                             return height
@@ -1446,23 +1465,29 @@ ApplicationWindow {
                                                     width: unscaledPageWidth * pdfAnnotationWorkspace.zoomFactor
                                                     height: unscaledPageHeight * pdfAnnotationWorkspace.zoomFactor
 
-                                                    PdfPageImage {
+                                                    Loader {
                                                         anchors.fill: parent
-                                                        document: centeredPdfDocument
-                                                        currentFrame: pdfPageSlot.index
+                                                        active: Math.abs(pdfPageSlot.index - pdfAnnotationWorkspace.currentPageIndex) <= 1
                                                         asynchronous: true
-                                                        cache: true
-                                                        smooth: true
-                                                        fillMode: Image.PreserveAspectFit
+                                                        sourceComponent: Component {
+                                                            PdfPageImage {
+                                                                anchors.fill: parent
+                                                                document: centeredPdfDocument
+                                                                currentFrame: pdfPageSlot.index
+                                                                asynchronous: true
+                                                                cache: true
+                                                                smooth: true
+                                                                fillMode: Image.PreserveAspectFit
 
-                                                        // Render at a stable resolution. Tying sourceSize to the zoomed
-                                                        // item dimensions forces PDF pages to rerender on every pinch,
-                                                        // producing blank frames and severe delays.
-                                                        sourceSize.width: Math.max(1, Math.ceil(
-                                                            pdfPageSlot.pointSize.width
-                                                            * pdfAnnotationWorkspace.basePageScale
-                                                            * Screen.devicePixelRatio * 1.5))
-                                                        sourceSize.height: 0
+                                                                // Keep a stable raster size so scrolling does not trigger
+                                                                // repeated high-resolution PDF rerenders.
+                                                                sourceSize.width: Math.max(1, Math.ceil(
+                                                                    pdfPageSlot.pointSize.width
+                                                                    * pdfAnnotationWorkspace.basePageScale
+                                                                    * Screen.devicePixelRatio * 1.5))
+                                                                sourceSize.height: 0
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
