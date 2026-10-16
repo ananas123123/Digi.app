@@ -1621,93 +1621,95 @@ ApplicationWindow {
                                                     }
                                                 }
                                             }
-                                        }
+                                        
 
-                                        // Stylus input is captured independently of finger and mouse navigation.
-                                        // Points are converted into stable page-local coordinates exactly once.
-                                        DragHandler {
-                                            id: inkInputHandler
-                                            acceptedDevices: PointerDevice.Stylus | PointerDevice.TouchScreen
-                                            acceptedPointerTypes: PointerDevice.Pen
-                                            enabled: previewPanel.previewMaximized
-                                            target: null
-                                            dragThreshold: 0
-                                            grabPermissions: PointerHandler.CanTakeOverFromAnything
-    
-                                            property bool strokeStarted: false
-    
-                                            function documentPoint(position) {
-                                                return {
-                                                    x: (pdfFlickable.contentX + position.x - pdfScaledContent.x) / pdfAnnotationWorkspace.zoomFactor,
-                                                    y: (pdfFlickable.contentY + position.y - pdfScaledContent.y) / pdfAnnotationWorkspace.zoomFactor
+                                            // Stylus input is captured independently of finger and mouse navigation.
+                                            // Points are converted into stable page-local coordinates exactly once.
+                                            DragHandler {
+                                                id: inkInputHandler
+                                                acceptedDevices: PointerDevice.Stylus | PointerDevice.TouchScreen
+                                                acceptedPointerTypes: PointerDevice.Pen
+                                                enabled: previewPanel.previewMaximized
+                                                target: null
+                                                dragThreshold: 0
+                                                grabPermissions: PointerHandler.CanTakeOverFromAnything
+        
+                                                property bool strokeStarted: false
+        
+                                                // Because this handler is parented to pdfScaledContent, Qt maps
+                                                // pointer coordinates through the zoom transform for us.
+                                                function documentPoint(position) {
+                                                    return { x: position.x, y: position.y }
                                                 }
-                                            }
-    
-                                            function pageAtPoint(point) {
-                                                if (centeredPdfDocument.status !== PdfDocument.Ready)
-                                                    return -1
-                                                for (var i = 0; i < centeredPdfDocument.pageCount; ++i) {
-                                                    var pageSize = pdfAnnotationWorkspace.pageSizeAt(i)
-                                                    var pageWidth = pageSize.width * pdfAnnotationWorkspace.basePageScale
-                                                    var pageHeight = pageSize.height * pdfAnnotationWorkspace.basePageScale
-                                                    var left = pdfAnnotationWorkspace.pageLeft(i)
-                                                    var top = pdfAnnotationWorkspace.pageTop(i)
-                                                    if (point.x >= left && point.x <= left + pageWidth
-                                                            && point.y >= top && point.y <= top + pageHeight)
-                                                        return i
-                                                }
-                                                return -1
-                                            }
-    
-                                            function markCurrentPageDirty() {
-                                                pdfAnnotationWorkspace.markInkDirty(pdfAnnotationWorkspace.activeStrokePageIndex)
-                                            }
-    
-                                            onActiveChanged: {
-                                                if (active) {
-                                                    var point = documentPoint(centroid.position)
-                                                    var pageIndex = pageAtPoint(point)
-                                                    strokeStarted = pageIndex >= 0
-                                                    pdfAnnotationWorkspace.activeStrokePageIndex = pageIndex
-                                                    pdfAnnotationWorkspace.activeStrokePoints = strokeStarted
-                                                        ? [{ x: (point.x - pdfAnnotationWorkspace.pageLeft(pageIndex)) / pdfAnnotationWorkspace.basePageScale,
-                                                             y: (point.y - pdfAnnotationWorkspace.pageTop(pageIndex)) / pdfAnnotationWorkspace.basePageScale }]
-                                                        : []
-                                                    if (strokeStarted)
-                                                        markCurrentPageDirty()
-                                                } else if (strokeStarted) {
-                                                    var pageIndex = pdfAnnotationWorkspace.activeStrokePageIndex
-                                                    var completedPoints = pdfAnnotationWorkspace.activeStrokePoints
-                                                    if (completedPoints.length > 0) {
-                                                        var nextPages = pdfAnnotationWorkspace.inkStrokesByPage.slice()
-                                                        var pageStrokes = (nextPages[pageIndex] || []).slice()
-                                                        pageStrokes.push(completedPoints)
-                                                        nextPages[pageIndex] = pageStrokes
-                                                        pdfAnnotationWorkspace.inkStrokesByPage = nextPages
+        
+                                                function pageAtPoint(point) {
+                                                    if (centeredPdfDocument.status !== PdfDocument.Ready)
+                                                        return -1
+                                                    for (var i = 0; i < centeredPdfDocument.pageCount; ++i) {
+                                                        var pageSize = pdfAnnotationWorkspace.pageSizeAt(i)
+                                                        var pageWidth = pageSize.width * pdfAnnotationWorkspace.basePageScale
+                                                        var pageHeight = pageSize.height * pdfAnnotationWorkspace.basePageScale
+                                                        var left = pdfAnnotationWorkspace.pageLeft(i)
+                                                        var top = pdfAnnotationWorkspace.pageTop(i)
+                                                        if (point.x >= left && point.x <= left + pageWidth
+                                                                && point.y >= top && point.y <= top + pageHeight)
+                                                            return i
                                                     }
-                                                    pdfAnnotationWorkspace.activeStrokePoints = []
-                                                    pdfAnnotationWorkspace.activeStrokePageIndex = -1
-                                                    pdfAnnotationWorkspace.markInkDirty(pageIndex)
-                                                    strokeStarted = false
-                                                } else {
-                                                    pdfAnnotationWorkspace.activeStrokePoints = []
-                                                    pdfAnnotationWorkspace.activeStrokePageIndex = -1
+                                                    return -1
+                                                }
+        
+                                                function markCurrentPageDirty() {
+                                                    pdfAnnotationWorkspace.markInkDirty(pdfAnnotationWorkspace.activeStrokePageIndex)
+                                                }
+        
+                                                onActiveChanged: {
+                                                    if (active) {
+                                                        var point = documentPoint(centroid.position)
+                                                        var pageIndex = pageAtPoint(point)
+                                                        strokeStarted = pageIndex >= 0
+                                                        pdfAnnotationWorkspace.activeStrokePageIndex = pageIndex
+                                                        pdfAnnotationWorkspace.activeStrokePoints = strokeStarted
+                                                            ? [{ x: (point.x - pdfAnnotationWorkspace.pageLeft(pageIndex)) / pdfAnnotationWorkspace.basePageScale,
+                                                                 y: (point.y - pdfAnnotationWorkspace.pageTop(pageIndex)) / pdfAnnotationWorkspace.basePageScale }]
+                                                            : []
+                                                        if (strokeStarted)
+                                                            markCurrentPageDirty()
+                                                    } else if (strokeStarted) {
+                                                        var pageIndex = pdfAnnotationWorkspace.activeStrokePageIndex
+                                                        var completedPoints = pdfAnnotationWorkspace.activeStrokePoints
+                                                        if (completedPoints.length > 0) {
+                                                            var nextPages = pdfAnnotationWorkspace.inkStrokesByPage.slice()
+                                                            var pageStrokes = (nextPages[pageIndex] || []).slice()
+                                                            pageStrokes.push(completedPoints)
+                                                            nextPages[pageIndex] = pageStrokes
+                                                            pdfAnnotationWorkspace.inkStrokesByPage = nextPages
+                                                        }
+                                                        pdfAnnotationWorkspace.activeStrokePoints = []
+                                                        pdfAnnotationWorkspace.activeStrokePageIndex = -1
+                                                        pdfAnnotationWorkspace.markInkDirty(pageIndex)
+                                                        strokeStarted = false
+                                                    } else {
+                                                        pdfAnnotationWorkspace.activeStrokePoints = []
+                                                        pdfAnnotationWorkspace.activeStrokePageIndex = -1
+                                                    }
+                                                }
+        
+                                                onCentroidChanged: {
+                                                    if (!active || !strokeStarted)
+                                                        return
+                                                    var point = documentPoint(centroid.position)
+                                                    // Mutate in place: copying the entire stroke on every pen sample
+                                                    // becomes increasingly expensive for long strokes.
+                                                    pdfAnnotationWorkspace.activeStrokePoints.push({
+                                                        x: (point.x - pdfAnnotationWorkspace.pageLeft(pdfAnnotationWorkspace.activeStrokePageIndex)) / pdfAnnotationWorkspace.basePageScale,
+                                                        y: (point.y - pdfAnnotationWorkspace.pageTop(pdfAnnotationWorkspace.activeStrokePageIndex)) / pdfAnnotationWorkspace.basePageScale
+                                                    })
+                                                    markCurrentPageDirty()
                                                 }
                                             }
-    
-                                            onCentroidChanged: {
-                                                if (!active || !strokeStarted)
-                                                    return
-                                                var point = documentPoint(centroid.position)
-                                                var nextPoints = pdfAnnotationWorkspace.activeStrokePoints.slice()
-                                                nextPoints.push({
-                                                    x: (point.x - pdfAnnotationWorkspace.pageLeft(pdfAnnotationWorkspace.activeStrokePageIndex)) / pdfAnnotationWorkspace.basePageScale,
-                                                    y: (point.y - pdfAnnotationWorkspace.pageTop(pdfAnnotationWorkspace.activeStrokePageIndex)) / pdfAnnotationWorkspace.basePageScale
-                                                })
-                                                pdfAnnotationWorkspace.activeStrokePoints = nextPoints
-                                                markCurrentPageDirty()
-                                            }
-                                        }
+}
+
+
     
                                     }
 
