@@ -1326,32 +1326,89 @@ ApplicationWindow {
 
                             Component {
                                 id: pdfPreviewComponent
+
                                 Item {
                                     id: pdfAnnotationWorkspace
+
                                     property real zoomFactor: 1.0
-                                    property real pinchStartZoom: 1.0
-                                    property real pinchStartContentX: 0
-                                    property real pinchStartContentY: 0
-                                    property real pinchStartGestureScale: 1.0
+                                    property real pageGap: 18
+                                    property real pageMargin: 20
+                                    property real basePageScale: 1.0
+                                    property real baseSurfaceWidth: Math.max(width, largestPageWidth() * basePageScale + pageMargin * 2)
+                                    property real baseSurfaceHeight: totalDocumentHeight()
+
+                                    function pageSizeAt(pageIndex) {
+                                        if (centeredPdfDocument.status !== PdfDocument.Ready
+                                                || pageIndex < 0
+                                                || pageIndex >= centeredPdfDocument.pageCount)
+                                            return Qt.size(0, 0)
+                                        return centeredPdfDocument.pagePointSize(pageIndex)
+                                    }
+
+                                    function largestPageWidth() {
+                                        var largest = 0
+                                        if (centeredPdfDocument.status !== PdfDocument.Ready)
+                                            return 0
+                                        for (var i = 0; i < centeredPdfDocument.pageCount; ++i)
+                                            largest = Math.max(largest, pageSizeAt(i).width)
+                                        return largest
+                                    }
+
+                                    function pageTop(pageIndex) {
+                                        var top = pageMargin
+                                        for (var i = 0; i < pageIndex; ++i)
+                                            top += pageSizeAt(i).height * basePageScale + pageGap
+                                        return top
+                                    }
+
+                                    function totalDocumentHeight() {
+                                        if (centeredPdfDocument.status !== PdfDocument.Ready)
+                                            return height
+                                        var total = pageMargin
+                                        for (var i = 0; i < centeredPdfDocument.pageCount; ++i)
+                                            total += pageSizeAt(i).height * basePageScale + pageGap
+                                        return Math.max(height, total + pageMargin - pageGap)
+                                    }
 
                                     function zoomAt(nextZoom, anchorX, anchorY) {
                                         var oldZoom = zoomFactor
-                                        var boundedZoom = Math.max(0.5, Math.min(3.0, nextZoom))
+                                        var boundedZoom = Math.max(0.5, Math.min(4.0, nextZoom))
                                         if (Math.abs(boundedZoom - oldZoom) < 0.0001)
                                             return
-                                        var ratio = boundedZoom / oldZoom
+
+                                        // Preserve the exact document-space point beneath the gesture centroid.
+                                        var documentX = (pdfFlickable.contentX + anchorX) / oldZoom
+                                        var documentY = (pdfFlickable.contentY + anchorY) / oldZoom
                                         zoomFactor = boundedZoom
                                         pdfFlickable.contentX = Math.max(0,
                                             Math.min(pdfFlickable.contentWidth - pdfFlickable.width,
-                                                (pdfFlickable.contentX + anchorX) * ratio - anchorX))
+                                                documentX * boundedZoom - anchorX))
                                         pdfFlickable.contentY = Math.max(0,
                                             Math.min(pdfFlickable.contentHeight - pdfFlickable.height,
-                                                (pdfFlickable.contentY + anchorY) * ratio - anchorY))
+                                                documentY * boundedZoom - anchorY))
                                     }
 
                                     PdfDocument {
                                         id: centeredPdfDocument
                                         source: "file:///" + searchRoot.selectedResultPath.replace(/\\/g, "/")
+                                        onStatusChanged: {
+                                            if (status === PdfDocument.Ready) {
+                                                var widest = pdfAnnotationWorkspace.largestPageWidth()
+                                                pdfAnnotationWorkspace.basePageScale = widest > 0
+                                                    ? Math.min(1, Math.max(0.1,
+                                                        (pdfAnnotationWorkspace.width - pdfAnnotationWorkspace.pageMargin * 2) / widest))
+                                                    : 1
+                                            }
+                                        }
+                                    }
+
+                                    onWidthChanged: {
+                                        if (centeredPdfDocument.status === PdfDocument.Ready) {
+                                            var widest = largestPageWidth()
+                                            basePageScale = widest > 0
+                                                ? Math.min(1, Math.max(0.1, (width - pageMargin * 2) / widest))
+                                                : 1
+                                        }
                                     }
 
                                     Flickable {
@@ -1359,26 +1416,50 @@ ApplicationWindow {
                                         anchors.fill: parent
                                         clip: true
                                         boundsBehavior: Flickable.StopAtBounds
-                                        contentWidth: width * pdfAnnotationWorkspace.zoomFactor
-                                        contentHeight: height * pdfAnnotationWorkspace.zoomFactor
                                         interactive: true
+                                        contentWidth: Math.max(width, pdfAnnotationWorkspace.baseSurfaceWidth) * pdfAnnotationWorkspace.zoomFactor
+                                        contentHeight: Math.max(height, pdfAnnotationWorkspace.baseSurfaceHeight) * pdfAnnotationWorkspace.zoomFactor
 
+                                        // One continuous, zoomable document surface. Each page is rendered independently,
+                                        // but every page shares the same document coordinate system and scroll area.
                                         Item {
                                             id: pdfScaledContent
                                             width: pdfFlickable.contentWidth
                                             height: pdfFlickable.contentHeight
 
-                                            PdfMultiPageView {
-                                                id: centeredPdfPage
-                                                anchors.fill: parent
-                                                document: centeredPdfDocument
-                                                renderScale: 1.0
+                                            Repeater {
+                                                model: centeredPdfDocument.status === PdfDocument.Ready
+                                                       ? centeredPdfDocument.pageCount : 0
+
+                                                delegate: Item {
+                                                    id: pdfPageSlot
+                                                    required property int index
+
+                                                    readonly property size pointSize: pdfAnnotationWorkspace.pageSizeAt(index)
+                                                    readonly property real unscaledPageWidth: pointSize.width * pdfAnnotationWorkspace.basePageScale
+                                                    readonly property real unscaledPageHeight: pointSize.height * pdfAnnotationWorkspace.basePageScale
+
+                                                    x: (pdfAnnotationWorkspace.baseSurfaceWidth - unscaledPageWidth) * 0.5 * pdfAnnotationWorkspace.zoomFactor
+                                                    y: pdfAnnotationWorkspace.pageTop(index) * pdfAnnotationWorkspace.zoomFactor
+                                                    width: unscaledPageWidth * pdfAnnotationWorkspace.zoomFactor
+                                                    height: unscaledPageHeight * pdfAnnotationWorkspace.zoomFactor
+
+                                                    PdfPageImage {
+                                                        anchors.fill: parent
+                                                        document: centeredPdfDocument
+                                                        page: pdfPageSlot.index
+                                                        asynchronous: true
+                                                        sourceSize: Qt.size(
+                                                            Math.max(1, Math.ceil(pdfPageSlot.width * Screen.devicePixelRatio)),
+                                                            Math.max(1, Math.ceil(pdfPageSlot.height * Screen.devicePixelRatio)))
+                                                    }
+                                                }
                                             }
                                         }
                                     }
 
-                                    // Touch input is reserved for PDF navigation/zoom.
-                                    // Ink is temporarily disabled here so gestures cannot become strokes.
+                                    // Keep touch input dedicated to navigation/zoom until ink is reintroduced
+                                    // with document-coordinate stroke storage.
                                     Canvas {
                                         id: annotationCanvas
                                         anchors.fill: parent
@@ -1393,7 +1474,7 @@ ApplicationWindow {
                                         target: null
                                         enabled: previewPanel.previewMaximized
                                         minimumScale: 0.5
-                                        maximumScale: 3.0
+                                        maximumScale: 4.0
                                         property real previousGestureScale: 1.0
 
                                         onActiveChanged: {
@@ -1410,7 +1491,6 @@ ApplicationWindow {
                                             var safePrevious = Math.max(0.001, previousGestureScale)
                                             var stepScale = scale / safePrevious
                                             previousGestureScale = scale
-
                                             pdfAnnotationWorkspace.zoomAt(
                                                 pdfAnnotationWorkspace.zoomFactor * stepScale,
                                                 centroid.position.x,
@@ -1448,7 +1528,9 @@ ApplicationWindow {
                                                 id: zoomOutMouse
                                                 anchors.fill: parent
                                                 hoverEnabled: true
-                                                onClicked: pdfAnnotationWorkspace.zoomAt(pdfAnnotationWorkspace.zoomFactor / 1.2, centeredPageViewport.width / 2, centeredPageViewport.height / 2)
+                                                onClicked: pdfAnnotationWorkspace.zoomAt(
+                                                    pdfAnnotationWorkspace.zoomFactor / 1.2,
+                                                    pdfFlickable.width / 2, pdfFlickable.height / 2)
                                             }
                                         }
                                         Rectangle {
@@ -1473,7 +1555,9 @@ ApplicationWindow {
                                                 id: zoomInMouse
                                                 anchors.fill: parent
                                                 hoverEnabled: true
-                                                onClicked: pdfAnnotationWorkspace.zoomAt(pdfAnnotationWorkspace.zoomFactor * 1.2, centeredPageViewport.width / 2, centeredPageViewport.height / 2)
+                                                onClicked: pdfAnnotationWorkspace.zoomAt(
+                                                    pdfAnnotationWorkspace.zoomFactor * 1.2,
+                                                    pdfFlickable.width / 2, pdfFlickable.height / 2)
                                             }
                                         }
                                     }
