@@ -1602,7 +1602,6 @@ ApplicationWindow {
                                             id: inkInputArea
                                             anchors.fill: parent
                                             enabled: previewPanel.previewMaximized && !pdfPinchHandler.active
-                                            acceptedDevices: PointerDevice.Stylus | PointerDevice.Mouse
                                             hoverEnabled: false
                                             preventStealing: true
 
