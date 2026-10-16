@@ -23,6 +23,9 @@ ApplicationWindow {
     property string activePage: "Home"
     property bool settingsOpen: false
     property bool profileOpen: false
+    property bool demoLoggedIn: false
+    property string demoUsername: ""
+    property string profileMessage: ""
     property bool lightMode: false
     property bool searchCaseSensitive: false
     property bool searchIncludeHidden: false
@@ -216,8 +219,133 @@ ApplicationWindow {
                 }
             }
             Rectangle { Layout.fillWidth: true; height: 1; color: theme.border }
-            Text { Layout.fillWidth: true; text: "Profile"; color: theme.accent; font.pixelSize: 12; font.weight: Font.DemiBold }
-            Text { Layout.fillWidth: true; text: "Account options will appear here."; color: theme.text; font.pixelSize: 13; wrapMode: Text.WordWrap }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                Rectangle {
+                    width: 46
+                    height: 46
+                    radius: 23
+                    color: theme.surfaceRaised
+                    border.color: theme.border
+                    Text {
+                        anchors.centerIn: parent
+                        text: window.demoLoggedIn && window.demoUsername.length > 0
+                              ? window.demoUsername.charAt(0).toUpperCase() : "●"
+                        color: theme.accent
+                        font.pixelSize: 20
+                        font.weight: Font.DemiBold
+                    }
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 3
+                    Text {
+                        Layout.fillWidth: true
+                        text: window.demoLoggedIn ? window.demoUsername : "Guest account"
+                        color: theme.text
+                        font.pixelSize: 14
+                        font.weight: Font.DemiBold
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: window.demoLoggedIn ? "Local demo profile" : "Not signed in"
+                        color: theme.mutedText
+                        font.pixelSize: 11
+                    }
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: window.demoLoggedIn ? "Profile" : "Sign in to your demo profile"
+                color: theme.accent
+                font.pixelSize: 12
+                font.weight: Font.DemiBold
+            }
+
+            TextField {
+                id: profileUsername
+                Layout.fillWidth: true
+                visible: !window.demoLoggedIn
+                placeholderText: "Username"
+                color: theme.text
+                selectByMouse: true
+                background: Rectangle {
+                    radius: 8
+                    color: theme.surface
+                    border.color: profileUsername.activeFocus ? theme.accent : theme.border
+                }
+            }
+
+            TextField {
+                id: profilePassword
+                Layout.fillWidth: true
+                visible: !window.demoLoggedIn
+                placeholderText: "Password (demo only)"
+                echoMode: TextInput.Password
+                color: theme.text
+                selectByMouse: true
+                background: Rectangle {
+                    radius: 8
+                    color: theme.surface
+                    border.color: profilePassword.activeFocus ? theme.accent : theme.border
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                visible: window.profileMessage.length > 0
+                text: window.profileMessage
+                color: theme.accent
+                font.pixelSize: 11
+                wrapMode: Text.WordWrap
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                Button {
+                    Layout.fillWidth: true
+                    text: window.demoLoggedIn ? "Sign out" : "Log in"
+                    onClicked: {
+                        if (window.demoLoggedIn) {
+                            window.demoLoggedIn = false
+                            window.demoUsername = ""
+                            window.profileMessage = "Signed out of the demo profile."
+                            profilePassword.text = ""
+                            profileUsername.text = ""
+                        } else if (profileUsername.text.trim().length === 0 || profilePassword.text.length === 0) {
+                            window.profileMessage = "Enter a username and password to try the demo."
+                        } else {
+                            window.demoUsername = profileUsername.text.trim()
+                            window.demoLoggedIn = true
+                            window.profileMessage = "Demo login successful. No account was created and no credentials were sent or saved."
+                            profilePassword.text = ""
+                        }
+                    }
+                }
+                Button {
+                    visible: !window.demoLoggedIn
+                    text: "Guest"
+                    onClicked: {
+                        window.demoUsername = "Guest"
+                        window.demoLoggedIn = true
+                        window.profileMessage = "Continuing as a guest demo profile."
+                        profilePassword.text = ""
+                    }
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: "Demo only — authentication is not connected to a server."
+                color: theme.mutedText
+                font.pixelSize: 10
+                wrapMode: Text.WordWrap
+            }
         }
     }
 
