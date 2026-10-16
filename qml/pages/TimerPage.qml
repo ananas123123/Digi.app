@@ -15,20 +15,28 @@ Item {
     property bool handleExpanded: false
     property real dailyCardCloudPhase: 0
     property real dailyHandleCloudPhase: 0
+    property int displayedCalendarYear: new Date().getFullYear()
+    property int displayedCalendarMonth: new Date().getMonth()
+    property real calendarSwipeStartX: 0
+    property real calendarSwipeStartY: 0
+
+    function changeCalendarMonth(offset) {
+        var date = new Date(displayedCalendarYear, displayedCalendarMonth + offset, 1)
+        displayedCalendarYear = date.getFullYear()
+        displayedCalendarMonth = date.getMonth()
+    }
 
 
     function calendarMonthTitle() {
-        return Qt.formatDate(new Date(), "MMMM yyyy")
+        return Qt.formatDate(new Date(displayedCalendarYear, displayedCalendarMonth, 1), "MMMM yyyy")
     }
 
     function calendarFirstWeekday() {
-        var now = new Date()
-        return new Date(now.getFullYear(), now.getMonth(), 1).getDay()
+        return new Date(displayedCalendarYear, displayedCalendarMonth, 1).getDay()
     }
 
     function calendarDaysInMonth() {
-        var now = new Date()
-        return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+        return new Date(displayedCalendarYear, displayedCalendarMonth + 1, 0).getDate()
     }
 
     function calendarCellDay(index) {
@@ -37,7 +45,11 @@ Item {
     }
 
     function isToday(day) {
-        return day !== "" && day === new Date().getDate()
+        var now = new Date()
+        return day !== ""
+                && displayedCalendarYear === now.getFullYear()
+                && displayedCalendarMonth === now.getMonth()
+                && day === now.getDate()
     }
 
     function formattedFocusedTime() {
@@ -182,6 +194,25 @@ Item {
         color: theme.surface
         border.color: theme.border
         border.width: 1
+        clip: true
+
+        // Swipe handling is confined to the calendar card.
+        MouseArea {
+            id: calendarSwipeArea
+            anchors.fill: parent
+            z: 10
+            preventStealing: true
+            onPressed: function(mouse) {
+                root.calendarSwipeStartX = mouse.x
+                root.calendarSwipeStartY = mouse.y
+            }
+            onReleased: function(mouse) {
+                var dx = mouse.x - root.calendarSwipeStartX
+                var dy = mouse.y - root.calendarSwipeStartY
+                if (Math.abs(dx) >= 45 && Math.abs(dx) > Math.abs(dy) * 1.2)
+                    root.changeCalendarMonth(dx < 0 ? 1 : -1)
+            }
+        }
 
         Column {
             anchors.fill: parent
