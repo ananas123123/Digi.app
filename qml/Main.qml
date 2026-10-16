@@ -1332,39 +1332,49 @@ ApplicationWindow {
                                     property real pinchStartZoom: 1.0
                                     property real pinchStartContentX: 0
                                     property real pinchStartContentY: 0
-                                    property real pinchAnchorX: 0
-                                    property real pinchAnchorY: 0
 
                                     function zoomAt(nextZoom, anchorX, anchorY) {
                                         var oldZoom = zoomFactor
                                         var boundedZoom = Math.max(0.5, Math.min(3.0, nextZoom))
                                         if (Math.abs(boundedZoom - oldZoom) < 0.0001)
                                             return
-                                        var relativeX = centeredPdfPage.contentX + anchorX
-                                        var relativeY = centeredPdfPage.contentY + anchorY
+                                        var ratio = boundedZoom / oldZoom
                                         zoomFactor = boundedZoom
-                                        centeredPdfPage.contentX = Math.max(0, relativeX * boundedZoom / oldZoom - anchorX)
-                                        centeredPdfPage.contentY = Math.max(0, relativeY * boundedZoom / oldZoom - anchorY)
+                                        pdfFlickable.contentX = Math.max(0,
+                                            Math.min(pdfFlickable.contentWidth - pdfFlickable.width,
+                                                (pdfFlickable.contentX + anchorX) * ratio - anchorX))
+                                        pdfFlickable.contentY = Math.max(0,
+                                            Math.min(pdfFlickable.contentHeight - pdfFlickable.height,
+                                                (pdfFlickable.contentY + anchorY) * ratio - anchorY))
                                     }
 
-                                    // Render the selected PDF as a centered page. Annotation
-                                    // behavior is intentionally unchanged in this step.
                                     PdfDocument {
                                         id: centeredPdfDocument
                                         source: "file:///" + searchRoot.selectedResultPath.replace(/\\/g, "/")
                                     }
 
-                                    Item {
-                                        id: centeredPageViewport
+                                    Flickable {
+                                        id: pdfFlickable
                                         anchors.fill: parent
                                         clip: true
+                                        boundsBehavior: Flickable.StopAtBounds
+                                        contentWidth: width * pdfAnnotationWorkspace.zoomFactor
+                                        contentHeight: height * pdfAnnotationWorkspace.zoomFactor
+                                        interactive: true
 
-                                        PdfMultiPageView {
-                                            id: centeredPdfPage
-                                            anchors.fill: parent
-                                            document: centeredPdfDocument
-                                            renderScale: pdfAnnotationWorkspace.zoomFactor
-                                            scale: 1.0
+                                        Item {
+                                            id: pdfScaledContent
+                                            width: pdfFlickable.width
+                                            height: pdfFlickable.height
+                                            scale: pdfAnnotationWorkspace.zoomFactor
+                                            transformOrigin: Item.TopLeft
+
+                                            PdfMultiPageView {
+                                                id: centeredPdfPage
+                                                anchors.fill: parent
+                                                document: centeredPdfDocument
+                                                renderScale: 1.0
+                                            }
                                         }
                                     }
 
@@ -1388,20 +1398,23 @@ ApplicationWindow {
                                         onActiveChanged: {
                                             if (active) {
                                                 pdfAnnotationWorkspace.pinchStartZoom = pdfAnnotationWorkspace.zoomFactor
-                                                pdfAnnotationWorkspace.pinchStartContentX = centeredPdfPage.contentX
-                                                pdfAnnotationWorkspace.pinchStartContentY = centeredPdfPage.contentY
+                                                pdfAnnotationWorkspace.pinchStartContentX = pdfFlickable.contentX
+                                                pdfAnnotationWorkspace.pinchStartContentY = pdfFlickable.contentY
                                             }
                                         }
                                         onScaleChanged: {
                                             if (active) {
+                                                var oldZoom = pdfAnnotationWorkspace.zoomFactor
                                                 var nextZoom = Math.max(0.5, Math.min(3.0,
                                                     pdfAnnotationWorkspace.pinchStartZoom * scale))
-                                                var ratio = nextZoom / pdfAnnotationWorkspace.pinchStartZoom
+                                                var ratio = nextZoom / oldZoom
                                                 pdfAnnotationWorkspace.zoomFactor = nextZoom
-                                                centeredPdfPage.contentX = Math.max(0,
-                                                    (pdfAnnotationWorkspace.pinchStartContentX + centroid.position.x) * ratio - centroid.position.x)
-                                                centeredPdfPage.contentY = Math.max(0,
-                                                    (pdfAnnotationWorkspace.pinchStartContentY + centroid.position.y) * ratio - centroid.position.y)
+                                                pdfFlickable.contentX = Math.max(0,
+                                                    Math.min(pdfFlickable.contentWidth - pdfFlickable.width,
+                                                        (pdfAnnotationWorkspace.pinchStartContentX + centroid.position.x) * nextZoom / pdfAnnotationWorkspace.pinchStartZoom - centroid.position.x))
+                                                pdfFlickable.contentY = Math.max(0,
+                                                    Math.min(pdfFlickable.contentHeight - pdfFlickable.height,
+                                                        (pdfAnnotationWorkspace.pinchStartContentY + centroid.position.y) * nextZoom / pdfAnnotationWorkspace.pinchStartZoom - centroid.position.y))
                                             }
                                         }
                                     }
