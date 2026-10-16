@@ -1598,52 +1598,47 @@ ApplicationWindow {
                                             }
                                         }
 
-                                        MouseArea {
-                                            id: inkInputArea
-                                            anchors.fill: parent
-                                            enabled: previewPanel.previewMaximized && !pdfPinchHandler.active
-                                            hoverEnabled: false
-                                            preventStealing: true
+                                        PointHandler {
+                                            id: inkInputHandler
+                                            acceptedDevices: PointerDevice.Stylus
+                                            enabled: previewPanel.previewMaximized && active
+                                            target: null
 
-                                            function documentPoint(point) {
+                                            property bool strokeStarted: false
+
+                                            function documentPoint(position) {
                                                 return {
-                                                    x: (pdfFlickable.contentX + point.x) / pdfAnnotationWorkspace.zoomFactor,
-                                                    y: (pdfFlickable.contentY + point.y) / pdfAnnotationWorkspace.zoomFactor
+                                                    x: (pdfFlickable.contentX + position.x) / pdfAnnotationWorkspace.zoomFactor,
+                                                    y: (pdfFlickable.contentY + position.y) / pdfAnnotationWorkspace.zoomFactor
                                                 }
                                             }
 
-                                            onPressed: function(mouse) {
-                                                var p = documentPoint(mouse)
-                                                annotationCanvas.activeStroke = [p]
-                                                annotationCanvas.requestPaint()
+                                            onActiveChanged: {
+                                                if (active) {
+                                                    strokeStarted = true
+                                                    annotationCanvas.activeStroke = [documentPoint(point.position)]
+                                                    annotationCanvas.requestPaint()
+                                                } else if (strokeStarted) {
+                                                    if (annotationCanvas.activeStroke.length > 0) {
+                                                        var nextStrokes = annotationCanvas.strokes.slice()
+                                                        nextStrokes.push(annotationCanvas.activeStroke)
+                                                        annotationCanvas.strokes = nextStrokes
+                                                    }
+                                                    annotationCanvas.activeStroke = []
+                                                    annotationCanvas.requestPaint()
+                                                    strokeStarted = false
+                                                }
                                             }
 
-                                            onPositionChanged: function(mouse) {
-                                                if (!(mouse.buttons & Qt.LeftButton))
+                                            onPointChanged: {
+                                                if (!active || !strokeStarted)
                                                     return
                                                 var nextPoints = annotationCanvas.activeStroke.slice()
-                                                nextPoints.push(documentPoint(mouse))
+                                                nextPoints.push(documentPoint(point.position))
                                                 annotationCanvas.activeStroke = nextPoints
                                                 annotationCanvas.requestPaint()
                                             }
-
-                                            onReleased: {
-                                                if (annotationCanvas.activeStroke.length > 0) {
-                                                    var nextStrokes = annotationCanvas.strokes.slice()
-                                                    nextStrokes.push(annotationCanvas.activeStroke)
-                                                    annotationCanvas.strokes = nextStrokes
-                                                    annotationCanvas.activeStroke = []
-                                                    annotationCanvas.requestPaint()
-                                                }
-                                            }
-
-                                            onCanceled: {
-                                                annotationCanvas.activeStroke = []
-                                                annotationCanvas.requestPaint()
-                                            }
                                         }
-                                    }
-
                                     PinchHandler {
                                         id: pdfPinchHandler
                                         target: null
