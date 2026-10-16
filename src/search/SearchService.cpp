@@ -151,19 +151,19 @@ bool SearchService::importDroppedUrls(const QVariantList &urls,
         if (!url.isLocalFile())
             continue;
 
-        const QFileInfo info(url.toLocalFile());
-        const QString canonicalSource = info.canonicalFilePath();
-        if (canonicalSource.isEmpty() || info.isSymLink()
-            || (!info.isFile() && !info.isDir())) {
+        // Keep source filesystem checks in the worker thread. Resolving slow
+        // removable/network paths here could stall the UI before progress appears.
+        const QString sourcePath = QDir::cleanPath(
+            QDir::fromNativeSeparators(url.toLocalFile()));
+        if (sourcePath.isEmpty())
             continue;
-        }
 
-        const QString key = normalizedPath(canonicalSource);
+        const QString key = normalizedPath(sourcePath);
         if (uniquePaths.contains(key))
             continue;
 
         uniquePaths.insert(key);
-        sourcePaths.append(canonicalSource);
+        sourcePaths.append(sourcePath);
     }
 
     if (sourcePaths.isEmpty())
