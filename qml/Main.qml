@@ -1019,11 +1019,38 @@ ApplicationWindow {
                             ToolTip.visible: explorerButtonMouse.containsMouse
                             ToolTip.text: "Lubis explorer"
 
-                            Text {
+                            Item {
                                 anchors.centerIn: parent
-                                text: "▰"
-                                color: explorerButtonMouse.containsMouse ? searchTheme.accent : searchTheme.text
-                                font.pixelSize: 21
+                                width: 22
+                                height: 19
+
+                                Rectangle {
+                                    x: 2
+                                    y: 5
+                                    width: 18
+                                    height: 12
+                                    radius: 2
+                                    color: explorerButtonMouse.containsMouse
+                                           ? Qt.rgba(searchTheme.accent.r, searchTheme.accent.g, searchTheme.accent.b, 0.20)
+                                           : "transparent"
+                                    border.color: explorerButtonMouse.containsMouse
+                                                  ? searchTheme.accent : searchTheme.text
+                                    border.width: 1.4
+                                }
+
+                                Rectangle {
+                                    x: 3
+                                    y: 2
+                                    width: 8
+                                    height: 5
+                                    radius: 1
+                                    color: explorerButtonMouse.containsMouse
+                                           ? Qt.rgba(searchTheme.accent.r, searchTheme.accent.g, searchTheme.accent.b, 0.20)
+                                           : "transparent"
+                                    border.color: explorerButtonMouse.containsMouse
+                                                  ? searchTheme.accent : searchTheme.text
+                                    border.width: 1.3
+                                }
                             }
 
                             MouseArea {
