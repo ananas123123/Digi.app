@@ -16,6 +16,30 @@ Item {
     property real dailyCardCloudPhase: 0
     property real dailyHandleCloudPhase: 0
 
+
+    function calendarMonthTitle() {
+        return Qt.formatDate(new Date(), "MMMM yyyy")
+    }
+
+    function calendarFirstWeekday() {
+        var now = new Date()
+        return new Date(now.getFullYear(), now.getMonth(), 1).getDay()
+    }
+
+    function calendarDaysInMonth() {
+        var now = new Date()
+        return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    }
+
+    function calendarCellDay(index) {
+        var day = index - calendarFirstWeekday() + 1
+        return day >= 1 && day <= calendarDaysInMonth() ? day : ""
+    }
+
+    function isToday(day) {
+        return day !== "" && day === new Date().getDate()
+    }
+
     function formattedFocusedTime() {
         var totalMinutes = Math.floor(dailyAnalyticsService.focusedSecondsToday / 60)
         if (totalMinutes < 60)
@@ -143,6 +167,91 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: theme.window
+    }
+
+    // Simple monthly calendar card, independent of the stopwatch layout.
+    Rectangle {
+        id: monthlyCalendarCard
+        anchors.left: parent.left
+        anchors.leftMargin: 28
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -8
+        width: 286
+        height: 300
+        radius: 16
+        color: theme.surface
+        border.color: theme.border
+        border.width: 1
+
+        Column {
+            anchors.fill: parent
+            anchors.margins: 18
+            spacing: 14
+
+            Text {
+                width: parent.width
+                text: root.calendarMonthTitle()
+                color: theme.text
+                font.pixelSize: 19
+                font.weight: Font.Medium
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            Grid {
+                width: parent.width
+                columns: 7
+                spacing: 0
+
+                Repeater {
+                    model: ["S", "M", "T", "W", "T", "F", "S"]
+                    delegate: Text {
+                        required property string modelData
+                        width: (monthlyCalendarCard.width - 36) / 7
+                        height: 22
+                        text: modelData
+                        color: theme.mutedText
+                        font.pixelSize: 11
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+            }
+
+            Grid {
+                width: parent.width
+                columns: 7
+                rowSpacing: 5
+                columnSpacing: 0
+
+                Repeater {
+                    model: 42
+                    delegate: Item {
+                        required property int index
+                        width: (monthlyCalendarCard.width - 36) / 7
+                        height: 27
+
+                        property string dayNumber: root.calendarCellDay(index)
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: 25
+                            height: 25
+                            radius: 8
+                            color: root.isToday(parent.dayNumber) ? theme.accent : "transparent"
+                        }
+
+                        Text {
+                            anchors.fill: parent
+                            text: parent.dayNumber
+                            color: root.isToday(parent.dayNumber) ? theme.accentText : theme.text
+                            font.pixelSize: 12
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // The stopwatch remains centered and independent of the daily focus card.
