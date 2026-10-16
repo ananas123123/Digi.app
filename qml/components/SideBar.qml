@@ -55,7 +55,6 @@ Item {
                     { label: "Search", symbol: "⌕", revealDelay: 220 },
                     { label: "Notes", symbol: "✎", revealDelay: 120 },
                     { label: "Timer", symbol: "◷", revealDelay: 0 },
-                    { label: "Doc", symbol: "▤", revealDelay: 320 }
                 ]
 
                 delegate: Button {
