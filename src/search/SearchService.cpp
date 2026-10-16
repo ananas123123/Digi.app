@@ -34,7 +34,7 @@ QString SearchService::searchRoot() const
     return QDir::cleanPath(m_searchRoot);
 }
 
-QVariantList SearchService::search(const QString &query, bool folders) const
+QVariantList SearchService::search(const QString &query) const
 {
     QVariantList results;
     const QString needle = query.trimmed();
@@ -45,16 +45,14 @@ QVariantList SearchService::search(const QString &query, bool folders) const
     if (!root.exists())
         return results;
 
-    const QDir::Filters entryFilters = (folders ? QDir::Dirs : QDir::Files)
-        | QDir::NoDotAndDotDot;
     QDirIterator iterator(root.absolutePath(),
-                          entryFilters,
+                          QDir::Files | QDir::NoDotAndDotDot,
                           QDirIterator::Subdirectories);
 
     while (iterator.hasNext() && results.size() < maxResults) {
         const QString path = iterator.next();
         const QFileInfo info(path);
-        if (info.isHidden() || (folders && !info.isDir()) || (!folders && !info.isFile()))
+        if (info.isHidden() || !info.isFile())
             continue;
 
         const QString name = info.fileName();
@@ -65,7 +63,7 @@ QVariantList SearchService::search(const QString &query, bool folders) const
         result.insert(QStringLiteral("name"), name);
         result.insert(QStringLiteral("path"), QDir::toNativeSeparators(info.absoluteFilePath()));
         result.insert(QStringLiteral("relativePath"), QDir::toNativeSeparators(root.relativeFilePath(path)));
-        result.insert(QStringLiteral("matchType"), folders ? QStringLiteral("folder") : QStringLiteral("filename"));
+        result.insert(QStringLiteral("matchType"), QStringLiteral("filename"));
         result.insert(QStringLiteral("excerpt"), QString());
         results.append(result);
     }
