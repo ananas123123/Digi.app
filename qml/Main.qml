@@ -1329,6 +1329,11 @@ ApplicationWindow {
                                 Item {
                                     id: pdfAnnotationWorkspace
                                     property real zoomFactor: 1.0
+                                    property real panX: 0
+                                    property real panY: 0
+                                    property real pinchStartZoom: 1.0
+                                    property real pinchStartPanX: 0
+                                    property real pinchStartPanY: 0
 
                                     // Render the selected PDF as a centered page. Annotation
                                     // behavior is intentionally unchanged in this step.
@@ -1347,7 +1352,35 @@ ApplicationWindow {
                                             document: centeredPdfDocument
                                             width: Math.min(centeredPageViewport.width - 32, 760) * pdfAnnotationWorkspace.zoomFactor
                                             height: width * 1.294
-                                            anchors.centerIn: parent
+                                            x: (centeredPageViewport.width - width) / 2 + pdfAnnotationWorkspace.panX
+                                            y: (centeredPageViewport.height - height) / 2 + pdfAnnotationWorkspace.panY
+                                        }
+                                    }
+
+                                    // Two-finger touch gestures zoom and move the PDF without
+                                    // turning those gestures into annotation strokes.
+                                    PinchHandler {
+                                        id: pdfPinchHandler
+                                        target: null
+                                        enabled: previewPanel.previewMaximized
+                                        minimumScale: 0.5
+                                        maximumScale: 3.0
+                                        onActiveScaleChanged: {
+                                            pdfAnnotationWorkspace.zoomFactor = Math.max(0.5, Math.min(3.0,
+                                                pdfPinchHandler.scale * pdfAnnotationWorkspace.pinchStartZoom))
+                                        }
+                                        onActiveChanged: {
+                                            if (active) {
+                                                pdfAnnotationWorkspace.pinchStartZoom = pdfAnnotationWorkspace.zoomFactor
+                                                pdfAnnotationWorkspace.pinchStartPanX = pdfAnnotationWorkspace.panX
+                                                pdfAnnotationWorkspace.pinchStartPanY = pdfAnnotationWorkspace.panY
+                                            }
+                                        }
+                                        onTranslationChanged: {
+                                            if (active) {
+                                                pdfAnnotationWorkspace.panX = pdfAnnotationWorkspace.pinchStartPanX + translation.x
+                                                pdfAnnotationWorkspace.panY = pdfAnnotationWorkspace.pinchStartPanY + translation.y
+                                            }
                                         }
                                     }
 
@@ -1378,7 +1411,7 @@ ApplicationWindow {
                                             enabled: previewPanel.previewMaximized
                                             acceptedButtons: Qt.LeftButton
                                             hoverEnabled: true
-                                            preventStealing: true
+                                            preventStealing: false
                                             onPressed: function(mouse) {
                                                 annotationCanvas.drawing = true
                                                 annotationCanvas.lastX = mouse.x
