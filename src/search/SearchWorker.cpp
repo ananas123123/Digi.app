@@ -28,9 +28,10 @@ const QSet<QString> searchableTextExtensions {
 
 QString contentExcerpt(const QString &content, qsizetype position, qsizetype needleLength)
 {
-    Q_UNUSED(needleLength);
     const qsizetype start = qMax<qsizetype>(0, position - 55);
-    const qsizetype length = qMin<qsizetype>(180, content.size() - start);
+    const qsizetype excerptLimit = qMin<qsizetype>(
+        300, qMax<qsizetype>(180, needleLength + 80));
+    const qsizetype length = qMin<qsizetype>(excerptLimit, content.size() - start);
     QString excerpt = content.mid(start, length).simplified();
     if (start > 0)
         excerpt.prepend(QStringLiteral("…"));
