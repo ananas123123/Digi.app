@@ -1619,10 +1619,27 @@ ApplicationWindow {
                                                 }
                                             }
 
+                                            function pageAtPoint(point) {
+                                                if (centeredPdfDocument.status !== PdfDocument.Ready)
+                                                    return -1
+                                                for (var i = 0; i < centeredPdfDocument.pageCount; ++i) {
+                                                    var pageSize = pdfAnnotationWorkspace.pageSizeAt(i)
+                                                    var pageWidth = pageSize.width * pdfAnnotationWorkspace.basePageScale
+                                                    var pageHeight = pageSize.height * pdfAnnotationWorkspace.basePageScale
+                                                    var left = (pdfAnnotationWorkspace.baseSurfaceWidth - pageWidth) * 0.5
+                                                    var top = pdfAnnotationWorkspace.pageTop(i)
+                                                    if (point.x >= left && point.x <= left + pageWidth
+                                                            && point.y >= top && point.y <= top + pageHeight)
+                                                        return i
+                                                }
+                                                return -1
+                                            }
+
                                             onActiveChanged: {
                                                 if (active) {
-                                                    strokeStarted = true
-                                                    annotationCanvas.activeStroke = [documentPoint(centroid.position)]
+                                                    var startPoint = documentPoint(centroid.position)
+                                                    strokeStarted = pageAtPoint(startPoint) >= 0
+                                                    annotationCanvas.activeStroke = strokeStarted ? [startPoint] : []
                                                     annotationCanvas.requestPaint()
                                                 } else if (strokeStarted) {
                                                     if (annotationCanvas.activeStroke.length > 0) {
