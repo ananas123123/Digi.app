@@ -26,13 +26,6 @@ Item {
         RowLayout {
             Layout.fillWidth: true
 
-            Text {
-                text: "Timer"
-                color: theme.text
-                font.pixelSize: 25
-                font.weight: Font.DemiBold
-            }
-
             Item { Layout.fillWidth: true }
 
             Button {
