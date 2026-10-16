@@ -1120,13 +1120,15 @@ ApplicationWindow {
                 id: searchColumn
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.topMargin: searchRoot.hasSearched ? 0 : Math.max(90, parent.height * 0.19)
+                anchors.topMargin: searchRoot.hasSearched ? 18 : Math.max(90, parent.height * 0.19)
                 height: searchRoot.hasSearched
-                    ? parent.height - anchors.topMargin - 24
+                    ? Math.max(0, parent.height - anchors.topMargin - 24)
                     : implicitHeight
-                Behavior on anchors.topMargin { NumberAnimation { duration: 850; easing.type: Easing.OutExpo } }
+                // Keep the search controls anchored in a predictable place when results appear.
+                // Animating the anchor margin while the results area expands caused the controls
+                // to visibly jump in some window sizes.
                 width: Math.min(900, parent.width - 64)
-                spacing: 22
+                spacing: searchRoot.hasSearched ? 12 : 22
                 opacity: 0
                 y: 14
 
@@ -1143,9 +1145,11 @@ ApplicationWindow {
                 Item {
                     id: searchHeadingContainer
                     Layout.fillWidth: true
-                    implicitHeight: searchContent.implicitHeight
+                    implicitHeight: searchRoot.hasSearched ? 0 : searchContent.implicitHeight
                     opacity: searchRoot.hasSearched ? 0 : 1
-                    Behavior on opacity { NumberAnimation { duration: 700; easing.type: Easing.OutExpo } }
+                    clip: true
+                    Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                    Behavior on implicitHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
                     Column {
                         id: searchContent
@@ -1363,7 +1367,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     Layout.fillHeight: searchRoot.hasSearched
                     Layout.preferredHeight: searchRoot.hasSearched ? 1 : 0
-                    Layout.minimumHeight: searchRoot.hasSearched ? 300 : 0
+                    Layout.minimumHeight: 0
                     Layout.maximumHeight: searchRoot.hasSearched ? Number.POSITIVE_INFINITY : 0
                     Layout.topMargin: 0
                     Layout.bottomMargin: 0
