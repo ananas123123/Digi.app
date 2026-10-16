@@ -25,9 +25,9 @@ Item {
     Rectangle {
         id: banner
         x: (root.width - width) / 2
-        y: root.bannerOpen ? 0 : -76
-        width: Math.min(root.width - 32, 760)
-        height: 76
+        y: root.bannerOpen ? 0 : -58
+        width: Math.min(root.width - 32, 560)
+        height: 58
         color: "transparent"
         border.color: "transparent"
         border.width: 0
@@ -42,11 +42,11 @@ Item {
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: 12
-            anchors.topMargin: 8
-            anchors.bottomMargin: 8
-            spacing: 8
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
+            anchors.topMargin: 5
+            anchors.bottomMargin: 5
+            spacing: 5
 
             Repeater {
                 model: [
@@ -114,7 +114,7 @@ Item {
                             Text {
                                 text: navButton.modelData.symbol
                                 color: root.activePage === navButton.modelData.label ? theme.accentText : theme.mutedText
-                                font.pixelSize: 21
+                                font.pixelSize: 15
                                 verticalAlignment: Text.AlignVCenter
                             }
                             Text {
