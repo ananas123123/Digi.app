@@ -1575,17 +1575,22 @@ ApplicationWindow {
                                                                             ctx.lineCap = "round"
                                                                             ctx.lineJoin = "round"
                                                                             ctx.strokeStyle = "#202020"
-                                                                            ctx.lineWidth = 2.4
+                                                                            // Stroke points use native PDF page-point coordinates.
+                                                                            // Applying basePageScale here keeps ink aligned if the preview resizes.
+                                                                            ctx.lineWidth = 2.4 * pdfAnnotationWorkspace.basePageScale
 
                                                                             function drawStroke(points) {
                                                                                 if (!points || points.length === 0)
                                                                                     return
                                                                                 ctx.beginPath()
-                                                                                ctx.moveTo(points[0].x, points[0].y)
+                                                                                ctx.moveTo(points[0].x * pdfAnnotationWorkspace.basePageScale,
+                                                                                           points[0].y * pdfAnnotationWorkspace.basePageScale)
                                                                                 for (var p = 1; p < points.length; ++p)
-                                                                                    ctx.lineTo(points[p].x, points[p].y)
+                                                                                    ctx.lineTo(points[p].x * pdfAnnotationWorkspace.basePageScale,
+                                                                                               points[p].y * pdfAnnotationWorkspace.basePageScale)
                                                                                 if (points.length === 1)
-                                                                                    ctx.lineTo(points[0].x + 0.1, points[0].y + 0.1)
+                                                                                    ctx.lineTo(points[0].x * pdfAnnotationWorkspace.basePageScale + 0.1,
+                                                                                               points[0].y * pdfAnnotationWorkspace.basePageScale + 0.1)
                                                                                 ctx.stroke()
                                                                             }
 
@@ -1602,7 +1607,13 @@ ApplicationWindow {
                                                                                 if (pdfAnnotationWorkspace.inkDirtyPage === pdfPageSlot.index)
                                                                                     pageInkCanvas.requestPaint()
                                                                             }
+                                                                            function onBasePageScaleChanged() {
+                                                                                pageInkCanvas.requestPaint()
+                                                                            }
                                                                         }
+
+                                                                        onWidthChanged: requestPaint()
+                                                                        onHeightChanged: requestPaint()
                                                                     }
                                                                 }
                                                             }
@@ -1658,8 +1669,8 @@ ApplicationWindow {
                                                 strokeStarted = pageIndex >= 0
                                                 pdfAnnotationWorkspace.activeStrokePageIndex = pageIndex
                                                 pdfAnnotationWorkspace.activeStrokePoints = strokeStarted
-                                                    ? [{ x: point.x - pdfAnnotationWorkspace.pageLeft(pageIndex),
-                                                         y: point.y - pdfAnnotationWorkspace.pageTop(pageIndex) }]
+                                                    ? [{ x: (point.x - pdfAnnotationWorkspace.pageLeft(pageIndex)) / pdfAnnotationWorkspace.basePageScale,
+                                                         y: (point.y - pdfAnnotationWorkspace.pageTop(pageIndex)) / pdfAnnotationWorkspace.basePageScale }]
                                                     : []
                                                 if (strokeStarted)
                                                     markCurrentPageDirty()
@@ -1689,8 +1700,8 @@ ApplicationWindow {
                                             var point = documentPoint(centroid.position)
                                             var nextPoints = pdfAnnotationWorkspace.activeStrokePoints.slice()
                                             nextPoints.push({
-                                                x: point.x - pdfAnnotationWorkspace.pageLeft(pdfAnnotationWorkspace.activeStrokePageIndex),
-                                                y: point.y - pdfAnnotationWorkspace.pageTop(pdfAnnotationWorkspace.activeStrokePageIndex)
+                                                x: (point.x - pdfAnnotationWorkspace.pageLeft(pdfAnnotationWorkspace.activeStrokePageIndex)) / pdfAnnotationWorkspace.basePageScale,
+                                                y: (point.y - pdfAnnotationWorkspace.pageTop(pdfAnnotationWorkspace.activeStrokePageIndex)) / pdfAnnotationWorkspace.basePageScale
                                             })
                                             pdfAnnotationWorkspace.activeStrokePoints = nextPoints
                                             markCurrentPageDirty()
