@@ -1631,7 +1631,7 @@ ApplicationWindow {
                                                 }
                                             }
 
-                                            onPointChanged: {
+                                            onCentroidChanged: {
                                                 if (!active || !strokeStarted)
                                                     return
                                                 var nextPoints = annotationCanvas.activeStroke.slice()
