@@ -1365,7 +1365,7 @@ ApplicationWindow {
                                         enabled: previewPanel.previewMaximized
                                         minimumScale: 0.5
                                         maximumScale: 3.0
-                                        onActiveScaleChanged: {
+                                        onScaleChanged: {
                                             pdfAnnotationWorkspace.zoomFactor = Math.max(0.5, Math.min(3.0,
                                                 pdfPinchHandler.scale * pdfAnnotationWorkspace.pinchStartZoom))
                                         }
