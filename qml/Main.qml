@@ -21,6 +21,14 @@ ApplicationWindow {
 
     Theme { id: theme }
     property string activePage: "Home"
+    property bool settingsOpen: false
+    property bool lightMode: false
+    property bool searchCaseSensitive: false
+    property bool searchIncludeHidden: false
+    property bool notesShowGrid: true
+    property bool notesPressureSensitivity: true
+    property bool homeShowQuickAccess: true
+    property bool timerSoundEnabled: true
 
     function toggleFullscreen() {
         if (window.visibility === Window.FullScreen) {
@@ -50,6 +58,48 @@ ApplicationWindow {
         anchors.fill: parent
         z: -1
         onClicked: sideBar.bannerOpen = false
+    }
+
+    Rectangle {
+        id: contextualSettings
+        width: 292
+        height: settingsColumn.implicitHeight + 28
+        x: Math.max(16, window.width - width - 24)
+        y: 50
+        z: 150
+        radius: 14
+        visible: window.settingsOpen
+        color: theme.surface
+        border.color: theme.border
+        border.width: 1
+        clip: true
+        ColumnLayout {
+            id: settingsColumn
+            anchors.fill: parent
+            anchors.margins: 14
+            spacing: 10
+            RowLayout {
+                Layout.fillWidth: true
+                Text { Layout.fillWidth: true; text: window.activePage + " settings"; color: theme.text; font.pixelSize: 16; font.weight: Font.DemiBold }
+                Button { text: "×"; flat: true; onClicked: window.settingsOpen = false }
+            }
+            Rectangle { Layout.fillWidth: true; height: 1; color: theme.border }
+            RowLayout {
+                Layout.fillWidth: true
+                Text { Layout.fillWidth: true; text: "Light theme"; color: theme.text; font.pixelSize: 13 }
+                Switch { checked: window.lightMode; onToggled: window.lightMode = checked }
+            }
+            Text { Layout.fillWidth: true; visible: window.activePage === "Search"; text: "Search options"; color: theme.accent; font.pixelSize: 12; font.weight: Font.DemiBold }
+            RowLayout { Layout.fillWidth: true; visible: window.activePage === "Search"; Text { Layout.fillWidth: true; text: "Case-sensitive search"; color: theme.text; font.pixelSize: 12 }; Switch { checked: window.searchCaseSensitive; onToggled: window.searchCaseSensitive = checked } }
+            RowLayout { Layout.fillWidth: true; visible: window.activePage === "Search"; Text { Layout.fillWidth: true; text: "Include hidden files"; color: theme.text; font.pixelSize: 12 }; Switch { checked: window.searchIncludeHidden; onToggled: window.searchIncludeHidden = checked } }
+            Text { Layout.fillWidth: true; visible: window.activePage === "Notes"; text: "Notes options"; color: theme.accent; font.pixelSize: 12; font.weight: Font.DemiBold }
+            RowLayout { Layout.fillWidth: true; visible: window.activePage === "Notes"; Text { Layout.fillWidth: true; text: "Show canvas grid"; color: theme.text; font.pixelSize: 12 }; Switch { checked: window.notesShowGrid; onToggled: window.notesShowGrid = checked } }
+            RowLayout { Layout.fillWidth: true; visible: window.activePage === "Notes"; Text { Layout.fillWidth: true; text: "Pen pressure sensitivity"; color: theme.text; font.pixelSize: 12 }; Switch { checked: window.notesPressureSensitivity; onToggled: window.notesPressureSensitivity = checked } }
+            Text { Layout.fillWidth: true; visible: window.activePage === "Home"; text: "Home options"; color: theme.accent; font.pixelSize: 12; font.weight: Font.DemiBold }
+            RowLayout { Layout.fillWidth: true; visible: window.activePage === "Home"; Text { Layout.fillWidth: true; text: "Show quick access"; color: theme.text; font.pixelSize: 12 }; Switch { checked: window.homeShowQuickAccess; onToggled: window.homeShowQuickAccess = checked } }
+            Text { Layout.fillWidth: true; visible: window.activePage === "Timer"; text: "Timer options"; color: theme.accent; font.pixelSize: 12; font.weight: Font.DemiBold }
+            RowLayout { Layout.fillWidth: true; visible: window.activePage === "Timer"; Text { Layout.fillWidth: true; text: "Timer sounds"; color: theme.text; font.pixelSize: 12 }; Switch { checked: window.timerSoundEnabled; onToggled: window.timerSoundEnabled = checked } }
+        }
     }
 
     Rectangle {
@@ -189,6 +239,7 @@ ApplicationWindow {
                 sideBar.bannerOpen = false
             }
             onFullscreenRequested: window.toggleFullscreen()
+            onSettingsRequested: window.settingsOpen = !window.settingsOpen
             clip: false
         }
 
