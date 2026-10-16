@@ -1473,7 +1473,7 @@ ApplicationWindow {
                                         boundsBehavior: Flickable.StopAtBounds
                                         flickableDirection: Flickable.HorizontalAndVerticalFlick
                                         pixelAligned: true
-                                        interactive: !pdfPinchHandler.active
+                                        interactive: !pdfPinchHandler.active && !inkInputHandler.active
                                         // Keep the scroll surface at least viewport-sized when zoomed out,
                                         // otherwise the document collapses to the left edge.
                                         contentWidth: Math.max(width, pdfAnnotationWorkspace.baseSurfaceWidth * pdfAnnotationWorkspace.zoomFactor)
@@ -1598,11 +1598,12 @@ ApplicationWindow {
                                             }
                                         }
 
-                                        PointHandler {
+                                        DragHandler {
                                             id: inkInputHandler
                                             acceptedDevices: PointerDevice.Stylus
                                             enabled: previewPanel.previewMaximized && active
                                             target: null
+                                            grabPermissions: PointerHandler.CanTakeOverFromAnything
 
                                             property bool strokeStarted: false
 
@@ -1616,7 +1617,7 @@ ApplicationWindow {
                                             onActiveChanged: {
                                                 if (active) {
                                                     strokeStarted = true
-                                                    annotationCanvas.activeStroke = [documentPoint(point.position)]
+                                                    annotationCanvas.activeStroke = [documentPoint(centroid.position)]
                                                     annotationCanvas.requestPaint()
                                                 } else if (strokeStarted) {
                                                     if (annotationCanvas.activeStroke.length > 0) {
