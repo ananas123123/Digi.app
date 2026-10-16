@@ -1707,10 +1707,7 @@ ApplicationWindow {
                                                     markCurrentPageDirty()
                                                 }
                                             }
-}
-
-
-    
+                                        }
                                     }
 
                                     PinchHandler {
