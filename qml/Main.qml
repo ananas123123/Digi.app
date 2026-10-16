@@ -1006,6 +1006,40 @@ ApplicationWindow {
                             }
                         }
 
+                        }
+
+                        Rectangle {
+                            id: lubisExplorerButton
+                            Layout.preferredWidth: 42
+                            Layout.preferredHeight: 42
+                            radius: 12
+                            color: explorerButtonMouse.containsMouse ? searchTheme.surfaceRaised : "transparent"
+                            border.color: explorerButtonMouse.containsMouse ? searchTheme.accent : searchTheme.border
+                            border.width: 1
+                            ToolTip.visible: explorerButtonMouse.containsMouse
+                            ToolTip.text: "Lubis explorer"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "▰"
+                                color: explorerButtonMouse.containsMouse ? searchTheme.accent : searchTheme.text
+                                font.pixelSize: 21
+                            }
+
+                            MouseArea {
+                                id: explorerButtonMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    lubisExplorerWindow.currentPath = searchService.searchRoot
+                                    lubisExplorerWindow.refreshEntries()
+                                    lubisExplorerWindow.show()
+                                    lubisExplorerWindow.raise()
+                                    lubisExplorerWindow.requestActivate()
+                                }
+                            }
+                        }
                 }
 
                 Item {
@@ -1958,6 +1992,191 @@ ApplicationWindow {
 
         }
     }
+
+    Window {
+        id: lubisExplorerWindow
+        width: 780
+        height: 560
+        minimumWidth: 600
+        minimumHeight: 420
+        title: "Lubis explorer"
+        color: theme.window
+        visible: false
+        flags: Qt.Window
+        modality: Qt.NonModal
+
+        property string currentPath: searchService.searchRoot
+        property var entries: []
+
+        function refreshEntries() {
+            entries = searchService.listFolderContents(currentPath)
+        }
+
+        function navigateUp() {
+            if (currentPath === searchService.searchRoot)
+                return
+            var normalizedRoot = searchService.searchRoot.replace(/\\\\/g, "/")
+            var normalizedPath = currentPath.replace(/\\\\/g, "/")
+            if (normalizedPath === normalizedRoot)
+                return
+            var separator = currentPath.lastIndexOf("/")
+            var backslash = currentPath.lastIndexOf("\\")
+            separator = Math.max(separator, backslash)
+            if (separator < 0)
+                return
+            var parentPath = currentPath.substring(0, separator)
+            if (parentPath.length < searchService.searchRoot.length)
+                parentPath = searchService.searchRoot
+            currentPath = parentPath
+            refreshEntries()
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                currentPath = searchService.searchRoot
+                refreshEntries()
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: theme.window
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 18
+            spacing: 12
+
+            RowLayout {
+                Layout.fillWidth: true
+                Text {
+                    text: "Lubis explorer"
+                    color: theme.text
+                    font.pixelSize: 22
+                    font.weight: Font.DemiBold
+                    Layout.fillWidth: true
+                }
+                Button {
+                    text: "×"
+                    onClicked: lubisExplorerWindow.close()
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                Button {
+                    text: "↑"
+                    enabled: lubisExplorerWindow.currentPath !== searchService.searchRoot
+                    onClicked: lubisExplorerWindow.navigateUp()
+                }
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 38
+                    radius: 8
+                    color: theme.surface
+                    border.color: theme.border
+                    Text {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        text: lubisExplorerWindow.currentPath
+                        color: theme.mutedText
+                        elide: Text.ElideMiddle
+                        verticalAlignment: Text.AlignVCenter
+                        font.pixelSize: 11
+                    }
+                }
+                Button {
+                    text: "Refresh"
+                    onClicked: lubisExplorerWindow.refreshEntries()
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                radius: 10
+                color: theme.surface
+                border.color: theme.border
+                clip: true
+
+                ListView {
+                    id: explorerEntriesList
+                    anchors.fill: parent
+                    anchors.margins: 6
+                    model: lubisExplorerWindow.entries
+                    clip: true
+                    delegate: Rectangle {
+                        required property var modelData
+                        width: explorerEntriesList.width
+                        height: 42
+                        radius: 7
+                        color: explorerEntryMouse.containsMouse ? theme.surfaceRaised : "transparent"
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            spacing: 10
+                            Text {
+                                text: modelData.isFolder ? "▰" : "▱"
+                                color: modelData.isFolder ? theme.accent : theme.mutedText
+                                font.pixelSize: 17
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                text: modelData.name
+                                color: theme.text
+                                font.pixelSize: 13
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                text: modelData.isFolder ? "Folder" : "File"
+                                color: theme.mutedText
+                                font.pixelSize: 10
+                            }
+                        }
+
+                        MouseArea {
+                            id: explorerEntryMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onDoubleClicked: {
+                                if (modelData.isFolder) {
+                                    lubisExplorerWindow.currentPath = modelData.path
+                                    lubisExplorerWindow.refreshEntries()
+                                }
+                            }
+                            onClicked: {
+                                if (modelData.isFolder) {
+                                    // Single-click selects; double-click opens.
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: lubisExplorerWindow.entries.length === 0
+                        text: "This searchQR folder is empty."
+                        color: theme.mutedText
+                        font.pixelSize: 13
+                    }
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: "Browsing inside search QR"
+                color: theme.mutedText
+                font.pixelSize: 10
+            }
+        }
+    }
+
     Component {
         id: timerPage
         TimerPage {
