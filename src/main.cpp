@@ -11,6 +11,7 @@
 #include <cstdio>
 
 #include "app/AppServices.h"
+#include "analytics/DailyAnalyticsService.h"
 #include "documents/DocumentService.h"
 #include "search/SearchService.h"
 
@@ -59,11 +60,13 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("Lubis");
 
     AppServices appServices;
+    DailyAnalyticsService dailyAnalyticsService;
     DocumentService documentService;
     SearchService searchService;
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("appServices", &appServices);
+    engine.rootContext()->setContextProperty("dailyAnalyticsService", &dailyAnalyticsService);
     engine.rootContext()->setContextProperty("documentService", &documentService);
     engine.rootContext()->setContextProperty("searchService", &searchService);
 
