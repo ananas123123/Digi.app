@@ -472,9 +472,9 @@ Item {
 
                                 Text {
                                     anchors.bottom: parent.bottom
-                                    anchors.bottomMargin: 2
+                                    anchors.bottomMargin: 1
                                     width: parent.width
-                                    height: 10
+                                    height: 12
                                     text: root.formatCalendarDuration(calendarDayCell.focusedSeconds)
                                     // Keep empty days clean; show HH:MM only after time is recorded.
                                     visible: calendarDayCell.dayNumber !== ""
