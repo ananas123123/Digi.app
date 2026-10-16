@@ -64,21 +64,25 @@ ApplicationWindow {
         id: contextualSettings
         width: 292
         height: settingsColumn.implicitHeight + 28
-        x: window.settingsOpen ? window.width - width : window.width
-        y: 38
+        x: window.settingsOpen ? window.width - width - 10 : window.width
+        y: (window.height - height) / 2
         z: 150
         radius: 14
         visible: window.settingsOpen || x < window.width
-        color: theme.surface
+        color: Qt.rgba(0.12, 0.12, 0.12, 0.88)
         border.color: theme.border
         border.width: 1
         clip: true
-        Behavior on x { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
+        opacity: window.settingsOpen ? 1 : 0
+        Behavior on x { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         ColumnLayout {
             id: settingsColumn
             anchors.fill: parent
             anchors.margins: 14
             spacing: 10
+            opacity: window.settingsOpen ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
             RowLayout {
                 Layout.fillWidth: true
                 Text { Layout.fillWidth: true; text: window.activePage + " settings"; color: theme.text; font.pixelSize: 16; font.weight: Font.DemiBold }
