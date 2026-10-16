@@ -65,7 +65,7 @@ ApplicationWindow {
         width: 292
         height: settingsColumn.implicitHeight + 28
         property bool tuckedByNavigation: sideBar.bannerOpen
-        x: window.settingsOpen ? window.width - width - 10 : (window.width - (tuckedByNavigation ? 24 : 0))
+        x: window.settingsOpen ? window.width - width - 10 : (tuckedByNavigation ? window.width - 24 : window.width)
         y: window.height * 0.25 - height / 2
         z: 150
         radius: 14
@@ -74,14 +74,11 @@ ApplicationWindow {
         border.color: theme.border
         border.width: 1
         clip: true
-        opacity: window.settingsOpen ? 1 : 0
+        opacity: window.settingsOpen ? 1 : (sideBar.bannerOpen ? 0.55 : 0)
         Behavior on x { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
         Connections {
             target: sideBar
-            function onBannerOpenChanged() {
-                if (sideBar.bannerOpen && window.settingsOpen)
-                    window.settingsOpen = false
-            }
+            function onBannerOpenChanged() {}
         }
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         ColumnLayout {
