@@ -14,6 +14,8 @@ qt_add_executable(Lubis
     src/main.cpp
     src/app/AppServices.cpp
     src/app/AppServices.h
+    src/analytics/DailyAnalyticsService.cpp
+    src/analytics/DailyAnalyticsService.h
     src/documents/DocumentService.cpp
     src/documents/DocumentService.h
     src/search/SearchService.cpp
