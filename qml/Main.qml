@@ -200,13 +200,11 @@ ApplicationWindow {
         radius: 7
         z: 151
         visible: contextualSettings.visible
-        opacity: contextualSettings.opacity
+        opacity: (window.settingsOpen || sideBar.bannerOpen) ? 1 : 0
         color: settingsHandleMouse.containsMouse ? theme.surfaceRaised : theme.surface
         border.color: theme.border
         border.width: 1
-        Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
 
-        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         Column {
             anchors.centerIn: parent
             spacing: 3
@@ -427,13 +425,11 @@ ApplicationWindow {
         radius: 7
         z: 151
         visible: profilePanel.visible
-        opacity: profilePanel.opacity
+        opacity: (window.profileOpen || sideBar.bannerOpen) ? 1 : 0
         color: profileHandleMouse.containsMouse ? theme.surfaceRaised : theme.surface
         border.color: theme.border
         border.width: 1
-        Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
 
-        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         Column {
             anchors.centerIn: parent
             spacing: 3
