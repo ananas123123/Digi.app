@@ -1329,84 +1329,71 @@ ApplicationWindow {
                                 Item {
                                     id: pdfAnnotationWorkspace
                                     property real zoomFactor: 1.0
-                                    property real pageWidth: 760
-                                    property real pageHeight: 980
 
-                                    Flickable {
-                                        id: annotationViewport
+                                    // Drawing is enabled only when the preview is maximized.
+                                    // The transparent canvas covers the entire expanded preview,
+                                    // rather than a separate page-shaped drawing surface.
+                                    Canvas {
+                                        id: annotationCanvas
                                         anchors.fill: parent
-                                        clip: true
-                                        contentWidth: Math.max(width, annotationPage.width)
-                                        contentHeight: Math.max(height, annotationPage.height)
-                                        boundsBehavior: Flickable.StopAtBounds
+                                        renderTarget: Canvas.Image
+                                        antialiasing: true
+                                        visible: previewPanel.previewMaximized
+                                        z: 3
+                                        property bool drawing: false
+                                        property real lastX: 0
+                                        property real lastY: 0
 
-                                        Rectangle {
-                                            id: annotationPage
-                                            width: pdfAnnotationWorkspace.pageWidth * pdfAnnotationWorkspace.zoomFactor
-                                            height: pdfAnnotationWorkspace.pageHeight * pdfAnnotationWorkspace.zoomFactor
-                                            color: "#202020"
-                                            border.color: "#D0D0D0"
-                                            border.width: 1
-                                            antialiasing: true
-
-                                            Canvas {
-                                                id: annotationCanvas
-                                                anchors.fill: parent
-                                                renderTarget: Canvas.Image
-                                                antialiasing: true
-                                                property bool drawing: false
-                                                property real lastX: 0
-                                                property real lastY: 0
-
-                                                onPaint: {
-                                                    var ctx = getContext("2d")
-                                                    ctx.strokeStyle = "#FFFFFF"
-                                                    ctx.lineWidth = 3
-                                                    ctx.lineCap = "round"
-                                                    ctx.lineJoin = "round"
-                                                }
-
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    acceptedButtons: Qt.LeftButton
-                                                    hoverEnabled: true
-                                                    onPressed: function(mouse) {
-                                                        annotationCanvas.drawing = true
-                                                        annotationCanvas.lastX = mouse.x
-                                                        annotationCanvas.lastY = mouse.y
-                                                    }
-                                                    onPositionChanged: function(mouse) {
-                                                        if (!annotationCanvas.drawing)
-                                                            return
-                                                        var ctx = annotationCanvas.getContext("2d")
-                                                        ctx.strokeStyle = "#FFFFFF"
-                                                        ctx.lineWidth = 3
-                                                        ctx.lineCap = "round"
-                                                        ctx.lineJoin = "round"
-                                                        ctx.beginPath()
-                                                        ctx.moveTo(annotationCanvas.lastX, annotationCanvas.lastY)
-                                                        ctx.lineTo(mouse.x, mouse.y)
-                                                        ctx.stroke()
-                                                        annotationCanvas.lastX = mouse.x
-                                                        annotationCanvas.lastY = mouse.y
-                                                        annotationCanvas.requestPaint()
-                                                    }
-                                                    onReleased: annotationCanvas.drawing = false
-                                                    onCanceled: annotationCanvas.drawing = false
-                                                }
-                                            }
+                                        onPaint: {
+                                            var ctx = getContext("2d")
+                                            ctx.strokeStyle = "#FFFFFF"
+                                            ctx.lineWidth = 3
+                                            ctx.lineCap = "round"
+                                            ctx.lineJoin = "round"
                                         }
 
-                                        WheelHandler {
-                                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                                            onWheel: function(event) {
-                                                var delta = event.angleDelta.y
-                                                if (delta === 0)
-                                                    return
-                                                var nextZoom = Math.max(0.5, Math.min(3.0,
-                                                    pdfAnnotationWorkspace.zoomFactor * (delta > 0 ? 1.1 : 0.9)))
-                                                pdfAnnotationWorkspace.zoomFactor = nextZoom
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            enabled: previewPanel.previewMaximized
+                                            acceptedButtons: Qt.LeftButton
+                                            hoverEnabled: true
+                                            preventStealing: true
+                                            onPressed: function(mouse) {
+                                                annotationCanvas.drawing = true
+                                                annotationCanvas.lastX = mouse.x
+                                                annotationCanvas.lastY = mouse.y
+                                                mouse.accepted = true
                                             }
+                                            onPositionChanged: function(mouse) {
+                                                if (!annotationCanvas.drawing)
+                                                    return
+                                                var ctx = annotationCanvas.getContext("2d")
+                                                ctx.strokeStyle = "#FFFFFF"
+                                                ctx.lineWidth = 3
+                                                ctx.lineCap = "round"
+                                                ctx.lineJoin = "round"
+                                                ctx.beginPath()
+                                                ctx.moveTo(annotationCanvas.lastX, annotationCanvas.lastY)
+                                                ctx.lineTo(mouse.x, mouse.y)
+                                                ctx.stroke()
+                                                annotationCanvas.lastX = mouse.x
+                                                annotationCanvas.lastY = mouse.y
+                                                annotationCanvas.requestPaint()
+                                            }
+                                            onReleased: annotationCanvas.drawing = false
+                                            onCanceled: annotationCanvas.drawing = false
+                                        }
+                                    }
+
+                                    WheelHandler {
+                                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                        onWheel: function(event) {
+                                            var delta = event.angleDelta.y
+                                            if (delta === 0)
+                                                return
+                                            pdfAnnotationWorkspace.zoomFactor = Math.max(0.5, Math.min(3.0,
+                                                pdfAnnotationWorkspace.zoomFactor * (delta > 0 ? 1.1 : 0.9)))
+                                            event.accepted = true
                                         }
                                     }
 
