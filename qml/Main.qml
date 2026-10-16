@@ -312,7 +312,59 @@ ApplicationWindow {
                     }
                 }
 
-                Rectangle {
+                RowLayout {
+                    id: searchControlsRow
+                    Layout.fillWidth: true
+                    spacing: 12
+
+                        Column {
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 1
+
+                            Text {
+                                text: "folder"
+                                color: searchRoot.folderSearch ? searchTheme.accent : searchTheme.mutedText
+                                font.pixelSize: 9
+                                horizontalAlignment: Text.AlignHCenter
+                                width: 38
+                            }
+
+                            Rectangle {
+                                width: 38
+                                height: 24
+                                radius: 12
+                                color: "#343434"
+                                border.width: 1
+                                border.color: searchRoot.folderSearch ? searchTheme.accent : "#666666"
+
+                                Rectangle {
+                                    width: 16
+                                    height: 16
+                                    radius: 8
+                                    y: 3
+                                    x: searchRoot.folderSearch ? parent.width - width - 3 : 3
+                                    color: searchRoot.folderSearch ? searchTheme.accent : "#BDBDBD"
+                                    Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: searchRoot.folderSearch = !searchRoot.folderSearch
+                                }
+                            }
+
+                            Text {
+                                text: "file"
+                                color: searchRoot.folderSearch ? searchTheme.mutedText : searchTheme.accent
+                                font.pixelSize: 9
+                                horizontalAlignment: Text.AlignHCenter
+                                width: 38
+                            }
+                        }
+
+                    Rectangle {
                     id: searchBox
                     Layout.fillWidth: true
                     Layout.preferredHeight: 60
@@ -400,53 +452,6 @@ ApplicationWindow {
                             }
                         }
 
-                        Column {
-                            Layout.alignment: Qt.AlignVCenter
-                            spacing: 1
-
-                            Text {
-                                text: "folder"
-                                color: searchRoot.folderSearch ? searchTheme.accent : searchTheme.mutedText
-                                font.pixelSize: 9
-                                horizontalAlignment: Text.AlignHCenter
-                                width: 38
-                            }
-
-                            Rectangle {
-                                width: 38
-                                height: 24
-                                radius: 12
-                                color: "#343434"
-                                border.width: 1
-                                border.color: searchRoot.folderSearch ? searchTheme.accent : "#666666"
-
-                                Rectangle {
-                                    width: 16
-                                    height: 16
-                                    radius: 8
-                                    y: 3
-                                    x: searchRoot.folderSearch ? parent.width - width - 3 : 3
-                                    color: searchRoot.folderSearch ? searchTheme.accent : "#BDBDBD"
-                                    Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: searchRoot.folderSearch = !searchRoot.folderSearch
-                                }
-                            }
-
-                            Text {
-                                text: "file"
-                                color: searchRoot.folderSearch ? searchTheme.mutedText : searchTheme.accent
-                                font.pixelSize: 9
-                                horizontalAlignment: Text.AlignHCenter
-                                width: 38
-                            }
-                        }
-
                         Rectangle {
                             width: 30
                             height: 30
@@ -485,6 +490,7 @@ ApplicationWindow {
                         z: -1
                         hoverEnabled: true
                         onClicked: searchInput.forceActiveFocus()
+                    }
                     }
                 }
 
