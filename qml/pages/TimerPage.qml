@@ -15,6 +15,13 @@ Item {
     property bool handleExpanded: false
     property real dailyCardCloudPhase: 0
     property real dailyHandleCloudPhase: 0
+    property bool calendarExpanded: false
+    property bool calendarSettled: false
+    property bool calendarHandleSettled: false
+    property bool calendarHandleExpanded: false
+    property bool calendarWaveVisible: false
+    property real calendarCloudPhase: 0
+    property real calendarHandleCloudPhase: 0
     property int displayedCalendarYear: new Date().getFullYear()
     property int displayedCalendarMonth: new Date().getMonth()
     property var calendarFocusedSeconds: ({})
@@ -195,6 +202,27 @@ Item {
         }
     }
 
+    onCalendarExpandedChanged: {
+        calendarSettleTimer.stop()
+        calendarHandleDelayTimer.stop()
+        calendarHandleSettleTimer.stop()
+        calendarWaveRevealTimer.stop()
+
+        if (calendarExpanded) {
+            calendarWaveVisible = false
+            calendarSettleTimer.start()
+            calendarHandleDelayTimer.start()
+            calendarHandleSettleTimer.start()
+        } else {
+            calendarSettled = false
+            calendarHandleSettled = false
+            calendarCloudPhase = 0
+            calendarHandleCloudPhase = 0
+            calendarWaveVisible = false
+            calendarHandleExpanded = false
+        }
+    }
+
     Timer {
         id: cardSettleTimer
         interval: 900
@@ -205,6 +233,84 @@ Item {
                 focusedTimeText.opacity = 1
                 dateFadeTimer.start()
             }
+        }
+    }
+
+    Timer {
+        id: calendarSettleTimer
+        interval: 900
+        repeat: false
+        onTriggered: {
+            if (root.calendarExpanded) {
+                root.calendarSettled = true
+                calendarWaveRevealTimer.start()
+            }
+        }
+    }
+
+    // Match the daily-card handle's tiny delay before it follows the calendar.
+    Timer {
+        id: calendarHandleDelayTimer
+        interval: 8
+        repeat: false
+        onTriggered: root.calendarHandleExpanded = root.calendarExpanded
+    }
+
+    Timer {
+        id: calendarHandleSettleTimer
+        interval: 908
+        repeat: false
+        onTriggered: {
+            if (root.calendarExpanded)
+                root.calendarHandleSettled = true
+        }
+    }
+
+    Timer {
+        id: calendarWaveRevealTimer
+        interval: 90
+        repeat: false
+        onTriggered: {
+            if (root.calendarExpanded)
+                root.calendarWaveVisible = true
+        }
+    }
+
+    SequentialAnimation {
+        running: root.calendarSettled
+        loops: Animation.Infinite
+        NumberAnimation {
+            target: root
+            property: "calendarCloudPhase"
+            to: 1
+            duration: 3000
+            easing.type: Easing.InOutSine
+        }
+        NumberAnimation {
+            target: root
+            property: "calendarCloudPhase"
+            to: 0
+            duration: 3000
+            easing.type: Easing.InOutSine
+        }
+    }
+
+    SequentialAnimation {
+        running: root.calendarHandleSettled
+        loops: Animation.Infinite
+        NumberAnimation {
+            target: root
+            property: "calendarHandleCloudPhase"
+            to: 1
+            duration: 3000
+            easing.type: Easing.InOutSine
+        }
+        NumberAnimation {
+            target: root
+            property: "calendarHandleCloudPhase"
+            to: 0
+            duration: 3000
+            easing.type: Easing.InOutSine
         }
     }
 
@@ -295,17 +401,33 @@ Item {
     // Calendar swipe follows the pointer and previews adjacent months before release.
     Rectangle {
         id: monthlyCalendarCard
-        anchors.left: parent.left
-        anchors.leftMargin: 22
+        x: root.calendarExpanded ? 22 : -width + 24
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -8
+            + (root.calendarSettled
+               ? Math.sin(root.calendarCloudPhase * 2 * Math.PI) * 3 : 0)
         width: 300
         height: 360
         radius: 16
-        color: theme.surface
-        border.color: theme.border
+        scale: root.calendarExpanded ? 1.02 : 0.96
+        color: Qt.lighter(theme.surface, 1.0 + 0.11 * root.calendarCloudPhase)
+        border.color: Qt.lighter(theme.border, 1.0 + 0.06 * root.calendarCloudPhase)
         border.width: 1
         clip: true
+        z: 4
+
+        Behavior on x {
+            NumberAnimation {
+                duration: 900
+                easing.type: Easing.OutExpo
+            }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: 900
+                easing.type: Easing.OutExpo
+            }
+        }
 
         Item {
             id: calendarViewport
@@ -440,6 +562,35 @@ Item {
                                 property string isoDate: root.calendarIsoDate(dayNumber, monthPage.monthOffset)
                                 property double focusedSeconds: root.calendarCellSeconds(dayNumber, monthPage.monthOffset)
                                 property bool today: root.isToday(dayNumber, monthPage.monthOffset)
+                                property int weekRow: Math.floor(index / 7)
+
+                                opacity: root.calendarWaveVisible ? 1 : 0
+                                Behavior on opacity {
+                                    SequentialAnimation {
+                                        PauseAnimation {
+                                            duration: calendarDayCell.weekRow * 65
+                                        }
+                                        NumberAnimation {
+                                            duration: 240
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+                                }
+
+                                transform: Translate {
+                                    y: root.calendarWaveVisible ? 0 : 7
+                                    Behavior on y {
+                                        SequentialAnimation {
+                                            PauseAnimation {
+                                                duration: calendarDayCell.weekRow * 65
+                                            }
+                                            NumberAnimation {
+                                                duration: 320
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+                                    }
+                                }
 
                                 Rectangle {
                                     anchors.fill: parent
@@ -572,6 +723,76 @@ Item {
                 root.calendarGestureDecided = false
                 root.calendarHorizontalGesture = false
             }
+        }
+    }
+
+    // Mirrored counterpart of the daily-focus handle, attached to the calendar's right edge.
+    Rectangle {
+        id: calendarCardHandle
+        x: monthlyCalendarCard.x + monthlyCalendarCard.width + 6
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -8
+            + (root.calendarHandleSettled
+               ? Math.sin(root.calendarHandleCloudPhase * 2 * Math.PI) * 3 : 0)
+        width: 38
+        height: 54
+        radius: 9
+        scale: calendarHandleHover.containsMouse
+               ? 1.09 : (root.calendarHandleExpanded ? 1.02 : 0.96)
+        color: calendarHandleHover.containsMouse
+               ? Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b, 0.14)
+               : Qt.lighter(theme.surface, 1.0 + 0.11 * root.calendarHandleCloudPhase)
+        border.color: calendarHandleHover.containsMouse
+                      ? theme.accent
+                      : Qt.lighter(theme.border, 1.0 + 0.06 * root.calendarHandleCloudPhase)
+        border.width: calendarHandleHover.containsMouse ? 1.4 : 1
+        z: 5
+
+        Behavior on x {
+            SequentialAnimation {
+                PauseAnimation { duration: 16 }
+                NumberAnimation {
+                    duration: 900
+                    easing.type: Easing.OutExpo
+                }
+            }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: 300
+                easing.type: Easing.OutBack
+            }
+        }
+        Behavior on color { ColorAnimation { duration: 220 } }
+        Behavior on border.color { ColorAnimation { duration: 220 } }
+        Behavior on border.width { NumberAnimation { duration: 180 } }
+
+        Grid {
+            anchors.centerIn: parent
+            columns: 2
+            rows: 3
+            columnSpacing: 4
+            rowSpacing: 4
+
+            Repeater {
+                model: 6
+                delegate: Rectangle {
+                    required property int index
+                    width: 3
+                    height: 3
+                    radius: 1.5
+                    color: calendarHandleHover.containsMouse ? theme.accent : theme.mutedText
+                    Behavior on color { ColorAnimation { duration: 180 } }
+                }
+            }
+        }
+
+        MouseArea {
+            id: calendarHandleHover
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.calendarExpanded = !root.calendarExpanded
         }
     }
 
