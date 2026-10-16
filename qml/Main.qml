@@ -1474,8 +1474,10 @@ ApplicationWindow {
                                         flickableDirection: Flickable.HorizontalAndVerticalFlick
                                         pixelAligned: true
                                         interactive: !pdfPinchHandler.active
-                                        contentWidth: Math.max(width, pdfAnnotationWorkspace.baseSurfaceWidth) * pdfAnnotationWorkspace.zoomFactor
-                                        contentHeight: Math.max(height, pdfAnnotationWorkspace.baseSurfaceHeight) * pdfAnnotationWorkspace.zoomFactor
+                                        // Keep the scroll surface at least viewport-sized when zoomed out,
+                                        // otherwise the document collapses to the left edge.
+                                        contentWidth: Math.max(width, pdfAnnotationWorkspace.baseSurfaceWidth * pdfAnnotationWorkspace.zoomFactor)
+                                        contentHeight: Math.max(height, pdfAnnotationWorkspace.baseSurfaceHeight * pdfAnnotationWorkspace.zoomFactor)
 
                                         // One continuous, zoomable document surface. Each page is rendered independently,
                                         // but every page shares the same document coordinate system and scroll area.
@@ -1496,7 +1498,8 @@ ApplicationWindow {
                                                     readonly property real unscaledPageWidth: pointSize.width * pdfAnnotationWorkspace.basePageScale
                                                     readonly property real unscaledPageHeight: pointSize.height * pdfAnnotationWorkspace.basePageScale
 
-                                                    x: (pdfAnnotationWorkspace.baseSurfaceWidth - unscaledPageWidth) * 0.5 * pdfAnnotationWorkspace.zoomFactor
+                                                    // Center each page within the actual scaled scroll surface.
+                                                    x: (pdfScaledContent.width - unscaledPageWidth * pdfAnnotationWorkspace.zoomFactor) * 0.5
                                                     y: pdfAnnotationWorkspace.pageTop(index) * pdfAnnotationWorkspace.zoomFactor
                                                     width: unscaledPageWidth * pdfAnnotationWorkspace.zoomFactor
                                                     height: unscaledPageHeight * pdfAnnotationWorkspace.zoomFactor
