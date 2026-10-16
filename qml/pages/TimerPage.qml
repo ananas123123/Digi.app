@@ -6,6 +6,7 @@ import "../themes"
 Item {
     id: root
     Theme { id: theme }
+    signal pageSelected(string pageName)
 
     Rectangle {
         anchors.fill: parent
@@ -29,6 +30,28 @@ Item {
                 font.weight: Font.DemiBold
             }
             Item { Layout.fillWidth: true }
+            Button {
+                text: "▤"
+                ToolTip.visible: hovered
+                ToolTip.text: "Resources"
+                implicitWidth: 42
+                implicitHeight: 42
+                flat: true
+                onClicked: root.pageSelected("Resources")
+                background: Rectangle { radius: 10; color: parent.hovered ? theme.surfaceRaised : theme.surface; border.color: theme.border }
+                contentItem: Text { text: parent.text; color: theme.text; font.pixelSize: 17; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            }
+            Button {
+                text: "▥"
+                ToolTip.visible: hovered
+                ToolTip.text: "Analytics"
+                implicitWidth: 42
+                implicitHeight: 42
+                flat: true
+                onClicked: root.pageSelected("Analytics")
+                background: Rectangle { radius: 10; color: parent.hovered ? theme.surfaceRaised : theme.surface; border.color: theme.border }
+                contentItem: Text { text: parent.text; color: theme.text; font.pixelSize: 17; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            }
             Button {
                 id: menuButton
                 text: "☰"
