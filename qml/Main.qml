@@ -948,10 +948,6 @@ ApplicationWindow {
                                         window.refreshLubisExplorerEntries()
                                     }
                                 }
-                                onDoubleClicked: {
-                                    if (!modelData.isFolder)
-                                        searchService.openFile(modelData.path)
-                                }
                             }
                         }
                     }
@@ -1126,7 +1122,7 @@ ApplicationWindow {
                             background: Item {}
                             verticalAlignment: TextInput.AlignVCenter
                             onAccepted: {
-                                searchRoot.results = searchService.search(text, false)
+                                searchRoot.results = searchService.search(text)
                                 searchRoot.currentPage = 0
                                 searchRoot.selectedResultPath = ""
                                 searchRoot.hasSearched = true
