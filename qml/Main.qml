@@ -1115,14 +1115,73 @@ ApplicationWindow {
             readonly property var pageResults: results.slice(currentPage * resultsPerPage, (currentPage + 1) * resultsPerPage)
             property string selectedResultPath: ""
             property string previewText: ""
+            property bool searchPending: false
+
+            function runSearch(query) {
+                var needle = query.trim()
+                searchRoot.hasSearched = needle.length > 0
+                searchRoot.searchPending = false
+                searchRoot.results = []
+                searchRoot.currentPage = 0
+                searchRoot.selectedResultPath = ""
+                searchRoot.previewText = ""
+                searchService.requestSearch(
+                    needle, window.searchCaseSensitive, window.searchIncludeHidden)
+            }
+
+            Timer {
+                id: searchDebounce
+                interval: 240
+                repeat: false
+                onTriggered: searchRoot.runSearch(searchInput.text)
+            }
+
+            Connections {
+                target: searchService
+                function onSearchResultsChanged() {
+                    searchRoot.results = searchService.searchResults
+                    searchRoot.currentPage = 0
+                    resultsList.contentY = 0
+                }
+                function onDropImportFinished(succeeded, message) {
+                    if (searchInput.text.trim().length > 0) {
+                        searchRoot.searchPending = true
+                        searchDebounce.restart()
+                    }
+                }
+            }
+
+            Connections {
+                target: window
+                function onSearchCaseSensitiveChanged() {
+                    if (searchInput.text.trim().length > 0) {
+                        searchRoot.searchPending = true
+                        searchDebounce.restart()
+                    }
+                }
+                function onSearchIncludeHiddenChanged() {
+                    if (searchInput.text.trim().length > 0) {
+                        searchRoot.searchPending = true
+                        searchDebounce.restart()
+                    }
+                }
+            }
 
             ColumnLayout {
                 id: searchColumn
+                property real animatedTopMargin: searchRoot.hasSearched
+                                                   ? 18
+                                                   : Math.max(90, parent.height * 0.19)
+                property real introOffsetY: 14
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.topMargin: searchRoot.hasSearched ? 18 : Math.max(90, parent.height * 0.19)
+                anchors.topMargin: animatedTopMargin
+                Behavior on animatedTopMargin {
+                    NumberAnimation { duration: 380; easing.type: Easing.OutExpo }
+                }
+                transform: Translate { y: searchColumn.introOffsetY }
                 height: searchRoot.hasSearched
-                    ? Math.max(0, parent.height - anchors.topMargin - 24)
+                    ? Math.max(0, parent.height - searchColumn.animatedTopMargin - 24)
                     : implicitHeight
                 // Keep the search controls anchored in a predictable place when results appear.
                 // Animating the anchor margin while the results area expands caused the controls
@@ -1130,7 +1189,6 @@ ApplicationWindow {
                 width: Math.min(900, parent.width - 64)
                 spacing: searchRoot.hasSearched ? 12 : 22
                 opacity: 0
-                y: 14
 
                 Component.onCompleted: {
                     introAnimation.start()
@@ -1139,7 +1197,7 @@ ApplicationWindow {
                 ParallelAnimation {
                     id: introAnimation
                     NumberAnimation { target: searchColumn; property: "opacity"; from: 0; to: 1; duration: 320; easing.type: Easing.OutCubic }
-                    NumberAnimation { target: searchColumn; property: "y"; from: 14; to: 0; duration: 360; easing.type: Easing.OutCubic }
+                    NumberAnimation { target: searchColumn; property: "introOffsetY"; from: 14; to: 0; duration: 360; easing.type: Easing.OutCubic }
                 }
 
                 Item {
@@ -1187,42 +1245,13 @@ ApplicationWindow {
                     color: searchInput.activeFocus ? "#D9363636" : "#A6292929"
                     border.width: searchInput.activeFocus ? 1.5 : 1
                     border.color: searchInput.activeFocus ? "#B8D8BD72" : "#55FFFFFF"
-                    scale: searchRoot.hasSearched ? 0.92 : (searchMouse.containsMouse || searchInput.activeFocus ? 1.012 : 1)
+                    scale: (searchMouse.containsMouse || searchInput.activeFocus) ? 1.006 : 1
 
-                    Behavior on scale { NumberAnimation { duration: 850; easing.type: Easing.OutExpo } }
+                    Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutExpo } }
                     Behavior on color { ColorAnimation { duration: 240 } }
                     Behavior on border.color { ColorAnimation { duration: 240 } }
 
-                    Rectangle {
-                        id: filtersButton
-                        width: 82
-                        height: 42
-                        anchors.right: parent.left
-                        anchors.rightMargin: 12
-                        anchors.verticalCenter: parent.verticalCenter
-                        radius: 12
-                        color: filtersMouse.containsMouse ? "#383838" : "#292929"
-                        border.width: 1
-                        border.color: "#55FFFFFF"
-                        z: 3
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "Filters"
-                            color: searchTheme.text
-                            font.pixelSize: 13
-                        }
-
-                        MouseArea {
-                            id: filtersMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {} // Intentionally non-functional placeholder.
-                        }
-                    }
-
-                    Rectangle {
+remove fake Filters control                    Rectangle {
                         anchors.fill: parent
                         radius: parent.radius
                         color: "transparent"
@@ -1257,11 +1286,22 @@ ApplicationWindow {
                             selectByMouse: true
                             background: Item {}
                             verticalAlignment: TextInput.AlignVCenter
+                            onTextChanged: {
+                                if (text.trim().length === 0) {
+                                    searchDebounce.stop()
+                                    searchRoot.runSearch("")
+                                } else {
+                                    searchRoot.hasSearched = true
+                                    searchRoot.searchPending = true
+                                    searchRoot.results = []
+                                    searchRoot.currentPage = 0
+                                    searchRoot.selectedResultPath = ""
+                                    searchDebounce.restart()
+                                }
+                            }
                             onAccepted: {
-                                searchRoot.results = searchService.search(text)
-                                searchRoot.currentPage = 0
-                                searchRoot.selectedResultPath = ""
-                                searchRoot.hasSearched = true
+                                searchDebounce.stop()
+                                searchRoot.runSearch(text)
                                 searchInput.focus = false
                             }
                         }
@@ -1377,7 +1417,13 @@ ApplicationWindow {
                     id: resultsPanel
                     x: 0
                     width: searchRoot.selectedResultPath ? resultsArea.width * 0.42 : resultsArea.width
-                    height: Math.min(resultsList.contentHeight + (searchRoot.results.length > searchRoot.resultsPerPage ? 58 : 16), resultsArea.height)
+                    height: Math.min(
+                                Math.max(searchRoot.results.length === 0
+                                             ? 72
+                                             : resultsList.contentHeight
+                                               + (searchRoot.results.length > searchRoot.resultsPerPage ? 58 : 16),
+                                         72),
+                                resultsArea.height)
                     radius: 12
                     color: searchTheme.surface
                     border.color: searchTheme.border
@@ -1387,7 +1433,19 @@ ApplicationWindow {
 
                     Text {
                         anchors.centerIn: parent
-                        visible: searchRoot.hasSearched && searchRoot.results.length === 0
+                        visible: searchRoot.hasSearched
+                                 && (searchRoot.searchPending || searchService.searching)
+                        text: "Searching…"
+                        color: searchTheme.mutedText
+                        font.pixelSize: 14
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: searchRoot.hasSearched
+                                 && !searchRoot.searchPending
+                                 && !searchService.searching
+                                 && searchRoot.results.length === 0
                         text: "No results found"
                         color: searchTheme.mutedText
                         font.pixelSize: 14
