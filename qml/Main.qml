@@ -23,8 +23,10 @@ ApplicationWindow {
     property string activePage: "Home"
     property bool settingsOpen: false
     property bool settingsExpanded: false
+    property real settingsBaseY: 0
     property bool profileOpen: false
     property bool profileExpanded: false
+    property real profileBaseY: 0
     property bool demoLoggedIn: false
     property string demoUsername: ""
     property string profileMessage: ""
@@ -76,7 +78,7 @@ ApplicationWindow {
         height: (settingsColumn.implicitHeight + 42) * (window.settingsExpanded ? 2 : 1)
         property bool tuckedByNavigation: sideBar.bannerOpen
         x: window.settingsOpen ? window.width - width - 10 : (tuckedByNavigation ? window.width - 24 : window.width)
-        y: window.height * 0.25 - height / 2
+        y: window.settingsExpanded ? settingsBaseY : window.height * 0.25 - height / 2
         z: 150
         radius: 14
         visible: window.settingsOpen || x < window.width
@@ -85,7 +87,8 @@ ApplicationWindow {
         border.width: 1
         clip: true
         opacity: window.settingsOpen ? 1 : (sideBar.bannerOpen ? 0.55 : 0)
-        Behavior on x { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+        Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutBack } }
+        Behavior on height { NumberAnimation { duration: 520; easing.type: Easing.OutBack } }
         Connections {
             target: sideBar
             function onBannerOpenChanged() {
@@ -104,6 +107,7 @@ ApplicationWindow {
             anchors.leftMargin: 14
             anchors.rightMargin: 14
             anchors.topMargin: 14
+            anchors.bottom: parent.bottom
             anchors.bottomMargin: 32
             spacing: 10
             opacity: window.settingsOpen ? 1 : 0
@@ -185,12 +189,18 @@ ApplicationWindow {
             height: 18
             radius: 8
             color: settingsHandleMouse.containsMouse ? theme.surfaceRaised : "transparent"
-            Row {
+            Column {
                 anchors.centerIn: parent
-                spacing: 4
+                spacing: 3
                 Repeater {
-                    model: 6
-                    delegate: Rectangle { width: 3; height: 3; radius: 2; color: theme.mutedText }
+                    model: 2
+                    delegate: Row {
+                        spacing: 4
+                        Repeater {
+                            model: 3
+                            delegate: Rectangle { width: 3; height: 3; radius: 2; color: theme.mutedText }
+                        }
+                    }
                 }
             }
             MouseArea {
@@ -198,7 +208,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: window.settingsExpanded = !window.settingsExpanded
+                onClicked: { if (!window.settingsExpanded) window.settingsBaseY = contextualSettings.y; window.settingsExpanded = !window.settingsExpanded }
             }
         }
     }
@@ -209,7 +219,7 @@ ApplicationWindow {
         height: contextualSettings.height * (window.profileExpanded ? 2 : 1)
         property bool tuckedByNavigation: sideBar.bannerOpen
         x: window.profileOpen ? 10 : (tuckedByNavigation ? -width + 24 : -width)
-        y: window.height * 0.25 - height / 2
+        y: window.profileExpanded ? profileBaseY : window.height * 0.25 - height / 2
         z: 150
         radius: 14
         visible: window.profileOpen || x > -width
@@ -218,8 +228,8 @@ ApplicationWindow {
         border.width: 1
         clip: true
         opacity: window.profileOpen ? 1 : (sideBar.bannerOpen ? 0.55 : 0)
-        Behavior on x { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
-        Behavior on height { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+        Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutBack } }
+        Behavior on height { NumberAnimation { duration: 520; easing.type: Easing.OutBack } }
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         Connections {
             target: sideBar
@@ -405,7 +415,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: window.profileExpanded = !window.profileExpanded
+                onClicked: { if (!window.profileExpanded) window.profileBaseY = profilePanel.y; window.profileExpanded = !window.profileExpanded }
             }
         }
     }
