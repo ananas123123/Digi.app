@@ -64,17 +64,25 @@ ApplicationWindow {
         id: contextualSettings
         width: 292
         height: settingsColumn.implicitHeight + 28
-        x: window.settingsOpen ? window.width - width - 10 : window.width
-        y: (window.height - height) / 2
+        property bool tuckedByNavigation: sideBar.bannerOpen
+        x: window.settingsOpen ? window.width - width - 10 : (window.width - (tuckedByNavigation ? 24 : 0))
+        y: window.height * 0.25 - height / 2
         z: 150
         radius: 14
         visible: window.settingsOpen || x < window.width
-        color: Qt.rgba(0.12, 0.12, 0.12, 0.88)
+        color: Qt.rgba(0.12, 0.12, 0.12, 0.48)
         border.color: theme.border
         border.width: 1
         clip: true
         opacity: window.settingsOpen ? 1 : 0
         Behavior on x { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+        Connections {
+            target: sideBar
+            function onBannerOpenChanged() {
+                if (sideBar.bannerOpen && window.settingsOpen)
+                    window.settingsOpen = false
+            }
+        }
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         ColumnLayout {
             id: settingsColumn
@@ -86,7 +94,24 @@ ApplicationWindow {
             RowLayout {
                 Layout.fillWidth: true
                 Text { Layout.fillWidth: true; text: window.activePage + " settings"; color: theme.text; font.pixelSize: 16; font.weight: Font.DemiBold }
-                Button { text: "×"; flat: true; onClicked: window.settingsOpen = false }
+                Button {
+                    text: "×"
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    flat: true
+                    onClicked: window.settingsOpen = false
+                    background: Rectangle {
+                        radius: 8
+                        color: parent.hovered ? theme.surfaceRaised : "transparent"
+                    }
+                    contentItem: Text {
+                        text: "×"
+                        color: theme.text
+                        font.pixelSize: 22
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
             }
             Rectangle { Layout.fillWidth: true; height: 1; color: theme.border }
             RowLayout {
