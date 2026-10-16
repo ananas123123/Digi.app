@@ -1365,10 +1365,8 @@ ApplicationWindow {
 
                                         Item {
                                             id: pdfScaledContent
-                                            width: pdfFlickable.width
-                                            height: pdfFlickable.height
-                                            scale: pdfAnnotationWorkspace.zoomFactor
-                                            transformOrigin: Item.TopLeft
+                                            width: pdfFlickable.contentWidth
+                                            height: pdfFlickable.contentHeight
 
                                             PdfMultiPageView {
                                                 id: centeredPdfPage
