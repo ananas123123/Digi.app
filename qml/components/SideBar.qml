@@ -50,7 +50,6 @@ Item {
 
             Repeater {
                 model: [
-                    { label: "Home", symbol: "⌂", revealDelay: 320 },
                     { label: "Search", symbol: "⌕", revealDelay: 220 },
                     { label: "Notes", symbol: "✎", revealDelay: 120 },
                     { label: "Timer", symbol: "◷", revealDelay: 0 },
