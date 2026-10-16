@@ -4,6 +4,7 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <functional>
 #include <QSet>
 #include <QVector>
 
@@ -94,7 +95,6 @@ bool copyFileInChunks(const FileEntry &entry,
                       qint64 totalBytes,
                       int completedFiles,
                       int totalFiles,
-                      QObject *emitter,
                       const std::function<void(const QString &, qint64, qint64, int, int)> &reportProgress)
 {
     if (!QDir().mkpath(QFileInfo(entry.destinationPath).absolutePath()))
@@ -261,7 +261,7 @@ void DropImportWorker::copyItems(QStringList sourcePaths, QString destinationDir
         if (success) {
             for (const FileEntry &file : plan.files) {
                 if (!copyFileInChunks(file, copiedBytes, totalBytes,
-                                      completedFiles, totalFiles, this, reportProgress)) {
+                                      completedFiles, totalFiles, reportProgress)) {
                     success = false;
                     break;
                 }
