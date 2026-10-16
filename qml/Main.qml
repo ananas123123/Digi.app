@@ -1368,8 +1368,25 @@ ApplicationWindow {
                                     property real pageGap: 18
                                     property real pageMargin: 20
                                     property real basePageScale: 1.0
+                                    property var cachedPageTops: []
                                     property real baseSurfaceWidth: Math.max(width, largestPageWidth() * basePageScale + pageMargin * 2)
                                     property real baseSurfaceHeight: totalDocumentHeight()
+
+                                    onBasePageScaleChanged: rebuildPageTops()
+                                    onPageGapChanged: rebuildPageTops()
+                                    onPageMarginChanged: rebuildPageTops()
+
+                                    function rebuildPageTops() {
+                                        var tops = []
+                                        if (centeredPdfDocument.status === PdfDocument.Ready) {
+                                            var top = pageMargin
+                                            for (var i = 0; i < centeredPdfDocument.pageCount; ++i) {
+                                                tops.push(top)
+                                                top += pageSizeAt(i).height * basePageScale + pageGap
+                                            }
+                                        }
+                                        cachedPageTops = tops
+                                    }
 
                                     // Ink is stored per page in unscaled page-local coordinates.
                                     // The page renderer and its ink share the same transform.
@@ -1407,6 +1424,8 @@ ApplicationWindow {
                                     }
 
                                     function pageTop(pageIndex) {
+                                        if (pageIndex >= 0 && pageIndex < cachedPageTops.length)
+                                            return cachedPageTops[pageIndex]
                                         var top = pageMargin
                                         for (var i = 0; i < pageIndex; ++i)
                                             top += pageSizeAt(i).height * basePageScale + pageGap
@@ -1420,16 +1439,29 @@ ApplicationWindow {
                                     readonly property int currentPageIndex: pageIndexAt(viewportCenterDocumentY)
 
                                     function pageIndexAt(documentY) {
-                                        if (centeredPdfDocument.status !== PdfDocument.Ready
-                                                || centeredPdfDocument.pageCount <= 0)
+                                        var count = centeredPdfDocument.pageCount
+                                        if (centeredPdfDocument.status !== PdfDocument.Ready || count <= 0)
                                             return 0
-                                        for (var i = 0; i < centeredPdfDocument.pageCount; ++i) {
-                                            var top = pageTop(i)
-                                            var bottom = top + pageSizeAt(i).height * basePageScale
-                                            if (documentY >= top && documentY <= bottom)
-                                                return i
+                                        if (documentY < pageMargin)
+                                            return 0
+
+                                        // Page tops are cached outside the scroll path, so visible-page lookup
+                                        // is logarithmic instead of repeatedly recalculating every prior page.
+                                        var low = 0
+                                        var high = count - 1
+                                        while (low <= high) {
+                                            var mid = Math.floor((low + high) / 2)
+                                            var top = pageTop(mid)
+                                            var bottom = top + pageSizeAt(mid).height * basePageScale
+                                            if (documentY < top) {
+                                                high = mid - 1
+                                            } else if (documentY > bottom) {
+                                                low = mid + 1
+                                            } else {
+                                                return mid
+                                            }
                                         }
-                                        return documentY < pageMargin ? 0 : centeredPdfDocument.pageCount - 1
+                                        return Math.max(0, Math.min(count - 1, low))
                                     }
 
                                     function totalDocumentHeight() {
@@ -1473,6 +1505,7 @@ ApplicationWindow {
                                                     ? Math.min(1, Math.max(0.1,
                                                         (pdfAnnotationWorkspace.width - pdfAnnotationWorkspace.pageMargin * 2) / widest))
                                                     : 1
+                                                pdfAnnotationWorkspace.rebuildPageTops()
                                             }
                                         }
                                     }
@@ -1494,7 +1527,7 @@ ApplicationWindow {
                                         clip: true
                                         boundsBehavior: Flickable.StopAtBounds
                                         flickableDirection: Flickable.HorizontalAndVerticalFlick
-                                        pixelAligned: true
+                                        pixelAligned: false
                                         interactive: !pdfPinchHandler.active && !inkInputHandler.active
                                         // Keep the scroll area in scaled screen pixels while the document uses a stable,
                                         // unscaled coordinate system. This prevents page geometry from shifting as zoom changes.
