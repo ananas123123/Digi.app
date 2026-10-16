@@ -323,8 +323,6 @@ Item {
                 width: calendarViewport.width * 3
                 height: calendarViewport.height
                 spacing: 0
-                layer.enabled: true
-                layer.smooth: true
 
                 Loader {
                     width: calendarViewport.width
@@ -436,7 +434,7 @@ Item {
                                 id: calendarDayCell
                                 required property int index
                                 width: calendarViewport.width / 7
-                                height: 34
+                                height: 36
 
                                 property string dayNumber: root.calendarCellDay(index, monthPage.monthOffset)
                                 property string isoDate: root.calendarIsoDate(dayNumber, monthPage.monthOffset)
@@ -478,10 +476,11 @@ Item {
                                     width: parent.width
                                     height: 10
                                     text: root.formatCalendarDuration(calendarDayCell.focusedSeconds)
+                                    // Keep empty days clean; show HH:MM only after time is recorded.
                                     visible: calendarDayCell.dayNumber !== ""
-                                    color: calendarDayCell.today ? "#F3C85D"
-                                           : (calendarDayCell.focusedSeconds > 0 ? "#E4B979" : theme.mutedText)
-                                    font.pixelSize: 8
+                                             && calendarDayCell.focusedSeconds > 0
+                                    color: calendarDayCell.today ? "#F3C85D" : "#E4B979"
+                                    font.pixelSize: 9
                                     font.weight: calendarDayCell.focusedSeconds > 0 ? Font.Medium : Font.Normal
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
