@@ -23,7 +23,6 @@ ApplicationWindow {
     property string activePage: "Home"
     property bool settingsOpen: false
     property bool profileOpen: false
-    property bool profileOpen: false
     property bool lightMode: false
     property bool searchCaseSensitive: false
     property bool searchIncludeHidden: false
