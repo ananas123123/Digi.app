@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import "../themes"
 
 Item {
@@ -19,39 +20,57 @@ Item {
     property int displayedCalendarMonth: new Date().getMonth()
     property real calendarSwipeStartX: 0
     property real calendarSwipeStartY: 0
-    property int pendingCalendarOffset: 0
+    property real calendarDragOffset: 0
+    property int calendarCommitOffset: 0
+    property bool calendarGestureDecided: false
+    property bool calendarHorizontalGesture: false
 
-    function changeCalendarMonth(offset) {
-        if (calendarTransition.running || offset === 0)
-            return
-        pendingCalendarOffset = offset
-        calendarTransition.start()
+    function applyCalendarMonthOffset(offset) {
+        var date = new Date(displayedCalendarYear, displayedCalendarMonth + offset, 1)
+        displayedCalendarYear = date.getFullYear()
+        displayedCalendarMonth = date.getMonth()
     }
 
-
-    function calendarMonthTitle() {
-        return Qt.formatDate(new Date(displayedCalendarYear, displayedCalendarMonth, 1), "MMMM yyyy")
+    function calendarMonthDate(offset) {
+        return new Date(displayedCalendarYear, displayedCalendarMonth + offset, 1)
     }
 
-    function calendarFirstWeekday() {
-        return new Date(displayedCalendarYear, displayedCalendarMonth, 1).getDay()
+    function calendarMonthName(offset) {
+        return Qt.formatDate(calendarMonthDate(offset), "MMMM")
     }
 
-    function calendarDaysInMonth() {
-        return new Date(displayedCalendarYear, displayedCalendarMonth + 1, 0).getDate()
+    function calendarYearText(offset) {
+        return Qt.formatDate(calendarMonthDate(offset), "yyyy")
     }
 
-    function calendarCellDay(index) {
-        var day = index - calendarFirstWeekday() + 1
-        return day >= 1 && day <= calendarDaysInMonth() ? day : ""
+    function calendarFirstWeekday(offset) {
+        return calendarMonthDate(offset).getDay()
     }
 
-    function isToday(day) {
+    function calendarDaysInMonth(offset) {
+        var date = calendarMonthDate(offset)
+        return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+    }
+
+    function calendarCellDay(index, offset) {
+        var day = index - calendarFirstWeekday(offset) + 1
+        return day >= 1 && day <= calendarDaysInMonth(offset) ? day : ""
+    }
+
+    function isToday(day, offset) {
         var now = new Date()
+        var month = calendarMonthDate(offset)
         return day !== ""
-                && displayedCalendarYear === now.getFullYear()
-                && displayedCalendarMonth === now.getMonth()
-                && day === now.getDate()
+                && month.getFullYear() === now.getFullYear()
+                && month.getMonth() === now.getMonth()
+                && Number(day) === now.getDate()
+    }
+
+    function isCurrentMonthOffset(offset) {
+        var now = new Date()
+        var month = calendarMonthDate(offset)
+        return month.getFullYear() === now.getFullYear()
+                && month.getMonth() === now.getMonth()
     }
 
     function formattedFocusedTime() {
@@ -183,7 +202,7 @@ Item {
         color: theme.window
     }
 
-    // Simple monthly calendar card, independent of the stopwatch layout.
+    // Calendar swipe follows the pointer and previews adjacent months before release.
     Rectangle {
         id: monthlyCalendarCard
         anchors.left: parent.left
@@ -198,137 +217,253 @@ Item {
         border.width: 1
         clip: true
 
-        SequentialAnimation {
-            id: calendarTransition
+        Item {
+            id: calendarViewport
+            anchors.fill: parent
+            anchors.margins: 18
+            clip: true
 
-            NumberAnimation {
-                target: calendarContent
-                property: "opacity"
-                to: 0
-                duration: 100
-                easing.type: Easing.OutCubic
-            }
+            Row {
+                id: calendarPagesRow
+                x: -calendarViewport.width + root.calendarDragOffset
+                y: 0
+                width: calendarViewport.width * 3
+                height: calendarViewport.height
+                spacing: 0
 
-            ScriptAction {
-                script: {
-                    var date = new Date(root.displayedCalendarYear,
-                                        root.displayedCalendarMonth + root.pendingCalendarOffset, 1)
-                    root.displayedCalendarYear = date.getFullYear()
-                    root.displayedCalendarMonth = date.getMonth()
-                    calendarContentSlide.x = root.pendingCalendarOffset > 0 ? 26 : -26
+                Loader {
+                    width: calendarViewport.width
+                    height: calendarViewport.height
+                    sourceComponent: calendarMonthPageComponent
+                    onLoaded: item.monthOffset = -1
                 }
-            }
 
-            ParallelAnimation {
-                NumberAnimation {
-                    target: calendarContent
-                    property: "opacity"
-                    to: 1
-                    duration: 220
-                    easing.type: Easing.OutCubic
+                Loader {
+                    width: calendarViewport.width
+                    height: calendarViewport.height
+                    sourceComponent: calendarMonthPageComponent
+                    onLoaded: item.monthOffset = 0
                 }
-                NumberAnimation {
-                    target: calendarContentSlide
-                    property: "x"
-                    to: 0
-                    duration: 260
-                    easing.type: Easing.OutCubic
+
+                Loader {
+                    width: calendarViewport.width
+                    height: calendarViewport.height
+                    sourceComponent: calendarMonthPageComponent
+                    onLoaded: item.monthOffset = 1
                 }
             }
         }
 
-        // Swipe handling is confined to the calendar card.
+        Component {
+            id: calendarMonthPageComponent
+
+            Item {
+                id: monthPage
+                property int monthOffset: 0
+                width: calendarViewport.width
+                height: calendarViewport.height
+
+                Column {
+                    anchors.fill: parent
+                    spacing: 14
+
+                    Row {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 5
+                        height: 24
+
+                        Item {
+                            width: monthNameText.implicitWidth
+                            height: parent.height
+
+                            MultiEffect {
+                                anchors.fill: monthNameText
+                                source: monthNameText
+                                shadowEnabled: root.isCurrentMonthOffset(monthPage.monthOffset)
+                                shadowColor: "#E6B83F"
+                                shadowBlur: 0.9
+                                shadowOpacity: 0.95
+                                shadowHorizontalOffset: 0
+                                shadowVerticalOffset: 0
+                                z: 0
+                            }
+
+                            Text {
+                                id: monthNameText
+                                anchors.centerIn: parent
+                                text: root.calendarMonthName(monthPage.monthOffset)
+                                color: root.isCurrentMonthOffset(monthPage.monthOffset)
+                                       ? "#F3C85D" : theme.text
+                                font.pixelSize: 18
+                                font.weight: root.isCurrentMonthOffset(monthPage.monthOffset)
+                                             ? Font.DemiBold : Font.Medium
+                                z: 1
+                            }
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.calendarYearText(monthPage.monthOffset)
+                            color: theme.mutedText
+                            font.pixelSize: 16
+                            font.weight: Font.Normal
+                        }
+                    }
+
+                    Grid {
+                        width: parent.width
+                        columns: 7
+                        spacing: 0
+
+                        Repeater {
+                            model: ["S", "M", "T", "W", "T", "F", "S"]
+                            delegate: Text {
+                                required property string modelData
+                                width: calendarViewport.width / 7
+                                height: 22
+                                text: modelData
+                                color: theme.mutedText
+                                font.pixelSize: 11
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                        }
+                    }
+
+                    Grid {
+                        width: parent.width
+                        columns: 7
+                        rowSpacing: 5
+                        columnSpacing: 0
+
+                        Repeater {
+                            model: 42
+                            delegate: Item {
+                                id: calendarDayCell
+                                required property int index
+                                width: calendarViewport.width / 7
+                                height: 27
+
+                                property string dayNumber: root.calendarCellDay(index, monthPage.monthOffset)
+                                property bool today: root.isToday(dayNumber, monthPage.monthOffset)
+
+                                MultiEffect {
+                                    anchors.fill: dayNumberText
+                                    source: dayNumberText
+                                    shadowEnabled: calendarDayCell.today
+                                    shadowColor: "#E6B83F"
+                                    shadowBlur: 0.95
+                                    shadowOpacity: 1
+                                    shadowHorizontalOffset: 0
+                                    shadowVerticalOffset: 0
+                                    z: 1
+                                }
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 25
+                                    height: 25
+                                    radius: 8
+                                    color: calendarDayCell.today
+                                           ? Qt.rgba(0.83, 0.65, 0.17, 0.12) : "transparent"
+                                    border.color: calendarDayCell.today ? "#D4A72C" : "transparent"
+                                    border.width: calendarDayCell.today ? 1 : 0
+                                    z: 0
+                                }
+
+                                Text {
+                                    id: dayNumberText
+                                    anchors.fill: parent
+                                    text: calendarDayCell.dayNumber
+                                    color: calendarDayCell.today ? "#F3C85D" : theme.text
+                                    font.pixelSize: 12
+                                    font.weight: calendarDayCell.today ? Font.DemiBold : Font.Normal
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    z: 2
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        NumberAnimation {
+            id: calendarSnapAnimation
+            target: root
+            property: "calendarDragOffset"
+            to: root.calendarCommitOffset === 0
+                ? 0 : -root.calendarCommitOffset * calendarViewport.width
+            duration: 220
+            easing.type: Easing.OutCubic
+            onFinished: {
+                if (root.calendarCommitOffset !== 0)
+                    root.applyCalendarMonthOffset(root.calendarCommitOffset)
+                root.calendarDragOffset = 0
+                root.calendarCommitOffset = 0
+            }
+        }
+
+        // The gesture surface is limited to the calendar box.
         MouseArea {
             id: calendarSwipeArea
             anchors.fill: parent
             z: 10
             preventStealing: true
+
             onPressed: function(mouse) {
+                if (calendarSnapAnimation.running) {
+                    calendarSnapAnimation.stop()
+                    root.calendarDragOffset = 0
+                }
+
                 root.calendarSwipeStartX = mouse.x
                 root.calendarSwipeStartY = mouse.y
+                root.calendarGestureDecided = false
+                root.calendarHorizontalGesture = false
+                root.calendarCommitOffset = 0
             }
-            onReleased: function(mouse) {
+
+            onPositionChanged: function(mouse) {
+                if (!pressed)
+                    return
+
                 var dx = mouse.x - root.calendarSwipeStartX
                 var dy = mouse.y - root.calendarSwipeStartY
-                if (Math.abs(dx) >= 45 && Math.abs(dx) > Math.abs(dy) * 1.2)
-                    root.changeCalendarMonth(dx < 0 ? 1 : -1)
-            }
-        }
 
-        Column {
-            id: calendarContent
-            anchors.fill: parent
-            anchors.margins: 18
-            spacing: 14
-            opacity: 1
+                if (!root.calendarGestureDecided
+                        && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+                    root.calendarGestureDecided = true
+                    root.calendarHorizontalGesture = Math.abs(dx) > Math.abs(dy) * 1.15
+                }
 
-            transform: Translate {
-                id: calendarContentSlide
-                x: 0
-            }
-
-            Text {
-                width: parent.width
-                text: root.calendarMonthTitle()
-                color: theme.text
-                font.pixelSize: 19
-                font.weight: Font.Medium
-                horizontalAlignment: Text.AlignHCenter
-            }
-
-            Grid {
-                width: parent.width
-                columns: 7
-                spacing: 0
-
-                Repeater {
-                    model: ["S", "M", "T", "W", "T", "F", "S"]
-                    delegate: Text {
-                        required property string modelData
-                        width: (monthlyCalendarCard.width - 36) / 7
-                        height: 22
-                        text: modelData
-                        color: theme.mutedText
-                        font.pixelSize: 11
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
+                if (root.calendarHorizontalGesture) {
+                    root.calendarDragOffset = Math.max(
+                                -calendarViewport.width,
+                                Math.min(calendarViewport.width, dx))
                 }
             }
 
-            Grid {
-                width: parent.width
-                columns: 7
-                rowSpacing: 5
-                columnSpacing: 0
-
-                Repeater {
-                    model: 42
-                    delegate: Item {
-                        required property int index
-                        width: (monthlyCalendarCard.width - 36) / 7
-                        height: 27
-
-                        property string dayNumber: root.calendarCellDay(index)
-
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: 25
-                            height: 25
-                            radius: 8
-                            color: root.isToday(parent.dayNumber) ? "#D4A72C" : "transparent"
-                        }
-
-                        Text {
-                            anchors.fill: parent
-                            text: parent.dayNumber
-                            color: root.isToday(parent.dayNumber) ? "#17130A" : theme.text
-                            font.pixelSize: 12
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                    }
+            onReleased: {
+                root.calendarCommitOffset = 0
+                if (root.calendarHorizontalGesture) {
+                    var threshold = calendarViewport.width * 0.45
+                    if (root.calendarDragOffset < -threshold)
+                        root.calendarCommitOffset = 1
+                    else if (root.calendarDragOffset > threshold)
+                        root.calendarCommitOffset = -1
                 }
+                calendarSnapAnimation.start()
+                root.calendarGestureDecided = false
+                root.calendarHorizontalGesture = false
+            }
+
+            onCanceled: {
+                root.calendarCommitOffset = 0
+                calendarSnapAnimation.start()
+                root.calendarGestureDecided = false
+                root.calendarHorizontalGesture = false
             }
         }
     }
