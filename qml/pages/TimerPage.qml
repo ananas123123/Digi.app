@@ -338,7 +338,7 @@ Item {
 
         Behavior on x {
             SequentialAnimation {
-                PauseAnimation { duration: 8 }
+                PauseAnimation { duration: 16 }
                 NumberAnimation {
                     duration: 900
                     easing.type: Easing.OutExpo
