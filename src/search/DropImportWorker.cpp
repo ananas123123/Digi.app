@@ -108,6 +108,8 @@ bool copyFileInChunks(const FileEntry &entry,
         return false;
 
     constexpr qint64 chunkSize = 1024 * 1024;
+    const qint64 reportInterval = qMax<qint64>(
+        chunkSize, totalBytes > 0 ? totalBytes / 100 : chunkSize);
     qint64 lastReportedBytes = copiedBytes;
 
     while (!input.atEnd()) {
@@ -128,7 +130,7 @@ bool copyFileInChunks(const FileEntry &entry,
             copiedBytes += written;
         }
 
-        if (copiedBytes - lastReportedBytes >= chunkSize || input.atEnd()) {
+        if (copiedBytes - lastReportedBytes >= reportInterval) {
             reportProgress(QFileInfo(entry.sourcePath).fileName(),
                            copiedBytes, totalBytes, completedFiles, totalFiles);
             lastReportedBytes = copiedBytes;
@@ -266,8 +268,12 @@ void DropImportWorker::copyItems(QStringList sourcePaths, QString destinationDir
                     break;
                 }
                 ++completedFiles;
-                reportProgress(QFileInfo(file.sourcePath).fileName(),
-                               copiedBytes, totalBytes, completedFiles, totalFiles);
+                const int fileProgressInterval = qMax(1, totalFiles / 100);
+                if (completedFiles % fileProgressInterval == 0
+                    || completedFiles == totalFiles) {
+                    reportProgress(QFileInfo(file.sourcePath).fileName(),
+                                   copiedBytes, totalBytes, completedFiles, totalFiles);
+                }
             }
         }
 
