@@ -280,26 +280,6 @@ Item {
                             width: monthNameText.implicitWidth + 28
                             height: 42
 
-                            // Lightweight centered text layers create a soft gold halo
-                            // without an effect texture that can misalign or clip glyphs.
-                            Text {
-                                anchors.centerIn: parent
-                                text: monthNameText.text
-                                color: "#E6B83F"
-                                font.pixelSize: 22
-                                font.weight: Font.DemiBold
-                                opacity: root.isCurrentMonthOffset(monthPage.monthOffset) ? 0.12 : 0
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: monthNameText.text
-                                color: "#E6B83F"
-                                font.pixelSize: 20
-                                font.weight: Font.DemiBold
-                                opacity: root.isCurrentMonthOffset(monthPage.monthOffset) ? 0.22 : 0
-                            }
-
                             Text {
                                 id: monthNameText
                                 anchors.centerIn: parent
