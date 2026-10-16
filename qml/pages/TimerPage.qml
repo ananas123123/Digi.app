@@ -483,9 +483,21 @@ Item {
                     spacing: 8
 
                     Row {
+                        id: calendarMonthHeading
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 5
                         height: 24
+                        opacity: root.calendarWaveVisible ? 1 : 0
+                        Behavior on opacity {
+                            SequentialAnimation {
+                                PauseAnimation { duration: 0 }
+                                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                            }
+                        }
+                        transform: Translate {
+                            y: root.calendarWaveVisible ? 0 : 7
+                            Behavior on y { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                        }
 
                         Item {
                             width: monthNameText.implicitWidth + 28
@@ -513,8 +525,23 @@ Item {
                     }
 
                     Text {
+                        id: calendarMonthTotalLabel
                         width: parent.width
                         height: 13
+                        opacity: root.calendarWaveVisible ? 1 : 0
+                        Behavior on opacity {
+                            SequentialAnimation {
+                                PauseAnimation { duration: 55 }
+                                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                            }
+                        }
+                        transform: Translate {
+                            y: root.calendarWaveVisible ? 0 : 7
+                            Behavior on y { SequentialAnimation {
+                                PauseAnimation { duration: 55 }
+                                NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                            } }
+                        }
                         text: "MONTHLY FOCUS  " + root.formatCalendarDuration(
                                   root.calendarMonthTotalSeconds(monthPage.monthOffset))
                         color: theme.mutedText
@@ -525,9 +552,26 @@ Item {
                     }
 
                     Grid {
+                        id: calendarWeekdayHeader
                         width: parent.width
                         columns: 7
                         spacing: 0
+                        opacity: root.calendarWaveVisible ? 1 : 0
+                        Behavior on opacity {
+                            SequentialAnimation {
+                                PauseAnimation { duration: 110 }
+                                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                            }
+                        }
+                        transform: Translate {
+                            y: root.calendarWaveVisible ? 0 : 7
+                            Behavior on y {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 110 }
+                                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                                }
+                            }
+                        }
 
                         Repeater {
                             model: ["S", "M", "T", "W", "T", "F", "S"]
@@ -568,7 +612,7 @@ Item {
                                 Behavior on opacity {
                                     SequentialAnimation {
                                         PauseAnimation {
-                                            duration: calendarDayCell.weekRow * 65
+                                            duration: (calendarDayCell.weekRow + 2) * 65
                                         }
                                         NumberAnimation {
                                             duration: 240
@@ -582,7 +626,7 @@ Item {
                                     Behavior on y {
                                         SequentialAnimation {
                                             PauseAnimation {
-                                                duration: calendarDayCell.weekRow * 65
+                                                duration: (calendarDayCell.weekRow + 2) * 65
                                             }
                                             NumberAnimation {
                                                 duration: 320
@@ -729,7 +773,7 @@ Item {
     // Mirrored counterpart of the daily-focus handle, attached to the calendar's right edge.
     Rectangle {
         id: calendarCardHandle
-        x: monthlyCalendarCard.x + monthlyCalendarCard.width + 6
+        x: (root.calendarExpanded ? 22 : 24 - monthlyCalendarCard.width) + monthlyCalendarCard.width + 6
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -8
             + (root.calendarHandleSettled
