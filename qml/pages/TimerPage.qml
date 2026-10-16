@@ -36,28 +36,6 @@ Item {
             Item { Layout.fillWidth: true }
 
             Button {
-                text: "▤"
-                ToolTip.visible: hovered
-                ToolTip.text: "Resources"
-                implicitWidth: 42
-                implicitHeight: 42
-                flat: true
-                onClicked: root.pageSelected("Resources")
-                background: Rectangle {
-                    radius: 10
-                    color: parent.hovered ? theme.surfaceRaised : theme.surface
-                    border.color: theme.border
-                }
-                contentItem: Text {
-                    text: parent.text
-                    color: theme.text
-                    font.pixelSize: 17
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-            }
-
-            Button {
                 text: "▥"
                 ToolTip.visible: hovered
                 ToolTip.text: "Analytics"
@@ -79,27 +57,7 @@ Item {
                 }
             }
 
-            Button {
-                text: "▰"
-                ToolTip.visible: hovered
-                ToolTip.text: "Explorer"
-                implicitWidth: 42
-                implicitHeight: 42
-                flat: true
-                onClicked: root.pageSelected("Explorer")
-                background: Rectangle {
-                    radius: 10
-                    color: parent.hovered ? theme.surfaceRaised : theme.surface
-                    border.color: theme.border
-                }
-                contentItem: Text {
-                    text: parent.text
-                    color: theme.text
-                    font.pixelSize: 17
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-            }
+
         }
 
         Item { Layout.fillHeight: true }
