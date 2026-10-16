@@ -1329,11 +1329,6 @@ ApplicationWindow {
                                 Item {
                                     id: pdfAnnotationWorkspace
                                     property real zoomFactor: 1.0
-                                    property real panX: 0
-                                    property real panY: 0
-                                    property real pinchStartZoom: 1.0
-                                    property real pinchStartPanX: 0
-                                    property real pinchStartPanY: 0
 
                                     // Render the selected PDF as a centered page. Annotation
                                     // behavior is intentionally unchanged in this step.
@@ -1347,42 +1342,11 @@ ApplicationWindow {
                                         anchors.fill: parent
                                         clip: true
 
-                                        PdfPageView {
+                                        PdfMultiPageView {
                                             id: centeredPdfPage
+                                            anchors.fill: parent
                                             document: centeredPdfDocument
-                                            width: Math.max(1, Math.min(centeredPageViewport.width - 32, 760))
-                                            height: width * 1.294
-                                            x: (centeredPageViewport.width - width) / 2 + pdfAnnotationWorkspace.panX
-                                            y: (centeredPageViewport.height - height) / 2 + pdfAnnotationWorkspace.panY
-                                            scale: pdfAnnotationWorkspace.zoomFactor
-                                            transformOrigin: Item.Center
-                                        }
-                                    }
-
-                                    // Two-finger touch gestures zoom and move the PDF without
-                                    // turning those gestures into annotation strokes.
-                                    PinchHandler {
-                                        id: pdfPinchHandler
-                                        target: null
-                                        enabled: previewPanel.previewMaximized
-                                        minimumScale: 0.5
-                                        maximumScale: 3.0
-                                        onScaleChanged: {
-                                            pdfAnnotationWorkspace.zoomFactor = Math.max(0.5, Math.min(3.0,
-                                                pdfPinchHandler.scale * pdfAnnotationWorkspace.pinchStartZoom))
-                                        }
-                                        onActiveChanged: {
-                                            if (active) {
-                                                pdfAnnotationWorkspace.pinchStartZoom = pdfAnnotationWorkspace.zoomFactor
-                                                pdfAnnotationWorkspace.pinchStartPanX = pdfAnnotationWorkspace.panX
-                                                pdfAnnotationWorkspace.pinchStartPanY = pdfAnnotationWorkspace.panY
-                                            }
-                                        }
-                                        onTranslationChanged: {
-                                            if (active) {
-                                                pdfAnnotationWorkspace.panX = pdfAnnotationWorkspace.pinchStartPanX + translation.x
-                                                pdfAnnotationWorkspace.panY = pdfAnnotationWorkspace.pinchStartPanY + translation.y
-                                            }
+                                            renderScale: pdfAnnotationWorkspace.zoomFactor
                                         }
                                     }
 
@@ -1402,7 +1366,7 @@ ApplicationWindow {
 
                                         onPaint: {
                                             var ctx = getContext("2d")
-                                            ctx.strokeStyle = "#FFFFFF"
+                                            ctx.strokeStyle = "#111111"
                                             ctx.lineWidth = 3
                                             ctx.lineCap = "round"
                                             ctx.lineJoin = "round"
@@ -1424,7 +1388,7 @@ ApplicationWindow {
                                                 if (!annotationCanvas.drawing)
                                                     return
                                                 var ctx = annotationCanvas.getContext("2d")
-                                                ctx.strokeStyle = "#FFFFFF"
+                                                ctx.strokeStyle = "#111111"
                                                 ctx.lineWidth = 3
                                                 ctx.lineCap = "round"
                                                 ctx.lineJoin = "round"
