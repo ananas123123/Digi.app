@@ -1449,11 +1449,18 @@ ApplicationWindow {
                                                         document: centeredPdfDocument
                                                         currentFrame: pdfPageSlot.index
                                                         asynchronous: true
-                                                        cache: false
+                                                        cache: true
+                                                        smooth: true
                                                         fillMode: Image.PreserveAspectFit
-                                                        sourceSize: Qt.size(
-                                                            Math.max(1, Math.ceil(pdfPageSlot.width * Screen.devicePixelRatio)),
-                                                            Math.max(1, Math.ceil(pdfPageSlot.height * Screen.devicePixelRatio)))
+
+                                                        // Render at a stable resolution. Tying sourceSize to the zoomed
+                                                        // item dimensions forces PDF pages to rerender on every pinch,
+                                                        // producing blank frames and severe delays.
+                                                        sourceSize.width: Math.max(1, Math.ceil(
+                                                            pdfPageSlot.pointSize.width
+                                                            * pdfAnnotationWorkspace.basePageScale
+                                                            * Screen.devicePixelRatio * 1.5))
+                                                        sourceSize.height: 0
                                                     }
                                                 }
                                             }
