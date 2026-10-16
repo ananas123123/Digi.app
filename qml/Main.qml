@@ -1386,13 +1386,23 @@ ApplicationWindow {
                                         minimumScale: 0.5
                                         maximumScale: 3.0
                                         onActiveChanged: {
-                                            if (active)
+                                            if (active) {
                                                 pdfAnnotationWorkspace.pinchStartZoom = pdfAnnotationWorkspace.zoomFactor
+                                                pdfAnnotationWorkspace.pinchStartContentX = centeredPdfPage.contentX
+                                                pdfAnnotationWorkspace.pinchStartContentY = centeredPdfPage.contentY
+                                            }
                                         }
                                         onScaleChanged: {
-                                            if (active)
-                                                pdfAnnotationWorkspace.zoomFactor = Math.max(0.5, Math.min(3.0,
+                                            if (active) {
+                                                var nextZoom = Math.max(0.5, Math.min(3.0,
                                                     pdfAnnotationWorkspace.pinchStartZoom * scale))
+                                                var ratio = nextZoom / pdfAnnotationWorkspace.pinchStartZoom
+                                                pdfAnnotationWorkspace.zoomFactor = nextZoom
+                                                centeredPdfPage.contentX = Math.max(0,
+                                                    (pdfAnnotationWorkspace.pinchStartContentX + centroid.position.x) * ratio - centroid.position.x)
+                                                centeredPdfPage.contentY = Math.max(0,
+                                                    (pdfAnnotationWorkspace.pinchStartContentY + centroid.position.y) * ratio - centroid.position.y)
+                                            }
                                         }
                                     }
 
