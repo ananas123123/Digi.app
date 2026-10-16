@@ -17,6 +17,9 @@ Item {
     property real dailyHandleCloudPhase: 0
     property int displayedCalendarYear: new Date().getFullYear()
     property int displayedCalendarMonth: new Date().getMonth()
+    property var calendarFocusedSeconds: ({})
+    property string calendarTodayIsoDate: ""
+    property double todayFocusedSeconds: 0
     property real calendarSwipeStartX: 0
     property real calendarSwipeStartY: 0
     property real calendarDragOffset: 0
@@ -70,6 +73,81 @@ Item {
         var month = calendarMonthDate(offset)
         return month.getFullYear() === now.getFullYear()
                 && month.getMonth() === now.getMonth()
+    }
+
+    function calendarDateKey(date) {
+        var monthNumber = date.getMonth() + 1
+        var dayNumber = date.getDate()
+        return date.getFullYear() + "-"
+                + (monthNumber < 10 ? "0" : "") + monthNumber + "-"
+                + (dayNumber < 10 ? "0" : "") + dayNumber
+    }
+
+    function calendarIsoDate(day, offset) {
+        if (day === "" || day === null || day === undefined)
+            return ""
+        var month = calendarMonthDate(offset)
+        return calendarDateKey(new Date(month.getFullYear(), month.getMonth(), Number(day)))
+    }
+
+    function formatCalendarDuration(seconds) {
+        var totalMinutes = Math.floor(Math.max(0, Number(seconds) || 0) / 60)
+        var hours = Math.floor(totalMinutes / 60)
+        var minutes = totalMinutes % 60
+        return (hours < 10 ? "0" : "") + hours + ":"
+                + (minutes < 10 ? "0" : "") + minutes
+    }
+
+    function calendarCellSeconds(day, offset) {
+        var key = calendarIsoDate(day, offset)
+        if (key === "")
+            return 0
+        if (key === calendarTodayIsoDate)
+            return todayFocusedSeconds
+        return Number(calendarFocusedSeconds[key] || 0)
+    }
+
+    function calendarMonthTotalSeconds(offset) {
+        var total = 0
+        for (var day = 1; day <= calendarDaysInMonth(offset); ++day) {
+            var key = calendarIsoDate(String(day), offset)
+            total += Number(calendarFocusedSeconds[key] || 0)
+            if (key === calendarTodayIsoDate)
+                total += todayFocusedSeconds - Number(calendarFocusedSeconds[key] || 0)
+        }
+        return total
+    }
+
+    function calendarCellBackground(seconds, today) {
+        if (today)
+            return "#493910"
+        if (seconds <= 0)
+            return Qt.rgba(1, 1, 1, 0.045)
+        var intensity = Math.sqrt(Math.min(1, seconds / 7200))
+        return Qt.rgba(0.88, 0.40, 0.13, 0.08 + intensity * 0.42)
+    }
+
+    function refreshCalendarData() {
+        var values = {}
+        for (var offset = -1; offset <= 1; ++offset) {
+            var daysInMonth = calendarDaysInMonth(offset)
+            for (var day = 1; day <= daysInMonth; ++day) {
+                var key = calendarIsoDate(String(day), offset)
+                values[key] = dailyAnalyticsService.focusedSecondsForDate(key)
+            }
+        }
+        calendarFocusedSeconds = values
+        calendarTodayIsoDate = calendarDateKey(new Date())
+        todayFocusedSeconds = dailyAnalyticsService.focusedSecondsForDate(calendarTodayIsoDate)
+    }
+
+    function refreshTodayCalendarData() {
+        var currentDateKey = calendarDateKey(new Date())
+        if (currentDateKey !== calendarTodayIsoDate) {
+            refreshCalendarData()
+            return
+        }
+        todayFocusedSeconds = dailyAnalyticsService.focusedSecondsForDate(currentDateKey)
     }
 
     function formattedFocusedTime() {
@@ -194,7 +272,17 @@ Item {
         }
     }
 
-    Component.onCompleted: dailyAnalyticsService.refreshToday()
+    Component.onCompleted: {
+        dailyAnalyticsService.refreshToday()
+        refreshCalendarData()
+    }
+
+    Connections {
+        target: dailyAnalyticsService
+        function onDailyStatsChanged() {
+            root.refreshTodayCalendarData()
+        }
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -205,11 +293,11 @@ Item {
     Rectangle {
         id: monthlyCalendarCard
         anchors.left: parent.left
-        anchors.leftMargin: 28
+        anchors.leftMargin: 22
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -8
-        width: 286
-        height: 300
+        width: 300
+        height: 360
         radius: 16
         color: theme.surface
         border.color: theme.border
@@ -269,16 +357,16 @@ Item {
 
                 Column {
                     anchors.fill: parent
-                    spacing: 14
+                    spacing: 8
 
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 5
-                        height: 42
+                        height: 24
 
                         Item {
                             width: monthNameText.implicitWidth + 28
-                            height: 42
+                            height: 24
 
                             Text {
                                 id: monthNameText
@@ -299,6 +387,18 @@ Item {
                             font.pixelSize: 16
                             font.weight: Font.Normal
                         }
+                    }
+
+                    Text {
+                        width: parent.width
+                        height: 13
+                        text: "MONTHLY FOCUS  " + root.formatCalendarDuration(
+                                  root.calendarMonthTotalSeconds(monthPage.monthOffset))
+                        color: theme.mutedText
+                        font.pixelSize: 9
+                        font.letterSpacing: 0.6
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
                     }
 
                     Grid {
@@ -324,7 +424,7 @@ Item {
                     Grid {
                         width: parent.width
                         columns: 7
-                        rowSpacing: 5
+                        rowSpacing: 3
                         columnSpacing: 0
 
                         Repeater {
@@ -333,18 +433,21 @@ Item {
                                 id: calendarDayCell
                                 required property int index
                                 width: calendarViewport.width / 7
-                                height: 27
+                                height: 34
 
                                 property string dayNumber: root.calendarCellDay(index, monthPage.monthOffset)
+                                property string isoDate: root.calendarIsoDate(dayNumber, monthPage.monthOffset)
+                                property double focusedSeconds: root.calendarCellSeconds(dayNumber, monthPage.monthOffset)
                                 property bool today: root.isToday(dayNumber, monthPage.monthOffset)
 
                                 Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 25
-                                    height: 25
-                                    radius: 8
-                                    color: calendarDayCell.today
-                                           ? Qt.rgba(0.83, 0.65, 0.17, 0.12) : "transparent"
+                                    anchors.fill: parent
+                                    anchors.margins: 1
+                                    radius: 6
+                                    visible: calendarDayCell.dayNumber !== ""
+                                    color: root.calendarCellBackground(
+                                               calendarDayCell.focusedSeconds,
+                                               calendarDayCell.today)
                                     border.color: calendarDayCell.today ? "#D4A72C" : "transparent"
                                     border.width: calendarDayCell.today ? 1 : 0
                                     z: 0
@@ -352,11 +455,31 @@ Item {
 
                                 Text {
                                     id: dayNumberText
-                                    anchors.fill: parent
+                                    anchors.top: parent.top
+                                    anchors.topMargin: 2
+                                    width: parent.width
+                                    height: 14
                                     text: calendarDayCell.dayNumber
+                                    visible: calendarDayCell.dayNumber !== ""
                                     color: calendarDayCell.today ? "#F3C85D" : theme.text
-                                    font.pixelSize: 12
+                                    font.pixelSize: 11
                                     font.weight: calendarDayCell.today ? Font.DemiBold : Font.Normal
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    z: 2
+                                }
+
+                                Text {
+                                    anchors.bottom: parent.bottom
+                                    anchors.bottomMargin: 2
+                                    width: parent.width
+                                    height: 10
+                                    text: root.formatCalendarDuration(calendarDayCell.focusedSeconds)
+                                    visible: calendarDayCell.dayNumber !== ""
+                                    color: calendarDayCell.today ? "#F3C85D"
+                                           : (calendarDayCell.focusedSeconds > 0 ? "#E4B979" : theme.mutedText)
+                                    font.pixelSize: 8
+                                    font.weight: calendarDayCell.focusedSeconds > 0 ? Font.Medium : Font.Normal
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
                                     z: 2
@@ -377,8 +500,10 @@ Item {
             duration: 140
             easing.type: Easing.OutCubic
             onFinished: {
-                if (root.calendarCommitOffset !== 0)
+                if (root.calendarCommitOffset !== 0) {
                     root.applyCalendarMonthOffset(root.calendarCommitOffset)
+                    root.refreshCalendarData()
+                }
                 root.calendarDragOffset = 0
                 root.calendarCommitOffset = 0
             }
