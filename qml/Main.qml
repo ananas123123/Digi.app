@@ -110,9 +110,8 @@ ApplicationWindow {
             anchors.leftMargin: 14
             anchors.rightMargin: 14
             anchors.topMargin: 14
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 32
             spacing: 10
+            height: implicitHeight
             opacity: window.settingsOpen ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
             RowLayout {
@@ -184,37 +183,42 @@ ApplicationWindow {
                 Switch { checked: window.timerSoundEnabled; onToggled: window.timerSoundEnabled = checked }
             }
         }
-        Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 8
-            width: 52
-            height: 18
-            radius: 8
-            color: settingsHandleMouse.containsMouse ? theme.surfaceRaised : theme.surface
-            border.color: theme.border
-            border.width: 1
-            Column {
-                anchors.centerIn: parent
-                spacing: 3
-                Repeater {
-                    model: 2
-                    delegate: Row {
-                        spacing: 4
-                        Repeater {
-                            model: 3
-                            delegate: Rectangle { width: 3; height: 3; radius: 2; color: theme.mutedText }
-                        }
-                    }
+
+    }
+
+    Rectangle {
+        id: settingsExpandHandle
+        x: contextualSettings.x + (contextualSettings.width - width) / 2
+        y: contextualSettings.y + contextualSettings.height + 4
+        width: 52
+        height: 22
+        radius: 7
+        z: 151
+        visible: contextualSettings.visible
+        opacity: contextualSettings.opacity
+        color: settingsHandleMouse.containsMouse ? theme.surfaceRaised : theme.surface
+        border.color: theme.border
+        border.width: 1
+        Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
+        Behavior on y { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
+        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+        Column {
+            anchors.centerIn: parent
+            spacing: 3
+            Repeater {
+                model: 2
+                delegate: Row {
+                    spacing: 4
+                    Repeater { model: 3; delegate: Rectangle { width: 3; height: 3; radius: 2; color: theme.mutedText } }
                 }
             }
-            MouseArea {
-                id: settingsHandleMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: window.settingsExpanded = !window.settingsExpanded
-            }
+        }
+        MouseArea {
+            id: settingsHandleMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: window.settingsExpanded = !window.settingsExpanded
         }
     }
 
