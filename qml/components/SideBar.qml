@@ -53,7 +53,6 @@ Item {
                 model: [
                     { label: "Home", symbol: "⌂", revealDelay: 320 },
                     { label: "Search", symbol: "⌕", revealDelay: 220 },
-                    { label: "Explorer", symbol: "▰", revealDelay: 260 },
                     { label: "Notes", symbol: "✎", revealDelay: 120 },
                     { label: "Timer", symbol: "◷", revealDelay: 0 },
                     { label: "Doc", symbol: "▤", revealDelay: 320 }
