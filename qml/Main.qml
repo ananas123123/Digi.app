@@ -1416,7 +1416,9 @@ ApplicationWindow {
                                         anchors.fill: parent
                                         clip: true
                                         boundsBehavior: Flickable.StopAtBounds
-                                        interactive: true
+                                        flickableDirection: Flickable.HorizontalAndVerticalFlick
+                                        pixelAligned: true
+                                        interactive: !pdfPinchHandler.active
                                         contentWidth: Math.max(width, pdfAnnotationWorkspace.baseSurfaceWidth) * pdfAnnotationWorkspace.zoomFactor
                                         contentHeight: Math.max(height, pdfAnnotationWorkspace.baseSurfaceHeight) * pdfAnnotationWorkspace.zoomFactor
 
@@ -1482,6 +1484,10 @@ ApplicationWindow {
                                         id: pdfPinchHandler
                                         target: null
                                         enabled: previewPanel.previewMaximized
+                                        // This handler must never activate for a single touch point.
+                                        minimumPointCount: 2
+                                        maximumPointCount: 2
+                                        grabPermissions: PointerHandler.TakeOverForbidden
                                         minimumScale: 0.5
                                         maximumScale: 4.0
                                         property real previousGestureScale: 1.0
