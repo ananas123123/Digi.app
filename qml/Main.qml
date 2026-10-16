@@ -22,6 +22,7 @@ ApplicationWindow {
     Theme { id: theme }
     property string activePage: "Home"
     property bool settingsOpen: false
+    property bool profileOpen: false
     property bool lightMode: false
     property bool searchCaseSensitive: false
     property bool searchIncludeHidden: false
@@ -60,6 +61,7 @@ ApplicationWindow {
         onClicked: {
             sideBar.bannerOpen = false
             window.settingsOpen = false
+            window.profileOpen = false
         }
     }
 
@@ -82,8 +84,10 @@ ApplicationWindow {
         Connections {
             target: sideBar
             function onBannerOpenChanged() {
-                if (!sideBar.bannerOpen && window.settingsOpen)
+                if (!sideBar.bannerOpen) {
                     window.settingsOpen = false
+                    window.profileOpen = false
+                }
             }
         }
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
@@ -162,6 +166,49 @@ ApplicationWindow {
                 Text { Layout.fillWidth: true; text: "Timer sounds"; color: theme.text; font.pixelSize: 12 }
                 Switch { checked: window.timerSoundEnabled; onToggled: window.timerSoundEnabled = checked }
             }
+        }
+    }
+
+    Rectangle {
+        id: profilePanel
+        width: 292
+        height: profileColumn.implicitHeight + 28
+        property bool tuckedByNavigation: sideBar.bannerOpen
+        x: window.profileOpen ? window.width - width - 10 : (tuckedByNavigation ? window.width - 24 : window.width)
+        y: window.height * 0.25 - height / 2
+        z: 150
+        radius: 14
+        visible: window.profileOpen || x < window.width
+        color: Qt.rgba(0.12, 0.12, 0.12, 0.48)
+        border.color: theme.border
+        border.width: 1
+        clip: true
+        opacity: window.profileOpen ? 1 : (sideBar.bannerOpen ? 0.55 : 0)
+        Behavior on x { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+        ColumnLayout {
+            id: profileColumn
+            anchors.fill: parent
+            anchors.margins: 14
+            spacing: 10
+            opacity: window.profileOpen ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
+            RowLayout {
+                Layout.fillWidth: true
+                Text { Layout.fillWidth: true; text: "Account"; color: theme.text; font.pixelSize: 16; font.weight: Font.DemiBold }
+                Button {
+                    text: "×"
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    flat: true
+                    onClicked: window.profileOpen = false
+                    background: Rectangle { radius: 8; color: parent.hovered ? theme.surfaceRaised : "transparent" }
+                    contentItem: Text { text: "×"; color: theme.text; font.pixelSize: 22; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                }
+            }
+            Rectangle { Layout.fillWidth: true; height: 1; color: theme.border }
+            Text { Layout.fillWidth: true; text: "Profile"; color: theme.accent; font.pixelSize: 12; font.weight: Font.DemiBold }
+            Text { Layout.fillWidth: true; text: "Account options will appear here."; color: theme.text; font.pixelSize: 13; wrapMode: Text.WordWrap }
         }
     }
 
