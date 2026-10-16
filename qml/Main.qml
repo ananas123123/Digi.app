@@ -509,7 +509,11 @@ ApplicationWindow {
             Layout.preferredHeight: visible ? 38 : 0
             visible: window.visibility !== Window.FullScreen
             z: 40
-            radius: 16
+            radius: 0
+            topLeftRadius: window.visibility === Window.FullScreen ? 0 : 16
+            topRightRadius: window.visibility === Window.FullScreen ? 0 : 16
+            bottomLeftRadius: 0
+            bottomRightRadius: 0
             clip: true
             color: theme.titleBar
             border.color: "transparent"
@@ -565,6 +569,9 @@ ApplicationWindow {
                 Rectangle {
                     width: 46
                     height: titleBar.height
+                    radius: 0
+                    topRightRadius: closeArea.containsMouse && window.visibility !== Window.FullScreen ? 16 : 0
+                    bottomRightRadius: 0
                     color: closeArea.containsMouse ? "#b94a4a" : "transparent"
                     MouseArea {
                         id: closeArea
