@@ -1,4 +1,5 @@
 #include "SearchService.h"
+#include "DropImportWorker.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -9,9 +10,28 @@
 #include <QDir>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QMetaObject>
+#include <QSet>
 
 namespace {
 constexpr int maxResults = 200;
+
+QString normalizedPath(QString path)
+{
+    path = QDir::cleanPath(QDir::fromNativeSeparators(path));
+#ifdef Q_OS_WIN
+    path = path.toCaseFolded();
+#endif
+    return path;
+}
+
+bool pathIsInsideOrEqual(const QString &candidate, const QString &root)
+{
+    const QString normalizedCandidate = normalizedPath(candidate);
+    const QString normalizedRoot = normalizedPath(root);
+    return normalizedCandidate == normalizedRoot
+        || normalizedCandidate.startsWith(normalizedRoot + QLatin1Char('/'));
+}
 }
 
 SearchService::SearchService(QObject *parent)
@@ -27,11 +47,140 @@ SearchService::SearchService(QObject *parent)
     m_searchRoot = QDir(dataRoot).filePath(QStringLiteral("search QR"));
     QDir().mkpath(m_searchRoot);
     QDir().mkpath(QDir(dataRoot).filePath(QStringLiteral("cache")));
+
+    m_importWorker = new DropImportWorker;
+    m_importWorker->moveToThread(&m_importThread);
+    connect(&m_importThread, &QThread::finished,
+            m_importWorker, &QObject::deleteLater);
+
+    connect(m_importWorker, &DropImportWorker::progressChanged, this,
+            [this](const QString &currentItem, qint64 copiedBytes, qint64 totalBytes,
+                   int completedFiles, int totalFiles) {
+        const QString status = currentItem.isEmpty()
+            ? QStringLiteral("Preparing files…")
+            : currentItem == QStringLiteral("Preparing files…")
+                || currentItem == QStringLiteral("Finishing…")
+                ? currentItem
+                : QStringLiteral("Importing ") + currentItem + QStringLiteral("…");
+
+        int percent = 0;
+        if (totalBytes > 0) {
+            const double fraction = static_cast<double>(copiedBytes)
+                / static_cast<double>(totalBytes);
+            percent = qBound(0, static_cast<int>(fraction * 100.0), 99);
+        } else if (totalFiles > 0) {
+            percent = qBound(0, completedFiles * 100 / totalFiles, 99);
+        }
+
+        bool changed = false;
+        if (m_importStatus != status) {
+            m_importStatus = status;
+            changed = true;
+        }
+        if (m_importProgressPercent != percent) {
+            m_importProgressPercent = percent;
+            changed = true;
+        }
+        if (changed)
+            emit importProgressChanged();
+    }, Qt::QueuedConnection);
+
+    connect(m_importWorker, &DropImportWorker::copyCompleted, this,
+            [this](int importedCount, int failedCount, const QString &message) {
+        m_importInProgress = false;
+        m_importProgressPercent = 100;
+        m_importStatus = message;
+        emit importStateChanged();
+        emit importProgressChanged();
+        emit dropImportFinished(importedCount > 0 && failedCount == 0, message);
+    }, Qt::QueuedConnection);
+
+    m_importThread.start();
+}
+
+SearchService::~SearchService()
+{
+    m_importThread.quit();
+    m_importThread.wait();
 }
 
 QString SearchService::searchRoot() const
 {
     return QDir::cleanPath(m_searchRoot);
+}
+
+bool SearchService::importInProgress() const
+{
+    return m_importInProgress;
+}
+
+int SearchService::importProgressPercent() const
+{
+    return m_importProgressPercent;
+}
+
+QString SearchService::importStatus() const
+{
+    return m_importStatus;
+}
+
+bool SearchService::importDroppedUrls(const QStringList &urls,
+                                      const QString &destinationDirectory)
+{
+    if (m_importInProgress || urls.isEmpty())
+        return false;
+
+    const QString canonicalRoot = QFileInfo(m_searchRoot).canonicalFilePath();
+    if (canonicalRoot.isEmpty())
+        return false;
+
+    const QString requestedDestination = destinationDirectory.trimmed().isEmpty()
+        ? canonicalRoot : destinationDirectory;
+    const QString canonicalDestination = QFileInfo(requestedDestination).canonicalFilePath();
+    if (canonicalDestination.isEmpty()
+        || !QFileInfo(canonicalDestination).isDir()
+        || !pathIsInsideOrEqual(canonicalDestination, canonicalRoot)) {
+        return false;
+    }
+
+    QStringList sourcePaths;
+    QSet<QString> uniquePaths;
+    for (const QString &urlString : urls) {
+        const QUrl url(urlString);
+        if (!url.isLocalFile())
+            continue;
+
+        const QFileInfo info(url.toLocalFile());
+        const QString canonicalSource = info.canonicalFilePath();
+        if (canonicalSource.isEmpty() || info.isSymLink()
+            || (!info.isFile() && !info.isDir())) {
+            continue;
+        }
+
+        const QString key = normalizedPath(canonicalSource);
+        if (uniquePaths.contains(key))
+            continue;
+
+        uniquePaths.insert(key);
+        sourcePaths.append(canonicalSource);
+    }
+
+    if (sourcePaths.isEmpty())
+        return false;
+
+    m_importInProgress = true;
+    m_importProgressPercent = 0;
+    m_importStatus = QStringLiteral("Preparing files…");
+    emit importStateChanged();
+    emit importProgressChanged();
+
+    QMetaObject::invokeMethod(
+        m_importWorker,
+        "copyItems",
+        Qt::QueuedConnection,
+        Q_ARG(QStringList, sourcePaths),
+        Q_ARG(QString, canonicalDestination));
+    return true;
 }
 
 QVariantList SearchService::search(const QString &query) const
