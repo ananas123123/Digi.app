@@ -1639,6 +1639,8 @@ ApplicationWindow {
                                                 annotationCanvas.requestPaint()
                                             }
                                         }
+                                    }
+
                                     PinchHandler {
                                         id: pdfPinchHandler
                                         target: null
