@@ -1350,10 +1350,12 @@ ApplicationWindow {
                                         PdfPageView {
                                             id: centeredPdfPage
                                             document: centeredPdfDocument
-                                            width: Math.min(centeredPageViewport.width - 32, 760) * pdfAnnotationWorkspace.zoomFactor
+                                            width: Math.max(1, Math.min(centeredPageViewport.width - 32, 760))
                                             height: width * 1.294
                                             x: (centeredPageViewport.width - width) / 2 + pdfAnnotationWorkspace.panX
                                             y: (centeredPageViewport.height - height) / 2 + pdfAnnotationWorkspace.panY
+                                            scale: pdfAnnotationWorkspace.zoomFactor
+                                            transformOrigin: Item.Center
                                         }
                                     }
 
