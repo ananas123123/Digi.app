@@ -1444,11 +1444,14 @@ ApplicationWindow {
                                                     width: unscaledPageWidth * pdfAnnotationWorkspace.zoomFactor
                                                     height: unscaledPageHeight * pdfAnnotationWorkspace.zoomFactor
 
-                                                    PdfPageImage {
+                                                    Image {
                                                         anchors.fill: parent
-                                                        document: centeredPdfDocument
-                                                        page: pdfPageSlot.index
                                                         asynchronous: true
+                                                        cache: false
+                                                        fillMode: Image.Stretch
+                                                        source: centeredPdfDocument.status === PdfDocument.Ready
+                                                                ? centeredPdfDocument.pageImage(pdfPageSlot.index)
+                                                                : ""
                                                         sourceSize: Qt.size(
                                                             Math.max(1, Math.ceil(pdfPageSlot.width * Screen.devicePixelRatio)),
                                                             Math.max(1, Math.ceil(pdfPageSlot.height * Screen.devicePixelRatio)))
