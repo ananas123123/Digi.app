@@ -773,7 +773,7 @@ Item {
     // Mirrored counterpart of the daily-focus handle, attached to the calendar's right edge.
     Rectangle {
         id: calendarCardHandle
-        x: (root.calendarExpanded ? 22 : 24 - monthlyCalendarCard.width) + monthlyCalendarCard.width + 6
+        x: (root.calendarExpanded ? 22 : 24 - monthlyCalendarCard.width) + monthlyCalendarCard.width - 8
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -8
             + (root.calendarHandleSettled
