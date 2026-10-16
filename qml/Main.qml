@@ -1371,6 +1371,24 @@ ApplicationWindow {
                                     property real baseSurfaceWidth: Math.max(width, largestPageWidth() * basePageScale + pageMargin * 2)
                                     property real baseSurfaceHeight: totalDocumentHeight()
 
+                                    // Ink is stored per page in unscaled page-local coordinates.
+                                    // The page renderer and its ink share the same transform.
+                                    property var inkStrokesByPage: []
+                                    property var activeStrokePoints: []
+                                    property int activeStrokePageIndex: -1
+                                    property int inkDirtyPage: -1
+                                    property int inkRevision: 0
+
+                                    function markInkDirty(pageIndex) {
+                                        inkDirtyPage = pageIndex
+                                        inkRevision += 1
+                                    }
+
+                                    function pageLeft(pageIndex) {
+                                        var pageWidth = pageSizeAt(pageIndex).width * basePageScale
+                                        return (baseSurfaceWidth - pageWidth) * 0.5
+                                    }
+
                                     function pageSizeAt(pageIndex) {
                                         if (centeredPdfDocument.status !== PdfDocument.Ready
                                                 || pageIndex < 0
@@ -1398,7 +1416,7 @@ ApplicationWindow {
                                     // Only keep the page at the viewport center and its immediate neighbors
                                     // instantiated. The rest retain layout geometry but no page renderer.
                                     readonly property real viewportCenterDocumentY:
-                                        (pdfFlickable.contentY + pdfFlickable.height * 0.5) / zoomFactor
+                                        (pdfFlickable.contentY + pdfFlickable.height * 0.5 - pdfScaledContent.y) / zoomFactor
                                     readonly property int currentPageIndex: pageIndexAt(viewportCenterDocumentY)
 
                                     function pageIndexAt(documentY) {
@@ -1429,16 +1447,20 @@ ApplicationWindow {
                                         if (Math.abs(boundedZoom - oldZoom) < 0.0001)
                                             return
 
-                                        // Preserve the exact document-space point beneath the gesture centroid.
-                                        var documentX = (pdfFlickable.contentX + anchorX) / oldZoom
-                                        var documentY = (pdfFlickable.contentY + anchorY) / oldZoom
+                                        // The scaled document may be centered inside the viewport when zoomed out.
+                                        // Include that offset so the same page point stays under the pinch centroid.
+                                        var documentX = (pdfFlickable.contentX + anchorX - pdfScaledContent.x) / oldZoom
+                                        var documentY = (pdfFlickable.contentY + anchorY - pdfScaledContent.y) / oldZoom
                                         zoomFactor = boundedZoom
+
+                                        var nextOffsetX = Math.max(0, (pdfFlickable.width - baseSurfaceWidth * boundedZoom) * 0.5)
+                                        var nextOffsetY = Math.max(0, (pdfFlickable.height - baseSurfaceHeight * boundedZoom) * 0.5)
                                         pdfFlickable.contentX = Math.max(0,
                                             Math.min(pdfFlickable.contentWidth - pdfFlickable.width,
-                                                documentX * boundedZoom - anchorX))
+                                                documentX * boundedZoom + nextOffsetX - anchorX))
                                         pdfFlickable.contentY = Math.max(0,
                                             Math.min(pdfFlickable.contentHeight - pdfFlickable.height,
-                                                documentY * boundedZoom - anchorY))
+                                                documentY * boundedZoom + nextOffsetY - anchorY))
                                     }
 
                                     PdfDocument {
@@ -1474,17 +1496,19 @@ ApplicationWindow {
                                         flickableDirection: Flickable.HorizontalAndVerticalFlick
                                         pixelAligned: true
                                         interactive: !pdfPinchHandler.active && !inkInputHandler.active
-                                        // Keep the scroll surface at least viewport-sized when zoomed out,
-                                        // otherwise the document collapses to the left edge.
+                                        // Keep the scroll area in scaled screen pixels while the document uses a stable,
+                                        // unscaled coordinate system. This prevents page geometry from shifting as zoom changes.
                                         contentWidth: Math.max(width, pdfAnnotationWorkspace.baseSurfaceWidth * pdfAnnotationWorkspace.zoomFactor)
                                         contentHeight: Math.max(height, pdfAnnotationWorkspace.baseSurfaceHeight * pdfAnnotationWorkspace.zoomFactor)
 
-                                        // One continuous, zoomable document surface. Each page is rendered independently,
-                                        // but every page shares the same document coordinate system and scroll area.
                                         Item {
                                             id: pdfScaledContent
-                                            width: pdfFlickable.contentWidth
-                                            height: pdfFlickable.contentHeight
+                                            x: Math.max(0, (pdfFlickable.width - width * scale) * 0.5)
+                                            y: Math.max(0, (pdfFlickable.height - height * scale) * 0.5)
+                                            width: pdfAnnotationWorkspace.baseSurfaceWidth
+                                            height: pdfAnnotationWorkspace.baseSurfaceHeight
+                                            scale: pdfAnnotationWorkspace.zoomFactor
+                                            transformOrigin: Item.TopLeft
 
                                             Repeater {
                                                 model: centeredPdfDocument.status === PdfDocument.Ready
@@ -1498,11 +1522,11 @@ ApplicationWindow {
                                                     readonly property real unscaledPageWidth: pointSize.width * pdfAnnotationWorkspace.basePageScale
                                                     readonly property real unscaledPageHeight: pointSize.height * pdfAnnotationWorkspace.basePageScale
 
-                                                    // Center each page within the actual scaled scroll surface.
-                                                    x: (pdfScaledContent.width - unscaledPageWidth * pdfAnnotationWorkspace.zoomFactor) * 0.5
-                                                    y: pdfAnnotationWorkspace.pageTop(index) * pdfAnnotationWorkspace.zoomFactor
-                                                    width: unscaledPageWidth * pdfAnnotationWorkspace.zoomFactor
-                                                    height: unscaledPageHeight * pdfAnnotationWorkspace.zoomFactor
+                                                    // Page geometry stays in document coordinates; the parent scales it for zoom.
+                                                    x: pdfAnnotationWorkspace.pageLeft(index)
+                                                    y: pdfAnnotationWorkspace.pageTop(index)
+                                                    width: unscaledPageWidth
+                                                    height: unscaledPageHeight
 
                                                     // A solid page backing keeps the paper bounds visible even while
                                                     // Qt's asynchronous PDF raster is loading or being refreshed.
@@ -1517,23 +1541,69 @@ ApplicationWindow {
                                                             active: Math.abs(pdfPageSlot.index - pdfAnnotationWorkspace.currentPageIndex) <= 1
                                                             asynchronous: true
                                                             sourceComponent: Component {
-                                                                PdfPageImage {
+                                                                Item {
                                                                     anchors.fill: parent
-                                                                    document: centeredPdfDocument
-                                                                    currentFrame: pdfPageSlot.index
-                                                                    asynchronous: true
-                                                                    cache: true
-                                                                    smooth: true
-                                                                    fillMode: Image.Stretch
 
-                                                                    // Keep PDF raster dimensions stable during gestures.
-                                                                    // Scaling the cached raster on screen avoids expensive rerenders
-                                                                    // on every pinch update; refresh quality only when reloading.
-                                                                    sourceSize.width: Math.max(1, Math.ceil(
-                                                                        pdfPageSlot.pointSize.width
-                                                                        * pdfAnnotationWorkspace.basePageScale
-                                                                        * Screen.devicePixelRatio * 1.25))
-                                                                    sourceSize.height: 0
+                                                                    PdfPageImage {
+                                                                        anchors.fill: parent
+                                                                        document: centeredPdfDocument
+                                                                        currentFrame: pdfPageSlot.index
+                                                                        asynchronous: true
+                                                                        cache: true
+                                                                        smooth: true
+                                                                        fillMode: Image.Stretch
+
+                                                                        // Rasterize at a stable size. Zoom uses the parent transform,
+                                                                        // avoiding expensive PDF rerenders during every pinch update.
+                                                                        sourceSize.width: Math.max(1, Math.ceil(
+                                                                            pdfPageSlot.pointSize.width
+                                                                            * pdfAnnotationWorkspace.basePageScale
+                                                                            * Screen.devicePixelRatio * 1.25))
+                                                                        sourceSize.height: 0
+                                                                    }
+
+                                                                    Canvas {
+                                                                        id: pageInkCanvas
+                                                                        anchors.fill: parent
+                                                                        z: 2
+                                                                        renderTarget: Canvas.Image
+                                                                        antialiasing: true
+
+                                                                        onPaint: {
+                                                                            var ctx = getContext("2d")
+                                                                            ctx.reset()
+                                                                            ctx.lineCap = "round"
+                                                                            ctx.lineJoin = "round"
+                                                                            ctx.strokeStyle = "#202020"
+                                                                            ctx.lineWidth = 2.4
+
+                                                                            function drawStroke(points) {
+                                                                                if (!points || points.length === 0)
+                                                                                    return
+                                                                                ctx.beginPath()
+                                                                                ctx.moveTo(points[0].x, points[0].y)
+                                                                                for (var p = 1; p < points.length; ++p)
+                                                                                    ctx.lineTo(points[p].x, points[p].y)
+                                                                                if (points.length === 1)
+                                                                                    ctx.lineTo(points[0].x + 0.1, points[0].y + 0.1)
+                                                                                ctx.stroke()
+                                                                            }
+
+                                                                            var pageStrokes = pdfAnnotationWorkspace.inkStrokesByPage[pdfPageSlot.index] || []
+                                                                            for (var s = 0; s < pageStrokes.length; ++s)
+                                                                                drawStroke(pageStrokes[s])
+                                                                            if (pdfAnnotationWorkspace.activeStrokePageIndex === pdfPageSlot.index)
+                                                                                drawStroke(pdfAnnotationWorkspace.activeStrokePoints)
+                                                                        }
+
+                                                                        Connections {
+                                                                            target: pdfAnnotationWorkspace
+                                                                            function onInkRevisionChanged() {
+                                                                                if (pdfAnnotationWorkspace.inkDirtyPage === pdfPageSlot.index)
+                                                                                    pageInkCanvas.requestPaint()
+                                                                            }
+                                                                        }
+                                                                    }
                                                                 }
                                                             }
                                                         }
@@ -1543,124 +1613,87 @@ ApplicationWindow {
                                         }
                                     }
 
-                                    // Simple in-memory ink layer. Stroke points are stored in PDF document
-                                    // coordinates so ink stays attached to the page while zooming and scrolling.
-                                    Canvas {
-                                        id: annotationCanvas
-                                        anchors.fill: pdfFlickable
-                                        renderTarget: Canvas.Image
-                                        antialiasing: true
-                                        visible: previewPanel.previewMaximized
-                                        z: 3
+                                    // Stylus input is captured independently of finger and mouse navigation.
+                                    // Points are converted into stable page-local coordinates exactly once.
+                                    DragHandler {
+                                        id: inkInputHandler
+                                        acceptedDevices: PointerDevice.Stylus
+                                        enabled: previewPanel.previewMaximized
+                                        target: null
+                                        grabPermissions: PointerHandler.CanTakeOverFromAnything
 
-                                        property var strokes: []
-                                        property var activeStroke: []
-                                        property color inkColor: "#202020"
-                                        property real inkWidth: 2.4
+                                        property bool strokeStarted: false
 
-                                        function redrawStrokes() {
-                                            requestPaint()
-                                        }
-
-                                        onPaint: {
-                                            var ctx = getContext("2d")
-                                            ctx.reset()
-                                            ctx.lineCap = "round"
-                                            ctx.lineJoin = "round"
-                                            ctx.strokeStyle = inkColor
-                                            ctx.lineWidth = inkWidth * pdfAnnotationWorkspace.zoomFactor
-
-                                            function drawStroke(points) {
-                                                if (!points || points.length === 0)
-                                                    return
-                                                ctx.beginPath()
-                                                ctx.moveTo(points[0].x * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentX,
-                                                           points[0].y * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentY)
-                                                for (var i = 1; i < points.length; ++i)
-                                                    ctx.lineTo(points[i].x * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentX,
-                                                               points[i].y * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentY)
-                                                if (points.length === 1) {
-                                                    ctx.lineTo(points[0].x * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentX + 0.1,
-                                                               points[0].y * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentY + 0.1)
-                                                }
-                                                ctx.stroke()
-                                            }
-
-                                            for (var s = 0; s < strokes.length; ++s)
-                                                drawStroke(strokes[s])
-                                            drawStroke(activeStroke)
-                                        }
-
-                                        Connections {
-                                            target: pdfAnnotationWorkspace
-                                            function onZoomFactorChanged() {
-                                                annotationCanvas.requestPaint()
-                                            }
-                                            function onContentXChanged() {
-                                                annotationCanvas.requestPaint()
-                                            }
-                                            function onContentYChanged() {
-                                                annotationCanvas.requestPaint()
+                                        function documentPoint(position) {
+                                            return {
+                                                x: (pdfFlickable.contentX + position.x - pdfScaledContent.x) / pdfAnnotationWorkspace.zoomFactor,
+                                                y: (pdfFlickable.contentY + position.y - pdfScaledContent.y) / pdfAnnotationWorkspace.zoomFactor
                                             }
                                         }
 
-                                        PointHandler {
-                                            id: inkInputHandler
-                                            acceptedDevices: PointerDevice.Stylus
-                                            enabled: previewPanel.previewMaximized
-                                            target: null
-
-                                            property bool strokeStarted: false
-
-                                            function documentPoint(position) {
-                                                return {
-                                                    x: (pdfFlickable.contentX + position.x) / pdfAnnotationWorkspace.zoomFactor,
-                                                    y: (pdfFlickable.contentY + position.y) / pdfAnnotationWorkspace.zoomFactor
-                                                }
-                                            }
-
-                                            function pageAtPoint(point) {
-                                                if (centeredPdfDocument.status !== PdfDocument.Ready)
-                                                    return -1
-                                                for (var i = 0; i < centeredPdfDocument.pageCount; ++i) {
-                                                    var pageSize = pdfAnnotationWorkspace.pageSizeAt(i)
-                                                    var pageWidth = pageSize.width * pdfAnnotationWorkspace.basePageScale
-                                                    var pageHeight = pageSize.height * pdfAnnotationWorkspace.basePageScale
-                                                    var left = (pdfAnnotationWorkspace.baseSurfaceWidth - pageWidth) * 0.5
-                                                    var top = pdfAnnotationWorkspace.pageTop(i)
-                                                    if (point.x >= left && point.x <= left + pageWidth
-                                                            && point.y >= top && point.y <= top + pageHeight)
-                                                        return i
-                                                }
+                                        function pageAtPoint(point) {
+                                            if (centeredPdfDocument.status !== PdfDocument.Ready)
                                                 return -1
+                                            for (var i = 0; i < centeredPdfDocument.pageCount; ++i) {
+                                                var pageSize = pdfAnnotationWorkspace.pageSizeAt(i)
+                                                var pageWidth = pageSize.width * pdfAnnotationWorkspace.basePageScale
+                                                var pageHeight = pageSize.height * pdfAnnotationWorkspace.basePageScale
+                                                var left = pdfAnnotationWorkspace.pageLeft(i)
+                                                var top = pdfAnnotationWorkspace.pageTop(i)
+                                                if (point.x >= left && point.x <= left + pageWidth
+                                                        && point.y >= top && point.y <= top + pageHeight)
+                                                    return i
                                             }
+                                            return -1
+                                        }
 
-                                            onActiveChanged: {
-                                                if (active) {
-                                                    var startPoint = documentPoint(point.position)
-                                                    strokeStarted = pageAtPoint(startPoint) >= 0
-                                                    annotationCanvas.activeStroke = strokeStarted ? [startPoint] : []
-                                                    annotationCanvas.requestPaint()
-                                                } else if (strokeStarted) {
-                                                    if (annotationCanvas.activeStroke.length > 0) {
-                                                        var nextStrokes = annotationCanvas.strokes.slice()
-                                                        nextStrokes.push(annotationCanvas.activeStroke)
-                                                        annotationCanvas.strokes = nextStrokes
-                                                    }
-                                                    annotationCanvas.activeStroke = []
-                                                    annotationCanvas.requestPaint()
-                                                    strokeStarted = false
+                                        function markCurrentPageDirty() {
+                                            pdfAnnotationWorkspace.markInkDirty(pdfAnnotationWorkspace.activeStrokePageIndex)
+                                        }
+
+                                        onActiveChanged: {
+                                            if (active) {
+                                                var point = documentPoint(centroid.position)
+                                                var pageIndex = pageAtPoint(point)
+                                                strokeStarted = pageIndex >= 0
+                                                pdfAnnotationWorkspace.activeStrokePageIndex = pageIndex
+                                                pdfAnnotationWorkspace.activeStrokePoints = strokeStarted
+                                                    ? [{ x: point.x - pdfAnnotationWorkspace.pageLeft(pageIndex),
+                                                         y: point.y - pdfAnnotationWorkspace.pageTop(pageIndex) }]
+                                                    : []
+                                                if (strokeStarted)
+                                                    markCurrentPageDirty()
+                                            } else if (strokeStarted) {
+                                                var pageIndex = pdfAnnotationWorkspace.activeStrokePageIndex
+                                                var completedPoints = pdfAnnotationWorkspace.activeStrokePoints
+                                                if (completedPoints.length > 0) {
+                                                    var nextPages = pdfAnnotationWorkspace.inkStrokesByPage.slice()
+                                                    var pageStrokes = (nextPages[pageIndex] || []).slice()
+                                                    pageStrokes.push(completedPoints)
+                                                    nextPages[pageIndex] = pageStrokes
+                                                    pdfAnnotationWorkspace.inkStrokesByPage = nextPages
                                                 }
+                                                pdfAnnotationWorkspace.activeStrokePoints = []
+                                                pdfAnnotationWorkspace.activeStrokePageIndex = -1
+                                                pdfAnnotationWorkspace.markInkDirty(pageIndex)
+                                                strokeStarted = false
+                                            } else {
+                                                pdfAnnotationWorkspace.activeStrokePoints = []
+                                                pdfAnnotationWorkspace.activeStrokePageIndex = -1
                                             }
+                                        }
 
-                                            onPointChanged: {
-                                                if (!active || !strokeStarted)
-                                                    return
-                                                var nextPoints = annotationCanvas.activeStroke.slice()
-                                                nextPoints.push(documentPoint(point.position))
-                                                annotationCanvas.activeStroke = nextPoints
-                                                annotationCanvas.requestPaint()
-                                            }
+                                        onCentroidChanged: {
+                                            if (!active || !strokeStarted)
+                                                return
+                                            var point = documentPoint(centroid.position)
+                                            var nextPoints = pdfAnnotationWorkspace.activeStrokePoints.slice()
+                                            nextPoints.push({
+                                                x: point.x - pdfAnnotationWorkspace.pageLeft(pdfAnnotationWorkspace.activeStrokePageIndex),
+                                                y: point.y - pdfAnnotationWorkspace.pageTop(pdfAnnotationWorkspace.activeStrokePageIndex)
+                                            })
+                                            pdfAnnotationWorkspace.activeStrokePoints = nextPoints
+                                            markCurrentPageDirty()
                                         }
                                     }
 
