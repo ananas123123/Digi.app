@@ -10,6 +10,11 @@ Item {
 
     property var controller: null
     property bool dailyCardExpanded: false
+    property bool dailyCardSettled: false
+    property bool dailyHandleSettled: false
+    property bool handleExpanded: false
+    property real dailyCardCloudPhase: 0
+    property real dailyHandleCloudPhase: 0
 
     function formattedFocusedTime() {
         var totalMinutes = Math.floor(dailyAnalyticsService.focusedSecondsToday / 60)
@@ -30,6 +35,93 @@ Item {
         return Qt.formatDate(date, "MMMM ") + day + suffix
     }
 
+    onDailyCardExpandedChanged: {
+        cardSettleTimer.stop()
+        handleDelayTimer.stop()
+        handleSettleTimer.stop()
+
+        if (dailyCardExpanded) {
+            cardSettleTimer.start()
+            handleDelayTimer.start()
+            handleSettleTimer.start()
+        } else {
+            dailyCardSettled = false
+            dailyHandleSettled = false
+            dailyCardCloudPhase = 0
+            dailyHandleCloudPhase = 0
+            dailyCardContent.opacity = 0
+        }
+    }
+
+    Timer {
+        id: cardSettleTimer
+        interval: 900
+        repeat: false
+        onTriggered: {
+            if (root.dailyCardExpanded) {
+                root.dailyCardSettled = true
+                dailyCardContent.opacity = 1
+            }
+        }
+    }
+
+    // The handle starts its own scale change 200 ms after the card begins moving.
+    Timer {
+        id: handleDelayTimer
+        interval: 200
+        repeat: false
+        onTriggered: root.handleExpanded = root.dailyCardExpanded
+    }
+
+    // The card floats first; the handle's cloud motion follows 200 ms later.
+    Timer {
+        id: handleSettleTimer
+        interval: 1100
+        repeat: false
+        onTriggered: {
+            if (root.dailyCardExpanded)
+                root.dailyHandleSettled = true
+        }
+    }
+
+    SequentialAnimation {
+        running: root.dailyCardSettled
+        loops: Animation.Infinite
+        NumberAnimation {
+            target: root
+            property: "dailyCardCloudPhase"
+            to: 1
+            duration: 3000
+            easing.type: Easing.InOutSine
+        }
+        NumberAnimation {
+            target: root
+            property: "dailyCardCloudPhase"
+            to: 0
+            duration: 3000
+            easing.type: Easing.InOutSine
+        }
+    }
+
+    SequentialAnimation {
+        running: root.dailyHandleSettled
+        loops: Animation.Infinite
+        NumberAnimation {
+            target: root
+            property: "dailyHandleCloudPhase"
+            to: 1
+            duration: 3000
+            easing.type: Easing.InOutSine
+        }
+        NumberAnimation {
+            target: root
+            property: "dailyHandleCloudPhase"
+            to: 0
+            duration: 3000
+            easing.type: Easing.InOutSine
+        }
+    }
+
     Component.onCompleted: dailyAnalyticsService.refreshToday()
 
     Rectangle {
@@ -37,7 +129,7 @@ Item {
         color: theme.window
     }
 
-    // The stopwatch remains centered independently of the daily focus card.
+    // The stopwatch remains centered and independent of the daily focus card.
     ColumnLayout {
         anchors.centerIn: parent
         spacing: 26
@@ -107,101 +199,160 @@ Item {
         }
     }
 
-    // The card can be moved without participating in the stopwatch layout.
-    Item {
-        id: dailyCardDock
-        width: dailyFocusedCard.width + dailyCardHandle.width - 8
-        height: dailyFocusedCard.height
-        anchors.right: parent.right
-        anchors.rightMargin: dailyCardExpanded ? 48 : -(dailyFocusedCard.width - 24)
+    // Only a slim strip of this independent card is visible initially.
+    Rectangle {
+        id: dailyFocusedCard
+        x: root.width - (root.dailyCardExpanded ? width + 48 : 24)
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -8
+            + (root.dailyCardSettled
+               ? Math.sin(root.dailyCardCloudPhase * 2 * Math.PI) * 3 : 0)
+        width: 248
+        height: 178
+        radius: 16
+        scale: root.dailyCardExpanded ? 1.02 : 0.96
+        color: Qt.lighter(theme.surface, 1.0 + 0.11 * root.dailyCardCloudPhase)
+        border.color: Qt.lighter(theme.border, 1.0 + 0.06 * root.dailyCardCloudPhase)
+        border.width: 1
+        z: 4
 
-        Rectangle {
-            id: dailyFocusedCard
-            x: dailyCardHandle.width - 8
-            y: 0
-            width: 248
-            height: 178
-            radius: 16
-            color: theme.surface
-            border.color: theme.border
-            border.width: 1
-
-            Column {
-                anchors.fill: parent
-                anchors.leftMargin: 16
-                anchors.rightMargin: 16
-                anchors.topMargin: 16
-                anchors.bottomMargin: 16
-                spacing: 10
-
-                Text {
-                    width: parent.width
-                    height: 58
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: root.formattedFocusedTime()
-                    color: theme.text
-                    font.pixelSize: 40
-                    font.weight: Font.Light
-                    minimumPixelSize: 28
-                    fontSizeMode: Text.Fit
-                }
-
-                Rectangle {
-                    x: 12
-                    width: parent.width - 24
-                    height: 1
-                    color: theme.border
-                }
-
-                Text {
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    text: root.formattedDate()
-                    color: theme.mutedText
-                    font.pixelSize: 13
-                }
+        Behavior on x {
+            NumberAnimation {
+                duration: 900
+                easing.type: Easing.OutExpo
+            }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: 900
+                easing.type: Easing.OutExpo
             }
         }
 
-        Rectangle {
-            id: dailyCardHandle
-            width: 38
-            height: 54
+        Column {
+            id: dailyCardContent
             anchors.left: parent.left
+            anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            radius: 9
-            color: theme.surface
-            border.color: theme.border
-            border.width: 1
-            z: 2
+            anchors.leftMargin: 16
+            anchors.rightMargin: 16
+            spacing: 10
+            opacity: 0
 
-            Grid {
-                anchors.centerIn: parent
-                columns: 2
-                rows: 3
-                columnSpacing: 4
-                rowSpacing: 4
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 500
+                    easing.type: Easing.OutCubic
+                }
+            }
 
-                Repeater {
-                    model: 6
-                    delegate: Rectangle {
-                        required property int index
-                        width: 3
-                        height: 3
-                        radius: 1.5
-                        color: theme.mutedText
+            transform: Translate {
+                y: root.dailyCardSettled ? 0 : 8
+                Behavior on y {
+                    NumberAnimation {
+                        duration: 500
+                        easing.type: Easing.OutCubic
                     }
                 }
             }
 
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.dailyCardExpanded = !root.dailyCardExpanded
+            Text {
+                width: parent.width
+                height: 58
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: root.formattedFocusedTime()
+                color: theme.text
+                font.pixelSize: 40
+                font.weight: Font.Light
+                minimumPixelSize: 28
+                fontSizeMode: Text.Fit
             }
+
+            Rectangle {
+                x: 12
+                width: parent.width - 24
+                height: 1
+                color: Qt.lighter(theme.border, 1.0 + 0.06 * root.dailyCardCloudPhase)
+            }
+
+            Text {
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                text: root.formattedDate()
+                color: theme.mutedText
+                font.pixelSize: 13
+            }
+        }
+    }
+
+    // Separate handle: position follows the card with a deliberate 200 ms delay.
+    Rectangle {
+        id: dailyCardHandle
+        x: root.width - (root.dailyCardExpanded ? dailyFocusedCard.width + 48 : 24) - 30
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -8
+            + (root.dailyHandleSettled
+               ? Math.sin(root.dailyHandleCloudPhase * 2 * Math.PI) * 3 : 0)
+        width: 38
+        height: 54
+        radius: 9
+        scale: handleHover.containsMouse
+               ? 1.09 : (root.handleExpanded ? 1.02 : 0.96)
+        color: handleHover.containsMouse
+               ? Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b, 0.14)
+               : Qt.lighter(theme.surface, 1.0 + 0.11 * root.dailyHandleCloudPhase)
+        border.color: handleHover.containsMouse
+                      ? theme.accent
+                      : Qt.lighter(theme.border, 1.0 + 0.06 * root.dailyHandleCloudPhase)
+        border.width: handleHover.containsMouse ? 1.4 : 1
+        z: 5
+
+        Behavior on x {
+            SequentialAnimation {
+                PauseAnimation { duration: 200 }
+                NumberAnimation {
+                    duration: 900
+                    easing.type: Easing.OutExpo
+                }
+            }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: 300
+                easing.type: Easing.OutBack
+            }
+        }
+        Behavior on color { ColorAnimation { duration: 220 } }
+        Behavior on border.color { ColorAnimation { duration: 220 } }
+        Behavior on border.width { NumberAnimation { duration: 180 } }
+
+        Grid {
+            anchors.centerIn: parent
+            columns: 2
+            rows: 3
+            columnSpacing: 4
+            rowSpacing: 4
+
+            Repeater {
+                model: 6
+                delegate: Rectangle {
+                    required property int index
+                    width: 3
+                    height: 3
+                    radius: 1.5
+                    color: handleHover.containsMouse ? theme.accent : theme.mutedText
+                    Behavior on color { ColorAnimation { duration: 180 } }
+                }
+            }
+        }
+
+        MouseArea {
+            id: handleHover
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.dailyCardExpanded = !root.dailyCardExpanded
         }
     }
 }
