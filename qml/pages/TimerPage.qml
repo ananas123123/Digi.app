@@ -43,6 +43,8 @@ Item {
     }
 
     function resetTimer() {
+        if (timerRunning)
+            tick()
         timerRunning = false
         remainingMilliseconds = durationForMode(mode) * 60 * 1000
         focusedRemainderMilliseconds = 0
@@ -326,7 +328,6 @@ Item {
                 color: theme.text
                 font.pixelSize: 84
                 font.weight: Font.Light
-                font.tabularFigures: true
             }
 
             Text {
