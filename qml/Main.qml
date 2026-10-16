@@ -406,37 +406,43 @@ ApplicationWindow {
                 wrapMode: Text.WordWrap
             }
         }
-        Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 8
-            width: 52
-            height: 18
-            radius: 8
-            color: profileHandleMouse.containsMouse ? theme.surfaceRaised : theme.surface
-            border.color: theme.border
-            border.width: 1
-            Column {
-                anchors.centerIn: parent
-                spacing: 3
-                Repeater {
-                    model: 2
-                    delegate: Row {
-                        spacing: 4
-                        Repeater {
-                            model: 3
-                            delegate: Rectangle { width: 3; height: 3; radius: 2; color: theme.mutedText }
-                        }
-                    }
+
+    }
+
+ 
+    Rectangle {
+        id: profileExpandHandle
+        x: profilePanel.x + (profilePanel.width - width) / 2
+        y: profilePanel.y + profilePanel.height + 4
+        width: 52
+        height: 22
+        radius: 7
+        z: 151
+        visible: profilePanel.visible
+        opacity: profilePanel.opacity
+        color: profileHandleMouse.containsMouse ? theme.surfaceRaised : theme.surface
+        border.color: theme.border
+        border.width: 1
+        Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
+        Behavior on y { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
+        Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+        Column {
+            anchors.centerIn: parent
+            spacing: 3
+            Repeater {
+                model: 2
+                delegate: Row {
+                    spacing: 4
+                    Repeater { model: 3; delegate: Rectangle { width: 3; height: 3; radius: 2; color: theme.mutedText } }
                 }
             }
-            MouseArea {
-                id: profileHandleMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: window.profileExpanded = !window.profileExpanded
-            }
+        }
+        MouseArea {
+            id: profileHandleMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: window.profileExpanded = !window.profileExpanded
         }
     }
 
