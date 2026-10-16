@@ -89,7 +89,7 @@ ApplicationWindow {
         clip: false
         opacity: window.settingsOpen ? 1 : (sideBar.bannerOpen ? 0.55 : 0)
         Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
-        Behavior on height { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
+        Behavior on height { NumberAnimation { duration: 440; easing.type: Easing.OutExpo } }
         Connections {
             target: sideBar
             function onBannerOpenChanged() {
@@ -200,7 +200,7 @@ ApplicationWindow {
         border.color: theme.border
         border.width: 1
         Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
-        Behavior on y { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
+        Behavior on y { NumberAnimation { duration: 455; easing.type: Easing.OutExpo } }
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         Column {
             anchors.centerIn: parent
