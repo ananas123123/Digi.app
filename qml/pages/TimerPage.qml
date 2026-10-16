@@ -133,7 +133,10 @@ Item {
             var daysInMonth = calendarDaysInMonth(offset)
             for (var day = 1; day <= daysInMonth; ++day) {
                 var key = calendarIsoDate(String(day), offset)
-                values[key] = dailyAnalyticsService.focusedSecondsForDate(key)
+                // Keep totals for overlapping months; only read newly exposed dates.
+                values[key] = calendarFocusedSeconds[key] !== undefined
+                        ? calendarFocusedSeconds[key]
+                        : dailyAnalyticsService.focusedSecondsForDate(key)
             }
         }
         calendarFocusedSeconds = values
