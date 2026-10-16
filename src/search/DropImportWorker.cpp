@@ -104,7 +104,7 @@ bool copyFileInChunks(const FileEntry &entry,
     QFile output(entry.destinationPath);
     if (!input.open(QIODevice::ReadOnly))
         return false;
-    if (!output.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    if (!output.open(QIODevice::WriteOnly | QIODevice::NewOnly))
         return false;
 
     constexpr qint64 chunkSize = 1024 * 1024;
