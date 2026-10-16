@@ -1329,6 +1329,7 @@ ApplicationWindow {
                                 Item {
                                     id: pdfAnnotationWorkspace
                                     property real zoomFactor: 1.0
+                                    property real pinchStartZoom: 1.0
 
                                     // Render the selected PDF as a centered page. Annotation
                                     // behavior is intentionally unchanged in this step.
@@ -1347,12 +1348,12 @@ ApplicationWindow {
                                             anchors.fill: parent
                                             document: centeredPdfDocument
                                             renderScale: pdfAnnotationWorkspace.zoomFactor
+                                            scale: 1.0
                                         }
                                     }
 
-                                    // Drawing is enabled only when the preview is maximized.
-                                    // The transparent canvas covers the entire expanded preview,
-                                    // rather than a separate page-shaped drawing surface.
+                                    // Touch input is reserved for PDF navigation/zoom.
+                                    // Ink is temporarily disabled here so gestures cannot become strokes.
                                     Canvas {
                                         id: annotationCanvas
                                         anchors.fill: parent
@@ -1360,48 +1361,22 @@ ApplicationWindow {
                                         antialiasing: true
                                         visible: previewPanel.previewMaximized
                                         z: 3
-                                        property bool drawing: false
-                                        property real lastX: 0
-                                        property real lastY: 0
+                                    }
 
-                                        onPaint: {
-                                            var ctx = getContext("2d")
-                                            ctx.strokeStyle = "#111111"
-                                            ctx.lineWidth = 3
-                                            ctx.lineCap = "round"
-                                            ctx.lineJoin = "round"
+                                    PinchHandler {
+                                        id: pdfPinchHandler
+                                        target: null
+                                        enabled: previewPanel.previewMaximized
+                                        minimumScale: 0.5
+                                        maximumScale: 3.0
+                                        onActiveChanged: {
+                                            if (active)
+                                                pdfAnnotationWorkspace.pinchStartZoom = pdfAnnotationWorkspace.zoomFactor
                                         }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            enabled: previewPanel.previewMaximized
-                                            acceptedButtons: Qt.LeftButton
-                                            hoverEnabled: true
-                                            preventStealing: false
-                                            onPressed: function(mouse) {
-                                                annotationCanvas.drawing = true
-                                                annotationCanvas.lastX = mouse.x
-                                                annotationCanvas.lastY = mouse.y
-                                                mouse.accepted = true
-                                            }
-                                            onPositionChanged: function(mouse) {
-                                                if (!annotationCanvas.drawing)
-                                                    return
-                                                var ctx = annotationCanvas.getContext("2d")
-                                                ctx.strokeStyle = "#111111"
-                                                ctx.lineWidth = 3
-                                                ctx.lineCap = "round"
-                                                ctx.lineJoin = "round"
-                                                ctx.beginPath()
-                                                ctx.moveTo(annotationCanvas.lastX, annotationCanvas.lastY)
-                                                ctx.lineTo(mouse.x, mouse.y)
-                                                ctx.stroke()
-                                                annotationCanvas.lastX = mouse.x
-                                                annotationCanvas.lastY = mouse.y
-                                                annotationCanvas.requestPaint()
-                                            }
-                                            onReleased: annotationCanvas.drawing = false
-                                            onCanceled: annotationCanvas.drawing = false
+                                        onScaleChanged: {
+                                            if (active)
+                                                pdfAnnotationWorkspace.zoomFactor = Math.max(0.5, Math.min(3.0,
+                                                    pdfAnnotationWorkspace.pinchStartZoom * scale))
                                         }
                                     }
 
@@ -1422,7 +1397,7 @@ ApplicationWindow {
                                         anchors.bottom: parent.bottom
                                         anchors.margins: 8
                                         spacing: 6
-                                        z: 5
+                                        z: 10
 
                                         Rectangle {
                                             width: 34
@@ -1434,7 +1409,7 @@ ApplicationWindow {
                                                 id: zoomOutMouse
                                                 anchors.fill: parent
                                                 hoverEnabled: true
-                                                onClicked: pdfAnnotationWorkspace.zoomFactor = Math.max(0.5, pdfAnnotationWorkspace.zoomFactor / 1.2)
+                                                onClicked: { pdfAnnotationWorkspace.zoomFactor = Math.max(0.5, pdfAnnotationWorkspace.zoomFactor / 1.2); mouse.accepted = true }
                                             }
                                         }
                                         Rectangle {
@@ -1459,7 +1434,7 @@ ApplicationWindow {
                                                 id: zoomInMouse
                                                 anchors.fill: parent
                                                 hoverEnabled: true
-                                                onClicked: pdfAnnotationWorkspace.zoomFactor = Math.min(3.0, pdfAnnotationWorkspace.zoomFactor * 1.2)
+                                                onClicked: { pdfAnnotationWorkspace.zoomFactor = Math.min(3.0, pdfAnnotationWorkspace.zoomFactor * 1.2); mouse.accepted = true }
                                             }
                                         }
                                     }
