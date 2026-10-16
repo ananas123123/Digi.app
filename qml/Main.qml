@@ -661,12 +661,39 @@ ApplicationWindow {
         z: 500
         visible: window.universalTimerView
         enabled: !sideBar.bannerOpen
+        property bool idle: false
+
+        function noteActivity() {
+            idle = false
+            idleTimer.restart()
+        }
+
+        Timer {
+            id: idleTimer
+            interval: 60000
+            repeat: false
+            running: universalTimerOverlay.visible && !sideBar.bannerOpen
+            onTriggered: universalTimerOverlay.idle = true
+        }
+
+        Behavior on opacity {
+            NumberAnimation { duration: 700; easing.type: Easing.OutCubic }
+        }
+        opacity: idle ? 0.075 : (sideBar.bannerOpen ? 0.45 : 1)
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.topMargin: 3
+            radius: 14
+            color: Qt.rgba(0, 0, 0, 0.16)
+            z: -1
+        }
 
         Rectangle {
             anchors.fill: parent
             radius: 13
-            color: theme.surface
-            border.color: theme.border
+            color: Qt.rgba(0.10, 0.10, 0.10, 0.16)
+            border.color: Qt.rgba(1, 1, 1, 0.12)
             border.width: 1
 
             RowLayout {
@@ -692,12 +719,15 @@ ApplicationWindow {
                     text: timerControllerInstance.timerRunning ? "Ⅱ" : "▶"
                     ToolTip.visible: hovered
                     ToolTip.text: timerControllerInstance.timerRunning ? "Pause stopwatch" : "Resume stopwatch"
-                    onClicked: timerControllerInstance.toggleTimer()
+                    onClicked: {
+                        universalTimerOverlay.noteActivity()
+                        timerControllerInstance.toggleTimer()
+                    }
 
                     background: Rectangle {
                         radius: 10
-                        color: parent.hovered ? theme.surfaceRaised : "transparent"
-                        border.color: parent.hovered ? theme.border : "transparent"
+                        color: parent.hovered ? Qt.rgba(1, 1, 1, 0.10) : "transparent"
+                        border.color: parent.hovered ? Qt.rgba(1, 1, 1, 0.14) : "transparent"
                     }
 
                     contentItem: Text {
@@ -710,7 +740,18 @@ ApplicationWindow {
                     }
                 }
             }
+
+            HoverHandler {
+                onPointChanged: universalTimerOverlay.noteActivity()
+                onHoveredChanged: if (hovered) universalTimerOverlay.noteActivity()
+            }
         }
+    }
+
+    // Passive input tracking lets activity elsewhere in Lubis wake the compact timer.
+    HoverHandler {
+        target: window
+        onPointChanged: universalTimerOverlay.noteActivity()
     }
 
     Component {
