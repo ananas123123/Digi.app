@@ -1330,6 +1330,22 @@ ApplicationWindow {
                                     id: pdfAnnotationWorkspace
                                     property real zoomFactor: 1.0
                                     property real pinchStartZoom: 1.0
+                                    property real pinchStartContentX: 0
+                                    property real pinchStartContentY: 0
+                                    property real pinchAnchorX: 0
+                                    property real pinchAnchorY: 0
+
+                                    function zoomAt(nextZoom, anchorX, anchorY) {
+                                        var oldZoom = zoomFactor
+                                        var boundedZoom = Math.max(0.5, Math.min(3.0, nextZoom))
+                                        if (Math.abs(boundedZoom - oldZoom) < 0.0001)
+                                            return
+                                        var relativeX = centeredPdfPage.contentX + anchorX
+                                        var relativeY = centeredPdfPage.contentY + anchorY
+                                        zoomFactor = boundedZoom
+                                        centeredPdfPage.contentX = Math.max(0, relativeX * boundedZoom / oldZoom - anchorX)
+                                        centeredPdfPage.contentY = Math.max(0, relativeY * boundedZoom / oldZoom - anchorY)
+                                    }
 
                                     // Render the selected PDF as a centered page. Annotation
                                     // behavior is intentionally unchanged in this step.
@@ -1386,8 +1402,9 @@ ApplicationWindow {
                                             var delta = event.angleDelta.y
                                             if (delta === 0)
                                                 return
-                                            pdfAnnotationWorkspace.zoomFactor = Math.max(0.5, Math.min(3.0,
-                                                pdfAnnotationWorkspace.zoomFactor * (delta > 0 ? 1.1 : 0.9)))
+                                            pdfAnnotationWorkspace.zoomAt(
+                                                pdfAnnotationWorkspace.zoomFactor * (delta > 0 ? 1.1 : 0.9),
+                                                event.position.x, event.position.y)
                                             event.accepted = true
                                         }
                                     }
@@ -1409,7 +1426,7 @@ ApplicationWindow {
                                                 id: zoomOutMouse
                                                 anchors.fill: parent
                                                 hoverEnabled: true
-                                                onClicked: { pdfAnnotationWorkspace.zoomFactor = Math.max(0.5, pdfAnnotationWorkspace.zoomFactor / 1.2); mouse.accepted = true }
+                                                onClicked: pdfAnnotationWorkspace.zoomAt(pdfAnnotationWorkspace.zoomFactor / 1.2, centeredPageViewport.width / 2, centeredPageViewport.height / 2)
                                             }
                                         }
                                         Rectangle {
@@ -1434,7 +1451,7 @@ ApplicationWindow {
                                                 id: zoomInMouse
                                                 anchors.fill: parent
                                                 hoverEnabled: true
-                                                onClicked: { pdfAnnotationWorkspace.zoomFactor = Math.min(3.0, pdfAnnotationWorkspace.zoomFactor * 1.2); mouse.accepted = true }
+                                                onClicked: pdfAnnotationWorkspace.zoomAt(pdfAnnotationWorkspace.zoomFactor * 1.2, centeredPageViewport.width / 2, centeredPageViewport.height / 2)
                                             }
                                         }
                                     }
