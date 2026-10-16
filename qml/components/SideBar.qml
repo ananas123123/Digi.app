@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import "../themes"
 
 Item {
@@ -16,7 +17,6 @@ Item {
 
     Layout.fillWidth: true
     Layout.preferredHeight: 0
-    // Keep the navigation menu as a compact, centered group.
     Layout.leftMargin: 16
     Layout.rightMargin: 16
     z: 10
@@ -100,12 +100,21 @@ Item {
                         onTapped: root.pageSelected(navButton.modelData.label)
                     }
                     background: Rectangle {
+                        id: navButtonBackground
                         radius: 10
                         color: root.activePage === navButton.modelData.label
                                ? (navButton.hovered ? "#E6D8BD72" : theme.accent)
-                               : (navButton.hovered ? theme.surfaceRaised : "transparent")
+                               : (navButton.hovered ? Qt.rgba(0, 0, 0, 0.18) : Qt.rgba(0, 0, 0, 0.10))
                         border.width: root.activePage === navButton.modelData.label ? 0 : 1
                         border.color: navButton.hovered ? "#777777" : "#3d3d3d"
+                        layer.enabled: true
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: "#55000000"
+                            shadowBlur: 0.12
+                            shadowOpacity: 0.16
+                            shadowVerticalOffset: 1
+                        }
                     }
                     contentItem: Item {
                         Row {
@@ -150,9 +159,17 @@ Item {
             y: (banner.height - height) / 2 + (movementShown ? -2 : -20)
             opacity: movementShown ? 1 : 0
             scale: movementShown ? 1 : 0.72
-            color: utilityMouse.containsMouse ? theme.surfaceRaised : theme.surface
+            color: utilityMouse.containsMouse ? Qt.rgba(0, 0, 0, 0.18) : Qt.rgba(0, 0, 0, 0.10)
             border.color: theme.border
             border.width: 1
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: "#55000000"
+                shadowBlur: 0.12
+                shadowOpacity: 0.16
+                shadowVerticalOffset: 1
+            }
             z: 3
             visible: root.bannerOpen || opacity > 0.01
 
@@ -198,8 +215,6 @@ Item {
         }
     }
 
-    // Bind directly to the banner's animated y in both directions. Do not
-    // switch to a fixed y when closing, or the handle will snap into place.
     Rectangle {
         id: revealTab
         width: 64
