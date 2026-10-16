@@ -1043,8 +1043,16 @@ ApplicationWindow {
             if (!window.lubisExplorerOpen)
                 window.openLubisExplorer()
 
-            searchService.importDroppedUrls(urlStrings, window.lubisExplorerCurrentPath)
-            drop.acceptProposedAction()
+            const importStarted = searchService.importDroppedUrls(
+                        urlStrings, window.lubisExplorerCurrentPath)
+            if (importStarted) {
+                // This operation copies into search QR; explicitly keep the
+                // source items at their original location.
+                drop.setDropAction(Qt.CopyAction)
+                drop.accept()
+            } else {
+                drop.accepted = false
+            }
         }
     }
 
