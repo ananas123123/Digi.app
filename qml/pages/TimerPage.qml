@@ -53,6 +53,17 @@ Item {
                 contentItem: Text { text: parent.text; color: theme.text; font.pixelSize: 17; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
             }
             Button {
+                text: "▰"
+                ToolTip.visible: hovered
+                ToolTip.text: "Explorer"
+                implicitWidth: 42
+                implicitHeight: 42
+                flat: true
+                onClicked: root.pageSelected("Explorer")
+                background: Rectangle { radius: 10; color: parent.hovered ? theme.surfaceRaised : theme.surface; border.color: theme.border }
+                contentItem: Text { text: parent.text; color: theme.text; font.pixelSize: 17; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            }
+            Button {
                 id: menuButton
                 text: "☰"
                 font.pixelSize: 22
