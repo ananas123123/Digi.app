@@ -55,7 +55,7 @@ Item {
                     { label: "Search", symbol: "⌕", revealDelay: 220 },
                     { label: "Explorer", symbol: "▰", revealDelay: 260 },
                     { label: "Notes", symbol: "✎", revealDelay: 120 },
-                    { label: "Timer", symbol: "◷", revealDelay: 0, extraPages: ["Resources", "Analytics"] },
+                    { label: "Timer", symbol: "◷", revealDelay: 0 },
                     { label: "Doc", symbol: "▤", revealDelay: 320 }
                 ]
 
@@ -126,22 +126,6 @@ Item {
                                 font.pixelSize: 18
                                 font.weight: Font.Medium
                                 verticalAlignment: Text.AlignVCenter
-                            }
-                            Row {
-                                visible: navButton.modelData.label === "Timer"
-                                spacing: 8
-                                Rectangle {
-                                    width: 28; height: 30; radius: 6
-                                    color: root.activePage === "Resources" ? theme.accent : "transparent"
-                                    Text { anchors.centerIn: parent; text: "▤"; color: root.activePage === "Resources" ? theme.accentText : theme.mutedText; font.pixelSize: 15 }
-                                    TapHandler { onTapped: root.pageSelected("Resources") }
-                                }
-                                Rectangle {
-                                    width: 28; height: 30; radius: 6
-                                    color: root.activePage === "Analytics" ? theme.accent : "transparent"
-                                    Text { anchors.centerIn: parent; text: "▥"; color: root.activePage === "Analytics" ? theme.accentText : theme.mutedText; font.pixelSize: 15 }
-                                    TapHandler { onTapped: root.pageSelected("Analytics") }
-                                }
                             }
                         }
                     }
