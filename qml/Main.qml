@@ -231,7 +231,15 @@ ApplicationWindow {
             }
         }
     }
-    Component { id: notesPage; NotesPage {} }
+    Component {
+        id: notesPage
+        NotesPage {
+            onPageSelected: function(pageName) {
+                window.activePage = pageName
+                sideBar.bannerOpen = false
+            }
+        }
+    }
     Component { id: explorerPage; Item { Rectangle { anchors.fill: parent; color: theme.window } Text { anchors.centerIn: parent; text: "▰"; color: theme.accent; font.pixelSize: 48 } } }
 
     Component {
