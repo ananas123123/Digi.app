@@ -34,12 +34,6 @@ Item {
                 Timer { interval: 40; running: true; onTriggered: homeHeading.entered = true }
                 spacing: 4
                 Text {
-                    text: "Home"
-                    color: theme.text
-                    font.pixelSize: 27
-                    font.weight: Font.DemiBold
-                }
-                Text {
                     text: "A little space to think."
                     color: theme.mutedText
                     font.pixelSize: 14
