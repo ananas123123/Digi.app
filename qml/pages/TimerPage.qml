@@ -233,6 +233,8 @@ Item {
                 width: calendarViewport.width * 3
                 height: calendarViewport.height
                 spacing: 0
+                layer.enabled: true
+                layer.smooth: true
 
                 Loader {
                     width: calendarViewport.width
@@ -273,14 +275,14 @@ Item {
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 5
-                        height: 28
+                        height: 42
 
                         Item {
-                            width: monthNameText.implicitWidth
-                            height: parent.height
+                            width: monthNameText.implicitWidth + 28
+                            height: 42
 
                             MultiEffect {
-                                anchors.fill: monthNameText
+                                anchors.fill: parent
                                 source: monthNameText
                                 shadowEnabled: root.isCurrentMonthOffset(monthPage.monthOffset)
                                 shadowColor: "#E6B83F"
