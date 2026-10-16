@@ -86,16 +86,18 @@ ApplicationWindow {
         color: Qt.rgba(0.12, 0.12, 0.12, 0.48)
         border.color: theme.border
         border.width: 1
-        clip: true
+        clip: false
         opacity: window.settingsOpen ? 1 : (sideBar.bannerOpen ? 0.55 : 0)
-        Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutBack } }
-        Behavior on height { NumberAnimation { duration: 520; easing.type: Easing.OutBack } }
+        Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
+        Behavior on height { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
         Connections {
             target: sideBar
             function onBannerOpenChanged() {
                 if (!sideBar.bannerOpen) {
                     window.settingsOpen = false
                     window.profileOpen = false
+                    window.settingsExpanded = false
+                    window.profileExpanded = false
                 }
             }
         }
@@ -189,7 +191,9 @@ ApplicationWindow {
             width: 52
             height: 18
             radius: 8
-            color: settingsHandleMouse.containsMouse ? theme.surfaceRaised : "transparent"
+            color: settingsHandleMouse.containsMouse ? theme.surfaceRaised : theme.surface
+            border.color: theme.border
+            border.width: 1
             Column {
                 anchors.centerIn: parent
                 spacing: 3
@@ -230,8 +234,8 @@ ApplicationWindow {
         border.width: 1
         clip: true
         opacity: window.profileOpen ? 1 : (sideBar.bannerOpen ? 0.55 : 0)
-        Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutBack } }
-        Behavior on height { NumberAnimation { duration: 520; easing.type: Easing.OutBack } }
+        Behavior on x { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
+        Behavior on height { NumberAnimation { duration: 520; easing.type: Easing.OutExpo } }
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         Connections {
             target: sideBar
@@ -239,6 +243,8 @@ ApplicationWindow {
                 if (!sideBar.bannerOpen) {
                     window.profileOpen = false
                     window.settingsOpen = false
+                    window.profileExpanded = false
+                    window.settingsExpanded = false
                 }
             }
         }
@@ -403,7 +409,9 @@ ApplicationWindow {
             width: 52
             height: 18
             radius: 8
-            color: profileHandleMouse.containsMouse ? theme.surfaceRaised : "transparent"
+            color: profileHandleMouse.containsMouse ? theme.surfaceRaised : theme.surface
+            border.color: theme.border
+            border.width: 1
             Column {
                 anchors.centerIn: parent
                 spacing: 3
@@ -444,7 +452,7 @@ ApplicationWindow {
         border.color: fullscreenMouse.containsMouse ? theme.accent : theme.border
         border.width: 1
         Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutBack } }
+        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutExpo } }
 
         Text {
             anchors.centerIn: parent
