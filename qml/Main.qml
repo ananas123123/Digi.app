@@ -628,6 +628,25 @@ ApplicationWindow {
                            : window.activePage === "Doc" ? docPage
                            : libraryPage
         }
+
+        // Block every interaction with the blurred page while the sidebar menu is open.
+        MouseArea {
+            id: pageInteractionBlocker
+            anchors.fill: pageLoader
+            z: pageLoader.z + 1
+            visible: sideBar.bannerOpen
+            enabled: visible
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: true
+            preventStealing: true
+            focus: visible
+            onPressed: function(mouse) { mouse.accepted = true }
+            onReleased: function(mouse) { mouse.accepted = true }
+            onClicked: function(mouse) { mouse.accepted = true }
+            onDoubleClicked: function(mouse) { mouse.accepted = true }
+            onWheel: function(wheel) { wheel.accepted = true }
+            Keys.onPressed: function(event) { event.accepted = true }
+        }
     }
 
     Component {
