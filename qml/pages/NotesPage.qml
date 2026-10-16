@@ -161,6 +161,12 @@ Item {
         anchors.fill: parent
         contentWidth: zoomLayer.width + root.canvasMargin * 2
         contentHeight: zoomLayer.height + root.canvasMargin * 2
+        Component.onCompleted: Qt.callLater(function() {
+            canvasViewport.contentX = root.clampContentX(
+                        (canvasViewport.contentWidth - canvasViewport.width) / 2)
+            canvasViewport.contentY = root.clampContentY(
+                        (canvasViewport.contentHeight - canvasViewport.height) / 2)
+        })
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.HorizontalAndVerticalFlick
         interactive: false
