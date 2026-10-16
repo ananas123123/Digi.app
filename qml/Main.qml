@@ -1227,6 +1227,7 @@ ApplicationWindow {
                                 onClicked: window.openLubisExplorer()
                             }
                         }
+                    }
                 }
 
                 Item {
