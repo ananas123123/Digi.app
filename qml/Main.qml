@@ -1601,7 +1601,7 @@ ApplicationWindow {
                                         DragHandler {
                                             id: inkInputHandler
                                             acceptedDevices: PointerDevice.Stylus
-                                            enabled: previewPanel.previewMaximized && active
+                                            enabled: previewPanel.previewMaximized
                                             target: null
                                             grabPermissions: PointerHandler.CanTakeOverFromAnything
 
@@ -1635,7 +1635,7 @@ ApplicationWindow {
                                                 if (!active || !strokeStarted)
                                                     return
                                                 var nextPoints = annotationCanvas.activeStroke.slice()
-                                                nextPoints.push(documentPoint(point.position))
+                                                nextPoints.push(documentPoint(centroid.position))
                                                 annotationCanvas.activeStroke = nextPoints
                                                 annotationCanvas.requestPaint()
                                             }
