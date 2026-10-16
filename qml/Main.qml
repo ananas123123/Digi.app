@@ -23,6 +23,7 @@ ApplicationWindow {
     property string activePage: "Home"
     property bool settingsOpen: false
     property bool profileOpen: false
+    property bool profileOpen: false
     property bool lightMode: false
     property bool searchCaseSensitive: false
     property bool searchIncludeHidden: false
@@ -174,7 +175,7 @@ ApplicationWindow {
         width: 292
         height: profileColumn.implicitHeight + 28
         property bool tuckedByNavigation: sideBar.bannerOpen
-        x: window.profileOpen ? window.width - width - 10 : (tuckedByNavigation ? window.width - 24 : window.width)
+        x: window.profileOpen ? 10 : (tuckedByNavigation ? 0 : -width + 24)
         y: window.height * 0.25 - height / 2
         z: 150
         radius: 14
@@ -186,6 +187,15 @@ ApplicationWindow {
         opacity: window.profileOpen ? 1 : (sideBar.bannerOpen ? 0.55 : 0)
         Behavior on x { NumberAnimation { duration: 420; easing.type: Easing.OutCubic } }
         Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+        Connections {
+            target: sideBar
+            function onBannerOpenChanged() {
+                if (!sideBar.bannerOpen) {
+                    window.profileOpen = false
+                    window.settingsOpen = false
+                }
+            }
+        }
         ColumnLayout {
             id: profileColumn
             anchors.fill: parent
@@ -347,15 +357,12 @@ ApplicationWindow {
             onPageSelected: function(pageName) {
                 window.activePage = pageName
                 window.settingsOpen = false
+                window.profileOpen = false
                 sideBar.bannerOpen = false
             }
             onFullscreenRequested: window.toggleFullscreen()
-            onSettingsRequested: {
-                if (window.activePage === "Home" || window.activePage === "Search")
-                    window.settingsOpen = !window.settingsOpen
-                else
-                    window.settingsOpen = !window.settingsOpen
-            }
+            onSettingsRequested: window.settingsOpen = !window.settingsOpen
+            onProfileRequested: window.profileOpen = !window.profileOpen
             clip: false
         }
 
