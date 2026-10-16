@@ -1,4 +1,5 @@
 #include <QGuiApplication>
+#include <QQuickWindow>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QCoreApplication>
@@ -52,6 +53,7 @@ void writeRuntimeLog(QtMsgType type, const QMessageLogContext &context, const QS
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
+    QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
     qInstallMessageHandler(writeRuntimeLog);
     QCoreApplication::setApplicationName("Lubis");
     QCoreApplication::setOrganizationName("Lubis");
