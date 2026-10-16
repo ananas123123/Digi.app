@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Effects
 import "../themes"
 
 Item {
@@ -281,16 +280,24 @@ Item {
                             width: monthNameText.implicitWidth + 28
                             height: 42
 
-                            MultiEffect {
-                                anchors.fill: parent
-                                source: monthNameText
-                                shadowEnabled: root.isCurrentMonthOffset(monthPage.monthOffset)
-                                shadowColor: "#E6B83F"
-                                shadowBlur: 0.9
-                                shadowOpacity: 0.95
-                                shadowHorizontalOffset: 0
-                                shadowVerticalOffset: 0
-                                z: 0
+                            // Lightweight centered text layers create a soft gold halo
+                            // without an effect texture that can misalign or clip glyphs.
+                            Text {
+                                anchors.centerIn: parent
+                                text: monthNameText.text
+                                color: "#E6B83F"
+                                font.pixelSize: 22
+                                font.weight: Font.DemiBold
+                                opacity: root.isCurrentMonthOffset(monthPage.monthOffset) ? 0.12 : 0
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: monthNameText.text
+                                color: "#E6B83F"
+                                font.pixelSize: 20
+                                font.weight: Font.DemiBold
+                                opacity: root.isCurrentMonthOffset(monthPage.monthOffset) ? 0.22 : 0
                             }
 
                             Text {
@@ -302,7 +309,6 @@ Item {
                                 font.pixelSize: 18
                                 font.weight: root.isCurrentMonthOffset(monthPage.monthOffset)
                                              ? Font.DemiBold : Font.Medium
-                                z: 1
                             }
                         }
 
