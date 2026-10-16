@@ -1604,20 +1604,18 @@ ApplicationWindow {
                                             }
                                         }
 
-                                        DragHandler {
+                                        PointHandler {
                                             id: inkInputHandler
                                             acceptedDevices: PointerDevice.Stylus
                                             enabled: previewPanel.previewMaximized
                                             target: null
-                                            grabPermissions: PointerHandler.CanTakeOverFromAnything
 
                                             property bool strokeStarted: false
 
                                             function documentPoint(position) {
-                                                var viewportPoint = inkInputHandler.mapToItem(pdfFlickable, position.x, position.y)
                                                 return {
-                                                    x: (pdfFlickable.contentX + viewportPoint.x) / pdfAnnotationWorkspace.zoomFactor,
-                                                    y: (pdfFlickable.contentY + viewportPoint.y) / pdfAnnotationWorkspace.zoomFactor
+                                                    x: (pdfFlickable.contentX + position.x) / pdfAnnotationWorkspace.zoomFactor,
+                                                    y: (pdfFlickable.contentY + position.y) / pdfAnnotationWorkspace.zoomFactor
                                                 }
                                             }
 
@@ -1639,7 +1637,7 @@ ApplicationWindow {
 
                                             onActiveChanged: {
                                                 if (active) {
-                                                    var startPoint = documentPoint(centroid.position)
+                                                    var startPoint = documentPoint(point.position)
                                                     strokeStarted = pageAtPoint(startPoint) >= 0
                                                     annotationCanvas.activeStroke = strokeStarted ? [startPoint] : []
                                                     annotationCanvas.requestPaint()
@@ -1655,11 +1653,11 @@ ApplicationWindow {
                                                 }
                                             }
 
-                                            onCentroidChanged: {
+                                            onPointChanged: {
                                                 if (!active || !strokeStarted)
                                                     return
                                                 var nextPoints = annotationCanvas.activeStroke.slice()
-                                                nextPoints.push(documentPoint(centroid.position))
+                                                nextPoints.push(documentPoint(point.position))
                                                 annotationCanvas.activeStroke = nextPoints
                                                 annotationCanvas.requestPaint()
                                             }
