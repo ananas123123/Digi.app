@@ -1622,15 +1622,16 @@ ApplicationWindow {
                                                 }
                                             }
                                         }
-                                    }
 
                                     // Stylus input is captured independently of finger and mouse navigation.
                                     // Points are converted into stable page-local coordinates exactly once.
                                     DragHandler {
                                         id: inkInputHandler
-                                        acceptedDevices: PointerDevice.Stylus
+                                        acceptedDevices: PointerDevice.Stylus | PointerDevice.TouchScreen
+                                        acceptedPointerTypes: PointerDevice.Pen
                                         enabled: previewPanel.previewMaximized
                                         target: null
+                                        dragThreshold: 0
                                         grabPermissions: PointerHandler.CanTakeOverFromAnything
 
                                         property bool strokeStarted: false
@@ -1708,6 +1709,157 @@ ApplicationWindow {
                                         }
                                     }
 
+                                    }
+
+                                    PinchHandler {
+                                        id: pdfPinchHandler
+                                        target: null
+                                        enabled: previewPanel.previewMaximized
+                                        acceptedDevices: PointerDevice.TouchScreen | PointerDevice.TouchPad
+                                        minimumPointCount: 2
+                                        maximumPointCount: 2
+                                        minimumScale: 0.5
+                                        maximumScale: 4.0
+                                        property real previousGestureScale: 1.0
+
+                                        onActiveChanged: {
+                                            previousGestureScale = active ? scale : 1.0
+                                        }
+
+                                        onScaleChanged: {
+                                            if (!active)
+                                                return
+
+                                            var safePrevious = Math.max(0.001, previousGestureScale)
+                                            var stepScale = scale / safePrevious
+                                            previousGestureScale = scale
+                                            pdfAnnotationWorkspace.zoomAt(
+                                                pdfAnnotationWorkspace.zoomFactor * stepScale,
+                                                centroid.position.x,
+                                                centroid.position.y)
+                                        }
+                                    }
+
+                                    WheelHandler {
+                                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                        onWheel: function(event) {
+                                            var delta = event.angleDelta.y
+                                            if (delta === 0)
+                                                return
+                                            pdfAnnotationWorkspace.zoomAt(
+                                                pdfAnnotationWorkspace.zoomFactor * (delta > 0 ? 1.1 : 0.9),
+                                                event.position.x, event.position.y)
+                                            event.accepted = true
+                                        }
+                                    }
+
+                                    Row {
+                                        anchors.right: parent.right
+                                        anchors.bottom: parent.bottom
+                                        anchors.margins: 8
+                                        spacing: 6
+                                        z: 10
+
+                                        Rectangle {
+                                            width: 34
+                                            height: 30
+                                            radius: 7
+                                            color: zoomOutMouse.containsMouse ? "#444444" : "#292929"
+                                            Text { anchors.centerIn: parent; text: "−"; color: "white"; font.pixelSize: 19 }
+                                            MouseArea {
+                                                id: zoomOutMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                onClicked: pdfAnnotationWorkspace.zoomAt(
+                                                    pdfAnnotationWorkspace.zoomFactor / 1.2,
+                                                    pdfFlickable.width / 2, pdfFlickable.height / 2)
+                                            }
+                                        }
+                                        Rectangle {
+                                            width: 54
+                                            height: 30
+                                            radius: 7
+                                            color: "#292929"
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: Math.round(pdfAnnotationWorkspace.zoomFactor * 100) + "%"
+                                                color: "white"
+                                                font.pixelSize: 11
+                                            }
+                                        }
+                                        Rectangle {
+                                            width: 34
+                                            height: 30
+                                            radius: 7
+                                            color: zoomInMouse.containsMouse ? "#444444" : "#292929"
+                                            Text { anchors.centerIn: parent; text: "+"; color: "white"; font.pixelSize: 19 }
+                                            MouseArea {
+                                                id: zoomInMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                onClicked: pdfAnnotationWorkspace.zoomAt(
+                                                    pdfAnnotationWorkspace.zoomFactor * 1.2,
+                                                    pdfFlickable.width / 2, pdfFlickable.height / 2)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Component {
+                                id: imagePreviewComponent
+                                Flickable {
+                                    contentWidth: Math.max(width, previewImage.implicitWidth)
+                                    contentHeight: Math.max(height, previewImage.implicitHeight)
+                                    clip: true
+                                    Image {
+                                        id: previewImage
+                                        source: "file:///" + searchRoot.selectedResultPath.replace(/\\/g, "/")
+                                        fillMode: Image.PreserveAspectFit
+                                        width: parent.width
+                                        height: parent.height
+                                        asynchronous: true
+                                        cache: false
+                                    }
+                                }
+                            }
+
+                            Component {
+                                id: textPreviewComponent
+                                ScrollView {
+                                    TextArea {
+                                        width: parent.width
+                                        readOnly: true
+                                        selectByMouse: true
+                                        wrapMode: TextEdit.Wrap
+                                        text: searchRoot.previewText
+                                        color: searchTheme.text
+                                        font.pixelSize: 12
+                                        background: Item {}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+    Component {
+        id: timerPage
+        TimerPage {
+            onPageSelected: function(pageName) {
+                window.activePage = pageName
+                sideBar.bannerOpen = false
+            }
+        }
+    }
+    Component { id: resourcesPage; ResourcesPage {} }
+    Component { id: analyticsPage; AnalyticsPage {} }
+    Component { id: docPage; DocPage {} }
+    Component { id: libraryPage; Item {} }
+}
                                     PinchHandler {
                                         id: pdfPinchHandler
                                         target: null
