@@ -257,7 +257,7 @@ void DropImportWorker::copyItems(QStringList sourcePaths, QString destinationDir
         if (plan.isDirectory) {
             // mkdir (not mkpath) ensures a concurrent name collision is never
             // treated as a directory this worker owns and may later remove.
-            destinationRootCreated = QDir().mkdir(plan.destinationRoot);
+            destinationRootCreated = QDir(destinationRoot).mkdir(QFileInfo(plan.destinationRoot).fileName());
             success = destinationRootCreated;
 
             for (qsizetype i = 1; success && i < plan.directories.size(); ++i) {
