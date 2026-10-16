@@ -1327,14 +1327,134 @@ ApplicationWindow {
                             Component {
                                 id: pdfPreviewComponent
                                 Item {
-                                    PdfDocument {
-                                        id: pdfDocument
-                                        source: "file:///" + searchRoot.selectedResultPath.replace(/\\/g, "/")
-                                    }
-                                    PdfMultiPageView {
+                                    id: pdfAnnotationWorkspace
+                                    property real zoomFactor: 1.0
+                                    property real pageWidth: 760
+                                    property real pageHeight: 980
+
+                                    Flickable {
+                                        id: annotationViewport
                                         anchors.fill: parent
-                                        document: pdfDocument
                                         clip: true
+                                        contentWidth: Math.max(width, annotationPage.width)
+                                        contentHeight: Math.max(height, annotationPage.height)
+                                        boundsBehavior: Flickable.StopAtBounds
+
+                                        Rectangle {
+                                            id: annotationPage
+                                            width: pdfAnnotationWorkspace.pageWidth * pdfAnnotationWorkspace.zoomFactor
+                                            height: pdfAnnotationWorkspace.pageHeight * pdfAnnotationWorkspace.zoomFactor
+                                            color: "white"
+                                            border.color: "#D0D0D0"
+                                            border.width: 1
+                                            antialiasing: true
+
+                                            Canvas {
+                                                id: annotationCanvas
+                                                anchors.fill: parent
+                                                renderTarget: Canvas.Image
+                                                antialiasing: true
+                                                property bool drawing: false
+                                                property real lastX: 0
+                                                property real lastY: 0
+
+                                                onPaint: {
+                                                    var ctx = getContext("2d")
+                                                    ctx.strokeStyle = "#FFFFFF"
+                                                    ctx.lineWidth = 3 * pdfAnnotationWorkspace.zoomFactor
+                                                    ctx.lineCap = "round"
+                                                    ctx.lineJoin = "round"
+                                                }
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    acceptedButtons: Qt.LeftButton
+                                                    hoverEnabled: true
+                                                    onPressed: function(mouse) {
+                                                        annotationCanvas.drawing = true
+                                                        annotationCanvas.lastX = mouse.x
+                                                        annotationCanvas.lastY = mouse.y
+                                                    }
+                                                    onPositionChanged: function(mouse) {
+                                                        if (!annotationCanvas.drawing)
+                                                            return
+                                                        var ctx = annotationCanvas.getContext("2d")
+                                                        ctx.strokeStyle = "#FFFFFF"
+                                                        ctx.lineWidth = 3 * pdfAnnotationWorkspace.zoomFactor
+                                                        ctx.lineCap = "round"
+                                                        ctx.lineJoin = "round"
+                                                        ctx.beginPath()
+                                                        ctx.moveTo(annotationCanvas.lastX, annotationCanvas.lastY)
+                                                        ctx.lineTo(mouse.x, mouse.y)
+                                                        ctx.stroke()
+                                                        annotationCanvas.lastX = mouse.x
+                                                        annotationCanvas.lastY = mouse.y
+                                                        annotationCanvas.requestPaint()
+                                                    }
+                                                    onReleased: annotationCanvas.drawing = false
+                                                    onCanceled: annotationCanvas.drawing = false
+                                                }
+                                            }
+                                        }
+
+                                        WheelHandler {
+                                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                            onWheel: function(event) {
+                                                var delta = event.angleDelta.y
+                                                if (delta === 0)
+                                                    return
+                                                var nextZoom = Math.max(0.5, Math.min(3.0,
+                                                    pdfAnnotationWorkspace.zoomFactor * (delta > 0 ? 1.1 : 0.9)))
+                                                pdfAnnotationWorkspace.zoomFactor = nextZoom
+                                            }
+                                        }
+                                    }
+
+                                    Row {
+                                        anchors.right: parent.right
+                                        anchors.bottom: parent.bottom
+                                        anchors.margins: 8
+                                        spacing: 6
+                                        z: 5
+
+                                        Rectangle {
+                                            width: 34
+                                            height: 30
+                                            radius: 7
+                                            color: zoomOutMouse.containsMouse ? "#444444" : "#292929"
+                                            Text { anchors.centerIn: parent; text: "−"; color: "white"; font.pixelSize: 19 }
+                                            MouseArea {
+                                                id: zoomOutMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                onClicked: pdfAnnotationWorkspace.zoomFactor = Math.max(0.5, pdfAnnotationWorkspace.zoomFactor / 1.2)
+                                            }
+                                        }
+                                        Rectangle {
+                                            width: 54
+                                            height: 30
+                                            radius: 7
+                                            color: "#292929"
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: Math.round(pdfAnnotationWorkspace.zoomFactor * 100) + "%"
+                                                color: "white"
+                                                font.pixelSize: 11
+                                            }
+                                        }
+                                        Rectangle {
+                                            width: 34
+                                            height: 30
+                                            radius: 7
+                                            color: zoomInMouse.containsMouse ? "#444444" : "#292929"
+                                            Text { anchors.centerIn: parent; text: "+"; color: "white"; font.pixelSize: 19 }
+                                            MouseArea {
+                                                id: zoomInMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                onClicked: pdfAnnotationWorkspace.zoomFactor = Math.min(3.0, pdfAnnotationWorkspace.zoomFactor * 1.2)
+                                            }
+                                        }
                                     }
                                 }
                             }
