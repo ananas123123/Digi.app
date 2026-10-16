@@ -9,6 +9,7 @@ Item {
     signal pageSelected(string pageName)
 
     property var controller: null
+    property bool dailyCardExpanded: false
 
     function formattedFocusedTime() {
         var totalMinutes = Math.floor(dailyAnalyticsService.focusedSecondsToday / 60)
@@ -36,7 +37,7 @@ Item {
         color: theme.window
     }
 
-    // The stopwatch is centered independently of the daily focused-time card.
+    // The stopwatch remains centered independently of the daily focus card.
     ColumnLayout {
         anchors.centerIn: parent
         spacing: 26
@@ -106,54 +107,100 @@ Item {
         }
     }
 
-    // Independent card: moving it does not affect the stopwatch layout.
-    Rectangle {
-        id: dailyFocusedCard
+    // The card can be moved without participating in the stopwatch layout.
+    Item {
+        id: dailyCardDock
+        width: dailyFocusedCard.width + dailyCardHandle.width - 8
+        height: dailyFocusedCard.height
         anchors.right: parent.right
-        anchors.rightMargin: 48
+        anchors.rightMargin: dailyCardExpanded ? 48 : -(dailyFocusedCard.width - 24)
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -8
-        width: 248
-        height: 178
-        radius: 16
-        color: theme.surface
-        border.color: theme.border
-        border.width: 1
 
-        Column {
-            anchors.fill: parent
-            anchors.leftMargin: 16
-            anchors.rightMargin: 16
-            anchors.topMargin: 16
-            anchors.bottomMargin: 16
-            spacing: 10
+        Rectangle {
+            id: dailyFocusedCard
+            x: dailyCardHandle.width - 8
+            y: 0
+            width: 248
+            height: 178
+            radius: 16
+            color: theme.surface
+            border.color: theme.border
+            border.width: 1
 
-            Text {
-                width: parent.width
-                height: 58
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                text: root.formattedFocusedTime()
-                color: theme.text
-                font.pixelSize: 40
-                font.weight: Font.Light
-                minimumPixelSize: 28
-                fontSizeMode: Text.Fit
+            Column {
+                anchors.fill: parent
+                anchors.leftMargin: 16
+                anchors.rightMargin: 16
+                anchors.topMargin: 16
+                anchors.bottomMargin: 16
+                spacing: 10
+
+                Text {
+                    width: parent.width
+                    height: 58
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: root.formattedFocusedTime()
+                    color: theme.text
+                    font.pixelSize: 40
+                    font.weight: Font.Light
+                    minimumPixelSize: 28
+                    fontSizeMode: Text.Fit
+                }
+
+                Rectangle {
+                    x: 12
+                    width: parent.width - 24
+                    height: 1
+                    color: theme.border
+                }
+
+                Text {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    text: root.formattedDate()
+                    color: theme.mutedText
+                    font.pixelSize: 13
+                }
+            }
+        }
+
+        Rectangle {
+            id: dailyCardHandle
+            width: 38
+            height: 54
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            radius: 9
+            color: theme.surface
+            border.color: theme.border
+            border.width: 1
+            z: 2
+
+            Grid {
+                anchors.centerIn: parent
+                columns: 2
+                rows: 3
+                columnSpacing: 4
+                rowSpacing: 4
+
+                Repeater {
+                    model: 6
+                    delegate: Rectangle {
+                        required property int index
+                        width: 3
+                        height: 3
+                        radius: 1.5
+                        color: theme.mutedText
+                    }
+                }
             }
 
-            Rectangle {
-                x: 12
-                width: parent.width - 24
-                height: 1
-                color: theme.border
-            }
-
-            Text {
-                width: parent.width
-                horizontalAlignment: Text.AlignHCenter
-                text: root.formattedDate()
-                color: theme.mutedText
-                font.pixelSize: 13
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.dailyCardExpanded = !root.dailyCardExpanded
             }
         }
     }
