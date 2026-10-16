@@ -750,7 +750,6 @@ ApplicationWindow {
 
     // Passive input tracking lets activity elsewhere in Lubis wake the compact timer.
     HoverHandler {
-        target: window
         onPointChanged: universalTimerOverlay.noteActivity()
     }
 
