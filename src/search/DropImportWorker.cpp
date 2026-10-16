@@ -252,11 +252,17 @@ void DropImportWorker::copyItems(QStringList sourcePaths, QString destinationDir
 
     for (const ImportPlan &plan : plans) {
         bool success = true;
+        bool destinationRootCreated = false;
 
-        for (const DirectoryEntry &directory : plan.directories) {
-            if (!QDir().mkpath(directory.destinationPath)) {
-                success = false;
-                break;
+        if (plan.isDirectory) {
+            // mkdir (not mkpath) ensures a concurrent name collision is never
+            // treated as a directory this worker owns and may later remove.
+            destinationRootCreated = QDir().mkdir(plan.destinationRoot);
+            success = destinationRootCreated;
+
+            for (qsizetype i = 1; success && i < plan.directories.size(); ++i) {
+                if (!QDir().mkpath(plan.directories.at(i).destinationPath))
+                    success = false;
             }
         }
 
@@ -281,10 +287,10 @@ void DropImportWorker::copyItems(QStringList sourcePaths, QString destinationDir
             ++importedCount;
         } else {
             ++failedCount;
-            if (plan.isDirectory)
+            if (plan.isDirectory && destinationRootCreated)
                 QDir(plan.destinationRoot).removeRecursively();
-            else
-                QFile::remove(plan.destinationRoot);
+            // Failed single-file copies remove only partial files created by
+            // copyFileInChunks; never delete a pre-existing collision.
         }
     }
 
