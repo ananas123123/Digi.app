@@ -12,6 +12,7 @@
 #include <QUrl>
 #include <QMetaObject>
 #include <QSet>
+#include <QVariant>
 
 namespace {
 constexpr int maxResults = 200;
@@ -174,12 +175,20 @@ bool SearchService::importDroppedUrls(const QVariantList &urls,
     emit importStateChanged();
     emit importProgressChanged();
 
-    QMetaObject::invokeMethod(
+    const bool queued = QMetaObject::invokeMethod(
         m_importWorker,
         "copyItems",
         Qt::QueuedConnection,
         Q_ARG(QStringList, sourcePaths),
         Q_ARG(QString, canonicalDestination));
+    if (!queued) {
+        m_importInProgress = false;
+        m_importProgressPercent = 0;
+        m_importStatus = QStringLiteral("Could not start the import.");
+        emit importStateChanged();
+        emit importProgressChanged();
+        return false;
+    }
     return true;
 }
 
