@@ -944,7 +944,15 @@ ApplicationWindow {
 
         }
     }
-    Component { id: timerPage; TimerPage {} }
+    Component {
+        id: timerPage
+        TimerPage {
+            onPageSelected: function(pageName) {
+                window.activePage = pageName
+                sideBar.bannerOpen = false
+            }
+        }
+    }
     Component { id: resourcesPage; ResourcesPage {} }
     Component { id: analyticsPage; AnalyticsPage {} }
     Component { id: docPage; DocPage {} }
