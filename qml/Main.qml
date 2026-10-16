@@ -74,11 +74,12 @@ ApplicationWindow {
 
     Rectangle {
         id: contextualSettings
+        Component.onCompleted: settingsBaseY = window.height * 0.25 - height / 2
         width: 292
         height: (settingsColumn.implicitHeight + 42) * (window.settingsExpanded ? 2 : 1)
         property bool tuckedByNavigation: sideBar.bannerOpen
         x: window.settingsOpen ? window.width - width - 10 : (tuckedByNavigation ? window.width - 24 : window.width)
-        y: window.settingsExpanded ? settingsBaseY : window.height * 0.25 - height / 2
+        y: settingsBaseY
         z: 150
         radius: 14
         visible: window.settingsOpen || x < window.width
@@ -208,18 +209,19 @@ ApplicationWindow {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: { if (!window.settingsExpanded) window.settingsBaseY = contextualSettings.y; window.settingsExpanded = !window.settingsExpanded }
+                onClicked: window.settingsExpanded = !window.settingsExpanded
             }
         }
     }
 
     Rectangle {
         id: profilePanel
+        Component.onCompleted: profileBaseY = window.height * 0.25 - height / 2
         width: 292
         height: contextualSettings.height * (window.profileExpanded ? 2 : 1)
         property bool tuckedByNavigation: sideBar.bannerOpen
         x: window.profileOpen ? 10 : (tuckedByNavigation ? -width + 24 : -width)
-        y: window.profileExpanded ? profileBaseY : window.height * 0.25 - height / 2
+        y: profileBaseY
         z: 150
         radius: 14
         visible: window.profileOpen || x > -width
@@ -402,12 +404,18 @@ ApplicationWindow {
             height: 18
             radius: 8
             color: profileHandleMouse.containsMouse ? theme.surfaceRaised : "transparent"
-            Row {
+            Column {
                 anchors.centerIn: parent
-                spacing: 4
+                spacing: 3
                 Repeater {
-                    model: 6
-                    delegate: Rectangle { width: 3; height: 3; radius: 2; color: theme.mutedText }
+                    model: 2
+                    delegate: Row {
+                        spacing: 4
+                        Repeater {
+                            model: 3
+                            delegate: Rectangle { width: 3; height: 3; radius: 2; color: theme.mutedText }
+                        }
+                    }
                 }
             }
             MouseArea {
@@ -415,7 +423,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: { if (!window.profileExpanded) window.profileBaseY = profilePanel.y; window.profileExpanded = !window.profileExpanded }
+                onClicked: window.profileExpanded = !window.profileExpanded
             }
         }
     }
