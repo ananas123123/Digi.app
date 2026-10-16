@@ -39,6 +39,7 @@ ApplicationWindow {
     property bool timerSoundEnabled: true
     property bool universalTimerView: false
     property bool lubisExplorerOpen: false
+    property bool dropHoverActive: false
     property string lubisExplorerCurrentPath: ""
     property var lubisExplorerEntries: []
 
@@ -62,7 +63,8 @@ ApplicationWindow {
     }
 
     function openLubisExplorer() {
-        lubisExplorerCurrentPath = searchService.searchRoot
+        if (!lubisExplorerOpen)
+            lubisExplorerCurrentPath = searchService.searchRoot
         refreshLubisExplorerEntries()
         lubisExplorerOpen = true
     }
@@ -806,10 +808,12 @@ ApplicationWindow {
             anchors.centerIn: parent
             radius: 14
             color: theme.surface
-            border.color: theme.border
-            border.width: 1
+            border.color: window.dropHoverActive ? theme.accent : theme.border
+            border.width: window.dropHoverActive ? 1.5 : 1
             clip: true
             z: 1
+
+            Behavior on border.color { ColorAnimation { duration: 140 } }
 
             ColumnLayout {
                 anchors.fill: parent
@@ -953,6 +957,102 @@ ApplicationWindow {
                     }
                 }
             }
+
+            Rectangle {
+                anchors.fill: parent
+                visible: searchService.importInProgress
+                color: Qt.rgba(0.06, 0.06, 0.06, 0.84)
+                z: 10
+
+                MouseArea {
+                    anchors.fill: parent
+                    preventStealing: true
+                }
+
+                Column {
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width - 36, 280)
+                    spacing: 14
+
+                    BusyIndicator {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 36
+                        height: 36
+                        running: searchService.importInProgress
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: searchService.importStatus
+                        color: theme.text
+                        font.pixelSize: 12
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideMiddle
+                    }
+
+                    ProgressBar {
+                        width: parent.width
+                        from: 0
+                        to: 100
+                        value: searchService.importProgressPercent
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: searchService.importProgressPercent + "%"
+                        color: theme.mutedText
+                        font.pixelSize: 10
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                }
+            }
+        }
+    }
+
+    DropArea {
+        id: searchImportDropArea
+        parent: pageLoader
+        anchors.fill: parent
+        z: 900
+        enabled: window.activePage === "Search"
+
+        onEntered: function(drag) {
+            if (!drag.hasUrls)
+                return
+            window.dropHoverActive = true
+            if (!window.lubisExplorerOpen)
+                window.openLubisExplorer()
+        }
+
+        onExited: {
+            window.dropHoverActive = false
+        }
+
+        onDropped: function(drop) {
+            window.dropHoverActive = false
+
+            if (!drop.hasUrls) {
+                drop.accepted = false
+                return
+            }
+
+            var urlStrings = []
+            for (var i = 0; i < drop.urls.length; ++i)
+                urlStrings.push(drop.urls[i].toString())
+
+            if (!window.lubisExplorerOpen)
+                window.openLubisExplorer()
+
+            searchService.importDroppedUrls(urlStrings, window.lubisExplorerCurrentPath)
+            drop.acceptProposedAction()
+        }
+    }
+
+    Connections {
+        target: searchService
+        function onDropImportFinished(succeeded, message) {
+            window.refreshLubisExplorerEntries()
+            window.dropHoverActive = false
         }
     }
 
