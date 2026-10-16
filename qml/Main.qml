@@ -1547,11 +1547,7 @@ ApplicationWindow {
                                     // coordinates so ink stays attached to the page while zooming and scrolling.
                                     Canvas {
                                         id: annotationCanvas
-                                        parent: pdfScaledContent
-                                        x: 0
-                                        y: 0
-                                        width: pdfScaledContent.width
-                                        height: pdfScaledContent.height
+                                        anchors.fill: pdfFlickable
                                         renderTarget: Canvas.Image
                                         antialiasing: true
                                         visible: previewPanel.previewMaximized
@@ -1578,14 +1574,14 @@ ApplicationWindow {
                                                 if (!points || points.length === 0)
                                                     return
                                                 ctx.beginPath()
-                                                ctx.moveTo(points[0].x * pdfAnnotationWorkspace.zoomFactor,
-                                                           points[0].y * pdfAnnotationWorkspace.zoomFactor)
+                                                ctx.moveTo(points[0].x * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentX,
+                                                           points[0].y * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentY)
                                                 for (var i = 1; i < points.length; ++i)
-                                                    ctx.lineTo(points[i].x * pdfAnnotationWorkspace.zoomFactor,
-                                                               points[i].y * pdfAnnotationWorkspace.zoomFactor)
+                                                    ctx.lineTo(points[i].x * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentX,
+                                                               points[i].y * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentY)
                                                 if (points.length === 1) {
-                                                    ctx.lineTo(points[0].x * pdfAnnotationWorkspace.zoomFactor + 0.1,
-                                                               points[0].y * pdfAnnotationWorkspace.zoomFactor + 0.1)
+                                                    ctx.lineTo(points[0].x * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentX + 0.1,
+                                                               points[0].y * pdfAnnotationWorkspace.zoomFactor - pdfFlickable.contentY + 0.1)
                                                 }
                                                 ctx.stroke()
                                             }
@@ -1600,6 +1596,12 @@ ApplicationWindow {
                                             function onZoomFactorChanged() {
                                                 annotationCanvas.requestPaint()
                                             }
+                                            function onContentXChanged() {
+                                                annotationCanvas.requestPaint()
+                                            }
+                                            function onContentYChanged() {
+                                                annotationCanvas.requestPaint()
+                                            }
                                         }
 
                                         DragHandler {
@@ -1612,10 +1614,10 @@ ApplicationWindow {
                                             property bool strokeStarted: false
 
                                             function documentPoint(position) {
-                                                var contentPoint = inkInputHandler.mapToItem(pdfScaledContent, position.x, position.y)
+                                                var viewportPoint = inkInputHandler.mapToItem(pdfFlickable, position.x, position.y)
                                                 return {
-                                                    x: contentPoint.x / pdfAnnotationWorkspace.zoomFactor,
-                                                    y: contentPoint.y / pdfAnnotationWorkspace.zoomFactor
+                                                    x: (pdfFlickable.contentX + viewportPoint.x) / pdfAnnotationWorkspace.zoomFactor,
+                                                    y: (pdfFlickable.contentY + viewportPoint.y) / pdfAnnotationWorkspace.zoomFactor
                                                 }
                                             }
 
