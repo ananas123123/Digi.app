@@ -5,6 +5,7 @@ import QtQuick.Layouts
 Item {
     id: root
     clip: true
+    signal pageSelected(string pageName)
 
     property var strokes: []
     property var activeStroke: []
@@ -125,6 +126,34 @@ Item {
                     documentX * nextZoom + root.canvasMargin - centerX)
         canvasViewport.contentY = root.clampContentY(
                     documentY * nextZoom + root.canvasMargin - centerY)
+    }
+
+    Button {
+        id: docsShortcut
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: 18
+        anchors.rightMargin: 22
+        z: 20
+        text: "▤"
+        implicitWidth: 42
+        implicitHeight: 42
+        ToolTip.visible: hovered
+        ToolTip.text: "Docs"
+        flat: true
+        onClicked: root.pageSelected("Doc")
+        background: Rectangle {
+            radius: 10
+            color: docsShortcut.hovered ? "#383838" : "#252525"
+            border.color: "#505050"
+        }
+        contentItem: Text {
+            text: docsShortcut.text
+            color: "#E0C477"
+            font.pixelSize: 18
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
     }
 
     Flickable {
