@@ -1332,6 +1332,7 @@ ApplicationWindow {
                                     property real pinchStartZoom: 1.0
                                     property real pinchStartContentX: 0
                                     property real pinchStartContentY: 0
+                                    property real pinchStartGestureScale: 1.0
 
                                     function zoomAt(nextZoom, anchorX, anchorY) {
                                         var oldZoom = zoomFactor
@@ -1400,14 +1401,15 @@ ApplicationWindow {
                                                 pdfAnnotationWorkspace.pinchStartZoom = pdfAnnotationWorkspace.zoomFactor
                                                 pdfAnnotationWorkspace.pinchStartContentX = pdfFlickable.contentX
                                                 pdfAnnotationWorkspace.pinchStartContentY = pdfFlickable.contentY
+                                                pdfAnnotationWorkspace.pinchStartGestureScale = scale
                                             }
                                         }
                                         onScaleChanged: {
                                             if (active) {
-                                                var oldZoom = pdfAnnotationWorkspace.zoomFactor
+                                                var relativeScale = scale / Math.max(0.001, pdfAnnotationWorkspace.pinchStartGestureScale)
                                                 var nextZoom = Math.max(0.5, Math.min(3.0,
-                                                    pdfAnnotationWorkspace.pinchStartZoom * scale))
-                                                var ratio = nextZoom / oldZoom
+                                                    pdfAnnotationWorkspace.pinchStartZoom * relativeScale))
+                                                var ratio = nextZoom / pdfAnnotationWorkspace.pinchStartZoom
                                                 pdfAnnotationWorkspace.zoomFactor = nextZoom
                                                 pdfFlickable.contentX = Math.max(0,
                                                     Math.min(pdfFlickable.contentWidth - pdfFlickable.width,
