@@ -38,6 +38,7 @@ ApplicationWindow {
     property bool notesPressureSensitivity: true
     property bool homeShowQuickAccess: true
     property bool timerSoundEnabled: true
+    property bool universalTimerView: false
 
     function toggleFullscreen() {
         if (window.visibility === Window.FullScreen) {
@@ -187,6 +188,12 @@ ApplicationWindow {
                 visible: window.activePage === "Timer"
                 Text { Layout.fillWidth: true; text: "Timer sounds"; color: theme.text; font.pixelSize: 12 }
                 Switch { checked: window.timerSoundEnabled; onToggled: window.timerSoundEnabled = checked }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                visible: window.activePage === "Timer"
+                Text { Layout.fillWidth: true; text: "Universal view"; color: theme.text; font.pixelSize: 12 }
+                Switch { checked: window.universalTimerView; onToggled: window.universalTimerView = checked }
             }
         }
 
@@ -639,6 +646,71 @@ ApplicationWindow {
                            : libraryPage
         }
 
+    }
+
+
+    // This is parented to pageLoader so it follows every page and shares
+    // the same blur effect while the sidebar is open.
+    Item {
+        id: universalTimerOverlay
+        parent: pageLoader
+        x: 18
+        y: 14
+        width: 204
+        height: 56
+        z: 500
+        visible: window.universalTimerView
+        enabled: !sideBar.bannerOpen
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 13
+            color: theme.surface
+            border.color: theme.border
+            border.width: 1
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 14
+                anchors.rightMargin: 8
+                spacing: 10
+
+                Text {
+                    Layout.fillWidth: true
+                    text: timerControllerInstance.formattedTime()
+                    color: theme.text
+                    font.pixelSize: 23
+                    font.weight: Font.DemiBold
+                    font.kerning: false
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                Button {
+                    Layout.preferredWidth: 38
+                    Layout.preferredHeight: 38
+                    flat: true
+                    text: timerControllerInstance.timerRunning ? "Ⅱ" : "▶"
+                    ToolTip.visible: hovered
+                    ToolTip.text: timerControllerInstance.timerRunning ? "Pause stopwatch" : "Resume stopwatch"
+                    onClicked: timerControllerInstance.toggleTimer()
+
+                    background: Rectangle {
+                        radius: 10
+                        color: parent.hovered ? theme.surfaceRaised : "transparent"
+                        border.color: parent.hovered ? theme.border : "transparent"
+                    }
+
+                    contentItem: Text {
+                        text: parent.text
+                        color: theme.text
+                        font.pixelSize: timerControllerInstance.timerRunning ? 18 : 16
+                        font.weight: Font.DemiBold
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+            }
+        }
     }
 
     Component {
