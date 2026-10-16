@@ -7,6 +7,15 @@ Item {
     id: root
     Theme { id: theme }
 
+    function formattedFocusedTime() {
+        var totalMinutes = Math.floor(dailyAnalyticsService.focusedSecondsToday / 60)
+        if (totalMinutes < 60)
+            return totalMinutes + " min"
+        return Math.floor(totalMinutes / 60) + " h " + (totalMinutes % 60) + " min"
+    }
+
+    Component.onCompleted: dailyAnalyticsService.refreshToday()
+
     Rectangle { anchors.fill: parent; color: theme.window }
 
     ColumnLayout {
@@ -32,7 +41,7 @@ Item {
 
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                text: "0 min"
+                text: root.formattedFocusedTime()
                 color: theme.text
                 font.pixelSize: 76
                 font.weight: Font.Light
@@ -48,9 +57,18 @@ Item {
 
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                text: "0 sessions completed"
+                text: dailyAnalyticsService.completedFocusSessionsToday + " focus " +
+                      (dailyAnalyticsService.completedFocusSessionsToday === 1 ? "session" : "sessions") +
+                      " completed"
                 color: theme.mutedText
                 font.pixelSize: 13
+            }
+
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: Qt.formatDate(new Date(), "dddd, d MMMM yyyy")
+                color: theme.mutedText
+                font.pixelSize: 12
             }
         }
 
@@ -58,9 +76,11 @@ Item {
 
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: "Weekly insights coming later"
+            text: "Daily analytics are saved locally and stored separately by date."
             color: theme.mutedText
             font.pixelSize: 12
+            wrapMode: Text.WordWrap
+            horizontalAlignment: Text.AlignHCenter
         }
     }
 }
