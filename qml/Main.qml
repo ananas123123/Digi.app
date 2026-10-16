@@ -1344,7 +1344,7 @@ ApplicationWindow {
                                             id: annotationPage
                                             width: pdfAnnotationWorkspace.pageWidth * pdfAnnotationWorkspace.zoomFactor
                                             height: pdfAnnotationWorkspace.pageHeight * pdfAnnotationWorkspace.zoomFactor
-                                            color: "white"
+                                            color: "#202020"
                                             border.color: "#D0D0D0"
                                             border.width: 1
                                             antialiasing: true
