@@ -1543,8 +1543,8 @@ ApplicationWindow {
                                         }
                                     }
 
-                                    // Keep touch input dedicated to navigation/zoom until ink is reintroduced
-                                    // with document-coordinate stroke storage.
+                                    // Simple in-memory ink layer. Stroke points are stored in PDF document
+                                    // coordinates so ink stays attached to the page while zooming and scrolling.
                                     Canvas {
                                         id: annotationCanvas
                                         anchors.fill: parent
@@ -1552,6 +1552,97 @@ ApplicationWindow {
                                         antialiasing: true
                                         visible: previewPanel.previewMaximized
                                         z: 3
+
+                                        property var strokes: []
+                                        property var activeStroke: []
+                                        property color inkColor: "#202020"
+                                        property real inkWidth: 2.4
+
+                                        function redrawStrokes() {
+                                            requestPaint()
+                                        }
+
+                                        onPaint: {
+                                            var ctx = getContext("2d")
+                                            ctx.reset()
+                                            ctx.lineCap = "round"
+                                            ctx.lineJoin = "round"
+                                            ctx.strokeStyle = inkColor
+                                            ctx.lineWidth = inkWidth * pdfAnnotationWorkspace.zoomFactor
+
+                                            function drawStroke(points) {
+                                                if (!points || points.length === 0)
+                                                    return
+                                                ctx.beginPath()
+                                                ctx.moveTo(points[0].x * pdfAnnotationWorkspace.zoomFactor,
+                                                           points[0].y * pdfAnnotationWorkspace.zoomFactor)
+                                                for (var i = 1; i < points.length; ++i)
+                                                    ctx.lineTo(points[i].x * pdfAnnotationWorkspace.zoomFactor,
+                                                               points[i].y * pdfAnnotationWorkspace.zoomFactor)
+                                                if (points.length === 1) {
+                                                    ctx.lineTo(points[0].x * pdfAnnotationWorkspace.zoomFactor + 0.1,
+                                                               points[0].y * pdfAnnotationWorkspace.zoomFactor + 0.1)
+                                                }
+                                                ctx.stroke()
+                                            }
+
+                                            for (var s = 0; s < strokes.length; ++s)
+                                                drawStroke(strokes[s])
+                                            drawStroke(activeStroke)
+                                        }
+
+                                        Connections {
+                                            target: pdfAnnotationWorkspace
+                                            function onZoomFactorChanged() {
+                                                annotationCanvas.requestPaint()
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: inkInputArea
+                                            anchors.fill: parent
+                                            enabled: previewPanel.previewMaximized && !pdfPinchHandler.active
+                                            acceptedDevices: PointerDevice.Stylus | PointerDevice.Mouse
+                                            hoverEnabled: false
+                                            preventStealing: true
+
+                                            function documentPoint(point) {
+                                                return {
+                                                    x: (pdfFlickable.contentX + point.x) / pdfAnnotationWorkspace.zoomFactor,
+                                                    y: (pdfFlickable.contentY + point.y) / pdfAnnotationWorkspace.zoomFactor
+                                                }
+                                            }
+
+                                            onPressed: function(mouse) {
+                                                var p = documentPoint(mouse)
+                                                annotationCanvas.activeStroke = [p]
+                                                annotationCanvas.requestPaint()
+                                            }
+
+                                            onPositionChanged: function(mouse) {
+                                                if (!(mouse.buttons & Qt.LeftButton))
+                                                    return
+                                                var nextPoints = annotationCanvas.activeStroke.slice()
+                                                nextPoints.push(documentPoint(mouse))
+                                                annotationCanvas.activeStroke = nextPoints
+                                                annotationCanvas.requestPaint()
+                                            }
+
+                                            onReleased: {
+                                                if (annotationCanvas.activeStroke.length > 0) {
+                                                    var nextStrokes = annotationCanvas.strokes.slice()
+                                                    nextStrokes.push(annotationCanvas.activeStroke)
+                                                    annotationCanvas.strokes = nextStrokes
+                                                    annotationCanvas.activeStroke = []
+                                                    annotationCanvas.requestPaint()
+                                                }
+                                            }
+
+                                            onCanceled: {
+                                                annotationCanvas.activeStroke = []
+                                                annotationCanvas.requestPaint()
+                                            }
+                                        }
                                     }
 
                                     PinchHandler {
