@@ -5,13 +5,12 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QDirIterator>
-#include <QFileInfo>
 #include <QFile>
-#include <QSaveFile>
-#include <QDir>
-#include <QUrl>
+#include <QFileInfo>
 #include <QMetaObject>
+#include <QSaveFile>
 #include <QSet>
+#include <QUrl>
 #include <QVariant>
 #include <QVariantMap>
 #include <algorithm>
