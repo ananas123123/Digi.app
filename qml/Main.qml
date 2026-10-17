@@ -1116,14 +1116,29 @@ ApplicationWindow {
             property var results: []
             property int currentPage: 0
             readonly property int resultsPerPage: 20
-            readonly property int pageCount: Math.ceil(results.length / resultsPerPage)
+            property bool hasMoreResults: false
+            readonly property int loadedPageCount: Math.ceil(results.length / resultsPerPage)
             readonly property var pageResults: results.slice(
                 currentPage * resultsPerPage,
                 (currentPage + 1) * resultsPerPage)
 
+            function performSearch(searchText) {
+                var response = searchService.startNameSearch(searchText)
+                results = response.results || []
+                hasMoreResults = response.hasMore === true
+                currentPage = 0
+            }
+
             Rectangle {
                 anchors.fill: parent
                 color: searchTheme.window
+            }
+
+            Timer {
+                id: searchDebounce
+                interval: 180
+                repeat: false
+                onTriggered: searchPlaceholder.performSearch(searchInput.text)
             }
 
             Column {
@@ -1193,13 +1208,19 @@ ApplicationWindow {
 
                             onTextChanged: {
                                 searchPlaceholder.query = text
-                                searchPlaceholder.results = searchService.searchNames(text)
-                                searchPlaceholder.currentPage = 0
+                                if (text.trim().length === 0) {
+                                    searchDebounce.stop()
+                                    searchPlaceholder.results = []
+                                    searchPlaceholder.hasMoreResults = false
+                                    searchPlaceholder.currentPage = 0
+                                } else {
+                                    searchDebounce.restart()
+                                }
                             }
 
                             onAccepted: {
-                                searchPlaceholder.results = searchService.searchNames(text)
-                                searchPlaceholder.currentPage = 0
+                                searchDebounce.stop()
+                                searchPlaceholder.performSearch(text)
                             }
                         }
 
@@ -1290,15 +1311,6 @@ ApplicationWindow {
                     border.width: 1
                     clip: true
 
-                    layer.enabled: true
-                    layer.effect: MultiEffect {
-                        shadowEnabled: true
-                        shadowColor: "#000000"
-                        shadowOpacity: 0.17
-                        shadowBlur: 0.20
-                        shadowVerticalOffset: 2
-                    }
-
                     Behavior on color { ColorAnimation { duration: 130 } }
                     Behavior on border.color { ColorAnimation { duration: 130 } }
 
@@ -1340,15 +1352,6 @@ ApplicationWindow {
                             border.color: resultHover.containsMouse ? "#72FFFFFF" : "#42FFFFFF"
                             border.width: 1
                             antialiasing: true
-
-                            layer.enabled: true
-                            layer.effect: MultiEffect {
-                                shadowEnabled: true
-                                shadowColor: "#000000"
-                                shadowOpacity: resultHover.containsMouse ? 0.20 : 0.13
-                                shadowBlur: resultHover.containsMouse ? 0.24 : 0.17
-                                shadowVerticalOffset: resultHover.containsMouse ? 3 : 2
-                            }
 
                             Behavior on color { ColorAnimation { duration: 120 } }
                             Behavior on border.color { ColorAnimation { duration: 120 } }
@@ -1395,7 +1398,8 @@ ApplicationWindow {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         height: 44
-                        visible: searchPlaceholder.results.length > searchPlaceholder.resultsPerPage
+                        visible: searchPlaceholder.hasMoreResults
+                                 || searchPlaceholder.results.length > searchPlaceholder.resultsPerPage
                         spacing: 12
 
                         Item {
@@ -1438,7 +1442,9 @@ ApplicationWindow {
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: (searchPlaceholder.currentPage + 1)
-                                          + " / " + searchPlaceholder.pageCount
+                                          + " / " + (searchPlaceholder.hasMoreResults
+                                                     ? "…"
+                                                     : Math.max(1, searchPlaceholder.loadedPageCount))
                                     color: searchTheme.mutedText
                                     font.pixelSize: 11
                                 }
@@ -1461,11 +1467,30 @@ ApplicationWindow {
                                     MouseArea {
                                         id: nextPageMouse
                                         anchors.fill: parent
-                                        enabled: searchPlaceholder.currentPage < searchPlaceholder.pageCount - 1
+                                        enabled: searchPlaceholder.currentPage
+                                                     < searchPlaceholder.loadedPageCount - 1
+                                                 || searchPlaceholder.hasMoreResults
                                         hoverEnabled: true
                                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                                         onClicked: {
-                                            searchPlaceholder.currentPage++
+                                            if (searchPlaceholder.currentPage
+                                                    < searchPlaceholder.loadedPageCount - 1) {
+                                                // Revisit a page already fetched; do not query again.
+                                                searchPlaceholder.currentPage++
+                                            } else if (searchPlaceholder.hasMoreResults) {
+                                                // Fetch only the next batch when the user requests it.
+                                                var nextBatch = searchService.nextNameSearchPage()
+                                                var batchResults = nextBatch.results || []
+                                                if (batchResults.length > 0) {
+                                                    searchPlaceholder.results =
+                                                        searchPlaceholder.results.concat(batchResults)
+                                                    searchPlaceholder.hasMoreResults =
+                                                        nextBatch.hasMore === true
+                                                    searchPlaceholder.currentPage++
+                                                } else {
+                                                    searchPlaceholder.hasMoreResults = false
+                                                }
+                                            }
                                             searchResultsList.contentY = 0
                                         }
                                     }
