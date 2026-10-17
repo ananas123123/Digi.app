@@ -81,7 +81,7 @@ bool isSafeSource(const QFileInfo &info, const QString &sourcePath, const QStrin
         return false;
 
     // Do not import items already inside the destination, or a parent folder
-    // containing the destination. Both cases could recursively copy Lubis into itself.
+    // containing the destination. Both cases could recursively copy Argon into itself.
     if (pathIsInsideOrEqual(sourcePath, destinationRoot))
         return false;
     if (info.isDir() && pathIsInsideOrEqual(destinationRoot, sourcePath))

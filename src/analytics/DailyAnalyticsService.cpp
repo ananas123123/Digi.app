@@ -18,11 +18,11 @@ DailyAnalyticsService::DailyAnalyticsService(QObject *parent)
     if (dataRoot.isEmpty())
         dataRoot = QCoreApplication::applicationDirPath();
 
-    // On Windows this normally resolves to %APPDATA%/Lubis/user-data/analytics/daily.
-    m_storageDirectory = QDir(dataRoot).filePath(QStringLiteral("Lubis/user-data/analytics/daily"));
+    // On Windows this normally resolves to %APPDATA%/Argon/user-data/analytics/daily.
+    m_storageDirectory = QDir(dataRoot).filePath(QStringLiteral("Argon/user-data/analytics/daily"));
 
     if (!QDir().mkpath(m_storageDirectory))
-        qWarning() << "Could not create Lubis daily analytics directory:" << m_storageDirectory;
+        qWarning() << "Could not create Argon daily analytics directory:" << m_storageDirectory;
 
     loadToday();
 }
@@ -48,20 +48,20 @@ void DailyAnalyticsService::addFocusedSeconds(qint64 seconds)
         return;
 
     if (!loadToday()) {
-        qWarning() << "Could not load today's Lubis analytics data.";
+        qWarning() << "Could not load today's Argon analytics data.";
         return;
     }
 
     m_focusedSecondsToday += seconds;
     if (!saveToday())
-        qWarning() << "Could not save today's Lubis focus-time counter.";
+        qWarning() << "Could not save today's Argon focus-time counter.";
     emit dailyStatsChanged();
 }
 
 void DailyAnalyticsService::recordFocusSessionCompleted()
 {
     if (!loadToday()) {
-        qWarning() << "Could not load today's Lubis analytics data.";
+        qWarning() << "Could not load today's Argon analytics data.";
         return;
     }
 
@@ -75,7 +75,7 @@ void DailyAnalyticsService::refreshToday()
 {
     const QString previousDate = m_loadedDate;
     if (!loadToday()) {
-        qWarning() << "Could not refresh today's Lubis analytics data.";
+        qWarning() << "Could not refresh today's Argon analytics data.";
         return;
     }
 
@@ -123,20 +123,20 @@ bool DailyAnalyticsService::loadToday()
         return saveToday();
 
     if (!file.open(QIODevice::ReadOnly)) {
-        qWarning() << "Could not read Lubis daily analytics file:" << path << file.errorString();
+        qWarning() << "Could not read Argon daily analytics file:" << path << file.errorString();
         return false;
     }
 
     QJsonParseError parseError;
     const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &parseError);
     if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
-        qWarning() << "Invalid Lubis daily analytics JSON:" << path << parseError.errorString();
+        qWarning() << "Invalid Argon daily analytics JSON:" << path << parseError.errorString();
         return false;
     }
 
     const QJsonObject object = document.object();
     if (object.value(QStringLiteral("date")).toString() != today) {
-        qWarning() << "Date mismatch in Lubis daily analytics file:" << path;
+        qWarning() << "Date mismatch in Argon daily analytics file:" << path;
         return false;
     }
 
@@ -149,7 +149,7 @@ bool DailyAnalyticsService::saveToday() const
 {
     QSaveFile file(filePathForDate(QDate::currentDate()));
     if (!file.open(QIODevice::WriteOnly)) {
-        qWarning() << "Could not write Lubis daily analytics file:" << file.fileName() << file.errorString();
+        qWarning() << "Could not write Argon daily analytics file:" << file.fileName() << file.errorString();
         return false;
     }
 
@@ -162,11 +162,11 @@ bool DailyAnalyticsService::saveToday() const
 
     const QByteArray json = QJsonDocument(object).toJson(QJsonDocument::Indented);
     if (file.write(json) != json.size()) {
-        qWarning() << "Could not write complete Lubis daily analytics file:" << file.fileName() << file.errorString();
+        qWarning() << "Could not write complete Argon daily analytics file:" << file.fileName() << file.errorString();
         return false;
     }
     if (!file.commit()) {
-        qWarning() << "Could not commit Lubis daily analytics file:" << file.fileName() << file.errorString();
+        qWarning() << "Could not commit Argon daily analytics file:" << file.fileName() << file.errorString();
         return false;
     }
     return true;

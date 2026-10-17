@@ -37,12 +37,12 @@ SearchService::SearchService(QObject *parent)
 {
     const QDir appDir(QCoreApplication::applicationDirPath());
     const QString localDataRoot = QDir::cleanPath(
-        appDir.filePath(QStringLiteral("Lubis")));
+        appDir.filePath(QStringLiteral("Argon")));
     const QString adjacentDataRoot = QDir::cleanPath(
-        appDir.filePath(QStringLiteral("../Lubis")));
+        appDir.filePath(QStringLiteral("../Argon")));
 
     // Prefer data beside the executable only when its Search QR directory exists.
-    // This prevents an unrelated neighbouring Lubis folder from shadowing the
+    // This prevents an unrelated neighbouring Argon folder from shadowing the
     // project's actual data when launching an executable from the repository root.
     const bool localSearchRootExists =
         QDir(QDir(localDataRoot).filePath(QStringLiteral("search QR"))).exists();
@@ -58,7 +58,7 @@ SearchService::SearchService(QObject *parent)
     // Search and the custom explorer share this single root.
     m_searchRoot = QDir(dataRoot).filePath(QStringLiteral("search QR"));
     QDir().mkpath(m_searchRoot);
-    qInfo().noquote() << "Lubis search root:" << QDir::cleanPath(m_searchRoot);
+    qInfo().noquote() << "Argon search root:" << QDir::cleanPath(m_searchRoot);
     QDir().mkpath(QDir(dataRoot).filePath(QStringLiteral("cache")));
 
     m_importWorker = new DropImportWorker;

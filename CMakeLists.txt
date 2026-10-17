@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(Lubis LANGUAGES CXX)
+project(Argon LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,7 +10,7 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2 Pdf PdfQuick)
 qt_standard_project_setup(REQUIRES 6.5)
 
-qt_add_executable(Lubis
+qt_add_executable(Argon
     src/main.cpp
     src/app/AppServices.cpp
     src/app/AppServices.h
@@ -24,8 +24,8 @@ qt_add_executable(Lubis
     src/search/DropImportWorker.h
 )
 
-qt_add_qml_module(Lubis
-    URI Lubis
+qt_add_qml_module(Argon
+    URI Argon
     VERSION 1.0
     QML_FILES
         qml/Main.qml
@@ -41,8 +41,8 @@ qt_add_qml_module(Lubis
         qml/themes/Theme.qml
 )
 
-target_link_libraries(Lubis PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Pdf Qt6::PdfQuick)
+target_link_libraries(Argon PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Pdf Qt6::PdfQuick)
 
 if(WIN32)
-    set_target_properties(Lubis PROPERTIES WIN32_EXECUTABLE TRUE)
+    set_target_properties(Argon PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()

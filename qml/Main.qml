@@ -15,7 +15,7 @@ ApplicationWindow {
     minimumWidth: 900
     minimumHeight: 620
     visible: true
-    title: "Lubis"
+    title: "Argon"
     flags: Qt.Window | Qt.FramelessWindowHint
     color: "transparent"
 
@@ -38,7 +38,7 @@ ApplicationWindow {
     property bool notesPressureSensitivity: true
     property bool timerSoundEnabled: true
     property bool universalTimerView: false
-    property bool lubisExplorerOpen: false
+    property bool argonExplorerOpen: false
     property bool fileActionDialogOpen: false
     property string fileActionFileName: ""
     property string fileActionFilePath: ""
@@ -46,8 +46,8 @@ ApplicationWindow {
     property string fileActionSelectedAction: ""
     property string fileActionPlaceholderMessage: ""
     property bool dropHoverActive: false
-    property string lubisExplorerCurrentPath: ""
-    property var lubisExplorerEntries: []
+    property string argonExplorerCurrentPath: ""
+    property var argonExplorerEntries: []
 
     function toggleFullscreen() {
         if (window.visibility === Window.FullScreen) {
@@ -59,35 +59,35 @@ ApplicationWindow {
 
     onActivePageChanged: {
         if (activePage !== "Search") {
-            lubisExplorerOpen = false
+            argonExplorerOpen = false
             fileActionDialogOpen = false
         }
     }
 
-    function refreshLubisExplorerEntries() {
-        if (lubisExplorerCurrentPath.length === 0)
-            lubisExplorerCurrentPath = searchService.searchRoot
-        lubisExplorerEntries = searchService.listFolderContents(lubisExplorerCurrentPath)
+    function refreshArgonExplorerEntries() {
+        if (argonExplorerCurrentPath.length === 0)
+            argonExplorerCurrentPath = searchService.searchRoot
+        argonExplorerEntries = searchService.listFolderContents(argonExplorerCurrentPath)
     }
 
-    function openLubisExplorer() {
-        if (!lubisExplorerOpen)
-            lubisExplorerCurrentPath = searchService.searchRoot
-        refreshLubisExplorerEntries()
-        lubisExplorerOpen = true
+    function openArgonExplorer() {
+        if (!argonExplorerOpen)
+            argonExplorerCurrentPath = searchService.searchRoot
+        refreshArgonExplorerEntries()
+        argonExplorerOpen = true
     }
 
-    function openLubisExplorerAtPath(path) {
-        lubisExplorerCurrentPath = path
-        refreshLubisExplorerEntries()
-        lubisExplorerOpen = true
+    function openArgonExplorerAtPath(path) {
+        argonExplorerCurrentPath = path
+        refreshArgonExplorerEntries()
+        argonExplorerOpen = true
     }
 
-    function goBackLubisExplorer() {
+    function goBackArgonExplorer() {
         var rootPath = searchService.searchRoot
-        var currentPath = lubisExplorerCurrentPath
+        var currentPath = argonExplorerCurrentPath
         if (currentPath.toLowerCase() === rootPath.toLowerCase()) {
-            lubisExplorerOpen = false
+            argonExplorerOpen = false
             return
         }
 
@@ -96,8 +96,8 @@ ApplicationWindow {
         if (parentPath.toLowerCase().indexOf(rootPath.toLowerCase()) !== 0)
             parentPath = rootPath
 
-        lubisExplorerCurrentPath = parentPath
-        refreshLubisExplorerEntries()
+        argonExplorerCurrentPath = parentPath
+        refreshArgonExplorerEntries()
     }
 
     Shortcut {
@@ -558,10 +558,10 @@ ApplicationWindow {
 
         // Blur the app surface behind Explorer and file-action dialogs.
         // Both popups are siblings of this layout, so their contents stay sharp.
-        layer.enabled: window.lubisExplorerOpen || window.fileActionDialogOpen
+        layer.enabled: window.argonExplorerOpen || window.fileActionDialogOpen
         layer.effect: MultiEffect {
-            blurEnabled: window.lubisExplorerOpen || window.fileActionDialogOpen
-            blur: (window.lubisExplorerOpen || window.fileActionDialogOpen) ? 0.58 : 0
+            blurEnabled: window.argonExplorerOpen || window.fileActionDialogOpen
+            blur: (window.argonExplorerOpen || window.fileActionDialogOpen) ? 0.58 : 0
             blurMax: 48
             Behavior on blur {
                 NumberAnimation {
@@ -807,20 +807,20 @@ ApplicationWindow {
         }
     }
 
-    // Passive input tracking lets activity elsewhere in Lubis wake the compact timer.
+    // Passive input tracking lets activity elsewhere in Argon wake the compact timer.
     HoverHandler {
         onPointChanged: universalTimerOverlay.noteActivity()
     }
 
     Item {
-        id: lubisExplorerPopup
+        id: argonExplorerPopup
         parent: window.contentItem
         x: appContentLayout.x + pageLoader.x
         y: appContentLayout.y + pageLoader.y
         width: pageLoader.width
         height: pageLoader.height
         z: 800
-        visible: window.lubisExplorerOpen && window.activePage === "Search"
+        visible: window.argonExplorerOpen && window.activePage === "Search"
         enabled: visible
 
         Rectangle {
@@ -830,12 +830,12 @@ ApplicationWindow {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: window.lubisExplorerOpen = false
+                onClicked: window.argonExplorerOpen = false
             }
         }
 
         Rectangle {
-            id: lubisExplorerPanel
+            id: argonExplorerPanel
             width: Math.min(520, parent.width - 40)
             height: Math.min(500, parent.height - 40)
             anchors.centerIn: parent
@@ -872,7 +872,7 @@ ApplicationWindow {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: window.goBackLubisExplorer()
+                        onClicked: window.goBackArgonExplorer()
                     }
                 }
 
@@ -884,16 +884,16 @@ ApplicationWindow {
                     clip: true
 
                     ListView {
-                        id: lubisExplorerEntriesList
+                        id: argonExplorerEntriesList
                         anchors.fill: parent
                         anchors.margins: 5
-                        model: window.lubisExplorerEntries
+                        model: window.argonExplorerEntries
                         clip: true
                         spacing: 1
 
                         delegate: Item {
                             required property var modelData
-                            width: lubisExplorerEntriesList.width
+                            width: argonExplorerEntriesList.width
                             height: 40
                             opacity: modelData.isFolder ? 1.0 : 0.18
 
@@ -981,8 +981,8 @@ ApplicationWindow {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     if (modelData.isFolder) {
-                                        window.lubisExplorerCurrentPath = modelData.path
-                                        window.refreshLubisExplorerEntries()
+                                        window.argonExplorerCurrentPath = modelData.path
+                                        window.refreshArgonExplorerEntries()
                                     }
                                 }
                             }
@@ -993,7 +993,7 @@ ApplicationWindow {
 
             Rectangle {
                 anchors.fill: parent
-                radius: lubisExplorerPanel.radius
+                radius: argonExplorerPanel.radius
                 clip: true
                 visible: searchService.importInProgress
                 color: Qt.rgba(0.06, 0.06, 0.06, 0.84)
@@ -1058,8 +1058,8 @@ ApplicationWindow {
             if (!drag.hasUrls)
                 return
             window.dropHoverActive = true
-            if (!window.lubisExplorerOpen)
-                window.openLubisExplorer()
+            if (!window.argonExplorerOpen)
+                window.openArgonExplorer()
         }
 
         onExited: {
@@ -1078,11 +1078,11 @@ ApplicationWindow {
             for (var i = 0; i < drop.urls.length; ++i)
                 urlStrings.push(drop.urls[i].toString())
 
-            if (!window.lubisExplorerOpen)
-                window.openLubisExplorer()
+            if (!window.argonExplorerOpen)
+                window.openArgonExplorer()
 
             const importStarted = searchService.importDroppedUrls(
-                        urlStrings, window.lubisExplorerCurrentPath)
+                        urlStrings, window.argonExplorerCurrentPath)
             if (importStarted) {
                 // This operation copies into search QR; explicitly keep the
                 // source items at their original location.
@@ -1097,7 +1097,7 @@ ApplicationWindow {
     Connections {
         target: searchService
         function onDropImportFinished(succeeded, message) {
-            window.refreshLubisExplorerEntries()
+            window.refreshArgonExplorerEntries()
             window.dropHoverActive = false
         }
     }
@@ -1251,7 +1251,7 @@ ApplicationWindow {
                     }
 
                     Text {
-                        text: "Find your way through Lubis."
+                        text: "Find your way through Argon."
                         color: searchTheme.mutedText
                         font.pixelSize: 14
                     }
@@ -1350,7 +1350,7 @@ ApplicationWindow {
                     }
 
                     Rectangle {
-                        id: lubisExplorerButton
+                        id: argonExplorerButton
                         width: 52
                         height: 52
                         anchors.verticalCenter: parent.verticalCenter
@@ -1390,7 +1390,7 @@ ApplicationWindow {
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: window.openLubisExplorer()
+                            onClicked: window.openArgonExplorer()
                         }
                     }
                 }
