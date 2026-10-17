@@ -1250,7 +1250,7 @@ ApplicationWindow {
                         searchPlaceholder.beginResultDrag(
                                     resultHoldMouse.fileName,
                                     resultHoldMouse.filePath,
-                                    resultHoldMouse.fileUrl,
+                                    resultHoldMouse.sourceFileUrl,
                                     resultHoldMouse.sourceCard,
                                     resultHoldMouse.lastPointerX,
                                     resultHoldMouse.lastPointerY)
@@ -1543,6 +1543,7 @@ ApplicationWindow {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 acceptedButtons: Qt.LeftButton
+                                preventStealing: dragStarted
                                 cursorShape: dragStarted ? Qt.ClosedHandCursor : Qt.PointingHandCursor
                                 property real pressX: 0
                                 property real pressY: 0
@@ -1551,7 +1552,7 @@ ApplicationWindow {
                                 property bool dragStarted: false
                                 property string fileName: name
                                 property string filePath: path
-                                property string fileUrl: fileUrl
+                                property string sourceFileUrl: searchResultCard.fileUrl
                                 property var sourceCard: searchResultCard
 
                                 onPressed: function(mouse) {
