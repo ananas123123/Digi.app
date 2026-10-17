@@ -130,8 +130,9 @@ bool migrateLegacySearchData()
     }
 
     QSaveFile marker(markerPath);
+    const QByteArray markerContents("completed\n");
     if (!marker.open(QIODevice::WriteOnly | QIODevice::Text)
-        || marker.write("completed\n") < 0
+        || marker.write(markerContents) != markerContents.size()
         || !marker.commit()) {
         qWarning().noquote() << "Argon copied legacy search data but could not write migration marker:"
                              << markerPath;
