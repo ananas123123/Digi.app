@@ -201,6 +201,11 @@ Item {
                 visible: utilityButton.modelData.label === "Settings"
                 fillMode: Image.PreserveAspectFit
                 smooth: true
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    colorization: 1.0
+                    colorizationColor: "white"
+                }
             }
 
             Text {
