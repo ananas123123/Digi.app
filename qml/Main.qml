@@ -1175,17 +1175,27 @@ ApplicationWindow {
 
             ColumnLayout {
                 id: searchColumn
-                property real fixedTopMargin: Math.max(90, parent.height * 0.19)
+                property real idleTopMargin: Math.max(90, parent.height * 0.19)
+                property real targetTopMargin: searchRoot.hasSearched ? 18 : idleTopMargin
+                property real animatedTopMargin: targetTopMargin
                 property real introOffsetY: 14
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.topMargin: fixedTopMargin
+                anchors.topMargin: animatedTopMargin
+                Behavior on animatedTopMargin {
+                    NumberAnimation { duration: 420; easing.type: Easing.OutExpo }
+                }
                 transform: Translate { y: searchColumn.introOffsetY }
-                height: Math.max(0, parent.height - searchColumn.fixedTopMargin - 24)
-                // Keep the search controls in one fixed position. Results appear below them;
-                // searching never changes the controls' anchor, heading reservation, or spacing.
+                // In the idle state the column wraps its title and search bar. Once searching,
+                // it expands to provide a real results viewport rather than squeezing it to zero.
+                height: searchRoot.hasSearched
+                    ? Math.max(0, parent.height - searchColumn.animatedTopMargin - 24)
+                    : implicitHeight
                 width: Math.min(900, parent.width - 64)
-                spacing: 22
+                spacing: searchRoot.hasSearched ? 12 : 22
+                Behavior on spacing {
+                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                }
                 opacity: 0
 
                 Component.onCompleted: {
@@ -1201,10 +1211,13 @@ ApplicationWindow {
                 Item {
                     id: searchHeadingContainer
                     Layout.fillWidth: true
-                    implicitHeight: searchContent.implicitHeight
+                    Layout.fillHeight: false
+                    Layout.alignment: Qt.AlignTop
+                    implicitHeight: searchRoot.hasSearched ? 0 : searchContent.implicitHeight
                     opacity: searchRoot.hasSearched ? 0 : 1
                     clip: true
-                    Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                    Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                    Behavior on implicitHeight { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
 
                     Column {
                         id: searchContent
@@ -1229,6 +1242,8 @@ ApplicationWindow {
                 RowLayout {
                     id: searchControlsRow
                     Layout.fillWidth: true
+                    Layout.fillHeight: false
+                    Layout.alignment: Qt.AlignTop
                     spacing: 12
 
 
@@ -1403,9 +1418,10 @@ ApplicationWindow {
                     id: resultsArea
                     Layout.fillWidth: true
                     Layout.fillHeight: searchRoot.hasSearched
-                    Layout.preferredHeight: searchRoot.hasSearched ? 1 : 0
-                    Layout.minimumHeight: 0
+                    Layout.preferredHeight: searchRoot.hasSearched ? 240 : 0
+                    Layout.minimumHeight: searchRoot.hasSearched ? 120 : 0
                     Layout.maximumHeight: searchRoot.hasSearched ? Number.POSITIVE_INFINITY : 0
+                    Layout.alignment: Qt.AlignTop
                     Layout.topMargin: 0
                     Layout.bottomMargin: 0
                     visible: searchRoot.hasSearched
@@ -1413,6 +1429,7 @@ ApplicationWindow {
                     Rectangle {
                     id: resultsPanel
                     x: 0
+                    y: 0
                     width: searchRoot.selectedResultPath ? resultsArea.width * 0.42 : resultsArea.width
                     height: Math.min(
                                 Math.max(searchRoot.results.length === 0
