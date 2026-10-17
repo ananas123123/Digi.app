@@ -1571,9 +1571,22 @@ ApplicationWindow {
                         NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
                     }
 
+                    onWidthChanged: {
+                        if (visible && selectedPdfDocument.status === PdfDocument.Ready)
+                            pdfPreviewScaleTimer.restart()
+                    }
+
                     PdfDocument {
                         id: selectedPdfDocument
                         source: searchPlaceholder.selectedPdfUrl
+                    }
+
+                    Connections {
+                        target: selectedPdfDocument
+                        function onStatusChanged() {
+                            if (selectedPdfDocument.status === PdfDocument.Ready)
+                                pdfPreviewScaleTimer.restart()
+                        }
                     }
 
                     Column {
@@ -1634,6 +1647,20 @@ ApplicationWindow {
                             width: parent.width
                             height: Math.max(0, parent.height - 48)
                             clip: true
+
+                            Timer {
+                                id: pdfPreviewScaleTimer
+                                interval: 260
+                                repeat: false
+                                onTriggered: {
+                                    if (selectedPdfDocument.status === PdfDocument.Ready
+                                            && selectedPdfView.width > 0
+                                            && selectedPdfView.height > 0) {
+                                        selectedPdfView.scaleToWidth(
+                                            selectedPdfView.width, selectedPdfView.height)
+                                    }
+                                }
+                            }
 
                             PdfMultiPageView {
                                 id: selectedPdfView
