@@ -1551,23 +1551,20 @@ ApplicationWindow {
 
                 Rectangle {
                     id: pdfPreviewPanel
-                    x: searchResultsPanel.width + 12
+                    x: searchResultsContainer.width - searchResultsContainer.previewWidth
                     y: 0
-                    width: searchPlaceholder.selectedPdfUrl.length > 0
-                           ? searchResultsContainer.previewWidth
-                           : 0
+                    width: searchResultsContainer.previewWidth
                     height: parent.height
-                    visible: searchPlaceholder.selectedPdfUrl.length > 0
+                    visible: searchResultsContainer.visible
+                    enabled: searchPlaceholder.selectedPdfUrl.length > 0
+                    opacity: searchPlaceholder.selectedPdfUrl.length > 0 ? 1 : 0
                     radius: 14
                     color: "#12FFFFFF"
                     border.color: "#42FFFFFF"
                     border.width: 1
                     clip: true
 
-                    Behavior on x {
-                        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-                    }
-                    Behavior on width {
+                    Behavior on opacity {
                         NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
                     }
 
@@ -1655,9 +1652,14 @@ ApplicationWindow {
                                 onTriggered: {
                                     if (selectedPdfDocument.status === PdfDocument.Ready
                                             && selectedPdfView.width > 0
-                                            && selectedPdfView.height > 0) {
-                                        selectedPdfView.scaleToWidth(
-                                            selectedPdfView.width, selectedPdfView.height)
+                                            && selectedPdfView.height > 0
+                                            && selectedPdfDocument.maxPageWidth > 0) {
+                                        // PdfMultiPageView sizes each page-holder to the
+                                        // document's widest page. Fit that width so smaller
+                                        // pages stay centered instead of being clipped sideways.
+                                        selectedPdfView.renderScale =
+                                            Math.max(1, selectedPdfView.width - 12)
+                                            / selectedPdfDocument.maxPageWidth
                                     }
                                 }
                             }
