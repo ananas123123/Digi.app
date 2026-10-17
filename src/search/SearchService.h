@@ -27,8 +27,6 @@ public:
 
     Q_INVOKABLE QVariantList searchNames(const QString &query) const;
     Q_INVOKABLE QVariantList listFolderContents(const QString &path) const;
-    Q_INVOKABLE QString previewFile(const QString &path) const;
-    Q_INVOKABLE bool openFile(const QString &path) const;
     Q_INVOKABLE bool importDroppedUrls(const QVariantList &urls,
                                        const QString &destinationDirectory = QString());
 
