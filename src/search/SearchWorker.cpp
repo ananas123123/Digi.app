@@ -107,7 +107,7 @@ void SearchWorker::performSearch(quint64 requestId,
         return;
     }
 
-    QDir::Filters filters = QDir::Files | QDir::NoDotAndDotDot;
+    QDir::Filters filters = QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot;
     if (includeHidden)
         filters |= QDir::Hidden | QDir::System;
 
@@ -123,20 +123,28 @@ void SearchWorker::performSearch(quint64 requestId,
 
         const QString path = iterator.next();
         const QFileInfo info(path);
-        if (!info.isFile() || (!includeHidden && info.isHidden()))
+        if ((!info.isDir() && !info.isFile()) || info.isSymLink()
+            || (!includeHidden && info.isHidden()))
             continue;
 
         if (++inspectedFiles > maxFilesToInspect)
             break;
 
         const QString name = info.fileName();
+        const bool isFolder = info.isDir();
         const bool nameMatches = name.contains(needle, sensitivity);
         QString excerpt;
         QString matchType;
 
         if (nameMatches) {
-            matchType = QStringLiteral("filename");
+            matchType = isFolder
+                ? QStringLiteral("folder") : QStringLiteral("filename");
         } else {
+            // Folder names are searchable, but their descendants are examined
+            // independently by QDirIterator; never try to read a directory as a file.
+            if (isFolder)
+                continue;
+
             const QString suffix = info.suffix().toLower();
             if (suffix == QStringLiteral("pdf")) {
                 if (!findPdfContentMatch(info, needle, sensitivity, contentBytesRead,
@@ -178,6 +186,7 @@ void SearchWorker::performSearch(quint64 requestId,
                       QDir::toNativeSeparators(root.relativeFilePath(path)));
         result.insert(QStringLiteral("matchType"), matchType);
         result.insert(QStringLiteral("excerpt"), excerpt);
+        result.insert(QStringLiteral("isFolder"), isFolder);
         results.append(result);
     }
 
