@@ -1297,7 +1297,6 @@ ApplicationWindow {
 
                         delegate: Rectangle {
                             required property string name
-                            required property string path
                             required property string relativePath
                             required property bool isFolder
 
@@ -1342,16 +1341,6 @@ ApplicationWindow {
                                 }
                             }
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    if (isFolder)
-                                        window.openLubisExplorerAtPath(path)
-                                    else
-                                        searchService.openFile(path)
-                                }
-                            }
                         }
                     }
                 }
