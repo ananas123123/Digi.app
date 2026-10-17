@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QStringList>
+#include <QtGlobal>
 
 namespace ArgonPaths
 {
@@ -17,6 +18,19 @@ QString cleanPath(const QString &path)
 
 QString rootDirectory()
 {
+    // The run.bat development launcher sets this override to the checked-in
+    // Argon/ folder so the runtime layout can be tested without touching the
+    // real per-user installation data. Packaged launches leave it unset.
+    const QString overrideRoot = qEnvironmentVariable(
+        "ARGON_DATA_ROOT").trimmed();
+    if (!overrideRoot.isEmpty()) {
+        const QFileInfo overrideInfo(overrideRoot);
+        const QString absolutePath = overrideInfo.isAbsolute()
+            ? overrideRoot
+            : QDir::current().absoluteFilePath(overrideRoot);
+        return cleanPath(absolutePath);
+    }
+
 #ifdef Q_OS_WIN
     const QString localAppData = qEnvironmentVariable(QStringLiteral("LOCALAPPDATA"));
     if (!localAppData.trimmed().isEmpty())
