@@ -39,6 +39,12 @@ ApplicationWindow {
     property bool timerSoundEnabled: true
     property bool universalTimerView: false
     property bool lubisExplorerOpen: false
+    property bool fileActionDialogOpen: false
+    property string fileActionFileName: ""
+    property string fileActionFilePath: ""
+    property string fileActionFileUrl: ""
+    property string fileActionSelectedAction: ""
+    property string fileActionPlaceholderMessage: ""
     property bool dropHoverActive: false
     property string lubisExplorerCurrentPath: ""
     property var lubisExplorerEntries: []
@@ -550,10 +556,10 @@ ApplicationWindow {
 
         // Only composite the app into a blur layer while the explorer popup is open.
         // The popup is a sibling of this layout, so it remains perfectly sharp.
-        layer.enabled: window.lubisExplorerOpen
+        layer.enabled: window.lubisExplorerOpen || window.fileActionDialogOpen
         layer.effect: MultiEffect {
-            blurEnabled: window.lubisExplorerOpen
-            blur: window.lubisExplorerOpen ? 0.58 : 0
+            blurEnabled: window.lubisExplorerOpen || window.fileActionDialogOpen
+            blur: (window.lubisExplorerOpen || window.fileActionDialogOpen) ? 0.58 : 0
             blurMax: 48
             Behavior on blur {
                 NumberAnimation {
@@ -1115,6 +1121,18 @@ ApplicationWindow {
             property string query: ""
             property string selectedPdfUrl: ""
             property string selectedPdfName: ""
+            property bool draggingFile: false
+            property bool dragOverActionZone: false
+            property string draggedFileName: ""
+            property string draggedFilePath: ""
+            property string draggedFileUrl: ""
+            property real dragSourceWidth: 0
+            property real dragGrabOffsetX: 0
+            property real dragGrabOffsetY: 0
+            property real dragGhostX: 0
+            property real dragGhostY: 0
+            property bool dragGhostCompressed: false
+            readonly property real dragDropZoneWidth: Math.min(184, Math.max(150, width * 0.21))
             property var results: []
             property int currentPage: 0
             readonly property int resultsPerPage: 20
@@ -1135,6 +1153,62 @@ ApplicationWindow {
                 searchPending = false
             }
 
+            function beginResultDrag(name, path, url, sourceItem, pointerX, pointerY) {
+                var origin = sourceItem.mapToItem(searchPlaceholder, 0, 0)
+                draggedFileName = name
+                draggedFilePath = path
+                draggedFileUrl = url
+                dragSourceWidth = sourceItem.width
+                dragGrabOffsetX = pointerX - origin.x
+                dragGrabOffsetY = pointerY - origin.y
+                dragGhostX = pointerX - dragGrabOffsetX
+                dragGhostY = pointerY - dragGrabOffsetY
+                dragGhostCompressed = false
+                dragOverActionZone = false
+                draggingFile = true
+                dragGhostCompressionTimer.restart()
+            }
+
+            function updateResultDrag(pointerX, pointerY) {
+                dragGhostX = pointerX - dragGrabOffsetX
+                dragGhostY = pointerY - dragGrabOffsetY
+                var zonePoint = searchActionDropZone.mapFromItem(
+                            searchPlaceholder, pointerX, pointerY)
+                dragOverActionZone = draggingFile
+                        && zonePoint.x >= 0
+                        && zonePoint.x <= searchActionDropZone.width
+                        && zonePoint.y >= 0
+                        && zonePoint.y <= searchActionDropZone.height
+            }
+
+            function finishResultDrag(pointerX, pointerY) {
+                updateResultDrag(pointerX, pointerY)
+                var droppedInActionZone = dragOverActionZone
+
+                if (droppedInActionZone) {
+                    window.fileActionFileName = draggedFileName
+                    window.fileActionFilePath = draggedFilePath
+                    window.fileActionFileUrl = draggedFileUrl
+                    window.fileActionSelectedAction = ""
+                    window.fileActionPlaceholderMessage = "These actions are placeholders for now."
+                    window.fileActionDialogOpen = true
+                }
+
+                dragGhostCompressionTimer.stop()
+                draggingFile = false
+                dragOverActionZone = false
+                dragGhostCompressed = false
+                dragSourceWidth = 0
+            }
+
+            function cancelResultDrag() {
+                dragGhostCompressionTimer.stop()
+                draggingFile = false
+                dragOverActionZone = false
+                dragGhostCompressed = false
+                dragSourceWidth = 0
+            }
+
             Rectangle {
                 anchors.fill: parent
                 color: searchTheme.window
@@ -1145,6 +1219,13 @@ ApplicationWindow {
                 interval: 180
                 repeat: false
                 onTriggered: searchPlaceholder.performSearch(searchInput.text)
+            }
+
+            Timer {
+                id: dragGhostCompressionTimer
+                interval: 70
+                repeat: false
+                onTriggered: searchPlaceholder.dragGhostCompressed = true
             }
 
             Column {
@@ -1320,16 +1401,24 @@ ApplicationWindow {
                             : 0
                     visible: searchPlaceholder.query.trim().length > 0
                     readonly property real previewWidth: Math.min(360, Math.max(280, width * 0.40))
+                    readonly property real actionZoneWidth: searchPlaceholder.dragDropZoneWidth
 
                     Rectangle {
                         id: searchResultsPanel
-                        anchors.left: parent.left
+                        x: searchPlaceholder.draggingFile
+                           ? searchResultsContainer.actionZoneWidth + 12 : 0
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
-                        width: searchPlaceholder.selectedPdfUrl.length > 0
-                               ? searchResultsContainer.width - searchResultsContainer.previewWidth - 12
-                               : searchResultsContainer.width
+                        width: searchResultsContainer.width
+                               - (searchPlaceholder.draggingFile
+                                  ? searchResultsContainer.actionZoneWidth + 12 : 0)
+                               - (searchPlaceholder.selectedPdfUrl.length > 0
+                                  ? searchResultsContainer.previewWidth + 12 : 0)
                         radius: 14
+
+                        Behavior on x {
+                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                        }
 
                         Behavior on width {
                             NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
@@ -1377,9 +1466,12 @@ ApplicationWindow {
                                 var dot = name.lastIndexOf(".")
                                 return dot > 0 ? name.substring(0, dot) : name
                             }
+                            id: searchResultCard
                             width: searchResultsList.width
                             height: 56
                             radius: 10
+                            opacity: searchPlaceholder.draggingFile
+                                    && searchPlaceholder.draggedFilePath === path ? 0.28 : 1
                             color: searchPlaceholder.selectedPdfUrl === fileUrl
                                    ? "#22FFFFFF"
                                    : (resultHover.containsMouse ? "#1AFFFFFF" : "#0CFFFFFF")
@@ -1388,6 +1480,8 @@ ApplicationWindow {
                                           : (resultHover.containsMouse ? "#72FFFFFF" : "#42FFFFFF")
                             border.width: 1
                             antialiasing: true
+
+                            Behavior on opacity { NumberAnimation { duration: 150 } }
 
                             Behavior on color { ColorAnimation { duration: 120 } }
                             Behavior on border.color { ColorAnimation { duration: 120 } }
@@ -1398,15 +1492,53 @@ ApplicationWindow {
                                 hoverEnabled: true
                                 acceptedButtons: Qt.LeftButton
                                 cursorShape: Qt.PointingHandCursor
+                                property real pressX: 0
+                                property real pressY: 0
+                                property bool dragStarted: false
 
-                                onClicked: {
-                                    if (fileExtension === "pdf") {
+                                onPressed: function(mouse) {
+                                    pressX = mouse.x
+                                    pressY = mouse.y
+                                    dragStarted = false
+                                }
+
+                                onPositionChanged: function(mouse) {
+                                    if (!pressed)
+                                        return
+
+                                    var point = mapToItem(searchPlaceholder, mouse.x, mouse.y)
+                                    if (!dragStarted) {
+                                        var dx = mouse.x - pressX
+                                        var dy = mouse.y - pressY
+                                        if (Math.sqrt(dx * dx + dy * dy) < 8)
+                                            return
+                                        dragStarted = true
+                                        searchPlaceholder.beginResultDrag(
+                                                    name, path, fileUrl, searchResultCard,
+                                                    point.x, point.y)
+                                    }
+
+                                    searchPlaceholder.updateResultDrag(point.x, point.y)
+                                }
+
+                                onReleased: function(mouse) {
+                                    var point = mapToItem(searchPlaceholder, mouse.x, mouse.y)
+                                    if (dragStarted) {
+                                        searchPlaceholder.finishResultDrag(point.x, point.y)
+                                    } else if (fileExtension === "pdf") {
                                         searchPlaceholder.selectedPdfUrl = fileUrl
                                         searchPlaceholder.selectedPdfName = name
                                     } else {
                                         searchPlaceholder.selectedPdfUrl = ""
                                         searchPlaceholder.selectedPdfName = ""
                                     }
+                                    dragStarted = false
+                                }
+
+                                onCanceled: {
+                                    if (dragStarted)
+                                        searchPlaceholder.cancelResultDrag()
+                                    dragStarted = false
                                 }
                             }
 
@@ -1549,6 +1681,66 @@ ApplicationWindow {
                     }
                 }
 
+                    Rectangle {
+                        id: searchActionDropZone
+                        x: 0
+                        y: 0
+                        width: searchResultsContainer.actionZoneWidth
+                        height: searchResultsContainer.height
+                        visible: searchResultsContainer.visible
+                        opacity: searchPlaceholder.draggingFile ? 1 : 0
+                        radius: 14
+                        color: searchPlaceholder.dragOverActionZone
+                               ? "#253C8DAD" : "#10000000"
+                        border.width: 1
+                        border.color: searchPlaceholder.dragOverActionZone
+                                      ? "#B3C0E6F5" : "#56FFFFFF"
+                        clip: true
+                        z: 3
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                        Column {
+                            anchors.centerIn: parent
+                            width: parent.width - 20
+                            spacing: 10
+
+                            Text {
+                                width: parent.width
+                                text: "＋"
+                                color: searchPlaceholder.dragOverActionZone
+                                       ? searchTheme.text : "#A7FFFFFF"
+                                font.pixelSize: 32
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+
+                            Text {
+                                width: parent.width
+                                text: searchPlaceholder.dragOverActionZone
+                                      ? "Release to choose"
+                                      : "Drop file here"
+                                color: searchTheme.text
+                                font.pixelSize: 14
+                                font.weight: Font.DemiBold
+                                horizontalAlignment: Text.AlignHCenter
+                                wrapMode: Text.WordWrap
+                            }
+
+                            Text {
+                                width: parent.width
+                                text: "Convert · Move · Edit"
+                                color: searchTheme.mutedText
+                                font.pixelSize: 11
+                                horizontalAlignment: Text.AlignHCenter
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+                    }
+
                 Rectangle {
                     id: pdfPreviewPanel
                     x: searchResultsContainer.width - searchResultsContainer.previewWidth
@@ -1689,6 +1881,62 @@ ApplicationWindow {
                         }
                     }
                 }
+
+                Rectangle {
+                    id: dragGhostCard
+                    x: searchPlaceholder.dragGhostX
+                    y: searchPlaceholder.dragGhostY
+                    width: searchPlaceholder.dragSourceWidth
+                           * (searchPlaceholder.dragGhostCompressed ? 0.82 : 1)
+                    height: 56
+                    visible: searchPlaceholder.draggingFile || opacity > 0.01
+                    opacity: searchPlaceholder.draggingFile ? 1 : 0
+                    radius: 10
+                    color: "#E6323232"
+                    border.color: "#B3FFFFFF"
+                    border.width: 1
+                    clip: true
+                    z: 999
+
+                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                    Behavior on width {
+                        NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    }
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.right: dragGhostType.left
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: {
+                            var dot = searchPlaceholder.draggedFileName.lastIndexOf(".")
+                            return dot > 0
+                                   ? searchPlaceholder.draggedFileName.substring(0, dot)
+                                   : searchPlaceholder.draggedFileName
+                        }
+                        color: searchTheme.text
+                        font.pixelSize: 14
+                        font.weight: Font.DemiBold
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        id: dragGhostType
+                        anchors.right: parent.right
+                        anchors.rightMargin: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: {
+                            var dot = searchPlaceholder.draggedFileName.lastIndexOf(".")
+                            return dot > 0
+                                   ? searchPlaceholder.draggedFileName.substring(dot + 1).toUpperCase()
+                                   : ""
+                        }
+                        visible: text === "PDF" || text === "DOC" || text === "DOCX"
+                        color: text === "PDF" ? "#E7A0A0" : "#8CBFFF"
+                        font.pixelSize: 11
+                        font.weight: Font.DemiBold
+                    }
                 }
             }
         }
@@ -1708,4 +1956,165 @@ ApplicationWindow {
     Component { id: analyticsPage; AnalyticsPage {} }
     Component { id: docPage; DocPage {} }
     Component { id: libraryPage; Item {} }
+
+    Item {
+        id: fileActionDialogLayer
+        anchors.fill: parent
+        z: 10000
+        visible: window.fileActionDialogOpen
+        opacity: window.fileActionDialogOpen ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#55000000"
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: window.fileActionDialogOpen = false
+            }
+        }
+
+        Rectangle {
+            id: fileActionDialog
+            anchors.centerIn: parent
+            width: Math.min(450, parent.width - 40)
+            height: 282
+            radius: 18
+            color: "#EE2D2D2D"
+            border.width: 1
+            border.color: "#70FFFFFF"
+            clip: true
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 20
+                spacing: 12
+
+                Row {
+                    width: parent.width
+                    height: 30
+                    spacing: 8
+
+                    Text {
+                        width: parent.width - closeActionDialog.width - 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Choose an action"
+                        color: theme.text
+                        font.pixelSize: 20
+                        font.weight: Font.DemiBold
+                    }
+
+                    Rectangle {
+                        id: closeActionDialog
+                        width: 30
+                        height: 30
+                        radius: 8
+                        color: closeActionDialogMouse.containsMouse ? "#30FFFFFF" : "transparent"
+                        border.color: "#55FFFFFF"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "×"
+                            color: theme.text
+                            font.pixelSize: 20
+                        }
+
+                        MouseArea {
+                            id: closeActionDialogMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: window.fileActionDialogOpen = false
+                        }
+                    }
+                }
+
+                Text {
+                    width: parent.width
+                    text: window.fileActionFileName
+                    color: theme.mutedText
+                    font.pixelSize: 12
+                    elide: Text.ElideMiddle
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: "#35FFFFFF"
+                }
+
+                Row {
+                    width: parent.width
+                    height: 94
+                    spacing: 10
+
+                    Repeater {
+                        model: ["Convert", "Move", "Edit"]
+
+                        delegate: Rectangle {
+                            required property string modelData
+                            width: (parent.width - 20) / 3
+                            height: parent.height
+                            radius: 12
+                            color: actionPlaceholderMouse.containsMouse
+                                   ? "#2BFFFFFF" : "#12FFFFFF"
+                            border.color: actionPlaceholderMouse.containsMouse
+                                          ? "#91FFFFFF" : "#45FFFFFF"
+
+                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                            Column {
+                                anchors.centerIn: parent
+                                spacing: 10
+
+                                Text {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: modelData === "Convert" ? "⇄"
+                                          : modelData === "Move" ? "↗" : "✎"
+                                    color: theme.text
+                                    font.pixelSize: 24
+                                }
+
+                                Text {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: modelData
+                                    color: theme.text
+                                    font.pixelSize: 13
+                                    font.weight: Font.DemiBold
+                                }
+                            }
+
+                            MouseArea {
+                                id: actionPlaceholderMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    window.fileActionSelectedAction = modelData
+                                    window.fileActionPlaceholderMessage =
+                                            modelData + " is a placeholder for now."
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    width: parent.width
+                    height: 28
+                    verticalAlignment: Text.AlignVCenter
+                    text: window.fileActionPlaceholderMessage
+                    color: theme.mutedText
+                    font.pixelSize: 11
+                    wrapMode: Text.WordWrap
+                    elide: Text.ElideRight
+                }
+            }
+        }
+    }
 }
