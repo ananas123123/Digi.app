@@ -1134,8 +1134,6 @@ ApplicationWindow {
             property real dragGhostX: 0
             property real dragGhostY: 0
             property bool dragGhostCompressed: false
-            property bool resultHoldActive: false
-            property real resultHoldProgress: 0
             readonly property real dragDropZoneWidth: Math.min(184, Math.max(150, width * 0.21))
             property var results: []
             property int currentPage: 0
@@ -1223,39 +1221,6 @@ ApplicationWindow {
                 interval: 180
                 repeat: false
                 onTriggered: searchPlaceholder.performSearch(searchInput.text)
-            }
-
-            Timer {
-                id: resultHoldProgressTimer
-                interval: 25
-                repeat: true
-                onTriggered: {
-                    if (resultHoldMouse.pressed && !resultHoldMouse.dragStarted) {
-                        searchPlaceholder.resultHoldProgress =
-                                Math.min(1, searchPlaceholder.resultHoldProgress + interval / 1000)
-                    } else {
-                        stop()
-                    }
-                }
-            }
-
-            Timer {
-                id: resultHoldActivationTimer
-                interval: 1000
-                repeat: false
-                onTriggered: {
-                    if (resultHoldMouse.pressed) {
-                        resultHoldMouse.dragStarted = true
-                        searchPlaceholder.resultHoldProgress = 1
-                        searchPlaceholder.beginResultDrag(
-                                    resultHoldMouse.fileName,
-                                    resultHoldMouse.filePath,
-                                    resultHoldMouse.sourceFileUrl,
-                                    resultHoldMouse.sourceCard,
-                                    resultHoldMouse.lastPointerX,
-                                    resultHoldMouse.lastPointerY)
-                    }
-                }
             }
 
             Timer {
@@ -1520,51 +1485,23 @@ ApplicationWindow {
 
                             Behavior on opacity { NumberAnimation { duration: 150 } }
 
-                            Rectangle {
-                                anchors.left: parent.left
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                                width: parent.width * searchPlaceholder.resultHoldProgress
-                                radius: 9
-                                color: "#3DFFFFFF"
-                                visible: resultHoldMouse.pressed && !resultHoldMouse.dragStarted
-                                z: 1
-
-                                Behavior on width {
-                                    NumberAnimation { duration: 25; easing.type: Easing.Linear }
-                                }
-                            }
-
                             Behavior on color { ColorAnimation { duration: 120 } }
                             Behavior on border.color { ColorAnimation { duration: 120 } }
 
                             MouseArea {
-                                id: resultHoldMouse
+                                id: resultHover
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 acceptedButtons: Qt.LeftButton
-                                preventStealing: dragStarted
-                                cursorShape: dragStarted ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+                                cursorShape: Qt.PointingHandCursor
                                 property real pressX: 0
                                 property real pressY: 0
-                                property real lastPointerX: 0
-                                property real lastPointerY: 0
                                 property bool dragStarted: false
-                                property string fileName: name
-                                property string filePath: path
-                                property string sourceFileUrl: searchResultCard.fileUrl
-                                property var sourceCard: searchResultCard
 
                                 onPressed: function(mouse) {
                                     pressX = mouse.x
                                     pressY = mouse.y
-                                    var point = mapToItem(searchPlaceholder, mouse.x, mouse.y)
-                                    lastPointerX = point.x
-                                    lastPointerY = point.y
                                     dragStarted = false
-                                    searchPlaceholder.resultHoldProgress = 0
-                                    resultHoldProgressTimer.start()
-                                    resultHoldActivationTimer.start()
                                 }
 
                                 onPositionChanged: function(mouse) {
@@ -1572,18 +1509,15 @@ ApplicationWindow {
                                         return
 
                                     var point = mapToItem(searchPlaceholder, mouse.x, mouse.y)
-                                    lastPointerX = point.x
-                                    lastPointerY = point.y
-
                                     if (!dragStarted) {
                                         var dx = mouse.x - pressX
                                         var dy = mouse.y - pressY
-                                        if (Math.sqrt(dx * dx + dy * dy) >= 8) {
-                                            resultHoldActivationTimer.stop()
-                                            resultHoldProgressTimer.stop()
-                                            searchPlaceholder.resultHoldProgress = 0
-                                        }
-                                        return
+                                        if (Math.sqrt(dx * dx + dy * dy) < 8)
+                                            return
+                                        dragStarted = true
+                                        searchPlaceholder.beginResultDrag(
+                                                    name, path, fileUrl, searchResultCard,
+                                                    point.x, point.y)
                                     }
 
                                     searchPlaceholder.updateResultDrag(point.x, point.y)
@@ -1591,8 +1525,6 @@ ApplicationWindow {
 
                                 onReleased: function(mouse) {
                                     var point = mapToItem(searchPlaceholder, mouse.x, mouse.y)
-                                    resultHoldActivationTimer.stop()
-                                    resultHoldProgressTimer.stop()
                                     if (dragStarted) {
                                         searchPlaceholder.finishResultDrag(point.x, point.y)
                                     } else if (fileExtension === "pdf") {
@@ -1603,16 +1535,12 @@ ApplicationWindow {
                                         searchPlaceholder.selectedPdfName = ""
                                     }
                                     dragStarted = false
-                                    searchPlaceholder.resultHoldProgress = 0
                                 }
 
                                 onCanceled: {
-                                    resultHoldActivationTimer.stop()
-                                    resultHoldProgressTimer.stop()
                                     if (dragStarted)
                                         searchPlaceholder.cancelResultDrag()
                                     dragStarted = false
-                                    searchPlaceholder.resultHoldProgress = 0
                                 }
                             }
 
