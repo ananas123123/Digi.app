@@ -4,6 +4,7 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QDebug>
 #include <QPdfDocument>
 #include <QPdfSelection>
 #include <QSet>
@@ -103,9 +104,12 @@ void SearchWorker::performSearch(quint64 requestId,
     const QDir root(rootPath);
     if (needle.isEmpty() || !root.exists()
         || m_latestRequestId.load(std::memory_order_relaxed) != requestId) {
+        qWarning() << "Search request skipped: empty query, missing root, or superseded request.";
         emit searchCompleted(requestId, results);
         return;
     }
+
+    qInfo().noquote() << "Search worker scanning root:" << root.absolutePath();
 
     QDir::Filters filters = QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot;
     if (includeHidden)
@@ -190,6 +194,9 @@ void SearchWorker::performSearch(quint64 requestId,
         results.append(result);
     }
 
-    if (m_latestRequestId.load(std::memory_order_relaxed) == requestId)
+    if (m_latestRequestId.load(std::memory_order_relaxed) == requestId) {
+        qInfo() << "Search worker inspected" << inspectedFiles
+                << "items and found" << results.size() << "matches.";
         emit searchCompleted(requestId, results);
+    }
 }
