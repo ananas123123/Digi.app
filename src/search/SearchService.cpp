@@ -100,6 +100,7 @@ bool migrateLegacySearchData()
 
     const QDir executableDirectory(QCoreApplication::applicationDirPath());
     const QStringList legacyCandidates = {
+        QDir(ArgonPaths::rootDirectory()).filePath(QStringLiteral("search QR")),
         executableDirectory.filePath(QStringLiteral("Argon/search QR")),
         executableDirectory.filePath(QStringLiteral("../Argon/search QR"))
     };
