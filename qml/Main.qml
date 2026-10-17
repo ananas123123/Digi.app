@@ -1114,6 +1114,12 @@ ApplicationWindow {
 
             property string query: ""
             property var results: []
+            property int currentPage: 0
+            readonly property int resultsPerPage: 20
+            readonly property int pageCount: Math.ceil(results.length / resultsPerPage)
+            readonly property var pageResults: results.slice(
+                currentPage * resultsPerPage,
+                (currentPage + 1) * resultsPerPage)
 
             Rectangle {
                 anchors.fill: parent
@@ -1121,10 +1127,12 @@ ApplicationWindow {
             }
 
             Column {
+                id: searchContentColumn
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
                 anchors.topMargin: Math.max(90, parent.height * 0.26)
                 width: Math.min(900, parent.width - 64)
+                height: Math.max(0, parent.height - anchors.topMargin - 24)
                 spacing: 18
 
                 Column {
@@ -1186,10 +1194,12 @@ ApplicationWindow {
                             onTextChanged: {
                                 searchPlaceholder.query = text
                                 searchPlaceholder.results = searchService.searchNames(text)
+                                searchPlaceholder.currentPage = 0
                             }
 
                             onAccepted: {
                                 searchPlaceholder.results = searchService.searchNames(text)
+                                searchPlaceholder.currentPage = 0
                             }
                         }
 
@@ -1270,7 +1280,9 @@ ApplicationWindow {
                 Rectangle {
                     id: searchResultsPanel
                     width: parent.width
-                    height: Math.min(320, Math.max(56, searchResultsList.contentHeight + 16))
+                    height: visible
+                            ? Math.max(160, searchContentColumn.height - y)
+                            : 0
                     visible: searchPlaceholder.query.trim().length > 0
                     radius: 12
                     color: searchTheme.surface
@@ -1288,59 +1300,123 @@ ApplicationWindow {
 
                     ListView {
                         id: searchResultsList
-                        anchors.fill: parent
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: paginationControls.top
                         anchors.margins: 8
+                        anchors.bottomMargin: searchPlaceholder.results.length > searchPlaceholder.resultsPerPage ? 4 : 0
                         visible: searchPlaceholder.results.length > 0
                         clip: true
-                        model: searchPlaceholder.results
-                        spacing: 4
+                        model: searchPlaceholder.pageResults
+                        spacing: 6
 
                         delegate: Rectangle {
                             required property string name
-                            required property string relativePath
-                            required property bool isFolder
 
                             width: searchResultsList.width
-                            height: 44
-                            radius: 7
-                            color: "transparent"
+                            height: 56
+                            radius: 8
+                            color: searchTheme.surfaceRaised
+                            border.color: searchTheme.border
+                            border.width: 1
+
+                            Text {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: name
+                                color: searchTheme.text
+                                font.pixelSize: 14
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+
+                    Row {
+                        id: paginationControls
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: 44
+                        visible: searchPlaceholder.results.length > searchPlaceholder.resultsPerPage
+                        spacing: 12
+
+                        Item {
+                            width: parent.width
+                            height: parent.height
 
                             Row {
-                                anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 10
-                                spacing: 10
+                                anchors.centerIn: parent
+                                spacing: 12
+
+                                Rectangle {
+                                    width: 92
+                                    height: 30
+                                    radius: 7
+                                    color: previousPageMouse.containsMouse && searchPlaceholder.currentPage > 0
+                                           ? searchTheme.surfaceRaised : "transparent"
+                                    border.color: searchTheme.border
+                                    opacity: searchPlaceholder.currentPage > 0 ? 1 : 0.4
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "Previous"
+                                        color: searchTheme.text
+                                        font.pixelSize: 12
+                                    }
+
+                                    MouseArea {
+                                        id: previousPageMouse
+                                        anchors.fill: parent
+                                        enabled: searchPlaceholder.currentPage > 0
+                                        hoverEnabled: true
+                                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                        onClicked: {
+                                            searchPlaceholder.currentPage--
+                                            searchResultsList.contentY = 0
+                                        }
+                                    }
+                                }
 
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: isFolder ? "▰" : "▯"
-                                    color: isFolder ? searchTheme.text : searchTheme.mutedText
-                                    font.pixelSize: 16
+                                    text: (searchPlaceholder.currentPage + 1)
+                                          + " / " + searchPlaceholder.pageCount
+                                    color: searchTheme.mutedText
+                                    font.pixelSize: 11
                                 }
 
-                                Column {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: parent.width - 36
-                                    spacing: 2
+                                Rectangle {
+                                    width: 72
+                                    height: 30
+                                    radius: 7
+                                    color: nextPageMouse.containsMouse ? searchTheme.surfaceRaised : "transparent"
+                                    border.color: searchTheme.border
+                                    opacity: searchPlaceholder.currentPage < searchPlaceholder.pageCount - 1 ? 1 : 0.4
 
                                     Text {
-                                        width: parent.width
-                                        text: name
+                                        anchors.centerIn: parent
+                                        text: "Next"
                                         color: searchTheme.text
-                                        font.pixelSize: 13
-                                        elide: Text.ElideRight
+                                        font.pixelSize: 12
                                     }
 
-                                    Text {
-                                        width: parent.width
-                                        text: relativePath
-                                        color: searchTheme.mutedText
-                                        font.pixelSize: 10
-                                        elide: Text.ElideMiddle
+                                    MouseArea {
+                                        id: nextPageMouse
+                                        anchors.fill: parent
+                                        enabled: searchPlaceholder.currentPage < searchPlaceholder.pageCount - 1
+                                        hoverEnabled: true
+                                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                        onClicked: {
+                                            searchPlaceholder.currentPage++
+                                            searchResultsList.contentY = 0
+                                        }
                                     }
                                 }
                             }
-
                         }
                     }
                 }
