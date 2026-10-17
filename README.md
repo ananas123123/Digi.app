@@ -25,28 +25,28 @@ QML owns presentation and UI interaction. C++ owns application logic and perform
 
 ## Per-user directory layout
 
-At startup, Argon creates its writable runtime layout under `%LOCALAPPDATA%\\Argon` on Windows. The directory path is centralized in `src/app/AppPaths.*`.
+At startup, Argon creates its writable runtime layout under `%LOCALAPPDATA%\Argon` on Windows. The directory path is centralized in `src/app/AppPaths.*`.
 
 ```text
-%LOCALAPPDATA%\\Argon\\
-├── App\\                 # Installed Argon executable and Qt files (installer-owned)
-├── Updater\\             # ArgonUpdater.exe (added by updater packaging)
-├── Bootstrap\\           # ArgonBootstrap.exe (added by updater packaging)
-├── UserData\\
-│   ├── Settings\\
-│   ├── Cache\\
-│   ├── Search QR\\      # Search and explorer share this root
-│   ├── Documents\\
-│   ├── Accounts\\
-│   └── Analytics\\Daily\\
-├── Updates\\
-│   ├── Downloads\\
-│   ├── Staging\\
-│   └── Backups\\
-└── Logs\\                # Includes argon-runtime.log
+%LOCALAPPDATA%\Argon\
+├── App\                 # Installed Argon executable and Qt files (installer-owned)
+├── Updater\             # ArgonUpdater.exe (added by updater packaging)
+├── Bootstrap\           # ArgonBootstrap.exe (added by updater packaging)
+├── UserData\
+│   ├── Settings\
+│   ├── Cache\
+│   ├── Search QR\      # Search and explorer share this root
+│   ├── Documents\
+│   ├── Accounts\
+│   └── Analytics\Daily\
+├── Updates\
+│   ├── Downloads\
+│   ├── Staging\
+│   └── Backups\
+└── Logs\                # Includes argon-runtime.log
 ```
 
-The application provisions folders but does not copy its own executable into `App\\`; the installer will own installation of binaries. Existing Search QR content and daily analytics are copied non-destructively from their previous locations when found. Original files are retained, existing destination files are never overwritten, and migration markers prevent repeated copying.
+The application provisions folders but does not copy its own executable into `App\`; the installer will own installation of binaries. Existing Search QR content and daily analytics are copied non-destructively from their previous locations when found. Original files are retained, existing destination files are never overwritten, and migration markers prevent repeated copying.
 
 ## Status
-The modular shell now provisions the per-user runtime directory layout and stores search content, runtime logs, and daily analytics under `%LOCALAPPDATA%\\Argon` on Windows. One-time, non-destructive migration copies recognized legacy search and analytics files while retaining their originals. Notes, PDF functionality, broader persistent storage, and ink rendering remain in progress. Build and runtime validation are required after each milestone.
+The modular shell now provisions the per-user runtime directory layout and stores search content, runtime logs, and daily analytics under `%LOCALAPPDATA%\Argon` on Windows. One-time, non-destructive migration copies recognized legacy search and analytics files while retaining their originals. Notes, PDF functionality, broader persistent storage, and ink rendering remain in progress. Build and runtime validation are required after each milestone.
