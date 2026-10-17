@@ -1660,6 +1660,7 @@ ApplicationWindow {
                         }
                     }
                 }
+                }
             }
         }
     }
