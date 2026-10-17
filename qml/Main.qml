@@ -1284,11 +1284,23 @@ ApplicationWindow {
                             ? Math.max(160, searchContentColumn.height - y)
                             : 0
                     visible: searchPlaceholder.query.trim().length > 0
-                    radius: 12
-                    color: searchTheme.surface
-                    border.color: searchTheme.border
+                    radius: 14
+                    color: "#12FFFFFF"
+                    border.color: "#42FFFFFF"
                     border.width: 1
                     clip: true
+
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: "#000000"
+                        shadowOpacity: 0.17
+                        shadowBlur: 0.20
+                        shadowVerticalOffset: 2
+                    }
+
+                    Behavior on color { ColorAnimation { duration: 130 } }
+                    Behavior on border.color { ColorAnimation { duration: 130 } }
 
                     Text {
                         anchors.centerIn: parent
@@ -1313,13 +1325,49 @@ ApplicationWindow {
 
                         delegate: Rectangle {
                             required property string name
+                            property string fileExtension: {
+                                var dot = name.lastIndexOf(".")
+                                return dot > 0 ? name.substring(dot + 1).toLowerCase() : ""
+                            }
+                            property string displayName: {
+                                var dot = name.lastIndexOf(".")
+                                return dot > 0 ? name.substring(0, dot) : name
+                            }
+                            property color restingTint: fileExtension === "pdf"
+                                                       ? "#12D94B4B"
+                                                       : ((fileExtension === "doc" || fileExtension === "docx")
+                                                          ? "#123F8DDB" : "#0CFFFFFF")
+                            property color hoverTint: fileExtension === "pdf"
+                                                     ? "#1CD94B4B"
+                                                     : ((fileExtension === "doc" || fileExtension === "docx")
+                                                        ? "#1C3F8DDB" : "#1AFFFFFF")
 
                             width: searchResultsList.width
                             height: 56
-                            radius: 8
-                            color: searchTheme.surfaceRaised
-                            border.color: searchTheme.border
+                            radius: 10
+                            color: resultHover.containsMouse ? hoverTint : restingTint
+                            border.color: resultHover.containsMouse ? "#72FFFFFF" : "#42FFFFFF"
                             border.width: 1
+                            antialiasing: true
+
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                shadowEnabled: true
+                                shadowColor: "#000000"
+                                shadowOpacity: resultHover.containsMouse ? 0.20 : 0.13
+                                shadowBlur: resultHover.containsMouse ? 0.24 : 0.17
+                                shadowVerticalOffset: resultHover.containsMouse ? 3 : 2
+                            }
+
+                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                            MouseArea {
+                                id: resultHover
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                acceptedButtons: Qt.NoButton
+                            }
 
                             Text {
                                 anchors.left: parent.left
@@ -1327,7 +1375,7 @@ ApplicationWindow {
                                 anchors.leftMargin: 16
                                 anchors.rightMargin: 16
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: name
+                                text: displayName
                                 color: searchTheme.text
                                 font.pixelSize: 14
                                 elide: Text.ElideRight
