@@ -259,6 +259,8 @@ QVariantMap SearchService::readNextSearchPage()
             result.insert(QStringLiteral("name"), name);
             result.insert(QStringLiteral("path"),
                           QDir::toNativeSeparators(info.absoluteFilePath()));
+            result.insert(QStringLiteral("fileUrl"),
+                          QUrl::fromLocalFile(info.absoluteFilePath()).toString());
             result.insert(QStringLiteral("relativePath"),
                           QDir::toNativeSeparators(
                               QDir(m_activeSearchRoot).relativeFilePath(path)));
