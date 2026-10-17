@@ -2,7 +2,6 @@
 
 #include <QDir>
 #include <QFileInfo>
-#include <QOperatingSystemVersion>
 #include <QStandardPaths>
 #include <QStringList>
 
@@ -48,6 +47,7 @@ QString settingsDirectory() { return QDir(userDataDirectory()).filePath(QStringL
 QString cacheDirectory() { return QDir(userDataDirectory()).filePath(QStringLiteral("Cache")); }
 QString searchRootDirectory() { return QDir(userDataDirectory()).filePath(QStringLiteral("Search QR")); }
 QString documentsDirectory() { return QDir(userDataDirectory()).filePath(QStringLiteral("Documents")); }
+QString accountsDirectory() { return QDir(userDataDirectory()).filePath(QStringLiteral("Accounts")); }
 QString analyticsDirectory()
 {
     return QDir(userDataDirectory()).filePath(QStringLiteral("Analytics/Daily"));
@@ -73,6 +73,7 @@ bool ensureDirectoryStructure(QString *errorMessage)
         cacheDirectory(),
         searchRootDirectory(),
         documentsDirectory(),
+        accountsDirectory(),
         analyticsDirectory(),
         updatesDirectory(),
         downloadsDirectory(),
