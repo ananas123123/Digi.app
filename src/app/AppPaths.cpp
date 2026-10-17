@@ -32,7 +32,7 @@ QString rootDirectory()
     }
 
 #ifdef Q_OS_WIN
-    const QString localAppData = qEnvironmentVariable(QStringLiteral("LOCALAPPDATA"));
+    const QString localAppData = qEnvironmentVariable("LOCALAPPDATA");
     if (!localAppData.trimmed().isEmpty())
         return cleanPath(QDir(localAppData).filePath(QStringLiteral("Argon")));
 #endif
