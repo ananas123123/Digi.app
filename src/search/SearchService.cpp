@@ -1,6 +1,5 @@
 #include "SearchService.h"
 #include "DropImportWorker.h"
-#include "SearchWorker.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -13,7 +12,6 @@
 #include <QMetaObject>
 #include <QSet>
 #include <QVariant>
-#include <QDebug>
 
 namespace {
 QString normalizedPath(QString path)
@@ -112,33 +110,10 @@ SearchService::SearchService(QObject *parent)
 
     m_importThread.start();
 
-    m_searchWorker = new SearchWorker;
-    m_searchWorker->moveToThread(&m_searchThread);
-    connect(&m_searchThread, &QThread::finished,
-            m_searchWorker, &QObject::deleteLater);
-    connect(m_searchWorker, &SearchWorker::searchCompleted, this,
-            [this](quint64 requestId, const QVariantList &results) {
-        if (requestId != m_searchRequestId)
-            return;
-
-        m_searchResults = results;
-        emit searchResultsChanged();
-
-        if (m_searching) {
-            m_searching = false;
-            emit searchStateChanged();
-        }
-    }, Qt::QueuedConnection);
-    m_searchThread.start();
 }
 
 SearchService::~SearchService()
 {
-    if (m_searchWorker)
-        m_searchWorker->setLatestRequestId(++m_searchRequestId);
-    m_searchThread.quit();
-    m_searchThread.wait();
-
     m_importThread.quit();
     m_importThread.wait();
 }
@@ -228,64 +203,6 @@ bool SearchService::importDroppedUrls(const QVariantList &urls,
         return false;
     }
     return true;
-}
-
-QVariantList SearchService::searchResults() const
-{
-    return m_searchResults;
-}
-
-bool SearchService::searching() const
-{
-    return m_searching;
-}
-
-void SearchService::requestSearch(const QString &query, bool caseSensitive, bool includeHidden)
-{
-    const quint64 requestId = ++m_searchRequestId;
-    m_searchWorker->setLatestRequestId(requestId);
-
-    const QString needle = query.trimmed();
-    if (!m_searchResults.isEmpty()) {
-        m_searchResults.clear();
-        emit searchResultsChanged();
-    }
-
-    if (needle.isEmpty()) {
-        if (m_searching) {
-            m_searching = false;
-            emit searchStateChanged();
-        }
-        return;
-    }
-
-    if (!m_searching) {
-        m_searching = true;
-        emit searchStateChanged();
-    }
-
-    // A queued functor avoids fragile string-based slot signature matching and
-    // guarantees all filesystem/PDF scanning runs on the worker thread.
-    SearchWorker *worker = m_searchWorker;
-    const QString rootPath = m_searchRoot;
-    const bool queued = QMetaObject::invokeMethod(
-        worker,
-        [worker, requestId, rootPath, needle, caseSensitive, includeHidden]() {
-            worker->performSearch(requestId, rootPath, needle,
-                                  caseSensitive, includeHidden);
-        },
-        Qt::QueuedConnection);
-
-    if (!queued) {
-        qWarning() << "Could not queue search request" << requestId
-                   << "for root" << rootPath;
-        m_searchResults.clear();
-        emit searchResultsChanged();
-        if (m_searching) {
-            m_searching = false;
-            emit searchStateChanged();
-        }
-    }
 }
 
 QVariantList SearchService::listFolderContents(const QString &path) const
