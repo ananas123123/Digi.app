@@ -20,8 +20,6 @@ qt_add_executable(Lubis
     src/documents/DocumentService.h
     src/search/SearchService.cpp
     src/search/SearchService.h
-    src/search/SearchWorker.cpp
-    src/search/SearchWorker.h
     src/search/DropImportWorker.cpp
     src/search/DropImportWorker.h
 )
