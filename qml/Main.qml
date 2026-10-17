@@ -69,6 +69,12 @@ ApplicationWindow {
         lubisExplorerOpen = true
     }
 
+    function openLubisExplorerAtPath(path) {
+        lubisExplorerCurrentPath = path
+        refreshLubisExplorerEntries()
+        lubisExplorerOpen = true
+    }
+
     function goBackLubisExplorer() {
         var rootPath = searchService.searchRoot
         var currentPath = lubisExplorerCurrentPath
@@ -1169,24 +1175,17 @@ ApplicationWindow {
 
             ColumnLayout {
                 id: searchColumn
-                property real animatedTopMargin: searchRoot.hasSearched
-                                                   ? 18
-                                                   : Math.max(90, parent.height * 0.19)
+                property real fixedTopMargin: Math.max(90, parent.height * 0.19)
                 property real introOffsetY: 14
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.topMargin: animatedTopMargin
-                Behavior on animatedTopMargin {
-                    NumberAnimation { duration: 380; easing.type: Easing.OutExpo }
-                }
+                anchors.topMargin: fixedTopMargin
                 transform: Translate { y: searchColumn.introOffsetY }
-                height: searchRoot.hasSearched
-                    ? Math.max(0, parent.height - searchColumn.animatedTopMargin - 24)
-                    : implicitHeight
-                // The top margin animates between the idle layout and the results layout;
-                // the intro motion uses a transform so it never competes with the anchors.
+                height: Math.max(0, parent.height - searchColumn.fixedTopMargin - 24)
+                // Keep the search controls in one fixed position. Results appear below them;
+                // searching never changes the controls' anchor, heading reservation, or spacing.
                 width: Math.min(900, parent.width - 64)
-                spacing: searchRoot.hasSearched ? 12 : 22
+                spacing: 22
                 opacity: 0
 
                 Component.onCompleted: {
@@ -1202,11 +1201,10 @@ ApplicationWindow {
                 Item {
                     id: searchHeadingContainer
                     Layout.fillWidth: true
-                    implicitHeight: searchRoot.hasSearched ? 0 : searchContent.implicitHeight
+                    implicitHeight: searchContent.implicitHeight
                     opacity: searchRoot.hasSearched ? 0 : 1
                     clip: true
                     Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                    Behavior on implicitHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
                     Column {
                         id: searchContent
@@ -1468,6 +1466,7 @@ ApplicationWindow {
                             required property string matchType
                             required property string excerpt
                             required property string path
+                            required property bool isFolder
                             property string folderName: {
                                 // relativePath is rooted at "search QR"; use only the immediate parent folder.
                                 var normalizedPath = relativePath.replace(/\\/g, "/")
@@ -1515,7 +1514,8 @@ ApplicationWindow {
                                         Text {
                                             id: matchLabel
                                             anchors.centerIn: parent
-                                            text: matchType === "filename" ? "NAME" : "CONTENT"
+                                            text: matchType === "folder" ? "FOLDER"
+                                                  : (matchType === "filename" ? "NAME" : "CONTENT")
                                             color: matchType === "filename" ? searchTheme.accentText : searchTheme.text
                                             font.pixelSize: 9
                                             font.weight: Font.DemiBold
@@ -1542,13 +1542,21 @@ ApplicationWindow {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    searchRoot.selectedResultPath = path
-                                    searchRoot.previewText = searchService.previewFile(path)
+                                    if (isFolder) {
+                                        window.openLubisExplorerAtPath(path)
+                                    } else {
+                                        searchRoot.selectedResultPath = path
+                                        searchRoot.previewText = searchService.previewFile(path)
+                                    }
                                 }
                                 onDoubleClicked: {
-                                    searchRoot.selectedResultPath = path
-                                    searchRoot.previewText = searchService.previewFile(path)
-                                    searchService.openFile(path)
+                                    if (isFolder) {
+                                        window.openLubisExplorerAtPath(path)
+                                    } else {
+                                        searchRoot.selectedResultPath = path
+                                        searchRoot.previewText = searchService.previewFile(path)
+                                        searchService.openFile(path)
+                                    }
                                 }
                             }
                         }
