@@ -1333,19 +1333,10 @@ ApplicationWindow {
                                 var dot = name.lastIndexOf(".")
                                 return dot > 0 ? name.substring(0, dot) : name
                             }
-                            property color restingTint: fileExtension === "pdf"
-                                                       ? "#12D94B4B"
-                                                       : ((fileExtension === "doc" || fileExtension === "docx")
-                                                          ? "#123F8DDB" : "#0CFFFFFF")
-                            property color hoverTint: fileExtension === "pdf"
-                                                     ? "#1CD94B4B"
-                                                     : ((fileExtension === "doc" || fileExtension === "docx")
-                                                        ? "#1C3F8DDB" : "#1AFFFFFF")
-
                             width: searchResultsList.width
                             height: 56
                             radius: 10
-                            color: resultHover.containsMouse ? hoverTint : restingTint
+                            color: resultHover.containsMouse ? "#1AFFFFFF" : "#0CFFFFFF"
                             border.color: resultHover.containsMouse ? "#72FFFFFF" : "#42FFFFFF"
                             border.width: 1
                             antialiasing: true
@@ -1371,14 +1362,29 @@ ApplicationWindow {
 
                             Text {
                                 anchors.left: parent.left
-                                anchors.right: parent.right
+                                anchors.right: fileTypeLabel.left
                                 anchors.leftMargin: 16
-                                anchors.rightMargin: 16
+                                anchors.rightMargin: 12
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: displayName
                                 color: searchTheme.text
                                 font.pixelSize: 14
+                                font.weight: Font.DemiBold
                                 elide: Text.ElideRight
+                            }
+
+                            Text {
+                                id: fileTypeLabel
+                                anchors.right: parent.right
+                                anchors.rightMargin: 16
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: fileExtension === "pdf"
+                                         || fileExtension === "doc"
+                                         || fileExtension === "docx"
+                                text: fileExtension.toUpperCase()
+                                color: fileExtension === "pdf" ? "#E7A0A0" : "#8CBFFF"
+                                font.pixelSize: 11
+                                font.weight: Font.DemiBold
                             }
                         }
                     }
