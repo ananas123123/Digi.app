@@ -15,6 +15,157 @@ Item {
     property bool handleExpanded: false
     property real dailyCardCloudPhase: 0
     property real dailyHandleCloudPhase: 0
+    property bool calendarExpanded: false
+    property bool calendarSettled: false
+    property bool calendarHandleSettled: false
+    property bool calendarHandleExpanded: false
+    property bool calendarWaveVisible: false
+    property real calendarCloudPhase: 0
+    property real calendarHandleCloudPhase: 0
+    property int displayedCalendarYear: new Date().getFullYear()
+    property int displayedCalendarMonth: new Date().getMonth()
+    property var calendarFocusedSeconds: ({})
+    property string calendarTodayIsoDate: ""
+    property double todayFocusedSeconds: 0
+    property real calendarSwipeStartX: 0
+    property real calendarSwipeStartY: 0
+    property real calendarDragOffset: 0
+    property int calendarCommitOffset: 0
+    property bool calendarGestureDecided: false
+    property bool calendarHorizontalGesture: false
+    property real timerIntroProgress: 0
+
+    function introProgress(delay) {
+        if (timerIntroProgress <= delay)
+            return 0
+        return Math.min(1, (timerIntroProgress - delay) / (1 - delay))
+    }
+
+    function applyCalendarMonthOffset(offset) {
+        var date = new Date(displayedCalendarYear, displayedCalendarMonth + offset, 1)
+        displayedCalendarYear = date.getFullYear()
+        displayedCalendarMonth = date.getMonth()
+    }
+
+    function calendarMonthDate(offset) {
+        return new Date(displayedCalendarYear, displayedCalendarMonth + offset, 1)
+    }
+
+    function calendarMonthName(offset) {
+        return Qt.formatDate(calendarMonthDate(offset), "MMMM")
+    }
+
+    function calendarYearText(offset) {
+        return Qt.formatDate(calendarMonthDate(offset), "yyyy")
+    }
+
+    function calendarFirstWeekday(offset) {
+        return calendarMonthDate(offset).getDay()
+    }
+
+    function calendarDaysInMonth(offset) {
+        var date = calendarMonthDate(offset)
+        return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+    }
+
+    function calendarCellDay(index, offset) {
+        var day = index - calendarFirstWeekday(offset) + 1
+        return day >= 1 && day <= calendarDaysInMonth(offset) ? day : ""
+    }
+
+    function isToday(day, offset) {
+        var now = new Date()
+        var month = calendarMonthDate(offset)
+        return day !== ""
+                && month.getFullYear() === now.getFullYear()
+                && month.getMonth() === now.getMonth()
+                && Number(day) === now.getDate()
+    }
+
+    function isCurrentMonthOffset(offset) {
+        var now = new Date()
+        var month = calendarMonthDate(offset)
+        return month.getFullYear() === now.getFullYear()
+                && month.getMonth() === now.getMonth()
+    }
+
+    function calendarDateKey(date) {
+        var monthNumber = date.getMonth() + 1
+        var dayNumber = date.getDate()
+        return date.getFullYear() + "-"
+                + (monthNumber < 10 ? "0" : "") + monthNumber + "-"
+                + (dayNumber < 10 ? "0" : "") + dayNumber
+    }
+
+    function calendarIsoDate(day, offset) {
+        if (day === "" || day === null || day === undefined)
+            return ""
+        var month = calendarMonthDate(offset)
+        return calendarDateKey(new Date(month.getFullYear(), month.getMonth(), Number(day)))
+    }
+
+    function formatCalendarDuration(seconds) {
+        var totalMinutes = Math.floor(Math.max(0, Number(seconds) || 0) / 60)
+        var hours = Math.floor(totalMinutes / 60)
+        var minutes = totalMinutes % 60
+        return (hours < 10 ? "0" : "") + hours + ":"
+                + (minutes < 10 ? "0" : "") + minutes
+    }
+
+    function calendarCellSeconds(day, offset) {
+        var key = calendarIsoDate(day, offset)
+        if (key === "")
+            return 0
+        if (key === calendarTodayIsoDate)
+            return todayFocusedSeconds
+        return Number(calendarFocusedSeconds[key] || 0)
+    }
+
+    function calendarMonthTotalSeconds(offset) {
+        var total = 0
+        for (var day = 1; day <= calendarDaysInMonth(offset); ++day) {
+            var key = calendarIsoDate(String(day), offset)
+            total += Number(calendarFocusedSeconds[key] || 0)
+            if (key === calendarTodayIsoDate)
+                total += todayFocusedSeconds - Number(calendarFocusedSeconds[key] || 0)
+        }
+        return total
+    }
+
+    function calendarCellBackground(seconds, today) {
+        if (today)
+            return "#493910"
+        if (seconds <= 0)
+            return Qt.rgba(1, 1, 1, 0.045)
+        var intensity = Math.sqrt(Math.min(1, seconds / 7200))
+        return Qt.rgba(0.88, 0.40, 0.13, 0.08 + intensity * 0.42)
+    }
+
+    function refreshCalendarData() {
+        var values = {}
+        for (var offset = -1; offset <= 1; ++offset) {
+            var daysInMonth = calendarDaysInMonth(offset)
+            for (var day = 1; day <= daysInMonth; ++day) {
+                var key = calendarIsoDate(String(day), offset)
+                // Keep totals for overlapping months; only read newly exposed dates.
+                values[key] = calendarFocusedSeconds[key] !== undefined
+                        ? calendarFocusedSeconds[key]
+                        : dailyAnalyticsService.focusedSecondsForDate(key)
+            }
+        }
+        calendarFocusedSeconds = values
+        calendarTodayIsoDate = calendarDateKey(new Date())
+        todayFocusedSeconds = dailyAnalyticsService.focusedSecondsForDate(calendarTodayIsoDate)
+    }
+
+    function refreshTodayCalendarData() {
+        var currentDateKey = calendarDateKey(new Date())
+        if (currentDateKey !== calendarTodayIsoDate) {
+            refreshCalendarData()
+            return
+        }
+        todayFocusedSeconds = dailyAnalyticsService.focusedSecondsForDate(currentDateKey)
+    }
 
     function formattedFocusedTime() {
         var totalMinutes = Math.floor(dailyAnalyticsService.focusedSecondsToday / 60)
@@ -58,6 +209,27 @@ Item {
         }
     }
 
+    onCalendarExpandedChanged: {
+        calendarSettleTimer.stop()
+        calendarHandleDelayTimer.stop()
+        calendarHandleSettleTimer.stop()
+        calendarWaveRevealTimer.stop()
+
+        if (calendarExpanded) {
+            calendarWaveVisible = false
+            calendarSettleTimer.start()
+            calendarHandleDelayTimer.start()
+            calendarHandleSettleTimer.start()
+        } else {
+            calendarSettled = false
+            calendarHandleSettled = false
+            calendarCloudPhase = 0
+            calendarHandleCloudPhase = 0
+            calendarWaveVisible = false
+            calendarHandleExpanded = false
+        }
+    }
+
     Timer {
         id: cardSettleTimer
         interval: 900
@@ -68,6 +240,84 @@ Item {
                 focusedTimeText.opacity = 1
                 dateFadeTimer.start()
             }
+        }
+    }
+
+    Timer {
+        id: calendarSettleTimer
+        interval: 900
+        repeat: false
+        onTriggered: {
+            if (root.calendarExpanded) {
+                root.calendarSettled = true
+                calendarWaveRevealTimer.start()
+            }
+        }
+    }
+
+    // Match the daily-card handle's tiny delay before it follows the calendar.
+    Timer {
+        id: calendarHandleDelayTimer
+        interval: 8
+        repeat: false
+        onTriggered: root.calendarHandleExpanded = root.calendarExpanded
+    }
+
+    Timer {
+        id: calendarHandleSettleTimer
+        interval: 908
+        repeat: false
+        onTriggered: {
+            if (root.calendarExpanded)
+                root.calendarHandleSettled = true
+        }
+    }
+
+    Timer {
+        id: calendarWaveRevealTimer
+        interval: 90
+        repeat: false
+        onTriggered: {
+            if (root.calendarExpanded)
+                root.calendarWaveVisible = true
+        }
+    }
+
+    SequentialAnimation {
+        running: root.calendarSettled
+        loops: Animation.Infinite
+        NumberAnimation {
+            target: root
+            property: "calendarCloudPhase"
+            to: 1
+            duration: 3000
+            easing.type: Easing.InOutSine
+        }
+        NumberAnimation {
+            target: root
+            property: "calendarCloudPhase"
+            to: 0
+            duration: 3000
+            easing.type: Easing.InOutSine
+        }
+    }
+
+    SequentialAnimation {
+        running: root.calendarHandleSettled
+        loops: Animation.Infinite
+        NumberAnimation {
+            target: root
+            property: "calendarHandleCloudPhase"
+            to: 1
+            duration: 3000
+            easing.type: Easing.InOutSine
+        }
+        NumberAnimation {
+            target: root
+            property: "calendarHandleCloudPhase"
+            to: 0
+            duration: 3000
+            easing.type: Easing.InOutSine
         }
     }
 
@@ -138,17 +388,513 @@ Item {
         }
     }
 
-    Component.onCompleted: dailyAnalyticsService.refreshToday()
+    NumberAnimation {
+        id: timerPageEntrance
+        target: root
+        property: "timerIntroProgress"
+        from: 0
+        to: 1
+        duration: 920
+        easing.type: Easing.OutCubic
+    }
+
+    Component.onCompleted: {
+        dailyAnalyticsService.refreshToday()
+        refreshCalendarData()
+        timerIntroProgress = 0
+        timerPageEntrance.start()
+    }
+
+    Connections {
+        target: dailyAnalyticsService
+        function onDailyStatsChanged() {
+            root.refreshTodayCalendarData()
+        }
+    }
 
     Rectangle {
         anchors.fill: parent
         color: theme.window
     }
 
+    // Calendar swipe follows the pointer and previews adjacent months before release.
+    Rectangle {
+        id: monthlyCalendarCard
+        x: root.calendarExpanded ? 22 : -width + 24
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -8
+            + (root.calendarSettled
+               ? Math.sin(root.calendarCloudPhase * 2 * Math.PI) * 3 : 0)
+        width: 300
+        height: 360
+        radius: 16
+        color: Qt.lighter(theme.surface, 1.0 + 0.11 * root.calendarCloudPhase)
+        border.color: Qt.lighter(theme.border, 1.0 + 0.06 * root.calendarCloudPhase)
+        border.width: 1
+        clip: true
+        z: 4
+        opacity: root.introProgress(0.02)
+        scale: root.calendarExpanded ? 1.02 : 0.96
+
+        transform: [
+            Scale {
+                origin.x: monthlyCalendarCard.width / 2
+                origin.y: monthlyCalendarCard.height / 2
+                xScale: 0.96 + 0.04 * root.introProgress(0.02)
+                yScale: 0.96 + 0.04 * root.introProgress(0.02)
+            },
+            Translate {
+                y: (1 - root.introProgress(0.02)) * 13
+            }
+        ]
+
+        Behavior on x {
+            NumberAnimation {
+                duration: 900
+                easing.type: Easing.OutExpo
+            }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: 900
+                easing.type: Easing.OutExpo
+            }
+        }
+
+        Item {
+            id: calendarViewport
+            anchors.fill: parent
+            anchors.leftMargin: 18
+            anchors.rightMargin: 18
+            anchors.topMargin: 24
+            anchors.bottomMargin: 12
+            clip: true
+
+            Row {
+                id: calendarPagesRow
+                x: -calendarViewport.width + root.calendarDragOffset
+                y: 0
+                width: calendarViewport.width * 3
+                height: calendarViewport.height
+                spacing: 0
+
+                Loader {
+                    width: calendarViewport.width
+                    height: calendarViewport.height
+                    sourceComponent: calendarMonthPageComponent
+                    onLoaded: item.monthOffset = -1
+                }
+
+                Loader {
+                    width: calendarViewport.width
+                    height: calendarViewport.height
+                    sourceComponent: calendarMonthPageComponent
+                    onLoaded: item.monthOffset = 0
+                }
+
+                Loader {
+                    width: calendarViewport.width
+                    height: calendarViewport.height
+                    sourceComponent: calendarMonthPageComponent
+                    onLoaded: item.monthOffset = 1
+                }
+            }
+        }
+
+        Component {
+            id: calendarMonthPageComponent
+
+            Item {
+                id: monthPage
+                property int monthOffset: 0
+                width: calendarViewport.width
+                height: calendarViewport.height
+
+                Column {
+                    anchors.fill: parent
+                    spacing: 8
+
+                    Row {
+                        id: calendarMonthHeading
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 5
+                        height: 24
+                        opacity: root.calendarWaveVisible ? 1 : 0
+                        Behavior on opacity {
+                            SequentialAnimation {
+                                PauseAnimation { duration: 0 }
+                                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                            }
+                        }
+                        transform: Translate {
+                            y: root.calendarWaveVisible ? 0 : 7
+                            Behavior on y { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                        }
+
+                        Item {
+                            width: monthNameText.implicitWidth + 28
+                            height: 24
+
+                            Text {
+                                id: monthNameText
+                                anchors.centerIn: parent
+                                text: root.calendarMonthName(monthPage.monthOffset)
+                                color: root.isCurrentMonthOffset(monthPage.monthOffset)
+                                       ? "#F3C85D" : theme.text
+                                font.pixelSize: 18
+                                font.weight: root.isCurrentMonthOffset(monthPage.monthOffset)
+                                             ? Font.DemiBold : Font.Medium
+                            }
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.calendarYearText(monthPage.monthOffset)
+                            color: theme.mutedText
+                            font.pixelSize: 16
+                            font.weight: Font.Normal
+                        }
+                    }
+
+                    Text {
+                        id: calendarMonthTotalLabel
+                        width: parent.width
+                        height: 13
+                        opacity: root.calendarWaveVisible ? 1 : 0
+                        Behavior on opacity {
+                            SequentialAnimation {
+                                PauseAnimation { duration: 55 }
+                                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                            }
+                        }
+                        transform: Translate {
+                            y: root.calendarWaveVisible ? 0 : 7
+                            Behavior on y { SequentialAnimation {
+                                PauseAnimation { duration: 55 }
+                                NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                            } }
+                        }
+                        text: "MONTHLY FOCUS  " + root.formatCalendarDuration(
+                                  root.calendarMonthTotalSeconds(monthPage.monthOffset))
+                        color: theme.mutedText
+                        font.pixelSize: 9
+                        font.letterSpacing: 0.6
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    Grid {
+                        id: calendarWeekdayHeader
+                        width: parent.width
+                        columns: 7
+                        spacing: 0
+                        opacity: root.calendarWaveVisible ? 1 : 0
+                        Behavior on opacity {
+                            SequentialAnimation {
+                                PauseAnimation { duration: 110 }
+                                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                            }
+                        }
+                        transform: Translate {
+                            y: root.calendarWaveVisible ? 0 : 7
+                            Behavior on y {
+                                SequentialAnimation {
+                                    PauseAnimation { duration: 110 }
+                                    NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                                }
+                            }
+                        }
+
+                        Repeater {
+                            model: ["S", "M", "T", "W", "T", "F", "S"]
+                            delegate: Text {
+                                required property string modelData
+                                width: calendarViewport.width / 7
+                                height: 22
+                                text: modelData
+                                color: theme.mutedText
+                                font.pixelSize: 11
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                        }
+                    }
+
+                    Grid {
+                        width: parent.width
+                        columns: 7
+                        rowSpacing: 3
+                        columnSpacing: 0
+
+                        Repeater {
+                            model: 42
+                            delegate: Item {
+                                id: calendarDayCell
+                                required property int index
+                                width: calendarViewport.width / 7
+                                height: 36
+
+                                property string dayNumber: root.calendarCellDay(index, monthPage.monthOffset)
+                                property string isoDate: root.calendarIsoDate(dayNumber, monthPage.monthOffset)
+                                property double focusedSeconds: root.calendarCellSeconds(dayNumber, monthPage.monthOffset)
+                                property bool today: root.isToday(dayNumber, monthPage.monthOffset)
+                                property int weekRow: Math.floor(index / 7)
+
+                                opacity: root.calendarWaveVisible ? 1 : 0
+                                Behavior on opacity {
+                                    SequentialAnimation {
+                                        PauseAnimation {
+                                            duration: (calendarDayCell.weekRow + 2) * 65
+                                        }
+                                        NumberAnimation {
+                                            duration: 240
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+                                }
+
+                                transform: Translate {
+                                    y: root.calendarWaveVisible ? 0 : 7
+                                    Behavior on y {
+                                        SequentialAnimation {
+                                            PauseAnimation {
+                                                duration: (calendarDayCell.weekRow + 2) * 65
+                                            }
+                                            NumberAnimation {
+                                                duration: 320
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    anchors.margins: 1
+                                    radius: 6
+                                    visible: calendarDayCell.dayNumber !== ""
+                                    color: root.calendarCellBackground(
+                                               calendarDayCell.focusedSeconds,
+                                               calendarDayCell.today)
+                                    border.color: calendarDayCell.today ? "#D4A72C" : "transparent"
+                                    border.width: calendarDayCell.today ? 1 : 0
+                                    z: 0
+                                }
+
+                                Text {
+                                    id: dayNumberText
+                                    anchors.top: parent.top
+                                    anchors.topMargin: 2
+                                    width: parent.width
+                                    height: 14
+                                    text: calendarDayCell.dayNumber
+                                    visible: calendarDayCell.dayNumber !== ""
+                                    color: calendarDayCell.today ? "#F3C85D" : theme.text
+                                    font.pixelSize: 11
+                                    font.weight: calendarDayCell.today ? Font.DemiBold : Font.Normal
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    z: 2
+                                }
+
+                                Text {
+                                    anchors.bottom: parent.bottom
+                                    anchors.bottomMargin: 5
+                                    width: parent.width
+                                    height: 12
+                                    text: root.formatCalendarDuration(calendarDayCell.focusedSeconds)
+                                    // Keep empty days clean; show HH:MM only after time is recorded.
+                                    visible: calendarDayCell.dayNumber !== ""
+                                             && calendarDayCell.focusedSeconds > 0
+                                    color: calendarDayCell.today ? "#F3C85D" : "#E4B979"
+                                    font.pixelSize: 9
+                                    font.weight: calendarDayCell.focusedSeconds > 0 ? Font.Medium : Font.Normal
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    z: 2
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        NumberAnimation {
+            id: calendarSnapAnimation
+            target: root
+            property: "calendarDragOffset"
+            to: root.calendarCommitOffset === 0
+                ? 0 : -root.calendarCommitOffset * calendarViewport.width
+            duration: 140
+            easing.type: Easing.OutCubic
+            onFinished: {
+                if (root.calendarCommitOffset !== 0) {
+                    root.applyCalendarMonthOffset(root.calendarCommitOffset)
+                    root.refreshCalendarData()
+                }
+                root.calendarDragOffset = 0
+                root.calendarCommitOffset = 0
+            }
+        }
+
+        // The gesture surface is limited to the calendar box.
+        MouseArea {
+            id: calendarSwipeArea
+            anchors.fill: parent
+            z: 10
+            preventStealing: true
+
+            onPressed: function(mouse) {
+                if (calendarSnapAnimation.running) {
+                    calendarSnapAnimation.stop()
+                    root.calendarDragOffset = 0
+                }
+
+                root.calendarSwipeStartX = mouse.x
+                root.calendarSwipeStartY = mouse.y
+                root.calendarGestureDecided = false
+                root.calendarHorizontalGesture = false
+                root.calendarCommitOffset = 0
+            }
+
+            onPositionChanged: function(mouse) {
+                if (!pressed)
+                    return
+
+                var dx = mouse.x - root.calendarSwipeStartX
+                var dy = mouse.y - root.calendarSwipeStartY
+
+                if (!root.calendarGestureDecided
+                        && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+                    root.calendarGestureDecided = true
+                    root.calendarHorizontalGesture = Math.abs(dx) > Math.abs(dy) * 1.15
+                }
+
+                if (root.calendarHorizontalGesture) {
+                    calendarSnapAnimation.stop()
+                    root.calendarDragOffset = Math.max(
+                                -calendarViewport.width,
+                                Math.min(calendarViewport.width, dx))
+                }
+            }
+
+            onReleased: {
+                root.calendarCommitOffset = 0
+                if (root.calendarHorizontalGesture) {
+                    var threshold = calendarViewport.width * 0.5
+                    if (root.calendarDragOffset < -threshold)
+                        root.calendarCommitOffset = 1
+                    else if (root.calendarDragOffset > threshold)
+                        root.calendarCommitOffset = -1
+                }
+                calendarSnapAnimation.start()
+                root.calendarGestureDecided = false
+                root.calendarHorizontalGesture = false
+            }
+
+            onCanceled: {
+                root.calendarCommitOffset = 0
+                calendarSnapAnimation.start()
+                root.calendarGestureDecided = false
+                root.calendarHorizontalGesture = false
+            }
+        }
+    }
+
+    // Mirrored counterpart of the daily-focus handle, attached to the calendar's right edge.
+    Rectangle {
+        id: calendarCardHandle
+        x: (root.calendarExpanded ? 22 : 24 - monthlyCalendarCard.width) + monthlyCalendarCard.width - 12
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -8
+            + (root.calendarHandleSettled
+               ? Math.sin(root.calendarHandleCloudPhase * 2 * Math.PI) * 3 : 0)
+        width: 38
+        height: 54
+        radius: 9
+        color: calendarHandleHover.containsMouse
+               ? Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b, 0.14)
+               : Qt.lighter(theme.surface, 1.0 + 0.11 * root.calendarHandleCloudPhase)
+        border.color: calendarHandleHover.containsMouse
+                      ? theme.accent
+                      : Qt.lighter(theme.border, 1.0 + 0.06 * root.calendarHandleCloudPhase)
+        border.width: calendarHandleHover.containsMouse ? 1.4 : 1
+        z: 5
+        opacity: root.introProgress(0.10)
+        scale: calendarHandleHover.containsMouse
+               ? 1.09 : (root.calendarHandleExpanded ? 1.02 : 0.96)
+
+        transform: [
+            Scale {
+                origin.x: calendarCardHandle.width / 2
+                origin.y: calendarCardHandle.height / 2
+                xScale: 0.95 + 0.05 * root.introProgress(0.10)
+                yScale: 0.95 + 0.05 * root.introProgress(0.10)
+            },
+            Translate {
+                y: (1 - root.introProgress(0.10)) * 12
+            }
+        ]
+
+        Behavior on x {
+            SequentialAnimation {
+                PauseAnimation { duration: 16 }
+                NumberAnimation {
+                    duration: 900
+                    easing.type: Easing.OutExpo
+                }
+            }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: 300
+                easing.type: Easing.OutBack
+            }
+        }
+        Behavior on color { ColorAnimation { duration: 220 } }
+        Behavior on border.color { ColorAnimation { duration: 220 } }
+        Behavior on border.width { NumberAnimation { duration: 180 } }
+
+        Grid {
+            anchors.centerIn: parent
+            columns: 2
+            rows: 3
+            columnSpacing: 4
+            rowSpacing: 4
+
+            Repeater {
+                model: 6
+                delegate: Rectangle {
+                    required property int index
+                    width: 3
+                    height: 3
+                    radius: 1.5
+                    color: calendarHandleHover.containsMouse ? theme.accent : theme.mutedText
+                    Behavior on color { ColorAnimation { duration: 180 } }
+                }
+            }
+        }
+
+        MouseArea {
+            id: calendarHandleHover
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.calendarExpanded = !root.calendarExpanded
+        }
+    }
+
     // The stopwatch remains centered and independent of the daily focus card.
     ColumnLayout {
         anchors.centerIn: parent
         spacing: 26
+        opacity: root.introProgress(0.20)
+        scale: 0.96 + 0.04 * root.introProgress(0.20)
+
+        transform: Translate {
+            y: (1 - root.introProgress(0.20)) * 14
+        }
 
         Text {
             Layout.alignment: Qt.AlignHCenter
@@ -164,44 +910,131 @@ Item {
             spacing: 12
 
             Button {
+                id: stopwatchToggleButton
                 text: controller.timerRunning ? "Pause" : "Start"
                 implicitWidth: 132
                 implicitHeight: 46
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
+                scale: hovered ? 1.035 : 1
                 onClicked: controller.toggleTimer()
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 180
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
                 background: Rectangle {
                     radius: 11
-                    color: theme.accent
+                    color: stopwatchToggleButton.hovered
+                           ? (controller.timerRunning
+                              ? "#D8E8D8"
+                              : (controller.elapsedMilliseconds > 0
+                                 ? "#E8D0CE" : Qt.lighter(theme.accent, 1.08)))
+                           : theme.accent
+                    border.width: stopwatchToggleButton.hovered ? 1 : 0
+                    border.color: controller.timerRunning ? "#6FA879"
+                                 : (controller.elapsedMilliseconds > 0 ? "#C96B66" : "#E6C978")
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        radius: 10
+                        color: "transparent"
+                        border.width: stopwatchToggleButton.hovered ? 1 : 0
+                        border.color: controller.timerRunning
+                                      ? Qt.rgba(0.18, 0.55, 0.28, 0.42)
+                                      : Qt.rgba(0.70, 0.22, 0.19, 0.34)
+                        opacity: stopwatchToggleButton.hovered
+                                 && (controller.timerRunning || controller.elapsedMilliseconds > 0)
+                                 ? 1 : 0
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: 220; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on border.color {
+                        ColorAnimation { duration: 220; easing.type: Easing.OutCubic }
+                    }
                 }
+
                 contentItem: Text {
-                    text: parent.text
-                    color: theme.accentText
-                    font: parent.font
+                    text: stopwatchToggleButton.text
+                    color: stopwatchToggleButton.hovered
+                           && (controller.timerRunning || controller.elapsedMilliseconds > 0)
+                           ? "#252525" : theme.accentText
+                    font: stopwatchToggleButton.font
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+
+                    Behavior on color {
+                        ColorAnimation { duration: 180; easing.type: Easing.OutCubic }
+                    }
                 }
             }
 
             Button {
+                id: stopwatchResetButton
                 text: "↻"
                 ToolTip.visible: hovered
                 ToolTip.text: "Reset stopwatch"
                 implicitWidth: 48
                 implicitHeight: 46
                 font.pixelSize: 21
+                scale: hovered ? 1.08 : 1
                 onClicked: controller.resetTimer()
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 220
+                        easing.type: Easing.OutBack
+                    }
+                }
+
                 background: Rectangle {
                     radius: 11
-                    color: theme.surface
-                    border.color: theme.border
+                    color: stopwatchResetButton.hovered ? Qt.lighter(theme.surface, 1.14) : theme.surface
+                    border.width: stopwatchResetButton.hovered ? 1.2 : 1
+                    border.color: stopwatchResetButton.hovered ? theme.accent : theme.border
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: stopwatchResetButton.hovered ? 28 : 0
+                        height: stopwatchResetButton.hovered ? 28 : 0
+                        radius: 14
+                        color: "transparent"
+                        border.color: theme.accent
+                        border.width: 1
+                        opacity: stopwatchResetButton.hovered ? 0.55 : 0
+
+                        Behavior on width {
+                            NumberAnimation { duration: 240; easing.type: Easing.OutBack }
+                        }
+                        Behavior on height {
+                            NumberAnimation { duration: 240; easing.type: Easing.OutBack }
+                        }
+                        Behavior on opacity {
+                            NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    Behavior on color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                    Behavior on border.color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
                 }
+
                 contentItem: Text {
-                    text: parent.text
-                    color: theme.text
-                    font: parent.font
+                    text: stopwatchResetButton.text
+                    color: stopwatchResetButton.hovered ? theme.accent : theme.text
+                    font: stopwatchResetButton.font
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+                    Behavior on color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
                 }
             }
         }
@@ -227,6 +1060,18 @@ Item {
         height: 178
         radius: 16
         scale: root.dailyCardExpanded ? 1.02 : 0.96
+        opacity: root.introProgress(0.32)
+        transform: [
+            Scale {
+                origin.x: dailyFocusedCard.width / 2
+                origin.y: dailyFocusedCard.height / 2
+                xScale: 0.96 + 0.04 * root.introProgress(0.32)
+                yScale: 0.96 + 0.04 * root.introProgress(0.32)
+            },
+            Translate {
+                y: (1 - root.introProgress(0.32)) * 14
+            }
+        ]
         color: Qt.lighter(theme.surface, 1.0 + 0.11 * root.dailyCardCloudPhase)
         border.color: Qt.lighter(theme.border, 1.0 + 0.06 * root.dailyCardCloudPhase)
         border.width: 1
@@ -325,8 +1170,6 @@ Item {
         width: 38
         height: 54
         radius: 9
-        scale: handleHover.containsMouse
-               ? 1.09 : (root.handleExpanded ? 1.02 : 0.96)
         color: handleHover.containsMouse
                ? Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b, 0.14)
                : Qt.lighter(theme.surface, 1.0 + 0.11 * root.dailyHandleCloudPhase)
@@ -335,6 +1178,20 @@ Item {
                       : Qt.lighter(theme.border, 1.0 + 0.06 * root.dailyHandleCloudPhase)
         border.width: handleHover.containsMouse ? 1.4 : 1
         z: 5
+        opacity: root.introProgress(0.40)
+        scale: handleHover.containsMouse
+               ? 1.09 : (root.handleExpanded ? 1.02 : 0.96)
+        transform: [
+            Scale {
+                origin.x: dailyCardHandle.width / 2
+                origin.y: dailyCardHandle.height / 2
+                xScale: 0.95 + 0.05 * root.introProgress(0.40)
+                yScale: 0.95 + 0.05 * root.introProgress(0.40)
+            },
+            Translate {
+                y: (1 - root.introProgress(0.40)) * 12
+            }
+        ]
 
         Behavior on x {
             SequentialAnimation {

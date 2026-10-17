@@ -20,6 +20,8 @@ qt_add_executable(Lubis
     src/documents/DocumentService.h
     src/search/SearchService.cpp
     src/search/SearchService.h
+    src/search/DropImportWorker.cpp
+    src/search/DropImportWorker.h
 )
 
 qt_add_qml_module(Lubis
@@ -31,7 +33,6 @@ qt_add_qml_module(Lubis
         qml/components/TimerController.qml
         qml/components/TopBar.qml
         qml/components/WorkspaceCard.qml
-        qml/pages/HomePage.qml
         qml/pages/NotesPage.qml
         qml/pages/TimerPage.qml
         qml/pages/ResourcesPage.qml

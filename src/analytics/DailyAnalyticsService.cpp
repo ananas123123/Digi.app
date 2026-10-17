@@ -83,6 +83,30 @@ void DailyAnalyticsService::refreshToday()
         emit dailyStatsChanged();
 }
 
+
+qint64 DailyAnalyticsService::focusedSecondsForDate(const QString &isoDate) const
+{
+    const QDate date = QDate::fromString(isoDate, Qt::ISODate);
+    if (!date.isValid() || date.toString(Qt::ISODate) != isoDate)
+        return 0;
+
+    QFile file(filePathForDate(date));
+    if (!file.exists() || !file.open(QIODevice::ReadOnly))
+        return 0;
+
+    QJsonParseError parseError;
+    const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &parseError);
+    if (parseError.error != QJsonParseError::NoError || !document.isObject())
+        return 0;
+
+    const QJsonObject object = document.object();
+    if (object.value(QStringLiteral("date")).toString() != isoDate)
+        return 0;
+
+    const double seconds = object.value(QStringLiteral("focusedSeconds")).toDouble(0);
+    return qMax<qint64>(0, qint64(seconds));
+}
+
 bool DailyAnalyticsService::loadToday()
 {
     const QString today = QDate::currentDate().toString(Qt::ISODate);
