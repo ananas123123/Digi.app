@@ -205,43 +205,95 @@ bool SearchService::importDroppedUrls(const QVariantList &urls,
     return true;
 }
 
-QVariantList SearchService::searchNames(const QString &query) const
+QVariantMap SearchService::startNameSearch(const QString &query)
 {
-    QVariantList results;
-    const QString needle = query.trimmed();
-    if (needle.isEmpty())
-        return results;
+    m_activeSearchQuery = query.trimmed();
+    m_activeSearchRoot = QFileInfo(m_searchRoot).canonicalFilePath();
+    m_searchIterator.reset();
+    m_pendingSearchResult.clear();
+    m_hasPendingSearchResult = false;
 
-    const QString rootPath = QFileInfo(m_searchRoot).canonicalFilePath();
-    if (rootPath.isEmpty() || !QFileInfo(rootPath).isDir())
-        return results;
-
-    constexpr int maximumResults = 200;
-    // Search results are files only. Directory browsing remains the responsibility
-    // of the separate Lubis Explorer.
-    QDirIterator iterator(rootPath,
-                          QDir::Files | QDir::NoDotAndDotDot,
-                          QDirIterator::Subdirectories);
-
-    while (iterator.hasNext() && results.size() < maximumResults) {
-        const QString path = iterator.next();
-        const QFileInfo info(path);
-        if (info.isSymLink() || info.isHidden() || !info.isFile())
-            continue;
-
-        const QString name = info.fileName();
-        if (!name.contains(needle, Qt::CaseInsensitive))
-            continue;
-
-        QVariantMap result;
-        result.insert(QStringLiteral("name"), name);
-        result.insert(QStringLiteral("path"),
-                      QDir::toNativeSeparators(info.absoluteFilePath()));
-        result.insert(QStringLiteral("relativePath"),
-                      QDir::toNativeSeparators(QDir(rootPath).relativeFilePath(path)));
-        results.append(result);
+    if (m_activeSearchQuery.isEmpty()
+        || m_activeSearchRoot.isEmpty()
+        || !QFileInfo(m_activeSearchRoot).isDir()) {
+        QVariantMap response;
+        response.insert(QStringLiteral("results"), QVariantList{});
+        response.insert(QStringLiteral("hasMore"), false);
+        return response;
     }
 
+    // Keep the iterator between requests. Each call processes only one batch,
+    // instead of collecting and sorting the entire tree for every keystroke.
+    m_searchIterator = std::make_unique<QDirIterator>(
+        m_activeSearchRoot,
+        QDir::Files | QDir::NoDotAndDotDot,
+        QDirIterator::Subdirectories);
+
+    return readNextSearchPage();
+}
+
+QVariantMap SearchService::nextNameSearchPage()
+{
+    return readNextSearchPage();
+}
+
+QVariantMap SearchService::readNextSearchPage()
+{
+    constexpr int resultsPerPage = 20;
+    QVariantList results;
+
+    const auto nextMatchingResult = [this](QVariantMap &result) -> bool {
+        if (!m_searchIterator)
+            return false;
+
+        while (m_searchIterator->hasNext()) {
+            const QString path = m_searchIterator->next();
+            const QFileInfo info(path);
+            if (info.isSymLink() || info.isHidden() || !info.isFile())
+                continue;
+
+            const QString name = info.fileName();
+            if (!name.contains(m_activeSearchQuery, Qt::CaseInsensitive))
+                continue;
+
+            result.insert(QStringLiteral("name"), name);
+            result.insert(QStringLiteral("path"),
+                          QDir::toNativeSeparators(info.absoluteFilePath()));
+            result.insert(QStringLiteral("relativePath"),
+                          QDir::toNativeSeparators(
+                              QDir(m_activeSearchRoot).relativeFilePath(path)));
+            return true;
+        }
+        return false;
+    };
+
+    if (m_hasPendingSearchResult) {
+        results.append(m_pendingSearchResult);
+        m_pendingSearchResult.clear();
+        m_hasPendingSearchResult = false;
+    }
+
+    while (results.size() < resultsPerPage) {
+        QVariantMap match;
+        if (!nextMatchingResult(match))
+            break;
+        results.append(match);
+    }
+
+    // Read ahead by only one matching file so the UI knows whether Next is
+    // available. That file is cached and becomes the first result of the next page.
+    bool hasMore = false;
+    if (results.size() == resultsPerPage) {
+        QVariantMap nextMatch;
+        if (nextMatchingResult(nextMatch)) {
+            m_pendingSearchResult = nextMatch;
+            m_hasPendingSearchResult = true;
+            hasMore = true;
+        }
+    }
+
+    // Keep a small, independently sorted batch. Global sorting would require
+    // scanning the whole tree before the first 20 results could be displayed.
     std::sort(results.begin(), results.end(),
               [](const QVariant &left, const QVariant &right) {
         return QString::compare(left.toMap().value(QStringLiteral("name")).toString(),
@@ -249,7 +301,13 @@ QVariantList SearchService::searchNames(const QString &query) const
                                 Qt::CaseInsensitive) < 0;
     });
 
-    return results;
+    if (!hasMore)
+        m_searchIterator.reset();
+
+    QVariantMap response;
+    response.insert(QStringLiteral("results"), results);
+    response.insert(QStringLiteral("hasMore"), hasMore);
+    return response;
 }
 
 QVariantList SearchService::listFolderContents(const QString &path) const
