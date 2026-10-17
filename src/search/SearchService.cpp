@@ -217,17 +217,17 @@ QVariantList SearchService::searchNames(const QString &query) const
         return results;
 
     constexpr int maximumResults = 200;
+    // Search results are files only. Directory browsing remains the responsibility
+    // of the separate Lubis Explorer.
     QDirIterator iterator(rootPath,
-                          QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot,
+                          QDir::Files | QDir::NoDotAndDotDot,
                           QDirIterator::Subdirectories);
 
     while (iterator.hasNext() && results.size() < maximumResults) {
         const QString path = iterator.next();
         const QFileInfo info(path);
-        if (info.isSymLink() || info.isHidden()
-            || (!info.isFile() && !info.isDir())) {
+        if (info.isSymLink() || info.isHidden() || !info.isFile())
             continue;
-        }
 
         const QString name = info.fileName();
         if (!name.contains(needle, Qt::CaseInsensitive))
@@ -239,20 +239,13 @@ QVariantList SearchService::searchNames(const QString &query) const
                       QDir::toNativeSeparators(info.absoluteFilePath()));
         result.insert(QStringLiteral("relativePath"),
                       QDir::toNativeSeparators(QDir(rootPath).relativeFilePath(path)));
-        result.insert(QStringLiteral("isFolder"), info.isDir());
         results.append(result);
     }
 
     std::sort(results.begin(), results.end(),
               [](const QVariant &left, const QVariant &right) {
-        const QVariantMap leftMap = left.toMap();
-        const QVariantMap rightMap = right.toMap();
-        const bool leftIsFolder = leftMap.value(QStringLiteral("isFolder")).toBool();
-        const bool rightIsFolder = rightMap.value(QStringLiteral("isFolder")).toBool();
-        if (leftIsFolder != rightIsFolder)
-            return leftIsFolder;
-        return QString::compare(leftMap.value(QStringLiteral("name")).toString(),
-                                rightMap.value(QStringLiteral("name")).toString(),
+        return QString::compare(left.toMap().value(QStringLiteral("name")).toString(),
+                                right.toMap().value(QStringLiteral("name")).toString(),
                                 Qt::CaseInsensitive) < 0;
     });
 
