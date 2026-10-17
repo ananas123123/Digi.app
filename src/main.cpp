@@ -10,6 +10,7 @@
 #include <QTextStream>
 #include <cstdio>
 
+#include "app/AppPaths.h"
 #include "app/AppServices.h"
 #include "analytics/DailyAnalyticsService.h"
 #include "documents/DocumentService.h"
@@ -37,7 +38,7 @@ void writeRuntimeLog(QtMsgType type, const QMessageLogContext &context, const QS
     std::fprintf(stderr, "\n");
     std::fflush(stderr);
 
-    QFile file(QCoreApplication::applicationDirPath() + "/argon-runtime.log");
+    QFile file(ArgonPaths::runtimeLogFilePath());
     if (!file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
         return;
 
@@ -55,9 +56,14 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
-    qInstallMessageHandler(writeRuntimeLog);
     QCoreApplication::setApplicationName("Argon");
     QCoreApplication::setOrganizationName("Argon");
+
+    QString pathsError;
+    const bool pathsReady = ArgonPaths::ensureDirectoryStructure(&pathsError);
+    qInstallMessageHandler(writeRuntimeLog);
+    if (!pathsReady)
+        qWarning().noquote() << pathsError;
 
     AppServices appServices;
     DailyAnalyticsService dailyAnalyticsService;
