@@ -3,6 +3,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QDirIterator>
 #include <QFileInfo>
 #include <QFile>
 #include <QTextStream>
@@ -12,6 +13,8 @@
 #include <QMetaObject>
 #include <QSet>
 #include <QVariant>
+#include <QVariantMap>
+#include <algorithm>
 
 namespace {
 QString normalizedPath(QString path)
@@ -203,6 +206,60 @@ bool SearchService::importDroppedUrls(const QVariantList &urls,
         return false;
     }
     return true;
+}
+
+QVariantList SearchService::searchNames(const QString &query) const
+{
+    QVariantList results;
+    const QString needle = query.trimmed();
+    if (needle.isEmpty())
+        return results;
+
+    const QString rootPath = QFileInfo(m_searchRoot).canonicalFilePath();
+    if (rootPath.isEmpty() || !QFileInfo(rootPath).isDir())
+        return results;
+
+    constexpr int maximumResults = 200;
+    QDirIterator iterator(rootPath,
+                          QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot,
+                          QDirIterator::Subdirectories);
+
+    while (iterator.hasNext() && results.size() < maximumResults) {
+        const QString path = iterator.next();
+        const QFileInfo info(path);
+        if (info.isSymLink() || info.isHidden()
+            || (!info.isFile() && !info.isDir())) {
+            continue;
+        }
+
+        const QString name = info.fileName();
+        if (!name.contains(needle, Qt::CaseInsensitive))
+            continue;
+
+        QVariantMap result;
+        result.insert(QStringLiteral("name"), name);
+        result.insert(QStringLiteral("path"),
+                      QDir::toNativeSeparators(info.absoluteFilePath()));
+        result.insert(QStringLiteral("relativePath"),
+                      QDir::toNativeSeparators(QDir(rootPath).relativeFilePath(path)));
+        result.insert(QStringLiteral("isFolder"), info.isDir());
+        results.append(result);
+    }
+
+    std::sort(results.begin(), results.end(),
+              [](const QVariant &left, const QVariant &right) {
+        const QVariantMap leftMap = left.toMap();
+        const QVariantMap rightMap = right.toMap();
+        const bool leftIsFolder = leftMap.value(QStringLiteral("isFolder")).toBool();
+        const bool rightIsFolder = rightMap.value(QStringLiteral("isFolder")).toBool();
+        if (leftIsFolder != rightIsFolder)
+            return leftIsFolder;
+        return QString::compare(leftMap.value(QStringLiteral("name")).toString(),
+                                rightMap.value(QStringLiteral("name")).toString(),
+                                Qt::CaseInsensitive) < 0;
+    });
+
+    return results;
 }
 
 QVariantList SearchService::listFolderContents(const QString &path) const
