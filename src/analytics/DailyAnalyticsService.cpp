@@ -4,16 +4,89 @@
 #include <QDate>
 #include <QDateTime>
 #include <QDir>
+#include <QFileInfo>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSaveFile>
+#include <QStandardPaths>
+#include <QCoreApplication>
 #include <QDebug>
+
+namespace
+{
+bool migrateLegacyAnalyticsData()
+{
+    const QString markerPath = QDir(ArgonPaths::userDataDirectory())
+        .filePath(QStringLiteral(".legacy-analytics-migration-v1"));
+    if (QFileInfo::exists(markerPath))
+        return true;
+
+    QString legacyDirectory;
+    const QString genericData = QStandardPaths::writableLocation(
+        QStandardPaths::GenericDataLocation);
+    if (!genericData.isEmpty()) {
+        legacyDirectory = QDir(genericData).filePath(
+            QStringLiteral("Argon/user-data/analytics/daily"));
+    }
+    if (legacyDirectory.isEmpty() || !QDir(legacyDirectory).exists()) {
+        legacyDirectory = QDir(QCoreApplication::applicationDirPath()).filePath(
+            QStringLiteral("Argon/user-data/analytics/daily"));
+    }
+
+    if (!QDir(legacyDirectory).exists()
+        || QDir::cleanPath(legacyDirectory).compare(
+               QDir::cleanPath(ArgonPaths::analyticsDirectory()),
+#ifdef Q_OS_WIN
+               Qt::CaseInsensitive
+#else
+               Qt::CaseSensitive
+#endif
+           ) == 0) {
+        return true;
+    }
+
+    const QFileInfoList legacyFiles = QDir(legacyDirectory).entryInfoList(
+        QStringList{QStringLiteral("*.json")},
+        QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System,
+        QDir::Name);
+
+    for (const QFileInfo &legacyFile : legacyFiles) {
+        if (legacyFile.isSymLink())
+            continue;
+
+        const QString destination = QDir(ArgonPaths::analyticsDirectory())
+            .filePath(legacyFile.fileName());
+        if (QFileInfo::exists(destination))
+            continue;
+        if (!QFile::copy(legacyFile.absoluteFilePath(), destination)) {
+            qWarning().noquote() << "Could not migrate legacy Argon analytics file:"
+                                 << legacyFile.absoluteFilePath()
+                                 << "(the original file remains in place).";
+            return false;
+        }
+    }
+
+    QSaveFile marker(markerPath);
+    const QByteArray markerContents("completed\\n");
+    if (!marker.open(QIODevice::WriteOnly | QIODevice::Text)
+        || marker.write(markerContents) != markerContents.size()
+        || !marker.commit()) {
+        qWarning().noquote() << "Could not write Argon analytics migration marker:" << markerPath;
+        return false;
+    }
+
+    if (!legacyFiles.isEmpty())
+        qInfo() << "Migrated legacy Argon analytics into" << ArgonPaths::analyticsDirectory();
+    return true;
+}
+}
 
 DailyAnalyticsService::DailyAnalyticsService(QObject *parent)
     : QObject(parent)
 {
     m_storageDirectory = ArgonPaths::analyticsDirectory();
+    migrateLegacyAnalyticsData();
 
     if (!QDir().mkpath(m_storageDirectory))
         qWarning() << "Could not create Argon daily analytics directory:" << m_storageDirectory;
