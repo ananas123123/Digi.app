@@ -1380,8 +1380,12 @@ ApplicationWindow {
                             width: searchResultsList.width
                             height: 56
                             radius: 10
-                            color: resultHover.containsMouse ? "#1AFFFFFF" : "#0CFFFFFF"
-                            border.color: resultHover.containsMouse ? "#72FFFFFF" : "#42FFFFFF"
+                            color: searchPlaceholder.selectedPdfUrl === fileUrl
+                                   ? "#22FFFFFF"
+                                   : (resultHover.containsMouse ? "#1AFFFFFF" : "#0CFFFFFF")
+                            border.color: searchPlaceholder.selectedPdfUrl === fileUrl
+                                          ? "#A0FFFFFF"
+                                          : (resultHover.containsMouse ? "#72FFFFFF" : "#42FFFFFF")
                             border.width: 1
                             antialiasing: true
 
