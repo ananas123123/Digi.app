@@ -68,7 +68,7 @@ bool migrateLegacyAnalyticsData()
     }
 
     QSaveFile marker(markerPath);
-            const QByteArray markerContents("completed");
+    const QByteArray markerContents("completed");
     if (!marker.open(QIODevice::WriteOnly | QIODevice::Text)
         || marker.write(markerContents) != markerContents.size()
         || !marker.commit()) {
