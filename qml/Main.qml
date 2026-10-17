@@ -1113,6 +1113,8 @@ ApplicationWindow {
             Theme { id: searchTheme }
 
             property string query: ""
+            property string selectedPdfUrl: ""
+            property string selectedPdfName: ""
             property var results: []
             property int currentPage: 0
             readonly property int resultsPerPage: 20
@@ -1124,6 +1126,8 @@ ApplicationWindow {
                 (currentPage + 1) * resultsPerPage)
 
             function performSearch(searchText) {
+                selectedPdfUrl = ""
+                selectedPdfName = ""
                 var response = searchService.startNameSearch(searchText)
                 results = response.results || []
                 hasMoreResults = response.hasMore === true
@@ -1210,6 +1214,8 @@ ApplicationWindow {
 
                             onTextChanged: {
                                 searchPlaceholder.query = text
+                                searchPlaceholder.selectedPdfUrl = ""
+                                searchPlaceholder.selectedPdfName = ""
                                 if (text.trim().length === 0) {
                                     searchDebounce.stop()
                                     searchService.startNameSearch("")
@@ -1306,14 +1312,28 @@ ApplicationWindow {
                     }
                 }
 
-                Rectangle {
-                    id: searchResultsPanel
+                Item {
+                    id: searchResultsContainer
                     width: parent.width
                     height: visible
                             ? Math.max(160, searchContentColumn.height - y)
                             : 0
                     visible: searchPlaceholder.query.trim().length > 0
-                    radius: 14
+                    readonly property real previewWidth: Math.min(360, Math.max(280, width * 0.40))
+
+                    Rectangle {
+                        id: searchResultsPanel
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: searchPlaceholder.selectedPdfUrl.length > 0
+                               ? searchResultsContainer.width - searchResultsContainer.previewWidth - 12
+                               : searchResultsContainer.width
+                        radius: 14
+
+                        Behavior on width {
+                            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                        }
                     color: "#12FFFFFF"
                     border.color: "#42FFFFFF"
                     border.width: 1
@@ -1347,6 +1367,8 @@ ApplicationWindow {
 
                         delegate: Rectangle {
                             required property string name
+                            required property string path
+                            required property string fileUrl
                             property string fileExtension: {
                                 var dot = name.lastIndexOf(".")
                                 return dot > 0 ? name.substring(dot + 1).toLowerCase() : ""
@@ -1370,7 +1392,18 @@ ApplicationWindow {
                                 id: resultHover
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                acceptedButtons: Qt.NoButton
+                                acceptedButtons: Qt.LeftButton
+                                cursorShape: Qt.PointingHandCursor
+
+                                onClicked: {
+                                    if (fileExtension === "pdf") {
+                                        searchPlaceholder.selectedPdfUrl = fileUrl
+                                        searchPlaceholder.selectedPdfName = name
+                                    } else {
+                                        searchPlaceholder.selectedPdfUrl = ""
+                                        searchPlaceholder.selectedPdfName = ""
+                                    }
+                                }
                             }
 
                             Text {
@@ -1507,6 +1540,118 @@ ApplicationWindow {
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: pdfPreviewPanel
+                    x: searchResultsPanel.width + 12
+                    y: 0
+                    width: searchPlaceholder.selectedPdfUrl.length > 0
+                           ? searchResultsContainer.previewWidth
+                           : 0
+                    height: parent.height
+                    visible: searchPlaceholder.selectedPdfUrl.length > 0
+                    radius: 14
+                    color: "#12FFFFFF"
+                    border.color: "#42FFFFFF"
+                    border.width: 1
+                    clip: true
+
+                    Behavior on x {
+                        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on width {
+                        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                    }
+
+                    PdfDocument {
+                        id: selectedPdfDocument
+                        source: searchPlaceholder.selectedPdfUrl
+                    }
+
+                    Column {
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        spacing: 8
+
+                        Row {
+                            width: parent.width
+                            height: 30
+                            spacing: 8
+
+                            Text {
+                                width: parent.width - closePreviewButton.width - 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: searchPlaceholder.selectedPdfName
+                                color: searchTheme.text
+                                font.pixelSize: 12
+                                font.weight: Font.DemiBold
+                                elide: Text.ElideRight
+                            }
+
+                            Rectangle {
+                                id: closePreviewButton
+                                width: 28
+                                height: 28
+                                radius: 7
+                                color: closePreviewMouse.containsMouse ? "#24FFFFFF" : "transparent"
+                                border.color: "#42FFFFFF"
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "×"
+                                    color: searchTheme.text
+                                    font.pixelSize: 19
+                                }
+
+                                MouseArea {
+                                    id: closePreviewMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        searchPlaceholder.selectedPdfUrl = ""
+                                        searchPlaceholder.selectedPdfName = ""
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: parent.width
+                            height: 1
+                            color: "#30FFFFFF"
+                        }
+
+                        Item {
+                            width: parent.width
+                            height: Math.max(0, parent.height - 48)
+                            clip: true
+
+                            PdfMultiPageView {
+                                id: selectedPdfView
+                                anchors.fill: parent
+                                document: selectedPdfDocument
+                                visible: selectedPdfDocument.status === PdfDocument.Ready
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: selectedPdfDocument.status === PdfDocument.Loading
+                                text: "Loading PDF…"
+                                color: searchTheme.mutedText
+                                font.pixelSize: 12
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: selectedPdfDocument.status === PdfDocument.Error
+                                text: "Could not load this PDF"
+                                color: searchTheme.mutedText
+                                font.pixelSize: 12
                             }
                         }
                     }
