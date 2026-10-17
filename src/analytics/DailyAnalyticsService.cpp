@@ -1,6 +1,6 @@
 #include "DailyAnalyticsService.h"
+#include "../app/AppPaths.h"
 
-#include <QCoreApplication>
 #include <QDate>
 #include <QDateTime>
 #include <QDir>
@@ -8,18 +8,12 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSaveFile>
-#include <QStandardPaths>
 #include <QDebug>
 
 DailyAnalyticsService::DailyAnalyticsService(QObject *parent)
     : QObject(parent)
 {
-    QString dataRoot = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-    if (dataRoot.isEmpty())
-        dataRoot = QCoreApplication::applicationDirPath();
-
-    // On Windows this normally resolves to %APPDATA%/Argon/user-data/analytics/daily.
-    m_storageDirectory = QDir(dataRoot).filePath(QStringLiteral("Argon/user-data/analytics/daily"));
+    m_storageDirectory = ArgonPaths::analyticsDirectory();
 
     if (!QDir().mkpath(m_storageDirectory))
         qWarning() << "Could not create Argon daily analytics directory:" << m_storageDirectory;
