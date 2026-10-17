@@ -2,6 +2,10 @@
 setlocal
 cd /d "%~dp0"
 
+rem Use the checked-in Argon folder as the data root for development tests.
+rem Installed builds leave ARGON_DATA_ROOT unset and use %LOCALAPPDATA%\Argon.
+set "ARGON_DATA_ROOT=%~dp0Argon"
+
 call "%~dp0build.bat"
 if errorlevel 1 exit /b %errorlevel%
 
@@ -16,7 +20,7 @@ if not exist "%~dp0build\Argon.exe" (
     exit /b 1
 )
 
-if exist "%~dp0build\argon-runtime.log" del "%~dp0build\argon-runtime.log"
+if exist "%ARGON_DATA_ROOT%\Logs\argon-runtime.log" del "%ARGON_DATA_ROOT%\Logs\argon-runtime.log"
 
 echo.
 echo === Launching Argon ===
@@ -27,8 +31,8 @@ if not "%ARGON_EXIT_CODE%"=="0" (
     echo Argon exited with an error. Exit code: %ARGON_EXIT_CODE%
     echo.
     echo === Runtime error details ===
-    if exist "%~dp0build\argon-runtime.log" (
-        type "%~dp0build\argon-runtime.log"
+    if exist "%ARGON_DATA_ROOT%\Logs\argon-runtime.log" (
+        type "%ARGON_DATA_ROOT%\Logs\argon-runtime.log"
     ) else (
         echo No runtime log was created. The process may have failed before Qt logging initialized.
     )
