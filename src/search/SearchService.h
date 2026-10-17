@@ -5,6 +5,10 @@
 #include <QVariantList>
 #include <QString>
 #include <QStringList>
+#include <QVariantMap>
+#include <memory>
+
+class QDirIterator;
 
 class DropImportWorker;
 
@@ -25,7 +29,8 @@ public:
     int importProgressPercent() const;
     QString importStatus() const;
 
-    Q_INVOKABLE QVariantList searchNames(const QString &query) const;
+    Q_INVOKABLE QVariantMap startNameSearch(const QString &query);
+    Q_INVOKABLE QVariantMap nextNameSearchPage();
     Q_INVOKABLE QVariantList listFolderContents(const QString &path) const;
     Q_INVOKABLE bool importDroppedUrls(const QVariantList &urls,
                                        const QString &destinationDirectory = QString());
@@ -36,7 +41,14 @@ signals:
     void dropImportFinished(bool succeeded, const QString &message);
 
 private:
+    QVariantMap readNextSearchPage();
+
     QString m_searchRoot;
+    QString m_activeSearchQuery;
+    QString m_activeSearchRoot;
+    std::unique_ptr<QDirIterator> m_searchIterator;
+    QVariantMap m_pendingSearchResult;
+    bool m_hasPendingSearchResult = false;
     QThread m_importThread;
     DropImportWorker *m_importWorker = nullptr;
     bool m_importInProgress = false;
