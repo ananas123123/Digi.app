@@ -1112,6 +1112,9 @@ ApplicationWindow {
             id: searchPlaceholder
             Theme { id: searchTheme }
 
+            property string query: ""
+            property var results: []
+
             Rectangle {
                 anchors.fill: parent
                 color: searchTheme.window
@@ -1120,13 +1123,13 @@ ApplicationWindow {
             Column {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.topMargin: Math.max(90, parent.height * 0.19)
+                anchors.topMargin: Math.max(90, parent.height * 0.26)
                 width: Math.min(900, parent.width - 64)
-                spacing: 22
+                spacing: 18
 
                 Column {
                     width: parent.width
-                    spacing: 9
+                    spacing: 8
 
                     Text {
                         text: "Search"
@@ -1144,61 +1147,211 @@ ApplicationWindow {
 
                 Row {
                     width: parent.width
+                    height: 60
                     spacing: 12
 
                     Rectangle {
+                        id: searchBox
                         width: parent.width - 64
                         height: 60
                         radius: 15
                         color: "#A6292929"
                         border.width: 1
-                        border.color: "#55FFFFFF"
+                        border.color: searchInput.activeFocus ? searchTheme.accent : "#55FFFFFF"
 
-                        Row {
-                            anchors.fill: parent
-                            anchors.leftMargin: 19
-                            anchors.rightMargin: 12
-                            spacing: 12
+                        Text {
+                            x: 19
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "⌕"
+                            color: searchTheme.mutedText
+                            font.pixelSize: 28
+                        }
 
-                            Text {
-                                text: "⌕"
-                                color: searchTheme.mutedText
-                                font.pixelSize: 28
-                                anchors.verticalCenter: parent.verticalCenter
+                        TextField {
+                            id: searchInput
+                            anchors.left: parent.left
+                            anchors.leftMargin: 55
+                            anchors.right: clearButton.left
+                            anchors.rightMargin: 5
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            placeholderText: "Search anything..."
+                            color: searchTheme.text
+                            placeholderTextColor: "#898989"
+                            font.pixelSize: 16
+                            selectByMouse: true
+                            verticalAlignment: TextInput.AlignVCenter
+                            background: Item {}
+
+                            onTextChanged: {
+                                searchPlaceholder.query = text
+                                searchPlaceholder.results = searchService.searchNames(text)
                             }
 
-                            Text {
-                                text: "Search anything..."
-                                color: searchTheme.mutedText
-                                font.pixelSize: 16
-                                anchors.verticalCenter: parent.verticalCenter
+                            onAccepted: {
+                                searchPlaceholder.results = searchService.searchNames(text)
                             }
                         }
 
-                        Text {
-                            text: "×"
-                            color: searchTheme.mutedText
-                            font.pixelSize: 20
+                        Rectangle {
+                            id: clearButton
+                            width: 34
+                            height: 34
                             anchors.right: parent.right
-                            anchors.rightMargin: 16
+                            anchors.rightMargin: 7
                             anchors.verticalCenter: parent.verticalCenter
+                            radius: 8
+                            color: "transparent"
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "×"
+                                color: searchTheme.mutedText
+                                font.pixelSize: 20
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    searchInput.clear()
+                                    searchInput.forceActiveFocus()
+                                }
+                            }
                         }
                     }
 
                     Rectangle {
+                        id: lubisExplorerButton
                         width: 52
                         height: 52
+                        anchors.verticalCenter: parent.verticalCenter
                         radius: 13
                         color: "transparent"
                         border.width: 1
                         border.color: "#33FFFFFF"
-                        anchors.verticalCenter: parent.verticalCenter
 
-                        Text {
-                            text: "▱"
-                            color: searchTheme.text
-                            font.pixelSize: 24
+                        Item {
                             anchors.centerIn: parent
+                            width: 22
+                            height: 19
+
+                            Rectangle {
+                                x: 2
+                                y: 5
+                                width: 18
+                                height: 12
+                                radius: 2
+                                color: "transparent"
+                                border.color: searchTheme.text
+                                border.width: 1.4
+                            }
+
+                            Rectangle {
+                                x: 3
+                                y: 2
+                                width: 8
+                                height: 5
+                                radius: 1
+                                color: "transparent"
+                                border.color: searchTheme.text
+                                border.width: 1.3
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: window.openLubisExplorer()
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: searchResultsPanel
+                    width: parent.width
+                    height: Math.min(320, Math.max(56, searchResultsList.contentHeight + 16))
+                    visible: searchPlaceholder.query.trim().length > 0
+                    radius: 12
+                    color: searchTheme.surface
+                    border.color: searchTheme.border
+                    border.width: 1
+                    clip: true
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: searchPlaceholder.results.length === 0
+                        text: "No results found"
+                        color: searchTheme.mutedText
+                        font.pixelSize: 13
+                    }
+
+                    ListView {
+                        id: searchResultsList
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        visible: searchPlaceholder.results.length > 0
+                        clip: true
+                        model: searchPlaceholder.results
+                        spacing: 4
+
+                        delegate: Rectangle {
+                            required property string name
+                            required property string path
+                            required property string relativePath
+                            required property bool isFolder
+
+                            width: searchResultsList.width
+                            height: 44
+                            radius: 7
+                            color: "transparent"
+
+                            Row {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                spacing: 10
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: isFolder ? "▰" : "▯"
+                                    color: isFolder ? searchTheme.text : searchTheme.mutedText
+                                    font.pixelSize: 16
+                                }
+
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: parent.width - 36
+                                    spacing: 2
+
+                                    Text {
+                                        width: parent.width
+                                        text: name
+                                        color: searchTheme.text
+                                        font.pixelSize: 13
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Text {
+                                        width: parent.width
+                                        text: relativePath
+                                        color: searchTheme.mutedText
+                                        font.pixelSize: 10
+                                        elide: Text.ElideMiddle
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (isFolder)
+                                        window.openLubisExplorerAtPath(path)
+                                    else
+                                        searchService.openFile(path)
+                                }
+                            }
                         }
                     }
                 }
