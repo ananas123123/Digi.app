@@ -58,8 +58,10 @@ ApplicationWindow {
     }
 
     onActivePageChanged: {
-        if (activePage !== "Search")
+        if (activePage !== "Search") {
             lubisExplorerOpen = false
+            fileActionDialogOpen = false
+        }
     }
 
     function refreshLubisExplorerEntries() {
@@ -554,8 +556,8 @@ ApplicationWindow {
         anchors.margins: window.visibility === Window.FullScreen ? 0 : 1
         spacing: 0
 
-        // Only composite the app into a blur layer while the explorer popup is open.
-        // The popup is a sibling of this layout, so it remains perfectly sharp.
+        // Blur the app surface behind Explorer and file-action dialogs.
+        // Both popups are siblings of this layout, so their contents stay sharp.
         layer.enabled: window.lubisExplorerOpen || window.fileActionDialogOpen
         layer.effect: MultiEffect {
             blurEnabled: window.lubisExplorerOpen || window.fileActionDialogOpen
@@ -1741,146 +1743,146 @@ ApplicationWindow {
                         }
                     }
 
-                Rectangle {
-                    id: pdfPreviewPanel
-                    x: searchResultsContainer.width - searchResultsContainer.previewWidth
-                    y: 0
-                    width: searchResultsContainer.previewWidth
-                    height: parent.height
-                    visible: searchResultsContainer.visible
-                    enabled: searchPlaceholder.selectedPdfUrl.length > 0
-                    opacity: searchPlaceholder.selectedPdfUrl.length > 0 ? 1 : 0
-                    radius: 14
-                    color: "#12FFFFFF"
-                    border.color: "#42FFFFFF"
-                    border.width: 1
-                    clip: true
-
-                    Behavior on opacity {
-                        NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-                    }
-
-                    onWidthChanged: {
-                        if (visible && selectedPdfDocument.status === PdfDocument.Ready)
-                            pdfPreviewScaleTimer.restart()
-                    }
-
-                    PdfDocument {
-                        id: selectedPdfDocument
-                        source: searchPlaceholder.selectedPdfUrl
-                    }
-
-                    Connections {
-                        target: selectedPdfDocument
-                        function onStatusChanged() {
-                            if (selectedPdfDocument.status === PdfDocument.Ready)
+                    Rectangle {
+                        id: pdfPreviewPanel
+                        x: searchResultsContainer.width - searchResultsContainer.previewWidth
+                        y: 0
+                        width: searchResultsContainer.previewWidth
+                        height: parent.height
+                        visible: searchResultsContainer.visible
+                        enabled: searchPlaceholder.selectedPdfUrl.length > 0
+                        opacity: searchPlaceholder.selectedPdfUrl.length > 0 ? 1 : 0
+                        radius: 14
+                        color: "#12FFFFFF"
+                        border.color: "#42FFFFFF"
+                        border.width: 1
+                        clip: true
+    
+                        Behavior on opacity {
+                            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                        }
+    
+                        onWidthChanged: {
+                            if (visible && selectedPdfDocument.status === PdfDocument.Ready)
                                 pdfPreviewScaleTimer.restart()
                         }
-                    }
-
-                    Column {
-                        anchors.fill: parent
-                        anchors.margins: 12
-                        spacing: 8
-
-                        Row {
-                            width: parent.width
-                            height: 30
-                            spacing: 8
-
-                            Text {
-                                width: parent.width - closePreviewButton.width - 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: searchPlaceholder.selectedPdfName
-                                color: searchTheme.text
-                                font.pixelSize: 12
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
+    
+                        PdfDocument {
+                            id: selectedPdfDocument
+                            source: searchPlaceholder.selectedPdfUrl
+                        }
+    
+                        Connections {
+                            target: selectedPdfDocument
+                            function onStatusChanged() {
+                                if (selectedPdfDocument.status === PdfDocument.Ready)
+                                    pdfPreviewScaleTimer.restart()
                             }
-
+                        }
+    
+                        Column {
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            spacing: 8
+    
+                            Row {
+                                width: parent.width
+                                height: 30
+                                spacing: 8
+    
+                                Text {
+                                    width: parent.width - closePreviewButton.width - 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: searchPlaceholder.selectedPdfName
+                                    color: searchTheme.text
+                                    font.pixelSize: 12
+                                    font.weight: Font.DemiBold
+                                    elide: Text.ElideRight
+                                }
+    
+                                Rectangle {
+                                    id: closePreviewButton
+                                    width: 28
+                                    height: 28
+                                    radius: 7
+                                    color: closePreviewMouse.containsMouse ? "#24FFFFFF" : "transparent"
+                                    border.color: "#42FFFFFF"
+    
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "×"
+                                        color: searchTheme.text
+                                        font.pixelSize: 19
+                                    }
+    
+                                    MouseArea {
+                                        id: closePreviewMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            searchPlaceholder.selectedPdfUrl = ""
+                                            searchPlaceholder.selectedPdfName = ""
+                                        }
+                                    }
+                                }
+                            }
+    
                             Rectangle {
-                                id: closePreviewButton
-                                width: 28
-                                height: 28
-                                radius: 7
-                                color: closePreviewMouse.containsMouse ? "#24FFFFFF" : "transparent"
-                                border.color: "#42FFFFFF"
-
+                                width: parent.width
+                                height: 1
+                                color: "#30FFFFFF"
+                            }
+    
+                            Item {
+                                width: parent.width
+                                height: Math.max(0, parent.height - 48)
+                                clip: true
+    
+                                Timer {
+                                    id: pdfPreviewScaleTimer
+                                    interval: 260
+                                    repeat: false
+                                    onTriggered: {
+                                        if (selectedPdfDocument.status === PdfDocument.Ready
+                                                && selectedPdfView.width > 0
+                                                && selectedPdfView.height > 0
+                                                && selectedPdfDocument.maxPageWidth > 0) {
+                                            // PdfMultiPageView sizes each page-holder to the
+                                            // document's widest page. Fit that width so smaller
+                                            // pages stay centered instead of being clipped sideways.
+                                            selectedPdfView.renderScale =
+                                                Math.max(1, selectedPdfView.width - 12)
+                                                / selectedPdfDocument.maxPageWidth
+                                        }
+                                    }
+                                }
+    
+                                PdfMultiPageView {
+                                    id: selectedPdfView
+                                    anchors.fill: parent
+                                    document: selectedPdfDocument
+                                    visible: selectedPdfDocument.status === PdfDocument.Ready
+                                }
+    
                                 Text {
                                     anchors.centerIn: parent
-                                    text: "×"
-                                    color: searchTheme.text
-                                    font.pixelSize: 19
+                                    visible: selectedPdfDocument.status === PdfDocument.Loading
+                                    text: "Loading PDF…"
+                                    color: searchTheme.mutedText
+                                    font.pixelSize: 12
                                 }
-
-                                MouseArea {
-                                    id: closePreviewMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        searchPlaceholder.selectedPdfUrl = ""
-                                        searchPlaceholder.selectedPdfName = ""
-                                    }
+    
+                                Text {
+                                    anchors.centerIn: parent
+                                    visible: selectedPdfDocument.status === PdfDocument.Error
+                                    text: "Could not load this PDF"
+                                    color: searchTheme.mutedText
+                                    font.pixelSize: 12
                                 }
-                            }
-                        }
-
-                        Rectangle {
-                            width: parent.width
-                            height: 1
-                            color: "#30FFFFFF"
-                        }
-
-                        Item {
-                            width: parent.width
-                            height: Math.max(0, parent.height - 48)
-                            clip: true
-
-                            Timer {
-                                id: pdfPreviewScaleTimer
-                                interval: 260
-                                repeat: false
-                                onTriggered: {
-                                    if (selectedPdfDocument.status === PdfDocument.Ready
-                                            && selectedPdfView.width > 0
-                                            && selectedPdfView.height > 0
-                                            && selectedPdfDocument.maxPageWidth > 0) {
-                                        // PdfMultiPageView sizes each page-holder to the
-                                        // document's widest page. Fit that width so smaller
-                                        // pages stay centered instead of being clipped sideways.
-                                        selectedPdfView.renderScale =
-                                            Math.max(1, selectedPdfView.width - 12)
-                                            / selectedPdfDocument.maxPageWidth
-                                    }
-                                }
-                            }
-
-                            PdfMultiPageView {
-                                id: selectedPdfView
-                                anchors.fill: parent
-                                document: selectedPdfDocument
-                                visible: selectedPdfDocument.status === PdfDocument.Ready
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                visible: selectedPdfDocument.status === PdfDocument.Loading
-                                text: "Loading PDF…"
-                                color: searchTheme.mutedText
-                                font.pixelSize: 12
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                visible: selectedPdfDocument.status === PdfDocument.Error
-                                text: "Could not load this PDF"
-                                color: searchTheme.mutedText
-                                font.pixelSize: 12
                             }
                         }
                     }
-                }
 
                 }
             }
