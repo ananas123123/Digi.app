@@ -1882,61 +1882,63 @@ ApplicationWindow {
                     }
                 }
 
-                Rectangle {
-                    id: dragGhostCard
-                    x: searchPlaceholder.dragGhostX
-                    y: searchPlaceholder.dragGhostY
-                    width: searchPlaceholder.dragSourceWidth
-                           * (searchPlaceholder.dragGhostCompressed ? 0.82 : 1)
-                    height: 56
-                    visible: searchPlaceholder.draggingFile || opacity > 0.01
-                    opacity: searchPlaceholder.draggingFile ? 1 : 0
-                    radius: 10
-                    color: "#E6323232"
-                    border.color: "#B3FFFFFF"
-                    border.width: 1
-                    clip: true
-                    z: 999
+                }
+            }
 
-                    Behavior on opacity { NumberAnimation { duration: 120 } }
-                    Behavior on width {
-                        NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
-                    }
+            Rectangle {
+                id: dragGhostCard
+                x: searchPlaceholder.dragGhostX
+                y: searchPlaceholder.dragGhostY
+                width: searchPlaceholder.dragSourceWidth
+                       * (searchPlaceholder.dragGhostCompressed ? 0.82 : 1)
+                height: 56
+                visible: searchPlaceholder.draggingFile || opacity > 0.01
+                opacity: searchPlaceholder.draggingFile ? 1 : 0
+                radius: 10
+                color: "#E6323232"
+                border.color: "#B3FFFFFF"
+                border.width: 1
+                clip: true
+                z: 999
 
-                    Text {
-                        anchors.left: parent.left
-                        anchors.right: dragGhostType.left
-                        anchors.leftMargin: 16
-                        anchors.rightMargin: 12
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: {
-                            var dot = searchPlaceholder.draggedFileName.lastIndexOf(".")
-                            return dot > 0
-                                   ? searchPlaceholder.draggedFileName.substring(0, dot)
-                                   : searchPlaceholder.draggedFileName
-                        }
-                        color: searchTheme.text
-                        font.pixelSize: 14
-                        font.weight: Font.DemiBold
-                        elide: Text.ElideRight
-                    }
+                Behavior on opacity { NumberAnimation { duration: 120 } }
+                Behavior on width {
+                    NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                }
 
-                    Text {
-                        id: dragGhostType
-                        anchors.right: parent.right
-                        anchors.rightMargin: 16
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: {
-                            var dot = searchPlaceholder.draggedFileName.lastIndexOf(".")
-                            return dot > 0
-                                   ? searchPlaceholder.draggedFileName.substring(dot + 1).toUpperCase()
-                                   : ""
-                        }
-                        visible: text === "PDF" || text === "DOC" || text === "DOCX"
-                        color: text === "PDF" ? "#E7A0A0" : "#8CBFFF"
-                        font.pixelSize: 11
-                        font.weight: Font.DemiBold
+                Text {
+                    anchors.left: parent.left
+                    anchors.right: dragGhostType.left
+                    anchors.leftMargin: 16
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: {
+                        var dot = searchPlaceholder.draggedFileName.lastIndexOf(".")
+                        return dot > 0
+                               ? searchPlaceholder.draggedFileName.substring(0, dot)
+                               : searchPlaceholder.draggedFileName
                     }
+                    color: searchTheme.text
+                    font.pixelSize: 14
+                    font.weight: Font.DemiBold
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    id: dragGhostType
+                    anchors.right: parent.right
+                    anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: {
+                        var dot = searchPlaceholder.draggedFileName.lastIndexOf(".")
+                        return dot > 0
+                               ? searchPlaceholder.draggedFileName.substring(dot + 1).toUpperCase()
+                               : ""
+                    }
+                    visible: text === "PDF" || text === "DOC" || text === "DOCX"
+                    color: text === "PDF" ? "#E7A0A0" : "#8CBFFF"
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
                 }
             }
         }
@@ -1988,6 +1990,11 @@ ApplicationWindow {
             border.width: 1
             border.color: "#70FFFFFF"
             clip: true
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {}
+            }
 
             Column {
                 anchors.fill: parent
