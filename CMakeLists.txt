@@ -12,6 +12,8 @@ qt_standard_project_setup(REQUIRES 6.5)
 
 qt_add_executable(Argon
     src/main.cpp
+    src/app/AppPaths.cpp
+    src/app/AppPaths.h
     src/app/AppServices.cpp
     src/app/AppServices.h
     src/analytics/DailyAnalyticsService.cpp
