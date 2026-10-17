@@ -1212,6 +1212,7 @@ ApplicationWindow {
                                 searchPlaceholder.query = text
                                 if (text.trim().length === 0) {
                                     searchDebounce.stop()
+                                    searchService.startNameSearch("")
                                     searchPlaceholder.results = []
                                     searchPlaceholder.hasMoreResults = false
                                     searchPlaceholder.currentPage = 0
@@ -1337,7 +1338,8 @@ ApplicationWindow {
                         anchors.top: parent.top
                         anchors.bottom: paginationControls.top
                         anchors.margins: 8
-                        anchors.bottomMargin: searchPlaceholder.results.length > searchPlaceholder.resultsPerPage ? 4 : 0
+                        anchors.bottomMargin: (searchPlaceholder.hasMoreResults
+                                              || searchPlaceholder.results.length > searchPlaceholder.resultsPerPage) ? 4 : 0
                         visible: searchPlaceholder.results.length > 0
                         clip: true
                         model: searchPlaceholder.pageResults
