@@ -39,6 +39,8 @@ qt_add_qml_module(Argon
         qml/pages/AnalyticsPage.qml
         qml/pages/DocPage.qml
         qml/themes/Theme.qml
+    RESOURCES
+        qml/assets/icons/Settings/setting-icon.png
 )
 
 target_link_libraries(Argon PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Pdf Qt6::PdfQuick)
