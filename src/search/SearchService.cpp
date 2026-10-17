@@ -13,6 +13,7 @@
 #include <QMetaObject>
 #include <QSet>
 #include <QVariant>
+#include <QDebug>
 
 namespace {
 QString normalizedPath(QString path)
@@ -37,14 +38,29 @@ SearchService::SearchService(QObject *parent)
     : QObject(parent)
 {
     const QDir appDir(QCoreApplication::applicationDirPath());
-    const QString adjacentDataRoot = QDir::cleanPath(appDir.filePath(QStringLiteral("../Lubis")));
-    const QString dataRoot = QDir(adjacentDataRoot).exists()
-        ? adjacentDataRoot
-        : QDir::cleanPath(appDir.filePath(QStringLiteral("Lubis")));
+    const QString localDataRoot = QDir::cleanPath(
+        appDir.filePath(QStringLiteral("Lubis")));
+    const QString adjacentDataRoot = QDir::cleanPath(
+        appDir.filePath(QStringLiteral("../Lubis")));
+
+    // Prefer data beside the executable only when its Search QR directory exists.
+    // This prevents an unrelated neighbouring Lubis folder from shadowing the
+    // project's actual data when launching an executable from the repository root.
+    const bool localSearchRootExists =
+        QDir(QDir(localDataRoot).filePath(QStringLiteral("search QR"))).exists();
+    const bool adjacentSearchRootExists =
+        QDir(QDir(adjacentDataRoot).filePath(QStringLiteral("search QR"))).exists();
+
+    const QString dataRoot = localSearchRootExists
+        ? localDataRoot
+        : (adjacentSearchRootExists
+               ? adjacentDataRoot
+               : (QDir(localDataRoot).exists() ? localDataRoot : adjacentDataRoot));
 
     // Search and the custom explorer share this single root.
     m_searchRoot = QDir(dataRoot).filePath(QStringLiteral("search QR"));
     QDir().mkpath(m_searchRoot);
+    qInfo().noquote() << "Lubis search root:" << QDir::cleanPath(m_searchRoot);
     QDir().mkpath(QDir(dataRoot).filePath(QStringLiteral("cache")));
 
     m_importWorker = new DropImportWorker;
@@ -248,17 +264,21 @@ void SearchService::requestSearch(const QString &query, bool caseSensitive, bool
         emit searchStateChanged();
     }
 
+    // A queued functor avoids fragile string-based slot signature matching and
+    // guarantees all filesystem/PDF scanning runs on the worker thread.
+    SearchWorker *worker = m_searchWorker;
+    const QString rootPath = m_searchRoot;
     const bool queued = QMetaObject::invokeMethod(
-        m_searchWorker,
-        "performSearch",
-        Qt::QueuedConnection,
-        Q_ARG(quint64, requestId),
-        Q_ARG(QString, m_searchRoot),
-        Q_ARG(QString, needle),
-        Q_ARG(bool, caseSensitive),
-        Q_ARG(bool, includeHidden));
+        worker,
+        [worker, requestId, rootPath, needle, caseSensitive, includeHidden]() {
+            worker->performSearch(requestId, rootPath, needle,
+                                  caseSensitive, includeHidden);
+        },
+        Qt::QueuedConnection);
 
     if (!queued) {
+        qWarning() << "Could not queue search request" << requestId
+                   << "for root" << rootPath;
         m_searchResults.clear();
         emit searchResultsChanged();
         if (m_searching) {
