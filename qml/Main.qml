@@ -1117,6 +1117,7 @@ ApplicationWindow {
             property int currentPage: 0
             readonly property int resultsPerPage: 20
             property bool hasMoreResults: false
+            property bool searchPending: false
             readonly property int loadedPageCount: Math.ceil(results.length / resultsPerPage)
             readonly property var pageResults: results.slice(
                 currentPage * resultsPerPage,
@@ -1127,6 +1128,7 @@ ApplicationWindow {
                 results = response.results || []
                 hasMoreResults = response.hasMore === true
                 currentPage = 0
+                searchPending = false
             }
 
             Rectangle {
@@ -1213,7 +1215,12 @@ ApplicationWindow {
                                     searchPlaceholder.results = []
                                     searchPlaceholder.hasMoreResults = false
                                     searchPlaceholder.currentPage = 0
+                                    searchPlaceholder.searchPending = false
                                 } else {
+                                    searchPlaceholder.results = []
+                                    searchPlaceholder.hasMoreResults = false
+                                    searchPlaceholder.currentPage = 0
+                                    searchPlaceholder.searchPending = true
                                     searchDebounce.restart()
                                 }
                             }
@@ -1317,6 +1324,7 @@ ApplicationWindow {
                     Text {
                         anchors.centerIn: parent
                         visible: searchPlaceholder.results.length === 0
+                                 && !searchPlaceholder.searchPending
                         text: "No results found"
                         color: searchTheme.mutedText
                         font.pixelSize: 13
@@ -1455,7 +1463,9 @@ ApplicationWindow {
                                     radius: 7
                                     color: nextPageMouse.containsMouse ? searchTheme.surfaceRaised : "transparent"
                                     border.color: searchTheme.border
-                                    opacity: searchPlaceholder.currentPage < searchPlaceholder.pageCount - 1 ? 1 : 0.4
+                                    opacity: (searchPlaceholder.currentPage
+                                              < searchPlaceholder.loadedPageCount - 1
+                                              || searchPlaceholder.hasMoreResults) ? 1 : 0.4
 
                                     Text {
                                         anchors.centerIn: parent
