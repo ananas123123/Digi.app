@@ -25,7 +25,7 @@ QML owns presentation and UI interaction. C++ owns application logic and perform
 
 ## Per-user directory layout
 
-At startup, Argon creates its writable runtime layout under `%LOCALAPPDATA%\Argon` on Windows. The directory path is centralized in `src/app/AppPaths.*`.
+At startup, Argon creates its writable runtime layout under `%LOCALAPPDATA%\Argon` on Windows. The directory path is centralized in `src/app/AppPaths.*`. When launched through `run.bat`, Argon sets `ARGON_DATA_ROOT` to the repository's `Argon/` folder so the exact same layout can be tested without changing the real per-user data. Packaged builds leave this override unset.
 
 ```text
 %LOCALAPPDATA%\Argon\
@@ -49,4 +49,4 @@ At startup, Argon creates its writable runtime layout under `%LOCALAPPDATA%\Argo
 The application provisions folders but does not copy its own executable into `App\`; the installer will own installation of binaries. Existing Search QR content and daily analytics are copied non-destructively from their previous locations when found. Original files are retained, existing destination files are never overwritten, and migration markers prevent repeated copying.
 
 ## Status
-The modular shell now provisions the per-user runtime directory layout and stores search content, runtime logs, and daily analytics under `%LOCALAPPDATA%\Argon` on Windows. One-time, non-destructive migration copies recognized legacy search and analytics files while retaining their originals. Notes, PDF functionality, broader persistent storage, and ink rendering remain in progress. Build and runtime validation are required after each milestone.
+The modular shell provisions the runtime directory layout through `AppPaths`. Normal Windows launches use `%LOCALAPPDATA%\Argon`; `run.bat` overrides the root to the repository's `Argon/` folder for development testing. Search content, runtime logs, and daily analytics use the centralized paths. One-time, non-destructive migrations preserve legacy files. Settings persistence, document storage, updater binaries, bootstrap binaries, and ink rendering remain in progress. Build and runtime validation are required after each milestone.
